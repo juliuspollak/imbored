@@ -104,13 +104,29 @@ create policy "users can remove themselves from a team" on team_members for dele
 create policy "feedback is publicly readable" on feedback for select using (true);
 create policy "users can submit feedback" on feedback for insert with check (auth.uid() = user_id);
 create policy "admins can update feedback" on feedback for update
-  using (exists (select 1 from profiles where id = auth.uid() and is_admin = true));
+  using (is_admin(auth.uid()));
 
 create policy "votes are publicly readable" on feedback_votes for select using (true);
 create policy "users can vote" on feedback_votes for insert with check (auth.uid() = user_id);
 create policy "users can remove their own vote" on feedback_votes for delete using (auth.uid() = user_id);
 
 -- ============ functions ============
+-- SECURITY DEFINER bypasses RLS for the query it runs internally — used
+-- anywhere a policy needs to check admin status without querying profiles
+-- directly from within a profiles policy (which causes infinite recursion:
+-- evaluating the policy would require re-evaluating the same policy to run
+-- the subquery).
+create or replace function is_admin(uid uuid)
+returns boolean
+language sql
+security definer
+stable
+as $$
+  select coalesce((select is_admin from profiles where id = uid), false);
+$$;
+
+grant execute on function is_admin to authenticated;
+
 -- Adding someone ELSE to a team goes through this function (not a direct
 -- insert), so a private profile can never be added by anyone but
 -- themselves. Joining yourself is a plain insert, already allowed above.

@@ -12,12 +12,8 @@ create table release_notes (
 
 alter table release_notes enable row level security;
 create policy "release notes are publicly readable" on release_notes for select using (true);
-create policy "admins can post release notes" on release_notes for insert with check (
-  exists (select 1 from profiles where id = auth.uid() and is_admin = true)
-);
-create policy "admins can delete release notes" on release_notes for delete using (
-  exists (select 1 from profiles where id = auth.uid() and is_admin = true)
-);
+create policy "admins can post release notes" on release_notes for insert with check (is_admin(auth.uid()));
+create policy "admins can delete release notes" on release_notes for delete using (is_admin(auth.uid()));
 
 -- ============ admin-only player hiding ============
 -- A hidden player is invisible to everyone except themselves and admins —
@@ -31,7 +27,7 @@ drop policy "profiles are publicly readable" on profiles;
 create policy "profiles are readable unless hidden" on profiles for select using (
   hidden_from_others = false
   or id = auth.uid()
-  or exists (select 1 from profiles me where me.id = auth.uid() and me.is_admin = true)
+  or is_admin(auth.uid())
 );
 
 create or replace function set_user_hidden(target_user_id uuid, hidden boolean)
