@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { usePresence } from "../lib/usePresence.js";
 import { withSeededRandom } from "../lib/seededRandom.js";
 import { Sun, Moon, RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle } from "lucide-react";
 
@@ -283,7 +282,6 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
   })();
   const isChallenge = mode === "challenge";
   const [dayIdx, setDayIdx] = useState(isChallenge ? forcedDayIdx ?? todayIdx : todayIdx);
-  usePresence("tango");
   const [puzzle, setPuzzle] = useState(null);
   const [board, setBoard] = useState(null);
   const [seconds, setSeconds] = useState(0);

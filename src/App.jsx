@@ -18,6 +18,7 @@ import { AuthProvider, useAuth } from "./lib/AuthContext.jsx";
 import { saveStats, rateDifficulty } from "./lib/saveStats.js";
 import { supabaseReady } from "./lib/supabase.js";
 import { useOnlinePlayers } from "./lib/useOnlinePlayers.js";
+import { usePresence } from "./lib/usePresence.js";
 import { useOpenFeedbackCount } from "./lib/useOpenFeedbackCount.js";
 import { usePokes } from "./lib/pokes.js";
 
@@ -35,6 +36,7 @@ function AppShell() {
   const [playMode, setPlayMode] = useState("challenge");
   const { loading, user, profile, profileLoading, signOut } = useAuth();
   const players = useOnlinePlayers();
+  usePresence(["queens", "tango", "zip"].includes(active) ? active : null);
   const openFeedbackCount = useOpenFeedbackCount();
 
   if (supabaseReady) {

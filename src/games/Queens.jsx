@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { usePresence } from "../lib/usePresence.js";
 import { withSeededRandom } from "../lib/seededRandom.js";
 import { Crown, RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle } from "lucide-react";
 
@@ -248,7 +247,6 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
   const isChallenge = mode === "challenge";
   const [dayIdx, setDayIdx] = useState(isChallenge ? forcedDayIdx ?? todayIdx : todayIdx);
   const n = SIZES[dayIdx];
-  usePresence("queens");
 
   const [puzzle, setPuzzle] = useState(null);
   const [board, setBoard] = useState(null);
