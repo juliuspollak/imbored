@@ -1,5 +1,12 @@
 [
   {
+    "id": "v55-release-reaction-rpc",
+    "title": "Reliable What\u2019s New reactions",
+    "body": "Fixed thumbs-up and thumbs-down reactions reverting after selection by saving them through an atomic authenticated database function.",
+    "version": "v55",
+    "date": "2026-07-23"
+  },
+  {
     "id": "2026-07-08-accounts",
     "version": "v1",
     "title": "Accounts & sign-in",

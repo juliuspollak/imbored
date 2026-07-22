@@ -66,7 +66,7 @@ export default function ReleaseNotes({ onBack }) {
     const mine = reactions.find((r) => r.release_note_id === noteId && r.user_id === user.id);
     const isUntick = mine?.reaction === reaction;
 
-    // Update immediately so the colour and count respond without waiting for Supabase.
+    // Update immediately while the atomic database function saves the change.
     setReactions((current) => {
       const withoutMine = current.filter(
         (r) => !(r.release_note_id === noteId && r.user_id === user.id),
@@ -75,7 +75,6 @@ export default function ReleaseNotes({ onBack }) {
       return [...withoutMine, { release_note_id: noteId, user_id: user.id, reaction }];
     });
 
-    // Only open the feedback box when thumbs-down is newly selected, not when unticked.
     if (reaction === "down" && !isUntick) {
       setReportingId(noteId);
       setReportText("");
@@ -84,32 +83,28 @@ export default function ReleaseNotes({ onBack }) {
     }
 
     setSavingReactionId(noteId);
-    let error;
-    if (isUntick) {
-      ({ error } = await supabase
-        .from("release_note_reactions")
-        .delete()
-        .eq("release_note_id", noteId)
-        .eq("user_id", user.id));
-    } else if (mine) {
-      // Switching an existing vote must be an UPDATE. Using upsert here can
-      // be rejected by RLS and causes the optimistic UI to snap back.
-      ({ error } = await supabase
-        .from("release_note_reactions")
-        .update({ reaction })
-        .eq("release_note_id", noteId)
-        .eq("user_id", user.id));
-    } else {
-      // A first-time vote is a plain INSERT.
-      ({ error } = await supabase
-        .from("release_note_reactions")
-        .insert({ release_note_id: noteId, user_id: user.id, reaction }));
-    }
+    const { data, error } = await supabase.rpc("toggle_release_note_reaction", {
+      target_release_note_id: noteId,
+      target_reaction: reaction,
+    });
 
     if (error) {
       console.error("Unable to save release-note reaction:", error);
-      // Restore the previous display if Supabase rejects the change.
       setReactions(previousReactions);
+    } else {
+      // Use the database result as the final source of truth for this user's vote.
+      const savedReaction = data?.[0]?.user_reaction ?? null;
+      setReactions((current) => {
+        const withoutMine = current.filter(
+          (r) => !(r.release_note_id === noteId && r.user_id === user.id),
+        );
+        if (!savedReaction) return withoutMine;
+        return [...withoutMine, {
+          release_note_id: noteId,
+          user_id: user.id,
+          reaction: savedReaction,
+        }];
+      });
     }
     setSavingReactionId(null);
   }
