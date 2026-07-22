@@ -8,14 +8,33 @@ const PANEL = "#FFFFFF";
 const INK = "#1B2129";
 const ACCENT = "#2F6FED";
 
+function GoogleIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 48 48">
+      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.1 8 3.1l5.7-5.7C34.6 6 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z" />
+      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.1 8 3.1l5.7-5.7C34.6 7 29.6 5 24 5c-7.7 0-14.4 4.4-17.7 10.7z" />
+      <path fill="#4CAF50" d="M24 43c5.5 0 10.4-1.9 14-5.1l-6.5-5.4c-2 1.4-4.6 2.3-7.5 2.3-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 38.6 16.3 43 24 43z" />
+      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.5 5.4C40.9 36 44 30.5 44 24c0-1.3-.1-2.7-.4-3.5z" />
+    </svg>
+  );
+}
+
 export default function Login() {
-  const { signInWithEmail } = useAuth();
+  const { signInWithEmail, verifyCode, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
+  const [verifying, setVerifying] = useState(false);
 
-  async function handleSubmit(e) {
+  async function handleGoogle() {
+    setError(null);
+    const { error } = await signInWithGoogle();
+    if (error) setError(error.message);
+  }
+
+  async function handleSendCode(e) {
     e.preventDefault();
     if (!email || sending) return;
     setSending(true);
@@ -24,6 +43,16 @@ export default function Login() {
     setSending(false);
     if (error) setError(error.message);
     else setSent(true);
+  }
+
+  async function handleVerify(e) {
+    e.preventDefault();
+    if (!code || verifying) return;
+    setVerifying(true);
+    setError(null);
+    const { error } = await verifyCode(email, code.trim());
+    setVerifying(false);
+    if (error) setError("That code didn't work — check it and try again, or resend below.");
   }
 
   return (
@@ -48,23 +77,23 @@ export default function Login() {
           </div>
         )}
 
-        {sent ? (
-          <div className="text-center py-4">
-            <Mail size={28} style={{ color: ACCENT, margin: "0 auto 12px" }} />
-            <p style={{ color: INK }} className="text-sm font-medium">Check your email</p>
-            <p style={{ color: INK, opacity: 0.5 }} className="text-xs mt-1">
-              We sent a sign-in link to {email}. Open it on this device to continue.
-            </p>
+        {!sent ? (
+          <>
             <button
-              onClick={() => setSent(false)}
-              style={{ color: ACCENT }}
-              className="text-xs mt-4 font-medium"
+              onClick={handleGoogle}
+              disabled={!supabaseReady}
+              className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold mb-4"
+              style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK, background: "#FFFFFF" }}
             >
-              Use a different email
+              <GoogleIcon />
+              Continue with Google
             </button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit}>
+            <div className="flex items-center gap-3 mb-4">
+              <div style={{ height: 1, background: "rgba(16,24,40,0.12)" }} className="flex-1" />
+              <span style={{ color: INK, opacity: 0.4 }} className="text-[11px]">or</span>
+              <div style={{ height: 1, background: "rgba(16,24,40,0.12)" }} className="flex-1" />
+            </div>
+            <form onSubmit={handleSendCode}>
             <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
               Email address
             </label>
@@ -85,12 +114,50 @@ export default function Login() {
               className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold"
               style={{ background: ACCENT, color: "#FFFFFF", opacity: sending ? 0.7 : 1 }}
             >
-              {sending ? "Sending…" : "Send sign-in link"}
+              {sending ? "Sending…" : "Send sign-in code"}
               {!sending && <ArrowRight size={15} />}
             </button>
             <p style={{ color: INK, opacity: 0.4 }} className="text-[11px] text-center mt-3">
-              No password — we'll email you a one-tap link instead.
+              No password — we'll email you a 6-digit code instead.
             </p>
+            </form>
+          </>
+        ) : (
+          <form onSubmit={handleVerify}>
+            <div className="text-center mb-4">
+              <Mail size={24} style={{ color: ACCENT, margin: "0 auto 8px" }} />
+              <p style={{ color: INK }} className="text-xs">
+                Enter the 6-digit code sent to <strong>{email}</strong>
+              </p>
+            </div>
+            <input
+              required
+              autoFocus
+              inputMode="numeric"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="123456"
+              maxLength={6}
+              className="w-full rounded-lg px-3 py-2.5 text-center text-lg tracking-[0.3em] mb-3 outline-none"
+              style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
+            />
+            {error && <p className="text-xs mb-3 text-center" style={{ color: "#B5433A" }}>{error}</p>}
+            <button
+              type="submit"
+              disabled={verifying}
+              className="w-full rounded-lg py-2.5 text-sm font-semibold"
+              style={{ background: ACCENT, color: "#FFFFFF", opacity: verifying ? 0.7 : 1 }}
+            >
+              {verifying ? "Checking…" : "Continue"}
+            </button>
+            <div className="flex justify-between mt-3">
+              <button type="button" onClick={() => { setSent(false); setCode(""); setError(null); }} style={{ color: INK, opacity: 0.5 }} className="text-xs">
+                Use a different email
+              </button>
+              <button type="button" onClick={handleSendCode} style={{ color: ACCENT }} className="text-xs font-medium">
+                Resend code
+              </button>
+            </div>
           </form>
         )}
       </div>

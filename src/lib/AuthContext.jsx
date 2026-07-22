@@ -37,7 +37,20 @@ export function AuthProvider({ children }) {
     if (!supabaseReady) return { error: new Error("Supabase isn't configured yet") };
     return supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.origin },
+      options: { emailRedirectTo: window.location.origin, shouldCreateUser: true },
+    });
+  }
+
+  async function verifyCode(email, token) {
+    if (!supabaseReady) return { error: new Error("Supabase isn't configured yet") };
+    return supabase.auth.verifyOtp({ email, token, type: "email" });
+  }
+
+  async function signInWithGoogle() {
+    if (!supabaseReady) return { error: new Error("Supabase isn't configured yet") };
+    return supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin },
     });
   }
 
@@ -64,6 +77,8 @@ export function AuthProvider({ children }) {
     profileLoading,
     loading: session === undefined,
     signInWithEmail,
+    verifyCode,
+    signInWithGoogle,
     signOut,
     saveProfile,
   };
