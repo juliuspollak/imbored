@@ -355,5 +355,19 @@
     "title": "Release notes workflow repaired",
     "body": "Updated checkout to the Node.js 24-compatible action, added clear secret and changelog validation, and made Supabase errors visible in GitHub Actions instead of failing without a useful response body.",
     "date": "2026-07-23"
+  },
+  {
+    "id": "2026-07-23-rating-feedback-polish",
+    "version": "v52",
+    "title": "Clearer difficulty rating feedback",
+    "body": "After choosing a difficulty, the solved panel now briefly confirms that the rating was saved before returning to the board. The saved rating is shown as a compact six-bar indicator matching the original picker, with the selected level highlighted.",
+    "date": "2026-07-23"
+  },
+  {
+    "id": "2026-07-23-release-note-reaction-counts",
+    "version": "v53",
+    "title": "Clearer reactions on What's New",
+    "body": "Thumbs up and thumbs down now always show their counts and update immediately. Your selected reaction changes colour, tapping it again removes it, and choosing the opposite reaction switches your vote instead of allowing both.",
+    "date": "2026-07-23"
   }
 ]

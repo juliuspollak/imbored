@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import { rateDifficulty } from "../lib/saveStats.js";
-import DifficultyRating from "../DifficultyRating.jsx";
+import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import { RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, Flag, Lock } from "lucide-react";
 
 /* ---------------- puzzle generation ---------------- */
@@ -903,9 +903,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
 
         {solved && difficultyRating !== null && (
           <div className="flex justify-center mt-3">
-            <span className="rounded-full px-3 py-1 text-[11px] font-semibold" style={{ background: "rgba(22,163,74,0.10)", color: "#16A34A" }}>
-              Your difficulty rating: {difficultyRating}/100
-            </span>
+            <DifficultyRatingBadge value={difficultyRating} />
           </div>
         )}
 

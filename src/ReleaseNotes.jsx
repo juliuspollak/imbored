@@ -28,6 +28,7 @@ export default function ReleaseNotes({ onBack }) {
   const [reportingId, setReportingId] = useState(null); // release note currently showing the "what's wrong" box
   const [reportText, setReportText] = useState("");
   const [justReported, setJustReported] = useState(null); // release note id that was just sent to feedback
+  const [savingReactionId, setSavingReactionId] = useState(null);
 
   const refresh = useCallback(async () => {
     if (!supabaseReady) {
@@ -59,19 +60,51 @@ export default function ReleaseNotes({ onBack }) {
   }, [refresh]);
 
   async function setReaction(noteId, reaction) {
-    if (!user) return;
+    if (!user || savingReactionId === noteId) return;
+
+    const previousReactions = reactions;
     const mine = reactions.find((r) => r.release_note_id === noteId && r.user_id === user.id);
-    if (mine?.reaction === reaction) {
-      // tapping the same one again clears it
-      await supabase.from("release_note_reactions").delete().eq("release_note_id", noteId).eq("user_id", user.id);
-    } else {
-      await supabase.from("release_note_reactions").upsert({ release_note_id: noteId, user_id: user.id, reaction });
-    }
-    if (reaction === "down") {
+    const isUntick = mine?.reaction === reaction;
+
+    // Update immediately so the colour and count respond without waiting for Supabase.
+    setReactions((current) => {
+      const withoutMine = current.filter(
+        (r) => !(r.release_note_id === noteId && r.user_id === user.id),
+      );
+      if (isUntick) return withoutMine;
+      return [...withoutMine, { release_note_id: noteId, user_id: user.id, reaction }];
+    });
+
+    // Only open the feedback box when thumbs-down is newly selected, not when unticked.
+    if (reaction === "down" && !isUntick) {
       setReportingId(noteId);
       setReportText("");
+    } else if (isUntick || reaction === "up") {
+      setReportingId((current) => (current === noteId ? null : current));
     }
-    refresh();
+
+    setSavingReactionId(noteId);
+    let error;
+    if (isUntick) {
+      ({ error } = await supabase
+        .from("release_note_reactions")
+        .delete()
+        .eq("release_note_id", noteId)
+        .eq("user_id", user.id));
+    } else {
+      ({ error } = await supabase
+        .from("release_note_reactions")
+        .upsert(
+          { release_note_id: noteId, user_id: user.id, reaction },
+          { onConflict: "release_note_id,user_id" },
+        ));
+    }
+
+    if (error) {
+      // Restore the previous display if Supabase rejects the change.
+      setReactions(previousReactions);
+    }
+    setSavingReactionId(null);
   }
 
   async function submitReport(note) {
@@ -140,19 +173,25 @@ export default function ReleaseNotes({ onBack }) {
                         <div className="flex items-center gap-1 ml-auto">
                           <button
                             onClick={() => setReaction(n.id, "up")}
-                            className="flex items-center gap-1 rounded-full px-1.5 py-0.5"
+                            disabled={savingReactionId === n.id}
+                            aria-pressed={mine === "up"}
+                            title={mine === "up" ? "Remove thumbs up" : "Thumbs up"}
+                            className="flex items-center gap-1 rounded-full px-1.5 py-0.5 disabled:cursor-wait"
                             style={{ background: mine === "up" ? "rgba(22,163,74,0.12)" : "rgba(16,24,40,0.05)", color: mine === "up" ? GREEN : INK, opacity: mine === "up" ? 1 : 0.5 }}
                           >
-                            <ThumbsUp size={11} />
-                            {upCount > 0 && <span className="text-[10px] font-medium">{upCount}</span>}
+                            <ThumbsUp size={11} fill={mine === "up" ? "currentColor" : "none"} />
+                            <span className="text-[10px] font-semibold min-w-[8px] text-center">{upCount}</span>
                           </button>
                           <button
                             onClick={() => setReaction(n.id, "down")}
-                            className="flex items-center gap-1 rounded-full px-1.5 py-0.5"
+                            disabled={savingReactionId === n.id}
+                            aria-pressed={mine === "down"}
+                            title={mine === "down" ? "Remove thumbs down" : "Thumbs down"}
+                            className="flex items-center gap-1 rounded-full px-1.5 py-0.5 disabled:cursor-wait"
                             style={{ background: mine === "down" ? "rgba(181,67,58,0.12)" : "rgba(16,24,40,0.05)", color: mine === "down" ? RED : INK, opacity: mine === "down" ? 1 : 0.5 }}
                           >
-                            <ThumbsDown size={11} />
-                            {downCount > 0 && <span className="text-[10px] font-medium">{downCount}</span>}
+                            <ThumbsDown size={11} fill={mine === "down" ? "currentColor" : "none"} />
+                            <span className="text-[10px] font-semibold min-w-[8px] text-center">{downCount}</span>
                           </button>
                         </div>
                       </div>
