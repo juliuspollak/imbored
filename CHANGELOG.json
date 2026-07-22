@@ -187,5 +187,12 @@
     "title": "New game: Mini Sudoku",
     "body": "6x6 sudoku, verified unique every time, difficulty scales through the week via clue count. Hint uses real solving techniques (naked/hidden singles, contradiction test) — never a guess. Works in both Challenge and Practice mode, same as the others. Also brought Queens/Tango/Zip's fonts in line with the rest of the app.",
     "days_ago": 0.0
+  },
+  {
+    "id": "2026-07-22-admin-players-screen",
+    "version": "v28",
+    "title": "New admin screen: Players",
+    "body": "Lists every signed-up player, not just ones who've played something (unlike Stats' hide toggle, which only shows players with game history). Admin-only, hide/unhide from here.",
+    "days_ago": 0.0
   }
 ]
