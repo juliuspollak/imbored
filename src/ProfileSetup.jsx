@@ -21,6 +21,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
   const [icon, setIcon] = useState(profile?.icon || "🙂");
   const [isPrivate, setIsPrivate] = useState(profile?.is_private || false);
   const [mood, setMood] = useState(profile?.mood || "");
+  const [defaultMode, setDefaultMode] = useState(profile?.default_mode || "challenge");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [passkeys, setPasskeys] = useState([]);
@@ -57,6 +58,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
       setIcon(profile.icon || "🙂");
       setIsPrivate(profile.is_private || false);
       setMood(profile.mood || "");
+      setDefaultMode(profile.default_mode || "challenge");
     }
   }, [profile]);
 
@@ -65,7 +67,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
     if (!name.trim() || saving) return;
     setSaving(true);
     setError(null);
-    const { error } = await saveProfile({ name: name.trim(), icon, is_private: isPrivate, mood: mood.trim() || null });
+    const { error } = await saveProfile({ name: name.trim(), icon, is_private: isPrivate, mood: mood.trim() || null, default_mode: defaultMode });
     setSaving(false);
     if (error) setError(error.message);
     else if (onDone) onDone();
@@ -150,6 +152,27 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
             className="w-full rounded-lg px-3 py-2.5 text-sm mb-4 outline-none"
             style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
           />
+
+          <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
+            Default mode after login
+          </label>
+          <div className="flex rounded-lg p-1 mb-4" style={{ background: "rgba(16,24,40,0.05)" }}>
+            {["challenge", "practice"].map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setDefaultMode(m)}
+                className="flex-1 rounded-md py-1.5 text-xs font-semibold capitalize"
+                style={{
+                  background: defaultMode === m ? "#FFFFFF" : "transparent",
+                  color: defaultMode === m ? INK : "rgba(27,33,41,0.5)",
+                  boxShadow: defaultMode === m ? "0 2px 6px rgba(16,24,40,0.10)" : "none",
+                }}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
 
           <button
             type="button"

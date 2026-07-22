@@ -201,5 +201,61 @@
     "title": "Mini Sudoku redesigned",
     "body": "White cells throughout, bold black for given numbers vs. light gray for your own entries (not blue), a green outline for the selected cell instead of a filled tint, and a proper 4-column number pad with Erase and Undo built right in.",
     "days_ago": 0.0
+  },
+  {
+    "id": "2026-07-22-mode-pill",
+    "version": "v30",
+    "title": "Mode indicator while playing",
+    "body": "A Challenge/Practice pill now shows the whole time you're playing, and tapping it switches modes without backing out to Home first.",
+    "days_ago": 0.1
+  },
+  {
+    "id": "2026-07-22-online-widget-selfhide",
+    "version": "v31",
+    "title": "Cleaned up the online widget",
+    "body": "No longer shows \"1 online\" when that one person is just you.",
+    "days_ago": 0.08
+  },
+  {
+    "id": "2026-07-22-last-seen",
+    "version": "v32",
+    "title": "Last seen tracking",
+    "body": "The admin Players screen now shows when each player was last active, not just whether they're online right now.",
+    "days_ago": 0.06
+  },
+  {
+    "id": "2026-07-22-daily-leaderboard",
+    "version": "v33",
+    "title": "Best times leaderboard",
+    "body": "Expanding a completed challenge day now shows the fastest 5 times for that specific day.",
+    "days_ago": 0.04
+  },
+  {
+    "id": "2026-07-22-favicon",
+    "version": "v34",
+    "title": "Added a favicon",
+    "body": "The browser tab now shows an actual icon instead of a blank one.",
+    "days_ago": 0.03
+  },
+  {
+    "id": "2026-07-22-admin-games",
+    "version": "v35",
+    "title": "New admin screen: Games",
+    "body": "Control which games show on the home screen, whether they're playable or \"coming soon\", and their display order.",
+    "days_ago": 0.0
+  },
+  {
+    "id": "2026-07-22-default-mode",
+    "version": "v36",
+    "title": "Choose your default mode",
+    "body": "New setting on the Profile screen: pick whether you land in Challenge or Practice mode after logging in.",
+    "days_ago": 0.0
+  },
+  {
+    "id": "2026-07-22-admingames-security-fix",
+    "version": "v37",
+    "title": "Fixed a gap in the new Games admin screen",
+    "body": "It didn't check admin status internally — the database would've blocked a non-admin from actually saving changes, but the screen would misleadingly let them try. Fixed.",
+    "days_ago": 0.0
   }
 ]

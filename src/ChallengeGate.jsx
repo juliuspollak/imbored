@@ -4,6 +4,7 @@ import { supabase, supabaseReady } from "./lib/supabase.js";
 import { saveStats, rateDifficulty } from "./lib/saveStats.js";
 import { weekDates, todayIndex } from "./lib/week.js";
 import DifficultyRating from "./DifficultyRating.jsx";
+import ModePill from "./ModePill.jsx";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -25,7 +26,7 @@ function describeAvg(avg) {
   return "Felt hard";
 }
 
-export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId, onExit }) {
+export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId, onExit, onSwitchMode }) {
   const dates = weekDates();
   const todayIdx = todayIndex();
   const [results, setResults] = useState({});
@@ -35,6 +36,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   const [alreadyPlayedNotice, setAlreadyPlayedNotice] = useState(false);
   const [justSolved, setJustSolved] = useState(null); // { statId, seconds, mistakes, hints }
   const [communityRatings, setCommunityRatings] = useState({}); // date -> { avg, count }
+  const [leaderboards, setLeaderboards] = useState({}); // date -> [{ user_id, seconds, profiles }]
 
   const refresh = useCallback(async () => {
     if (!supabaseReady || !userId) {
@@ -42,7 +44,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
       return;
     }
     setLoading(true);
-    const [{ data }, { data: allRatings }] = await Promise.all([
+    const [{ data }, { data: allRatings }, { data: allTimes }] = await Promise.all([
       supabase
         .from("game_stats")
         .select("*")
@@ -59,6 +61,13 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
         .eq("mode", "challenge")
         .in("challenge_date", dates)
         .not("difficulty_rating", "is", null),
+      // everyone's times, for the per-day leaderboard
+      supabase
+        .from("game_stats")
+        .select("challenge_date, user_id, seconds, profiles(name, icon)")
+        .eq("game", gameId)
+        .eq("mode", "challenge")
+        .in("challenge_date", dates),
     ]);
     const byDate = {};
     (data || []).forEach((row) => {
@@ -77,6 +86,15 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
       avgs[date] = { avg: total / count, count };
     });
     setCommunityRatings(avgs);
+
+    const byDateTimes = {};
+    (allTimes || []).forEach((row) => {
+      if (!row.profiles) return; // hidden from us — leave them out entirely, not a mystery blank row
+      byDateTimes[row.challenge_date] ||= [];
+      byDateTimes[row.challenge_date].push(row);
+    });
+    Object.values(byDateTimes).forEach((rows) => rows.sort((a, b) => a.seconds - b.seconds));
+    setLeaderboards(byDateTimes);
 
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -123,6 +141,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           seed={`${gameId}-${date}`}
           challengeDate={date}
         />
+        {onSwitchMode && <ModePill mode="challenge" onSwitch={onSwitchMode} />}
       </div>
     );
   }
@@ -170,6 +189,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
 
   return (
     <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex justify-center p-4 pt-10">
+      {onSwitchMode && <ModePill mode="challenge" onSwitch={onSwitchMode} />}
       <div className="w-full max-w-md">
         <div className="flex items-center gap-3 mb-2">
           <button
@@ -264,8 +284,34 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                         <Stat label="Hints" value={result.hints} />
                       </div>
                       {communityRatings[date] && (
-                        <div style={{ color: INK, opacity: 0.45, borderTop: "1px solid rgba(16,24,40,0.08)" }} className="text-[11px] text-center pt-2">
+                        <div style={{ color: INK, opacity: 0.45, borderTop: "1px solid rgba(16,24,40,0.08)" }} className="text-[11px] text-center pt-2 mb-2">
                           {describeAvg(communityRatings[date].avg)} — {communityRatings[date].count} rating{communityRatings[date].count === 1 ? "" : "s"}
+                        </div>
+                      )}
+                      {leaderboards[date] && leaderboards[date].length > 0 && (
+                        <div style={{ borderTop: "1px solid rgba(16,24,40,0.08)" }} className="pt-2">
+                          <div style={{ color: INK, opacity: 0.4 }} className="text-[10px] font-semibold uppercase tracking-wide mb-1.5 text-center">
+                            Fastest today
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            {leaderboards[date].slice(0, 5).map((row, i) => {
+                              const isMe = row.user_id === userId;
+                              return (
+                                <div
+                                  key={row.user_id}
+                                  className="flex items-center gap-2 rounded-lg px-2 py-1"
+                                  style={{ background: isMe ? "rgba(47,111,237,0.08)" : "transparent" }}
+                                >
+                                  <span style={{ color: INK, opacity: 0.4, width: 14 }} className="text-[11px] font-semibold">{i + 1}</span>
+                                  <span style={{ fontSize: 13 }}>{row.profiles?.icon || "🙂"}</span>
+                                  <span style={{ color: INK, fontWeight: isMe ? 700 : 500 }} className="text-xs flex-1 truncate">
+                                    {isMe ? "You" : row.profiles?.name || "Someone"}
+                                  </span>
+                                  <span style={{ color: INK, opacity: 0.6 }} className="text-xs tabular-nums">{fmtTime(row.seconds)}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>

@@ -14,10 +14,12 @@ export default function OnlineWidget({ players, userId, myName }) {
 
   const others = players.filter((p) => p.user_id !== userId);
 
-  // periodic little wiggle to draw the eye, only while someone else is online
+  // periodic little wiggle to draw the eye
   const shouldWiggle = others.length > 0;
 
-  if (players.length === 0) return null;
+  // "1 online = just me" isn't useful information — only show this at all
+  // once someone else is actually around
+  if (others.length === 0) return null;
 
   async function handlePoke(p) {
     await sendPoke(userId, p.user_id, myName);
@@ -76,12 +78,7 @@ export default function OnlineWidget({ players, userId, myName }) {
           <div style={{ color: CREAM, opacity: 0.4, background: PANEL, borderRadius: 999, padding: "2px 10px" }} className="text-[10px] font-semibold uppercase tracking-wide balloon">
             {players.length} online
           </div>
-          {others.length === 0 ? (
-            <div className="balloon rounded-full px-3 py-1.5 text-xs" style={{ background: PANEL, color: CREAM, opacity: 0.5, boxShadow: "0 6px 16px rgba(16,24,40,0.12)" }}>
-              just you right now
-            </div>
-          ) : (
-            others.map((p, i) => {
+          {others.map((p, i) => {
               const meta = GAME_META.find((g) => g.id === p.game);
               const isPoked = poked === p.user_id;
               return (
@@ -108,8 +105,7 @@ export default function OnlineWidget({ players, userId, myName }) {
                   </div>
                 </button>
               );
-            })
-          )}
+            })}
         </div>
       )}
     </div>

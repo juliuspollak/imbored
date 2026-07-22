@@ -6,6 +6,20 @@ import { useAuth } from "./lib/AuthContext.jsx";
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
 const INK = "#1B2129";
+const GREEN = "#22C55E";
+
+function fmtLastSeen(iso) {
+  if (!iso) return "Never";
+  const diffMs = Date.now() - new Date(iso).getTime();
+  if (diffMs < 45000) return "Online now";
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
 
 // Admin-only: every profile that exists, regardless of whether they've
 // played anything yet — unlike the Stats page, which only lists players
@@ -15,6 +29,7 @@ export default function AdminPlayers({ onBack }) {
   const isAdmin = !!myProfile?.is_admin;
 
   const [players, setPlayers] = useState([]);
+  const [lastSeen, setLastSeen] = useState({}); // user_id -> iso timestamp
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
@@ -23,11 +38,12 @@ export default function AdminPlayers({ onBack }) {
       return;
     }
     setLoading(true);
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, name, icon, mood, is_private, is_admin, hidden_from_others")
-      .order("name", { ascending: true });
-    setPlayers(data || []);
+    const [{ data: profilesData }, { data: presenceData }] = await Promise.all([
+      supabase.from("profiles").select("id, name, icon, mood, is_private, is_admin, hidden_from_others").order("name", { ascending: true }),
+      supabase.from("presence").select("user_id, last_seen"),
+    ]);
+    setPlayers(profilesData || []);
+    setLastSeen(Object.fromEntries((presenceData || []).map((p) => [p.user_id, p.last_seen])));
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
@@ -73,36 +89,46 @@ export default function AdminPlayers({ onBack }) {
           <p style={{ color: INK, opacity: 0.4 }} className="text-sm text-center py-8">No players yet.</p>
         ) : (
           <div className="flex flex-col gap-2">
-            {players.map((p) => (
-              <div
-                key={p.id}
-                className="rounded-xl p-3 flex items-center gap-3"
-                style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)", opacity: p.hidden_from_others ? 0.5 : 1 }}
-              >
-                <span style={{ fontSize: 18 }}>{p.icon || "🙂"}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span style={{ color: INK, fontWeight: 600 }} className="text-sm truncate">{p.name}</span>
-                    {p.is_admin && <Crown size={11} style={{ color: "#D9AE58", flexShrink: 0 }} />}
-                    {p.is_private && <Lock size={11} style={{ color: INK, opacity: 0.35, flexShrink: 0 }} />}
-                  </div>
-                  {p.mood && <div style={{ color: INK, opacity: 0.45 }} className="text-xs truncate">{p.mood}</div>}
-                </div>
-                <button
-                  onClick={() => handleToggleHidden(p.id, p.hidden_from_others)}
-                  disabled={p.id === myProfile.id}
-                  className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
-                  style={{
-                    background: p.hidden_from_others ? "rgba(181,67,58,0.1)" : "rgba(16,24,40,0.05)",
-                    color: p.hidden_from_others ? "#B5433A" : INK,
-                    opacity: p.id === myProfile.id ? 0.25 : p.hidden_from_others ? 1 : 0.45,
-                  }}
+            {players.map((p) => {
+              const seenIso = lastSeen[p.id];
+              const isOnlineNow = seenIso && Date.now() - new Date(seenIso).getTime() < 45000;
+              return (
+                <div
+                  key={p.id}
+                  className="rounded-xl p-3 flex items-center gap-3"
+                  style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)", opacity: p.hidden_from_others ? 0.5 : 1 }}
                 >
-                  <EyeOff size={12} />
-                  <span className="text-[10px] font-medium">{p.hidden_from_others ? "Hidden" : "Hide"}</span>
-                </button>
-              </div>
-            ))}
+                  <span style={{ fontSize: 18 }}>{p.icon || "🙂"}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span style={{ color: INK, fontWeight: 600 }} className="text-sm truncate">{p.name}</span>
+                      {p.is_admin && <Crown size={11} style={{ color: "#D9AE58", flexShrink: 0 }} />}
+                      {p.is_private && <Lock size={11} style={{ color: INK, opacity: 0.35, flexShrink: 0 }} />}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {isOnlineNow && <span style={{ width: 5, height: 5, borderRadius: "50%", background: GREEN, display: "inline-block" }} />}
+                      <span style={{ color: isOnlineNow ? GREEN : INK, opacity: isOnlineNow ? 1 : 0.4 }} className="text-[11px]">
+                        {fmtLastSeen(seenIso)}
+                      </span>
+                      {p.mood && <span style={{ color: INK, opacity: 0.35 }} className="text-[11px]">· {p.mood}</span>}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleToggleHidden(p.id, p.hidden_from_others)}
+                    disabled={p.id === myProfile.id}
+                    className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
+                    style={{
+                      background: p.hidden_from_others ? "rgba(181,67,58,0.1)" : "rgba(16,24,40,0.05)",
+                      color: p.hidden_from_others ? "#B5433A" : INK,
+                      opacity: p.id === myProfile.id ? 0.25 : p.hidden_from_others ? 1 : 0.45,
+                    }}
+                  >
+                    <EyeOff size={12} />
+                    <span className="text-[10px] font-medium">{p.hidden_from_others ? "Hidden" : "Hide"}</span>
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
 

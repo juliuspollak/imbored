@@ -1,4 +1,5 @@
 import { Crown, Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle } from "lucide-react";
+import { useGameConfig } from "./lib/useGameConfig.js";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -16,6 +17,21 @@ export const GAME_META = [
 ];
 
 export default function Home({ onSelect, playMode, onPlayModeChange, players = [] }) {
+  const gameConfig = useGameConfig();
+
+  const visibleGames = GAME_META
+    .map((g, i) => {
+      const cfg = gameConfig?.[g.id];
+      return {
+        ...g,
+        available: cfg ? cfg.available : g.available,
+        visible: cfg ? cfg.visible : true,
+        sortOrder: cfg ? cfg.sort_order : i,
+      };
+    })
+    .filter((g) => g.visible)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+
   return (
     <div style={{ background: BG, minHeight: "100vh" }} className="flex items-start justify-center p-4 pt-10 sm:pt-16">
       <style>{`
@@ -65,7 +81,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         </p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {GAME_META.map((g) => {
+          {visibleGames.map((g) => {
             const Icon = g.icon;
             const playingCount = players.filter((p) => p.game === g.id).length;
             return (

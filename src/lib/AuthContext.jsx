@@ -90,13 +90,14 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut();
   }
 
-  async function saveProfile({ name, icon, is_private, mood }) {
+  async function saveProfile({ name, icon, is_private, mood, default_mode }) {
     if (!supabaseReady || !session) return { error: new Error("Not logged in") };
     const patch = { id: session.user.id };
     if (name !== undefined) patch.name = name;
     if (icon !== undefined) patch.icon = icon;
     if (is_private !== undefined) patch.is_private = is_private;
     if (mood !== undefined) patch.mood = mood;
+    if (default_mode !== undefined) patch.default_mode = default_mode;
     const { data, error } = await supabase.from("profiles").upsert(patch).select().single();
     if (!error) setProfile(data);
     return { data, error };

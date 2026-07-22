@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ArrowLeft, LogOut, Users, User, BarChart3, PartyPopper, MessageSquare, Sparkles, Shield } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ArrowLeft, LogOut, Users, User, BarChart3, PartyPopper, MessageSquare, Sparkles, Shield, Grid3x3 } from "lucide-react";
 import Home from "./Home.jsx";
 import QueensGame from "./games/Queens.jsx";
 import TangoGame from "./games/Tango.jsx";
@@ -12,6 +12,8 @@ import Stats from "./Stats.jsx";
 import Feedback from "./Feedback.jsx";
 import ReleaseNotes from "./ReleaseNotes.jsx";
 import AdminPlayers from "./AdminPlayers.jsx";
+import AdminGames from "./AdminGames.jsx";
+import ModePill from "./ModePill.jsx";
 import ChallengeGate from "./ChallengeGate.jsx";
 import OnlineWidget from "./OnlineWidget.jsx";
 import DifficultyRating from "./DifficultyRating.jsx";
@@ -38,6 +40,13 @@ function AppShell() {
   // is the only real option.
   const [playMode, setPlayMode] = useState("challenge");
   const { loading, user, profile, profileLoading, signOut } = useAuth();
+  const appliedDefaultModeRef = useRef(false);
+  useEffect(() => {
+    if (!appliedDefaultModeRef.current && profile?.default_mode) {
+      setPlayMode(profile.default_mode);
+      appliedDefaultModeRef.current = true;
+    }
+  }, [profile]);
   const players = useOnlinePlayers();
   usePresence(["queens", "tango", "zip", "minisudoku"].includes(active) ? active : null);
   const openFeedbackCount = useOpenFeedbackCount();
@@ -73,6 +82,10 @@ function AppShell() {
     return <AdminPlayers onBack={() => setActive(null)} />;
   }
 
+  if (active === "admingames") {
+    return <AdminGames onBack={() => setActive(null)} />;
+  }
+
   if (!active) {
     return (
       <>
@@ -92,6 +105,7 @@ function AppShell() {
             onOpenFeedback={() => setActive("feedback")}
             onOpenWhatsNew={() => setActive("whatsnew")}
             onOpenAdminPlayers={() => setActive("adminplayers")}
+            onOpenAdminGames={() => setActive("admingames")}
             players={players}
             userId={user?.id}
             openFeedbackCount={openFeedbackCount}
@@ -111,14 +125,22 @@ function AppShell() {
         GameComponent={Current}
         userId={user?.id}
         onExit={() => setActive(null)}
+        onSwitchMode={() => setPlayMode("practice")}
       />
     );
   }
 
-  return <PracticePlay Current={Current} userId={user?.id} onExit={() => setActive(null)} />;
+  return (
+    <PracticePlay
+      Current={Current}
+      userId={user?.id}
+      onExit={() => setActive(null)}
+      onSwitchMode={supabaseReady ? () => setPlayMode("challenge") : undefined}
+    />
+  );
 }
 
-function PracticePlay({ Current, userId, onExit }) {
+function PracticePlay({ Current, userId, onExit, onSwitchMode }) {
   const [justSolved, setJustSolved] = useState(null);
 
   async function handleSolved(stats) {
@@ -194,11 +216,12 @@ function PracticePlay({ Current, userId, onExit }) {
         onSolved={handleSolved}
         mode="practice"
       />
+      {onSwitchMode && <ModePill mode="practice" onSwitch={onSwitchMode} />}
     </div>
   );
 }
 
-function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenStats, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, players, userId, openFeedbackCount = 0 }) {
+function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenStats, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, players, userId, openFeedbackCount = 0 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const hasOpenFeedback = openFeedbackCount > 0;
   const isAdmin = !!profile.is_admin;
@@ -210,6 +233,7 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenSt
     { onClick: onOpenStats, icon: BarChart3, label: "Stats", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
     { onClick: onOpenTeams, icon: Users, label: "Teams", glow: "rgba(18,148,106,0.35)", border: "rgba(18,148,106,0.4)" },
     ...(isAdmin ? [{ onClick: onOpenAdminPlayers, icon: Shield, label: "Players (admin)", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" }] : []),
+    ...(isAdmin ? [{ onClick: onOpenAdminGames, icon: Grid3x3, label: "Games (admin)", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" }] : []),
     { onClick: onSignOut, icon: LogOut, label: "Sign out", glow: "rgba(229,72,77,0.35)", border: "rgba(229,72,77,0.4)" },
   ];
 
