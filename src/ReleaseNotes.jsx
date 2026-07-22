@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Home, Plus, Sparkles, Trash2 } from "lucide-react";
-import { useAuth } from "./lib/AuthContext.jsx";
+import { Home, Sparkles } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 
 const BG = "#F1F3F7";
@@ -12,16 +11,13 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
+// Purely a read-only board — every entry here comes from CHANGELOG.json in
+// the repo, synced automatically by a GitHub Action on every push. No
+// manual posting or deleting from the app: the changelog file is the one
+// source of truth, so admin edits happen there instead, not here.
 export default function ReleaseNotes({ onBack }) {
-  const { user, profile } = useAuth();
-  const isAdmin = !!profile?.is_admin;
-
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!supabaseReady) {
@@ -37,23 +33,6 @@ export default function ReleaseNotes({ onBack }) {
   useEffect(() => {
     refresh();
   }, [refresh]);
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    if (!title.trim() || submitting) return;
-    setSubmitting(true);
-    await supabase.from("release_notes").insert({ title: title.trim(), body: body.trim() || null, created_by: user.id });
-    setSubmitting(false);
-    setTitle("");
-    setBody("");
-    setShowForm(false);
-    refresh();
-  }
-
-  async function handleDelete(id) {
-    await supabase.from("release_notes").delete().eq("id", id);
-    refresh();
-  }
 
   return (
     <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex justify-center p-4 pt-10">
@@ -76,78 +55,35 @@ export default function ReleaseNotes({ onBack }) {
           <div className="text-xs rounded-lg p-3" style={{ background: "rgba(217,105,92,0.1)", color: "#B5433A" }}>
             Supabase isn't configured yet.
           </div>
+        ) : loading ? (
+          <p style={{ color: INK, opacity: 0.4 }} className="text-sm text-center py-8">Loading…</p>
+        ) : notes.length === 0 ? (
+          <p style={{ color: INK, opacity: 0.4 }} className="text-sm text-center py-8">Nothing posted yet.</p>
         ) : (
-          <>
-            {isAdmin && (
-              <>
-                <button
-                  onClick={() => setShowForm((s) => !s)}
-                  className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold mb-4"
-                  style={{ background: showForm ? "rgba(16,24,40,0.06)" : ACCENT, color: showForm ? INK : "#FFFFFF" }}
-                >
-                  <Plus size={15} />
-                  {showForm ? "Cancel" : "Post an update"}
-                </button>
-                {showForm && (
-                  <form onSubmit={handleSubmit} className="rounded-2xl p-4 mb-4" style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)" }}>
-                    <input
-                      required
-                      autoFocus
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="What changed?"
-                      maxLength={100}
-                      className="w-full rounded-lg px-3 py-2 text-sm mb-2 outline-none"
-                      style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
-                    />
-                    <textarea
-                      value={body}
-                      onChange={(e) => setBody(e.target.value)}
-                      placeholder="Details (optional)"
-                      rows={3}
-                      maxLength={500}
-                      className="w-full rounded-lg px-3 py-2 text-sm mb-3 outline-none resize-none"
-                      style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
-                    />
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="w-full rounded-lg py-2 text-sm font-semibold"
-                      style={{ background: ACCENT, color: "#FFFFFF", opacity: submitting ? 0.7 : 1 }}
-                    >
-                      {submitting ? "Posting…" : "Post"}
-                    </button>
-                  </form>
-                )}
-              </>
-            )}
-
-            {loading ? (
-              <p style={{ color: INK, opacity: 0.4 }} className="text-sm text-center py-8">Loading…</p>
-            ) : notes.length === 0 ? (
-              <p style={{ color: INK, opacity: 0.4 }} className="text-sm text-center py-8">Nothing posted yet.</p>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {notes.map((n) => (
-                  <div key={n.id} className="rounded-2xl p-4" style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)" }}>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-2">
-                        <Sparkles size={14} style={{ color: ACCENT, marginTop: 2, flexShrink: 0 }} />
-                        <div style={{ color: INK, fontWeight: 600 }} className="text-sm">{n.title}</div>
-                      </div>
-                      {isAdmin && (
-                        <button onClick={() => handleDelete(n.id)} style={{ color: "#B5433A", opacity: 0.5, flexShrink: 0 }}>
-                          <Trash2 size={13} />
-                        </button>
+          <div className="flex flex-col gap-3">
+            {notes.map((n) => (
+              <div key={n.id} className="rounded-2xl p-4" style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)" }}>
+                <div className="flex items-start gap-2">
+                  <Sparkles size={14} style={{ color: ACCENT, marginTop: 2, flexShrink: 0 }} />
+                  <div className="flex-1">
+                    <div style={{ color: INK, fontWeight: 600 }} className="text-sm">{n.title}</div>
+                    {n.body && <p style={{ color: INK, opacity: 0.6 }} className="text-xs mt-1">{n.body}</p>}
+                    <div className="flex items-center gap-2 mt-2">
+                      {n.version && (
+                        <span
+                          style={{ background: "rgba(47,111,237,0.1)", color: ACCENT, fontWeight: 700 }}
+                          className="text-[10px] rounded-full px-1.5 py-0.5"
+                        >
+                          {n.version}
+                        </span>
                       )}
+                      <span style={{ color: INK, opacity: 0.35 }} className="text-[10px]">{fmtDate(n.created_at)}</span>
                     </div>
-                    {n.body && <p style={{ color: INK, opacity: 0.6 }} className="text-xs mt-1.5 ml-5">{n.body}</p>}
-                    <p style={{ color: INK, opacity: 0.35 }} className="text-[10px] mt-2 ml-5">{fmtDate(n.created_at)}</p>
                   </div>
-                ))}
+                </div>
               </div>
-            )}
-          </>
+            ))}
+          </div>
         )}
       </div>
     </div>

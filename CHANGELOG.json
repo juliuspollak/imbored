@@ -1,16 +1,156 @@
 [
-  { "id": "2026-07-08-accounts", "title": "Accounts & sign-in", "body": "Email code sign-in, Google sign-in, and passkey support. No passwords, and no confusing magic links.", "days_ago": 14 },
-  { "id": "2026-07-09-stats", "title": "Stats tracking", "body": "Every solved puzzle records your time, mistakes, and hints used — see it all on the Stats page.", "days_ago": 13 },
-  { "id": "2026-07-10-teams", "title": "Teams", "body": "Create a team, join as many as you like, add other players, or leave any time. Private profiles can't be added by anyone but themselves.", "days_ago": 12 },
-  { "id": "2026-07-12-challenge", "title": "Challenge mode", "body": "One attempt per puzzle per day, the exact same puzzle for everyone, locked to real calendar dates. Miss a day? You can still catch it up later — still just one shot.", "days_ago": 10 },
-  { "id": "2026-07-13-mood", "title": "Mood status", "body": "Set a short status next to your name, visible to everyone.", "days_ago": 9 },
-  { "id": "2026-07-15-rating", "title": "Post-puzzle difficulty rating", "body": "Tap a bar right after solving to say how hard it felt. See the group's average difficulty before you even start a puzzle.", "days_ago": 7 },
-  { "id": "2026-07-16-feedback", "title": "Feedback board", "body": "Suggest ideas, upvote other people's. Admin can mark things done with a comment.", "days_ago": 6 },
-  { "id": "2026-07-17-online", "title": "Who's online", "body": "See who else currently has the app open and what they're playing. Tap someone to send them a fun poke.", "days_ago": 5 },
-  { "id": "2026-07-18-rename", "title": "Renamed to I'mBoredToday", "body": "New name, new font, nicer hover effects on all the buttons.", "days_ago": 4 },
-  { "id": "2026-07-19-mistakes-fix", "title": "Fixed mistake counting in Tango", "body": "Mistakes now only count when Hint actually catches something wrong — not on every tap. Matches how Queens already worked.", "days_ago": 3 },
-  { "id": "2026-07-20-admin-hide", "title": "Admin: hide a player", "body": "Admin can now make a player invisible to everyone but themselves, enforced by the database itself.", "days_ago": 2 },
-  { "id": "2026-07-21-presence-fix", "title": "Fixed online status", "body": "You now show as online for as long as the app is open, not just while mid-puzzle.", "days_ago": 1 },
-  { "id": "2026-07-22-recursion-fix", "title": "Fixed a login-breaking bug", "body": "A database policy bug could block sign-in entirely for everyone. Fixed.", "days_ago": 0 },
-  { "id": "2026-07-22-release-notes", "title": "This page", "body": "Release notes are now automatic — no one has to type these in by hand.", "days_ago": 0 }
+  {
+    "id": "2026-07-08-accounts",
+    "version": "v1",
+    "title": "Accounts & sign-in",
+    "body": "Email code sign-in, Google sign-in, and passkey support. No passwords, and no confusing magic links.",
+    "days_ago": 14
+  },
+  {
+    "id": "2026-07-09-stats",
+    "version": "v2",
+    "title": "Stats tracking",
+    "body": "Every solved puzzle records your time, mistakes, and hints used — see it all on the Stats page.",
+    "days_ago": 13
+  },
+  {
+    "id": "2026-07-10-teams",
+    "version": "v3",
+    "title": "Teams",
+    "body": "Create a team, join as many as you like, add other players, or leave any time. Private profiles can't be added by anyone but themselves.",
+    "days_ago": 12
+  },
+  {
+    "id": "2026-07-12-challenge",
+    "version": "v4",
+    "title": "Challenge mode",
+    "body": "One attempt per puzzle per day, the exact same puzzle for everyone, locked to real calendar dates. Miss a day? You can still catch it up later — still just one shot.",
+    "days_ago": 10
+  },
+  {
+    "id": "2026-07-13-mood",
+    "version": "v5",
+    "title": "Mood status",
+    "body": "Set a short status next to your name, visible to everyone.",
+    "days_ago": 9
+  },
+  {
+    "id": "2026-07-15-rating",
+    "version": "v6",
+    "title": "Post-puzzle difficulty rating",
+    "body": "Tap a bar right after solving to say how hard it felt. See the group's average difficulty before you even start a puzzle.",
+    "days_ago": 7
+  },
+  {
+    "id": "2026-07-16-feedback",
+    "version": "v7",
+    "title": "Feedback board",
+    "body": "Suggest ideas, upvote other people's. Admin can mark things done with a comment.",
+    "days_ago": 6
+  },
+  {
+    "id": "2026-07-17-online",
+    "version": "v8",
+    "title": "Who's online",
+    "body": "See who else currently has the app open and what they're playing. Tap someone to send them a fun poke.",
+    "days_ago": 5
+  },
+  {
+    "id": "2026-07-18-rename",
+    "version": "v9",
+    "title": "Renamed to I'mBoredToday",
+    "body": "New name, new playful font across the whole app.",
+    "days_ago": 4
+  },
+  {
+    "id": "2026-07-19-mistakes-fix",
+    "version": "v10",
+    "title": "Fixed mistake counting in Tango",
+    "body": "Mistakes now only count when Hint actually catches something wrong — not on every tap. Matches how Queens already worked.",
+    "days_ago": 3
+  },
+  {
+    "id": "2026-07-22-hover-effects",
+    "version": "v11",
+    "title": "Nicer button hover/press effects",
+    "body": "Every nav icon now has a springy lift on hover and a satisfying press on tap, each in its own accent color.",
+    "days_ago": 0.11
+  },
+  {
+    "id": "2026-07-22-difficulty-bars",
+    "version": "v12",
+    "title": "Difficulty rating redesigned",
+    "body": "Switched from a tap-anywhere triangle to discrete tappable bars, matching watchOS's effort rating pattern.",
+    "days_ago": 0.1
+  },
+  {
+    "id": "2026-07-22-feedback-simplified",
+    "version": "v13",
+    "title": "Feedback form simplified",
+    "body": "Down to a single text box instead of separate title and description fields.",
+    "days_ago": 0.09
+  },
+  {
+    "id": "2026-07-22-admin-hide",
+    "version": "v14",
+    "title": "Admin: hide a player",
+    "body": "Admin can make a player invisible to everyone but themselves, enforced by the database itself, not just the UI.",
+    "days_ago": 0.08
+  },
+  {
+    "id": "2026-07-22-online-redesign",
+    "version": "v15",
+    "title": "Online widget redesign",
+    "body": "Moved next to your profile, wiggles when others are online, expands into a list you can tap to poke someone.",
+    "days_ago": 0.07
+  },
+  {
+    "id": "2026-07-22-nav-collapse",
+    "version": "v16",
+    "title": "Nav menu collapsed into one button",
+    "body": "Profile, Feedback, Stats, Teams, and Sign out now live behind a single avatar button instead of cluttering the top bar.",
+    "days_ago": 0.06
+  },
+  {
+    "id": "2026-07-22-home-buttons",
+    "version": "v17",
+    "title": "Fixed missing Home buttons",
+    "body": "Teams, Stats, Feedback, Profile, and the Challenge screen all had a barely-visible back arrow — replaced with a clear, labeled Home button everywhere.",
+    "days_ago": 0.05
+  },
+  {
+    "id": "2026-07-22-feedback-badge",
+    "version": "v18",
+    "title": "Feedback notification badge",
+    "body": "The nav button now wiggles with a purple count badge whenever there's open feedback waiting to be reviewed.",
+    "days_ago": 0.04
+  },
+  {
+    "id": "2026-07-22-presence-fix",
+    "version": "v19",
+    "title": "Fixed online status",
+    "body": "You now show as online for the whole time the app is open, not just while mid-puzzle.",
+    "days_ago": 0.03
+  },
+  {
+    "id": "2026-07-22-recursion-fix",
+    "version": "v20",
+    "title": "Fixed a login-breaking bug",
+    "body": "A database policy had an infinite recursion bug that could block sign-in entirely. Fixed at the database level.",
+    "days_ago": 0.02
+  },
+  {
+    "id": "2026-07-22-release-notes",
+    "version": "v21",
+    "title": "This page",
+    "body": "Release notes are now fully automatic, synced from a changelog file on every deploy — nobody types these in by hand.",
+    "days_ago": 0.01
+  },
+  {
+    "id": "2026-07-22-release-notes-readonly",
+    "version": "v22",
+    "title": "Release notes cleanup",
+    "body": "Removed manual post/delete controls (the changelog file is the single source of truth now) and added version numbers to every entry.",
+    "days_ago": 0.0
+  }
 ]
