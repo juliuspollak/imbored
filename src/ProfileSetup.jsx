@@ -90,7 +90,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
           >
             {icon}
           </div>
-          <h1 style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, color: INK }} className="text-2xl">
+          <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl">
             {isFirstTime ? "Welcome" : "My Profile"}
           </h1>
           <p style={{ color: INK, opacity: 0.5 }} className="text-xs mt-1">

@@ -82,14 +82,14 @@ export default function Login() {
 
   return (
     <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-center justify-center p-4">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;1,600&family=Inter:wght@400;500;600;700&display=swap');`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');`}</style>
       <div
         className="w-full max-w-sm rounded-2xl p-6"
         style={{ background: PANEL, boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}
       >
         <div className="text-center mb-6">
-          <h1 style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, color: INK }} className="text-3xl">
-            Puzzle Games
+          <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-3xl">
+            I'mBoredToday
           </h1>
           <p style={{ color: INK, opacity: 0.5 }} className="text-xs mt-1">
             sign in to track your stats and play with friends

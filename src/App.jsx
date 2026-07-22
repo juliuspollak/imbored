@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, LogOut, Users, BarChart3, PartyPopper, MessageSquare } from "lucide-react";
+import { ArrowLeft, LogOut, Users, User, BarChart3, PartyPopper, MessageSquare } from "lucide-react";
 import Home from "./Home.jsx";
 import QueensGame from "./games/Queens.jsx";
 import TangoGame from "./games/Tango.jsx";
@@ -12,10 +12,12 @@ import Feedback from "./Feedback.jsx";
 import ChallengeGate from "./ChallengeGate.jsx";
 import OnlineWidget from "./OnlineWidget.jsx";
 import DifficultyRating from "./DifficultyRating.jsx";
+import PokeOverlay from "./PokeOverlay.jsx";
 import { AuthProvider, useAuth } from "./lib/AuthContext.jsx";
 import { saveStats, rateDifficulty } from "./lib/saveStats.js";
 import { supabaseReady } from "./lib/supabase.js";
 import { useOnlinePlayers } from "./lib/useOnlinePlayers.js";
+import { usePokes } from "./lib/pokes.js";
 
 const GAME_COMPONENTS = {
   queens: { Component: QueensGame, label: "Queens" },
@@ -64,7 +66,6 @@ function AppShell() {
           onPlayModeChange={supabaseReady ? setPlayMode : undefined}
           players={players}
         />
-        {supabaseReady && <OnlineWidget players={players} userId={user?.id} />}
         {supabaseReady && profile && (
           <AccountBadge
             profile={profile}
@@ -73,6 +74,8 @@ function AppShell() {
             onOpenTeams={() => setActive("teams")}
             onOpenStats={() => setActive("stats")}
             onOpenFeedback={() => setActive("feedback")}
+            players={players}
+            userId={user?.id}
           />
         )}
       </>
@@ -111,7 +114,7 @@ function PracticePlay({ Current, userId, onExit }) {
       <div style={{ background: "#F1F3F7", minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-center justify-center p-4">
         <div className="w-full max-w-sm rounded-2xl p-6 text-center" style={{ background: "#FFFFFF", boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}>
           <PartyPopper size={28} style={{ color: "#2F6FED", margin: "0 auto 10px" }} />
-          <h2 style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, color: "#1B2129" }} className="text-2xl mb-4">
+          <h2 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: "#1B2129" }} className="text-2xl mb-4">
             Solved!
           </h2>
           <DifficultyRating onRate={(value) => rateDifficulty(justSolved.statId, value)} />
@@ -163,126 +166,97 @@ function PracticePlay({ Current, userId, onExit }) {
   );
 }
 
-function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenStats, onOpenFeedback }) {
+function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenStats, onOpenFeedback, players, userId }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const items = [
+    { onClick: onOpenProfile, icon: User, label: "My profile", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
+    { onClick: onOpenFeedback, icon: MessageSquare, label: "Feedback", glow: "rgba(139,92,246,0.35)", border: "rgba(139,92,246,0.4)" },
+    { onClick: onOpenStats, icon: BarChart3, label: "Stats", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
+    { onClick: onOpenTeams, icon: Users, label: "Teams", glow: "rgba(18,148,106,0.35)", border: "rgba(18,148,106,0.4)" },
+    { onClick: onSignOut, icon: LogOut, label: "Sign out", glow: "rgba(229,72,77,0.35)", border: "rgba(229,72,77,0.4)" },
+  ];
+
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 16,
-        right: 16,
-        zIndex: 50,
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-      }}
-    >
-      <button
-        onClick={onOpenFeedback}
-        className="nav-btn"
-        style={{
-          "--nav-glow": "rgba(139,92,246,0.35)",
-          "--nav-border": "rgba(139,92,246,0.4)",
-          background: "rgba(255,255,255,0.9)",
-          backdropFilter: "blur(6px)",
-          border: "1px solid rgba(16,24,40,0.12)",
-          borderRadius: "50%",
-          width: 32,
-          height: 32,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#1B2129",
-        }}
-        aria-label="Feedback"
-      >
-        <MessageSquare size={14} />
-      </button>
-      <button
-        onClick={onOpenStats}
-        className="nav-btn"
-        style={{
-          "--nav-glow": "rgba(47,111,237,0.35)",
-          "--nav-border": "rgba(47,111,237,0.4)",
-          background: "rgba(255,255,255,0.9)",
-          backdropFilter: "blur(6px)",
-          border: "1px solid rgba(16,24,40,0.12)",
-          borderRadius: "50%",
-          width: 32,
-          height: 32,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#1B2129",
-        }}
-        aria-label="Stats"
-      >
-        <BarChart3 size={14} />
-      </button>
-      <button
-        onClick={onOpenTeams}
-        className="nav-btn"
-        style={{
-          "--nav-glow": "rgba(18,148,106,0.35)",
-          "--nav-border": "rgba(18,148,106,0.4)",
-          background: "rgba(255,255,255,0.9)",
-          backdropFilter: "blur(6px)",
-          border: "1px solid rgba(16,24,40,0.12)",
-          borderRadius: "50%",
-          width: 32,
-          height: 32,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#1B2129",
-        }}
-        aria-label="Teams"
-      >
-        <Users size={14} />
-      </button>
-      <button
-        onClick={onOpenProfile}
-        className="nav-btn"
-        title={profile.mood || undefined}
-        style={{
-          "--nav-glow": "rgba(47,111,237,0.3)",
-          "--nav-border": "rgba(47,111,237,0.4)",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          background: "rgba(255,255,255,0.9)",
-          backdropFilter: "blur(6px)",
-          border: "1px solid rgba(16,24,40,0.12)",
-          borderRadius: 999,
-          padding: "6px 12px",
-          fontSize: 12,
-          color: "#1B2129",
-        }}
-      >
-        <span style={{ fontSize: 14 }}>{profile.icon || "🙂"}</span>
-        <span style={{ fontWeight: 600 }}>{profile.name}</span>
-      </button>
-      <button
-        onClick={onSignOut}
-        className="nav-btn"
-        style={{
-          "--nav-glow": "rgba(229,72,77,0.35)",
-          "--nav-border": "rgba(229,72,77,0.4)",
-          background: "rgba(255,255,255,0.9)",
-          backdropFilter: "blur(6px)",
-          border: "1px solid rgba(16,24,40,0.12)",
-          borderRadius: "50%",
-          width: 32,
-          height: 32,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#1B2129",
-          opacity: 0.6,
-        }}
-        aria-label="Sign out"
-      >
-        <LogOut size={13} />
-      </button>
+    <div style={{ position: "fixed", top: 16, right: 16, zIndex: 50, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+      <style>{`
+        @keyframes menuBalloonPop {
+          0% { transform: scale(0.3) translateY(-10px); opacity: 0; }
+          60% { transform: scale(1.1); opacity: 1; }
+          100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .menu-balloon { animation: menuBalloonPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
+      `}</style>
+
+      <div style={{ position: "relative" }}>
+        <button
+          onClick={() => setMenuOpen((o) => !o)}
+          className="nav-btn"
+          title={profile.mood || undefined}
+          style={{
+            "--nav-glow": "rgba(47,111,237,0.3)",
+            "--nav-border": "rgba(47,111,237,0.4)",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            background: "rgba(255,255,255,0.9)",
+            backdropFilter: "blur(6px)",
+            border: "1px solid rgba(16,24,40,0.12)",
+            borderRadius: 999,
+            padding: "6px 12px",
+            fontSize: 12,
+            color: "#1B2129",
+          }}
+        >
+          <span style={{ fontSize: 14 }}>{profile.icon || "🙂"}</span>
+          <span style={{ fontWeight: 600 }}>{profile.name}</span>
+        </button>
+        {profile.is_admin && (
+          <div
+            style={{
+              position: "absolute", top: -5, left: -5, background: "#D9AE58", color: "#FFFFFF",
+              fontSize: 8, fontWeight: 700, borderRadius: 999, padding: "1px 5px", border: "1.5px solid #F1F3F7",
+            }}
+          >
+            ADMIN
+          </div>
+        )}
+      </div>
+
+      {menuOpen && (
+        <div className="flex flex-col items-end gap-1.5">
+          {items.map((item, i) => (
+            <button
+              key={item.label}
+              onClick={() => {
+                setMenuOpen(false);
+                item.onClick();
+              }}
+              className="menu-balloon nav-btn flex items-center gap-2 rounded-full pl-3 pr-1.5 py-1.5"
+              style={{
+                "--nav-glow": item.glow,
+                "--nav-border": item.border,
+                animationDelay: `${i * 0.04}s`,
+                background: "#FFFFFF",
+                boxShadow: "0 6px 16px rgba(16,24,40,0.14)",
+                border: "1px solid rgba(16,24,40,0.08)",
+                color: "#1B2129",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <span className="text-xs font-medium">{item.label}</span>
+              <span
+                className="flex items-center justify-center rounded-full"
+                style={{ width: 24, height: 24, background: "rgba(16,24,40,0.05)" }}
+              >
+                <item.icon size={12} />
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <OnlineWidget players={players} userId={userId} myName={profile.name} />
     </div>
   );
 }
@@ -313,11 +287,18 @@ const NAV_BTN_STYLE = `
   }
 `;
 
+function PokeLayer() {
+  const { user } = useAuth();
+  const { poke, dismiss } = usePokes(supabaseReady ? user?.id : undefined);
+  return <PokeOverlay poke={poke} onDismiss={dismiss} />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <style>{NAV_BTN_STYLE}</style>
       <AppShell />
+      <PokeLayer />
     </AuthProvider>
   );
 }

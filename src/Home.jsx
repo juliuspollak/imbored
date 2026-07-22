@@ -19,7 +19,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   return (
     <div style={{ background: BG, minHeight: "100vh" }} className="flex items-start justify-center p-4 pt-10 sm:pt-16">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;1,600&family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
         @media (hover: hover) and (pointer: fine) {
           .home-tile:not(:disabled):hover { transform: translateY(-2px); filter: brightness(1.08); }
         }
@@ -28,10 +28,10 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
       <div className="w-full max-w-2xl" style={{ fontFamily: "'Inter', sans-serif" }}>
         <div className="text-center mb-6">
           <h1
-            style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, color: CREAM, letterSpacing: "-0.01em" }}
+            style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }}
             className="text-5xl"
           >
-            Puzzle Games
+            I'mBoredToday
           </h1>
           <p style={{ color: CREAM, opacity: 0.45 }} className="text-sm mt-2">
             new puzzles every day &mdash; Monday easiest, Sunday hardest

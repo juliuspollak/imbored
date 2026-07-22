@@ -354,10 +354,6 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     setBoard((prev) => {
       const next = prev.map((row) => row.slice());
       next[r][c] = (next[r][c] + 1) % 3;
-      if (next[r][c] !== 0) {
-        const conf = getConflicts(next, puzzle.edgeMap);
-        if (conf.has(`${r}-${c}`)) setMistakes((m) => m + 1);
-      }
       return next;
     });
   }
@@ -394,12 +390,14 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
 
   function handleHint() {
     if (solved) return;
-    // 1) flag one wrong symbol, if any
+    // 1) flag one wrong symbol, if any — this is the only place a mistake
+    // gets counted, not every wrong tap, only a wrong tap hint catches you on
     for (let r = 0; r < SIZE; r++) {
       for (let c = 0; c < SIZE; c++) {
         if (board[r][c] !== 0 && board[r][c] !== puzzle.solution[r][c]) {
           setHintCell({ r, c, type: "error" });
           setHintsUsed((h) => h + 1);
+          setMistakes((m) => m + 1);
           return;
         }
       }

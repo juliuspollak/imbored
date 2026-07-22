@@ -19,7 +19,6 @@ export default function Feedback({ onBack }) {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [closingId, setClosingId] = useState(null);
   const [closeComment, setCloseComment] = useState("");
@@ -47,10 +46,9 @@ export default function Feedback({ onBack }) {
     e.preventDefault();
     if (!title.trim() || submitting) return;
     setSubmitting(true);
-    await supabase.from("feedback").insert({ user_id: user.id, title: title.trim(), description: description.trim() || null });
+    await supabase.from("feedback").insert({ user_id: user.id, title: title.trim() });
     setSubmitting(false);
     setTitle("");
-    setDescription("");
     setShowForm(false);
     refresh();
   }
@@ -95,7 +93,7 @@ export default function Feedback({ onBack }) {
           <button onClick={onBack} style={{ color: INK, opacity: 0.5 }}>
             <ArrowLeft size={18} />
           </button>
-          <h1 style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, color: INK }} className="text-2xl">
+          <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl">
             Feedback
           </h1>
         </div>
@@ -120,21 +118,14 @@ export default function Feedback({ onBack }) {
 
             {showForm && (
               <form onSubmit={handleSubmit} className="rounded-2xl p-4 mb-4" style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)" }}>
-                <input
+                <textarea
                   required
+                  autoFocus
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Short summary"
-                  maxLength={80}
-                  className="w-full rounded-lg px-3 py-2 text-sm mb-2 outline-none"
-                  style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
-                />
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="More detail (optional)"
+                  placeholder="What's on your mind?"
                   rows={3}
-                  maxLength={500}
+                  maxLength={300}
                   className="w-full rounded-lg px-3 py-2 text-sm mb-3 outline-none resize-none"
                   style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
                 />

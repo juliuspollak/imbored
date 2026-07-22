@@ -1,92 +1,117 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Users } from "lucide-react";
 import { GAME_META } from "./Home.jsx";
+import { sendPoke } from "./lib/pokes.js";
 
 const PANEL = "#FFFFFF";
 const CREAM = "#1B2129";
 const GREEN = "#22C55E";
+const ACCENT = "#2F6FED";
 
-export default function OnlineWidget({ players, userId }) {
+export default function OnlineWidget({ players, userId, myName }) {
   const [open, setOpen] = useState(false);
-  if (players.length === 0) return null;
+  const [poked, setPoked] = useState(null); // id of the player just poked, for a quick confirm flash
 
-  const me = players.find((p) => p.user_id === userId);
   const others = players.filter((p) => p.user_id !== userId);
 
+  // periodic little wiggle to draw the eye, only while someone else is online
+  const shouldWiggle = others.length > 0;
+
+  if (players.length === 0) return null;
+
+  async function handlePoke(p) {
+    await sendPoke(userId, p.user_id, myName);
+    setPoked(p.user_id);
+    setTimeout(() => setPoked(null), 1200);
+  }
+
   return (
-    <div style={{ position: "fixed", top: 16, left: 16, zIndex: 50 }}>
+    <div style={{ position: "relative" }}>
       <style>{`
         @keyframes onlineRingSpin { to { transform: rotate(360deg); } }
         .online-ring { animation: onlineRingSpin 3s linear infinite; }
+        @keyframes onlineWiggle {
+          0%, 92%, 100% { transform: rotate(0deg); }
+          93% { transform: rotate(-8deg); }
+          94% { transform: rotate(8deg); }
+          95% { transform: rotate(-6deg); }
+          96% { transform: rotate(6deg); }
+          97% { transform: rotate(-3deg); }
+          98% { transform: rotate(0deg); }
+        }
+        .online-wiggle { animation: onlineWiggle 6s ease-in-out infinite; }
         .online-btn { transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .online-btn:active { transform: scale(0.9); }
         @media (hover: hover) and (pointer: fine) {
           .online-btn:hover { transform: scale(1.08); }
         }
+        @keyframes balloonPop {
+          0% { transform: scale(0.4) translateY(-8px); opacity: 0; }
+          60% { transform: scale(1.08); opacity: 1; }
+          100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .balloon { animation: balloonPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
       `}</style>
 
       <button
         onClick={() => setOpen((o) => !o)}
-        className="online-btn relative flex items-center justify-center"
-        style={{ width: 44, height: 44 }}
+        className={`online-btn relative flex items-center justify-center ${shouldWiggle ? "online-wiggle" : ""}`}
+        style={{ width: 32, height: 32 }}
         aria-label="Who's online"
       >
-        <div
-          className="online-ring absolute inset-0 rounded-full"
-          style={{ background: `conic-gradient(from 0deg, ${GREEN}, #BBF7D0, ${GREEN})` }}
-        />
-        <div
-          className="absolute rounded-full flex items-center justify-center"
-          style={{ inset: 3, background: "rgba(255,255,255,0.95)", backdropFilter: "blur(6px)" }}
-        >
-          <Users size={16} style={{ color: CREAM }} />
+        <div className="online-ring absolute inset-0 rounded-full" style={{ background: `conic-gradient(from 0deg, ${GREEN}, #BBF7D0, ${GREEN})` }} />
+        <div className="absolute rounded-full flex items-center justify-center" style={{ inset: 2.5, background: "rgba(255,255,255,0.95)" }}>
+          <Users size={13} style={{ color: CREAM }} />
         </div>
         <div
           className="absolute flex items-center justify-center rounded-full"
-          style={{
-            top: -4, right: -4, minWidth: 18, height: 18, padding: "0 4px",
-            background: GREEN, color: "#FFFFFF", fontSize: 10, fontWeight: 700,
-            border: "2px solid #F1F3F7",
-          }}
+          style={{ top: -3, right: -3, minWidth: 15, height: 15, padding: "0 3px", background: GREEN, color: "#FFFFFF", fontSize: 9, fontWeight: 700, border: "1.5px solid #F1F3F7" }}
         >
           {players.length}
         </div>
       </button>
 
       {open && (
-        <div
-          className="absolute top-full left-0 mt-2 rounded-2xl p-3 w-64"
-          style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)", boxShadow: "0 12px 30px rgba(16,24,40,0.14)" }}
-        >
-          <div style={{ color: CREAM, opacity: 0.5 }} className="text-[10px] font-semibold uppercase tracking-wide mb-2">
-            {players.length} online now
+        <div className="absolute top-full right-0 mt-2 flex flex-col items-end gap-1.5" style={{ zIndex: 60 }}>
+          <div style={{ color: CREAM, opacity: 0.4, background: PANEL, borderRadius: 999, padding: "2px 10px" }} className="text-[10px] font-semibold uppercase tracking-wide balloon">
+            {players.length} online
           </div>
-          <div className="flex flex-col gap-1.5 max-h-64 overflow-y-auto">
-            {me && <PlayerRow p={me} isMe />}
-            {others.map((p, i) => (
-              <PlayerRow key={i} p={p} />
-            ))}
-          </div>
+          {others.length === 0 ? (
+            <div className="balloon rounded-full px-3 py-1.5 text-xs" style={{ background: PANEL, color: CREAM, opacity: 0.5, boxShadow: "0 6px 16px rgba(16,24,40,0.12)" }}>
+              just you right now
+            </div>
+          ) : (
+            others.map((p, i) => {
+              const meta = GAME_META.find((g) => g.id === p.game);
+              const isPoked = poked === p.user_id;
+              return (
+                <button
+                  key={i}
+                  onClick={() => handlePoke(p)}
+                  className="balloon flex items-center gap-2 rounded-full pl-1.5 pr-3 py-1.5"
+                  style={{
+                    animationDelay: `${i * 0.05}s`,
+                    background: isPoked ? "rgba(47,111,237,0.15)" : PANEL,
+                    boxShadow: "0 6px 16px rgba(16,24,40,0.14)",
+                    border: isPoked ? `1.5px solid ${ACCENT}` : "1px solid rgba(16,24,40,0.06)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  <span style={{ fontSize: 16 }}>{p.profiles?.icon || "🙂"}</span>
+                  <div className="text-left">
+                    <div style={{ color: CREAM, fontWeight: 600 }} className="text-xs leading-tight">
+                      {isPoked ? "Poked! 👋" : p.profiles?.name || "Someone"}
+                    </div>
+                    <div style={{ color: meta ? meta.accent : CREAM, opacity: meta ? 1 : 0.4 }} className="text-[10px] leading-tight">
+                      {meta ? `playing ${meta.label}` : "browsing"}
+                    </div>
+                  </div>
+                </button>
+              );
+            })
+          )}
         </div>
       )}
-    </div>
-  );
-}
-
-function PlayerRow({ p, isMe }) {
-  const meta = GAME_META.find((g) => g.id === p.game);
-  return (
-    <div className="flex items-center gap-2 rounded-lg px-2 py-1.5" style={{ background: isMe ? "rgba(47,111,237,0.08)" : "rgba(16,24,40,0.03)" }}>
-      <span style={{ fontSize: 15 }}>{p.profiles?.icon || "🙂"}</span>
-      <div className="flex-1 min-w-0">
-        <div style={{ color: CREAM, fontWeight: 600 }} className="text-xs truncate">
-          {isMe ? "You" : p.profiles?.name || "Someone"}
-        </div>
-        <div style={{ color: meta ? meta.accent : CREAM, opacity: meta ? 1 : 0.4 }} className="text-[10px] truncate">
-          {meta ? `playing ${meta.label}` : "browsing"}
-          {p.profiles?.mood ? ` · ${p.profiles.mood}` : ""}
-        </div>
-      </div>
     </div>
   );
 }

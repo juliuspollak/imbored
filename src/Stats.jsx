@@ -49,7 +49,7 @@ export default function Stats({ onBack }) {
           <button onClick={onBack} style={{ color: INK, opacity: 0.5 }}>
             <ArrowLeft size={18} />
           </button>
-          <h1 style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, color: INK }} className="text-2xl">
+          <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl">
             Stats
           </h1>
         </div>

@@ -132,7 +132,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
       <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-center justify-center p-4">
         <div className="w-full max-w-sm rounded-2xl p-6 text-center" style={{ background: PANEL, boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}>
           <PartyPopper size={28} style={{ color: ACCENT, margin: "0 auto 10px" }} />
-          <h2 style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, color: INK }} className="text-2xl mb-1">
+          <h2 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl mb-1">
             Solved!
           </h2>
           <div className="flex justify-center gap-4 mb-6">
@@ -162,7 +162,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           <button onClick={onExit} style={{ color: INK, opacity: 0.5 }}>
             <ArrowLeft size={18} />
           </button>
-          <h1 style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, color: INK }} className="text-2xl">
+          <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl">
             {gameLabel} — Challenge
           </h1>
         </div>
