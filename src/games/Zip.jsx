@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { usePresence } from "../lib/usePresence.js";
+import { withSeededRandom } from "../lib/seededRandom.js";
 import { RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, Flag } from "lucide-react";
 
 /* ---------------- puzzle generation ---------------- */
@@ -255,12 +256,13 @@ function fmtTime(s) {
 
 /* ---------------- component ---------------- */
 
-export default function ZipGame({ userId, onSolved } = {}) {
+export default function ZipGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate } = {}) {
   const todayIdx = (() => {
     const d = new Date().getDay();
     return d === 0 ? 6 : d - 1;
   })();
-  const [dayIdx, setDayIdx] = useState(todayIdx);
+  const isChallenge = mode === "challenge";
+  const [dayIdx, setDayIdx] = useState(isChallenge ? forcedDayIdx ?? todayIdx : todayIdx);
   usePresence("zip");
   const [puzzle, setPuzzle] = useState(null);
   const [path, setPath] = useState(null);
@@ -279,7 +281,8 @@ export default function ZipGame({ userId, onSolved } = {}) {
   const latest = useRef({});
 
   const newPuzzle = useCallback((dIdx) => {
-    const p = generatePuzzle(SIZE, CHECKPOINT_COUNTS[dIdx], WALL_COUNTS[dIdx], BLACKHOLE_COUNTS[dIdx], TUNNEL_PAIR_COUNTS[dIdx]);
+    const gen = () => generatePuzzle(SIZE, CHECKPOINT_COUNTS[dIdx], WALL_COUNTS[dIdx], BLACKHOLE_COUNTS[dIdx], TUNNEL_PAIR_COUNTS[dIdx]);
+    const p = isChallenge && seed ? withSeededRandom(seed, gen) : gen();
     setPuzzle(p);
     setPath(p ? [p.path[0]] : null);
     setSeconds(0);
@@ -289,7 +292,8 @@ export default function ZipGame({ userId, onSolved } = {}) {
     setHintsUsed(0);
     setHintCell(null);
     setHistory([]);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isChallenge, seed]);
 
   useEffect(() => {
     newPuzzle(dayIdx);
@@ -311,7 +315,7 @@ export default function ZipGame({ userId, onSolved } = {}) {
     if (path.length === totalVisitable && lastIsMaxCheckpoint && !hasOrderConflict(path, puzzle.numberGrid) && !solved) {
       setSolved(true);
       setRunning(false);
-      onSolved && onSolved({ userId, game: "zip", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed });
+      onSolved && onSolved({ userId, game: "zip", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed, mode, challengeDate: isChallenge ? challengeDate : undefined });
     }
   }, [path, puzzle]);
 
@@ -602,25 +606,36 @@ export default function ZipGame({ userId, onSolved } = {}) {
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-1.5 mb-4">
-          {DAYS.map((d, i) => (
-            <button
-              key={d}
-              onClick={() => setDayIdx(i)}
-              className="zp-day-btn flex flex-col items-center justify-center rounded-lg px-2 py-1.5 transition-colors"
-              style={{
-                background: i === dayIdx ? GOLD : "rgba(16,24,40,0.05)",
-                color: i === dayIdx ? "#FFFFFF" : CREAM,
-                minWidth: 38,
-              }}
-            >
-              <span className="text-xs font-semibold">{d}</span>
-              <span className="text-[10px] opacity-70">
-                {WALL_COUNTS[i] + BLACKHOLE_COUNTS[i] + TUNNEL_PAIR_COUNTS[i]} hazards
+        {isChallenge ? (
+          <div className="flex justify-center mb-4">
+            <div className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: `${GOLD}18`, color: GOLD }}>
+              <span className="text-xs font-semibold">Today's Challenge</span>
+              <span className="text-[10px] opacity-80">
+                {WALL_COUNTS[dayIdx] + BLACKHOLE_COUNTS[dayIdx] + TUNNEL_PAIR_COUNTS[dayIdx]} hazards
               </span>
-            </button>
-          ))}
-        </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap justify-center gap-1.5 mb-4">
+            {DAYS.map((d, i) => (
+              <button
+                key={d}
+                onClick={() => setDayIdx(i)}
+                className="zp-day-btn flex flex-col items-center justify-center rounded-lg px-2 py-1.5 transition-colors"
+                style={{
+                  background: i === dayIdx ? GOLD : "rgba(16,24,40,0.05)",
+                  color: i === dayIdx ? "#FFFFFF" : CREAM,
+                  minWidth: 38,
+                }}
+              >
+                <span className="text-xs font-semibold">{d}</span>
+                <span className="text-[10px] opacity-70">
+                  {WALL_COUNTS[i] + BLACKHOLE_COUNTS[i] + TUNNEL_PAIR_COUNTS[i]} hazards
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="flex items-center justify-center gap-4 mb-3 px-1">
           <div className="flex items-center gap-1.5" style={{ color: CREAM, opacity: 0.7 }}>
@@ -639,7 +654,7 @@ export default function ZipGame({ userId, onSolved } = {}) {
           {[
             { Icon: Undo2, label: "Undo", onClick: handleUndo, disabled: history.length === 0 },
             { Icon: RotateCcw, label: "Reset", onClick: handleReset, disabled: false },
-            { Icon: Shuffle, label: "New", onClick: () => newPuzzle(dayIdx), disabled: false },
+            { Icon: Shuffle, label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
             { Icon: Lightbulb, label: "Hint", onClick: handleHint, disabled: solved },
           ].map(({ Icon, label, onClick, disabled }) => (
             <button

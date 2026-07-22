@@ -59,15 +59,51 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut();
   }
 
-  async function saveProfile({ name, team }) {
+  async function saveProfile({ name, icon, is_private, mood }) {
     if (!supabaseReady || !session) return { error: new Error("Not logged in") };
-    const { data, error } = await supabase
-      .from("profiles")
-      .upsert({ id: session.user.id, name, team })
-      .select()
-      .single();
+    const patch = { id: session.user.id };
+    if (name !== undefined) patch.name = name;
+    if (icon !== undefined) patch.icon = icon;
+    if (is_private !== undefined) patch.is_private = is_private;
+    if (mood !== undefined) patch.mood = mood;
+    const { data, error } = await supabase.from("profiles").upsert(patch).select().single();
     if (!error) setProfile(data);
     return { data, error };
+  }
+
+  async function createTeam(name) {
+    if (!supabaseReady || !session) return { error: new Error("Not logged in") };
+    const { data, error } = await supabase
+      .from("teams")
+      .insert({ name, created_by: session.user.id })
+      .select()
+      .single();
+    if (!error) {
+      // creator joins their own team automatically
+      await supabase.from("team_members").insert({ team_id: data.id, user_id: session.user.id });
+    }
+    return { data, error };
+  }
+
+  // Adding someone ELSE goes through a server-side function rather than a
+  // direct insert, so a private profile can never be added by anyone but
+  // themselves — see migration_multiteam.sql for the check. Joining
+  // yourself is a plain insert, which RLS already allows directly.
+  async function addPlayerToTeam(targetUserId, teamId) {
+    if (!supabaseReady) return { error: new Error("Not logged in") };
+    return supabase.rpc("add_player_to_team", { target_user_id: targetUserId, target_team_id: teamId });
+  }
+
+  async function joinTeam(teamId) {
+    if (!supabaseReady || !session) return { error: new Error("Not logged in") };
+    const { error } = await supabase.from("team_members").insert({ team_id: teamId, user_id: session.user.id });
+    return { error };
+  }
+
+  async function leaveTeam(teamId) {
+    if (!supabaseReady || !session) return { error: new Error("Not logged in") };
+    const { error } = await supabase.from("team_members").delete().eq("team_id", teamId).eq("user_id", session.user.id);
+    return { error };
   }
 
   const value = {
@@ -81,6 +117,10 @@ export function AuthProvider({ children }) {
     signInWithGoogle,
     signOut,
     saveProfile,
+    createTeam,
+    addPlayerToTeam,
+    joinTeam,
+    leaveTeam,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

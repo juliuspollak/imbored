@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mail, ArrowRight } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { supabaseReady } from "./lib/supabase.js";
@@ -27,6 +27,13 @@ export default function Login() {
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(t);
+  }, [cooldown]);
 
   async function handleGoogle() {
     setError(null);
@@ -36,13 +43,17 @@ export default function Login() {
 
   async function handleSendCode(e) {
     e.preventDefault();
-    if (!email || sending) return;
+    if (!email || sending || cooldown > 0) return;
     setSending(true);
     setError(null);
     const { error } = await signInWithEmail(email);
     setSending(false);
-    if (error) setError(error.message);
-    else setSent(true);
+    if (error) {
+      setError(error.message);
+    } else {
+      setSent(true);
+      setCooldown(30); // a shared inbox rate limit means one person spamming "resend" can lock everyone out
+    }
   }
 
   async function handleVerify(e) {
@@ -154,8 +165,14 @@ export default function Login() {
               <button type="button" onClick={() => { setSent(false); setCode(""); setError(null); }} style={{ color: INK, opacity: 0.5 }} className="text-xs">
                 Use a different email
               </button>
-              <button type="button" onClick={handleSendCode} style={{ color: ACCENT }} className="text-xs font-medium">
-                Resend code
+              <button
+                type="button"
+                onClick={handleSendCode}
+                disabled={cooldown > 0}
+                style={{ color: cooldown > 0 ? "rgba(27,33,41,0.35)" : ACCENT }}
+                className="text-xs font-medium"
+              >
+                {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}
               </button>
             </div>
           </form>

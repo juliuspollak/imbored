@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { usePresence } from "../lib/usePresence.js";
+import { withSeededRandom } from "../lib/seededRandom.js";
 import { Crown, RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle } from "lucide-react";
 
 /* ---------------- puzzle generation ---------------- */
@@ -239,12 +240,13 @@ function fmtTime(s) {
 
 /* ---------------- component ---------------- */
 
-export default function QueensGame({ userId, onSolved } = {}) {
+export default function QueensGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate } = {}) {
   const todayIdx = (() => {
     const d = new Date().getDay();
     return d === 0 ? 6 : d - 1;
   })();
-  const [dayIdx, setDayIdx] = useState(todayIdx);
+  const isChallenge = mode === "challenge";
+  const [dayIdx, setDayIdx] = useState(isChallenge ? forcedDayIdx ?? todayIdx : todayIdx);
   const n = SIZES[dayIdx];
   usePresence("queens");
 
@@ -265,7 +267,7 @@ export default function QueensGame({ userId, onSolved } = {}) {
   const latest = useRef({});
 
   const newPuzzle = useCallback((size) => {
-    const p = generatePuzzle(size);
+    const p = isChallenge && seed ? withSeededRandom(seed, () => generatePuzzle(size)) : generatePuzzle(size);
     setPuzzle(p);
     setBoard(Array.from({ length: size }, () => Array(size).fill(0)));
     setSeconds(0);
@@ -275,7 +277,8 @@ export default function QueensGame({ userId, onSolved } = {}) {
     setHintsUsed(0);
     setHintCell(null);
     setHistory([]);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isChallenge, seed]);
 
   useEffect(() => {
     newPuzzle(n);
@@ -297,7 +300,7 @@ export default function QueensGame({ userId, onSolved } = {}) {
     if (count === size && conflicts.size === 0 && !solved) {
       setSolved(true);
       setRunning(false);
-      onSolved && onSolved({ userId, game: "queens", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed });
+      onSolved && onSolved({ userId, game: "queens", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed, mode, challengeDate: isChallenge ? challengeDate : undefined });
     }
   }, [board, puzzle]);
 
@@ -838,24 +841,36 @@ export default function QueensGame({ userId, onSolved } = {}) {
           </p>
         </div>
 
-        {/* day selector */}
-        <div className="flex flex-wrap justify-center gap-1.5 mb-4">
-          {DAYS.map((d, i) => (
-            <button
-              key={d}
-              onClick={() => setDayIdx(i)}
-              className="qp-day-btn flex flex-col items-center justify-center rounded-lg px-2 py-1.5 transition-colors"
-              style={{
-                background: i === dayIdx ? GOLD : "rgba(16,24,40,0.05)",
-                color: i === dayIdx ? "#FFFFFF" : CREAM,
-                minWidth: 38,
-              }}
+        {/* day selector — locked to today's date in challenge mode */}
+        {isChallenge ? (
+          <div className="flex justify-center mb-4">
+            <div
+              className="flex items-center gap-2 rounded-lg px-3 py-1.5"
+              style={{ background: `${GOLD}18`, color: GOLD }}
             >
-              <span className="text-xs font-semibold">{d}</span>
-              <span className="text-[10px] opacity-70">{SIZES[i]}×{SIZES[i]}</span>
-            </button>
-          ))}
-        </div>
+              <span className="text-xs font-semibold">Today's Challenge</span>
+              <span className="text-[10px] opacity-80">{n}×{n}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap justify-center gap-1.5 mb-4">
+            {DAYS.map((d, i) => (
+              <button
+                key={d}
+                onClick={() => setDayIdx(i)}
+                className="qp-day-btn flex flex-col items-center justify-center rounded-lg px-2 py-1.5 transition-colors"
+                style={{
+                  background: i === dayIdx ? GOLD : "rgba(16,24,40,0.05)",
+                  color: i === dayIdx ? "#FFFFFF" : CREAM,
+                  minWidth: 38,
+                }}
+              >
+                <span className="text-xs font-semibold">{d}</span>
+                <span className="text-[10px] opacity-70">{SIZES[i]}×{SIZES[i]}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* stats row */}
         <div className="flex items-center justify-center gap-4 mb-3 px-1">
@@ -876,7 +891,7 @@ export default function QueensGame({ userId, onSolved } = {}) {
           {[
             { Icon: Undo2, label: "Undo", onClick: handleUndo, disabled: history.length === 0 },
             { Icon: RotateCcw, label: "Reset", onClick: handleReset, disabled: false },
-            { Icon: Shuffle, label: "New", onClick: () => newPuzzle(n), disabled: false },
+            { Icon: Shuffle, label: "New", onClick: () => newPuzzle(n), disabled: isChallenge },
             { Icon: Lightbulb, label: "Hint", onClick: handleHint, disabled: solved },
           ].map(({ Icon, label, onClick, disabled }) => (
             <button

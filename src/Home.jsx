@@ -1,4 +1,4 @@
-import { Crown, Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves } from "lucide-react";
+import { Crown, Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle } from "lucide-react";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -15,7 +15,7 @@ export const GAME_META = [
   { id: "wend", label: "Wend", desc: "Weave hidden words through the grid", icon: Waves, accent: "#0EA5E9", available: false },
 ];
 
-export default function Home({ onSelect }) {
+export default function Home({ onSelect, playMode, onPlayModeChange, players = [] }) {
   return (
     <div style={{ background: BG, minHeight: "100vh" }} className="flex items-start justify-center p-4 pt-10 sm:pt-16">
       <style>{`
@@ -26,7 +26,7 @@ export default function Home({ onSelect }) {
         .home-tile { transition: transform 0.15s ease, filter 0.15s ease; }
       `}</style>
       <div className="w-full max-w-2xl" style={{ fontFamily: "'Inter', sans-serif" }}>
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <h1
             style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, color: CREAM, letterSpacing: "-0.01em" }}
             className="text-5xl"
@@ -38,15 +38,42 @@ export default function Home({ onSelect }) {
           </p>
         </div>
 
+        {onPlayModeChange && (
+          <div className="flex justify-center mb-6">
+            <div className="inline-flex rounded-full p-1" style={{ background: "rgba(16,24,40,0.06)" }}>
+              {["challenge", "practice"].map((m) => (
+                <button
+                  key={m}
+                  onClick={() => onPlayModeChange(m)}
+                  className="rounded-full px-4 py-1.5 text-xs font-semibold capitalize"
+                  style={{
+                    background: playMode === m ? PANEL : "transparent",
+                    color: playMode === m ? CREAM : "rgba(27,33,41,0.5)",
+                    boxShadow: playMode === m ? "0 2px 8px rgba(16,24,40,0.10)" : "none",
+                  }}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        <p style={{ color: CREAM, opacity: 0.4 }} className="text-[11px] text-center -mt-4 mb-6">
+          {playMode === "challenge"
+            ? "one attempt a day, same puzzle for everyone — today only"
+            : "any day, unlimited puzzles — nothing saved to your stats"}
+        </p>
+
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {GAME_META.map((g) => {
             const Icon = g.icon;
+            const playingCount = players.filter((p) => p.game === g.id).length;
             return (
               <button
                 key={g.id}
                 disabled={!g.available}
                 onClick={() => g.available && onSelect(g.id)}
-                className="home-tile flex flex-col items-start gap-3 rounded-2xl p-4 text-left"
+                className="home-tile relative flex flex-col items-start gap-3 rounded-2xl p-4 text-left"
                 style={{
                   background: PANEL,
                   border: "1px solid rgba(16,24,40,0.09)",
@@ -55,6 +82,15 @@ export default function Home({ onSelect }) {
                   cursor: g.available ? "pointer" : "default",
                 }}
               >
+                {playingCount > 0 && (
+                  <span
+                    className="absolute top-3 right-3 flex items-center gap-1 rounded-full px-1.5 py-0.5"
+                    style={{ background: "rgba(34,197,94,0.12)" }}
+                  >
+                    <Circle size={5} fill="#22C55E" style={{ color: "#22C55E" }} />
+                    <span style={{ color: "#16A34A", fontWeight: 700 }} className="text-[10px]">{playingCount}</span>
+                  </span>
+                )}
                 <div
                   className="flex items-center justify-center rounded-xl"
                   style={{ width: 40, height: 40, background: `${g.accent}22` }}

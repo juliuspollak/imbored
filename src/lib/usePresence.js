@@ -6,12 +6,20 @@ import { useAuth } from "./AuthContext.jsx";
 // screen is mounted, or null while just browsing the home page. Writes a
 // heartbeat every 20s so a "currently playing" query can treat anyone seen
 // in the last ~45s as online, and removes the row when the screen unmounts
-// or the tab closes.
+// or the tab closes. A private profile writes nothing at all — not hidden
+// after the fact, simply never recorded — and if privacy gets toggled on
+// mid-session, any existing row is cleared immediately.
 export function usePresence(game) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const isPrivate = profile?.is_private;
 
   useEffect(() => {
     if (!supabaseReady || !user) return;
+
+    if (isPrivate) {
+      supabase.from("presence").delete().eq("user_id", user.id).then();
+      return;
+    }
 
     let cancelled = false;
     const beat = () => {
@@ -33,5 +41,5 @@ export function usePresence(game) {
       window.removeEventListener("beforeunload", clear);
       clear();
     };
-  }, [game, user]);
+  }, [game, user, isPrivate]);
 }
