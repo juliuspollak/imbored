@@ -370,7 +370,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
   }
 
   function handleUndo() {
-    if (history.length === 0) return;
+    if (solved || history.length === 0) return;
     const last = history[history.length - 1];
     setHistory((h) => h.slice(0, -1));
     setBoard(last.board);
@@ -382,6 +382,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
   }
 
   function handleReset() {
+    if (solved) return;
     setBoard(puzzle.givens.map((row) => row.slice()));
     setMistakes(0);
     setHintsUsed(0);
@@ -527,8 +528,8 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
         {/* toolbar */}
         <div className="flex items-center justify-center gap-2 mb-4">
           {[
-            { Icon: Undo2, label: "Undo", onClick: handleUndo, disabled: history.length === 0 },
-            { Icon: RotateCcw, label: "Reset", onClick: handleReset, disabled: false },
+            { Icon: Undo2, label: "Undo", onClick: handleUndo, disabled: solved || history.length === 0 },
+            { Icon: RotateCcw, label: "Reset", onClick: handleReset, disabled: solved },
             { Icon: Shuffle, label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
             {
               Icon: hintCooldown.locked ? Lock : Lightbulb,

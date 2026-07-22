@@ -508,7 +508,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
   }
 
   function handleUndo() {
-    if (history.length === 0) return;
+    if (solved || history.length === 0) return;
     const last = history[history.length - 1];
     setHistory((h) => h.slice(0, -1));
     setPath(last.path);
@@ -520,6 +520,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
   }
 
   function handleReset() {
+    if (solved) return;
     setPath([puzzle.path[0]]);
     setMistakes(0);
     setHintsUsed(0);
@@ -658,8 +659,8 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
 
         <div className="flex items-center justify-center gap-2 mb-4">
           {[
-            { Icon: Undo2, label: "Undo", onClick: handleUndo, disabled: history.length === 0 },
-            { Icon: RotateCcw, label: "Reset", onClick: handleReset, disabled: false },
+            { Icon: Undo2, label: "Undo", onClick: handleUndo, disabled: solved || history.length === 0 },
+            { Icon: RotateCcw, label: "Reset", onClick: handleReset, disabled: solved },
             { Icon: Shuffle, label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
             {
               Icon: hintCooldown.locked ? Lock : Lightbulb,

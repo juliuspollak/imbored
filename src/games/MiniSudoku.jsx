@@ -375,7 +375,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   }
 
   function handleUndo() {
-    if (history.length === 0) return;
+    if (solved || history.length === 0) return;
     const last = history[history.length - 1];
     setHistory((h) => h.slice(0, -1));
     setBoard(last.board);
@@ -387,6 +387,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   }
 
   function handleReset() {
+    if (solved) return;
     setBoard(puzzle.givens.map((row) => row.slice()));
     setSelected(null);
     setMistakes(0);
@@ -524,7 +525,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         {/* toolbar */}
         <div className="flex items-center justify-center gap-2 mb-4">
           {[
-            { Icon: RotateCcw, label: "Reset", onClick: handleReset, disabled: false },
+            { Icon: RotateCcw, label: "Reset", onClick: handleReset, disabled: solved },
             { Icon: Shuffle, label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
             {
               Icon: hintCooldown.locked ? Lock : Lightbulb,
@@ -660,7 +661,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
               {d}
             </NumBtn>
           ))}
-          <NumBtn onClick={handleUndo} disabled={history.length === 0} aria-label="Undo">
+          <NumBtn onClick={handleUndo} disabled={solved || history.length === 0} aria-label="Undo">
             <Undo2 size={18} />
           </NumBtn>
         </div>

@@ -4,307 +4,335 @@
     "version": "v1",
     "title": "Accounts & sign-in",
     "body": "Email code sign-in, Google sign-in, and passkey support. No passwords, and no confusing magic links.",
-    "days_ago": 14
+    "date": "2026-07-08"
   },
   {
     "id": "2026-07-09-stats",
     "version": "v2",
     "title": "Stats tracking",
     "body": "Every solved puzzle records your time, mistakes, and hints used — see it all on the Stats page.",
-    "days_ago": 13
+    "date": "2026-07-09"
   },
   {
     "id": "2026-07-10-teams",
     "version": "v3",
     "title": "Teams",
     "body": "Create a team, join as many as you like, add other players, or leave any time. Private profiles can't be added by anyone but themselves.",
-    "days_ago": 12
+    "date": "2026-07-10"
   },
   {
     "id": "2026-07-12-challenge",
     "version": "v4",
     "title": "Challenge mode",
     "body": "One attempt per puzzle per day, the exact same puzzle for everyone, locked to real calendar dates. Miss a day? You can still catch it up later — still just one shot.",
-    "days_ago": 10
+    "date": "2026-07-12"
   },
   {
     "id": "2026-07-13-mood",
     "version": "v5",
     "title": "Mood status",
     "body": "Set a short status next to your name, visible to everyone.",
-    "days_ago": 9
+    "date": "2026-07-13"
   },
   {
     "id": "2026-07-15-rating",
     "version": "v6",
     "title": "Post-puzzle difficulty rating",
     "body": "Tap a bar right after solving to say how hard it felt. See the group's average difficulty before you even start a puzzle.",
-    "days_ago": 7
+    "date": "2026-07-15"
   },
   {
     "id": "2026-07-16-feedback",
     "version": "v7",
     "title": "Feedback board",
     "body": "Suggest ideas, upvote other people's. Admin can mark things done with a comment.",
-    "days_ago": 6
+    "date": "2026-07-16"
   },
   {
     "id": "2026-07-17-online",
     "version": "v8",
     "title": "Who's online",
     "body": "See who else currently has the app open and what they're playing. Tap someone to send them a fun poke.",
-    "days_ago": 5
+    "date": "2026-07-17"
   },
   {
     "id": "2026-07-18-rename",
     "version": "v9",
     "title": "Renamed to I'mBoredToday",
     "body": "New name, new playful font across the whole app.",
-    "days_ago": 4
+    "date": "2026-07-18"
   },
   {
     "id": "2026-07-19-mistakes-fix",
     "version": "v10",
     "title": "Fixed mistake counting in Tango",
     "body": "Mistakes now only count when Hint actually catches something wrong — not on every tap. Matches how Queens already worked.",
-    "days_ago": 3
+    "date": "2026-07-19"
   },
   {
     "id": "2026-07-22-hover-effects",
     "version": "v11",
     "title": "Nicer button hover/press effects",
     "body": "Every nav icon now has a springy lift on hover and a satisfying press on tap, each in its own accent color.",
-    "days_ago": 0.11
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-difficulty-bars",
     "version": "v12",
     "title": "Difficulty rating redesigned",
     "body": "Switched from a tap-anywhere triangle to discrete tappable bars, matching watchOS's effort rating pattern.",
-    "days_ago": 0.1
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-feedback-simplified",
     "version": "v13",
     "title": "Feedback form simplified",
     "body": "Down to a single text box instead of separate title and description fields.",
-    "days_ago": 0.09
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-admin-hide",
     "version": "v14",
     "title": "Admin: hide a player",
     "body": "Admin can make a player invisible to everyone but themselves, enforced by the database itself, not just the UI.",
-    "days_ago": 0.08
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-online-redesign",
     "version": "v15",
     "title": "Online widget redesign",
     "body": "Moved next to your profile, wiggles when others are online, expands into a list you can tap to poke someone.",
-    "days_ago": 0.07
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-nav-collapse",
     "version": "v16",
     "title": "Nav menu collapsed into one button",
     "body": "Profile, Feedback, Stats, Teams, and Sign out now live behind a single avatar button instead of cluttering the top bar.",
-    "days_ago": 0.06
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-home-buttons",
     "version": "v17",
     "title": "Fixed missing Home buttons",
     "body": "Teams, Stats, Feedback, Profile, and the Challenge screen all had a barely-visible back arrow — replaced with a clear, labeled Home button everywhere.",
-    "days_ago": 0.05
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-feedback-badge",
     "version": "v18",
     "title": "Feedback notification badge",
     "body": "The nav button now wiggles with a purple count badge whenever there's open feedback waiting to be reviewed.",
-    "days_ago": 0.04
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-presence-fix",
     "version": "v19",
     "title": "Fixed online status",
     "body": "You now show as online for the whole time the app is open, not just while mid-puzzle.",
-    "days_ago": 0.03
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-recursion-fix",
     "version": "v20",
     "title": "Fixed a login-breaking bug",
     "body": "A database policy had an infinite recursion bug that could block sign-in entirely. Fixed at the database level.",
-    "days_ago": 0.02
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-release-notes",
     "version": "v21",
     "title": "This page",
     "body": "Release notes are now fully automatic, synced from a changelog file on every deploy — nobody types these in by hand.",
-    "days_ago": 0.01
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-release-notes-readonly",
     "version": "v22",
     "title": "Release notes cleanup",
     "body": "Removed manual post/delete controls (the changelog file is the single source of truth now) and added version numbers to every entry.",
-    "days_ago": 0.0
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-stats-split",
     "version": "v23",
     "title": "Stats split by Challenge/Practice",
     "body": "Toggle between the two — practice is unlimited so its counts aren't really comparable, challenge is the fair one-shot-a-day metric. Each game shown separately, plus a total.",
-    "days_ago": 0.0
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-hide-label",
     "version": "v24",
     "title": "Fixed the mystery hide button",
     "body": "Admin's player-hide toggle only had a hover tooltip, which does nothing on a phone. Now has a visible text label.",
-    "days_ago": 0.0
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-sync-merge-fix",
     "version": "v25",
     "title": "Fixed release notes not updating",
     "body": "The sync used 'ignore-duplicates', which skips any entry that already exists instead of updating it. Switched to 'merge-duplicates' so edits to CHANGELOG.json actually take effect on already-synced entries.",
-    "days_ago": 0.0
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-solved-home-button",
     "version": "v26",
     "title": "Fixed missing Home button on the Solved! screen",
     "body": "The post-puzzle rating screen (challenge and practice mode both) had no way back to Home at all — only its own continue button. Added a back arrow, top-left.",
-    "days_ago": 0.0
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-mini-sudoku",
     "version": "v27",
     "title": "New game: Mini Sudoku",
     "body": "6x6 sudoku, verified unique every time, difficulty scales through the week via clue count. Hint uses real solving techniques (naked/hidden singles, contradiction test) — never a guess. Works in both Challenge and Practice mode, same as the others. Also brought Queens/Tango/Zip's fonts in line with the rest of the app.",
-    "days_ago": 0.0
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-admin-players-screen",
     "version": "v28",
     "title": "New admin screen: Players",
     "body": "Lists every signed-up player, not just ones who've played something (unlike Stats' hide toggle, which only shows players with game history). Admin-only, hide/unhide from here.",
-    "days_ago": 0.0
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-sudoku-restyle",
     "version": "v29",
     "title": "Mini Sudoku redesigned",
     "body": "White cells throughout, bold black for given numbers vs. light gray for your own entries (not blue), a green outline for the selected cell instead of a filled tint, and a proper 4-column number pad with Erase and Undo built right in.",
-    "days_ago": 0.0
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-mode-pill",
     "version": "v30",
     "title": "Mode indicator while playing",
     "body": "A Challenge/Practice pill now shows the whole time you're playing, and tapping it switches modes without backing out to Home first.",
-    "days_ago": 0.1
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-online-widget-selfhide",
     "version": "v31",
     "title": "Cleaned up the online widget",
     "body": "No longer shows \"1 online\" when that one person is just you.",
-    "days_ago": 0.08
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-last-seen",
     "version": "v32",
     "title": "Last seen tracking",
     "body": "The admin Players screen now shows when each player was last active, not just whether they're online right now.",
-    "days_ago": 0.06
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-daily-leaderboard",
     "version": "v33",
     "title": "Best times leaderboard",
     "body": "Expanding a completed challenge day now shows the fastest 5 times for that specific day.",
-    "days_ago": 0.04
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-favicon",
     "version": "v34",
     "title": "Added a favicon",
     "body": "The browser tab now shows an actual icon instead of a blank one.",
-    "days_ago": 0.03
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-admin-games",
     "version": "v35",
     "title": "New admin screen: Games",
     "body": "Control which games show on the home screen, whether they're playable or \"coming soon\", and their display order.",
-    "days_ago": 0.0
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-default-mode",
     "version": "v36",
     "title": "Choose your default mode",
     "body": "New setting on the Profile screen: pick whether you land in Challenge or Practice mode after logging in.",
-    "days_ago": 0.0
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-admingames-security-fix",
     "version": "v37",
     "title": "Fixed a gap in the new Games admin screen",
     "body": "It didn't check admin status internally — the database would've blocked a non-admin from actually saving changes, but the screen would misleadingly let them try. Fixed.",
-    "days_ago": 0.0
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-queens-no-guessing-fix",
     "version": "v38",
     "title": "Fixed Queens sometimes requiring a guess",
     "body": "Found the real cause: some puzzles needed a brute-force deduction technique that's essentially unspottable by eye. Generation now rejects any layout that ever needs it — every hint step is now something a person could actually reason out, verified across dozens of test puzzles at every size.",
-    "days_ago": 0.1
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-played-today-badge",
     "version": "v39",
     "title": "Played-today badge on Home",
     "body": "See at a glance which games you've already completed today's challenge for, without opening each one.",
-    "days_ago": 0.08
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-reset-mistake",
     "version": "v40",
     "title": "Reset now counts as a mistake in Queens",
     "body": "Starting over after making progress counts against you, same spirit as everything else.",
-    "days_ago": 0.06
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-hint-cooldown",
     "version": "v41",
     "title": "Hint cooldown, admin-configurable",
     "body": "Admin can set how long Hint locks after each use, per game, with an optional per-day ramp so it can get stricter as difficulty increases through the week. Off by default everywhere.",
-    "days_ago": 0.0
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-sudoku-section-flash",
     "version": "v42",
     "title": "Sudoku flashes a completed section",
     "body": "Finish a row, column, or box correctly and it briefly pulses, not just the final win.",
-    "days_ago": 0.06
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-hide-flash-fix",
     "version": "v43",
     "title": "Fixed hidden games flashing visible",
     "body": "A hidden game would show briefly on every page load before disappearing. The config was loading async and defaulting to \"show everything\" in the meantime — now waits for the real answer first.",
-    "days_ago": 0.04
+    "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-rating-inline",
     "version": "v44",
     "title": "Rating moved onto the game screen",
     "body": "No more jumping to a separate page after solving — the difficulty rating now appears right on the completed board. Challenge mode hides \"Play again\" since it's one attempt only; your result stays visible on the challenge screen's day list any time.",
-    "days_ago": 0.0
+    "date": "2026-07-22"
+  },
+  {
+    "id": "2026-07-22-release-notes-order-fix",
+    "version": "v45",
+    "title": "Fixed What's New showing entries out of order",
+    "body": "The sort relied on a timestamp that got recomputed differently every time the sync ran, so entries pushed at different times could interleave wrong. Now sorts by version number, which is fixed and never changes, and switched dates to a fixed value too so they stop drifting.",
+    "date": "2026-07-22"
+  },
+  {
+    "id": "2026-07-22-release-notes-reactions",
+    "version": "v46",
+    "title": "Thumbs up/down on What's New",
+    "body": "React to any update — thumbs up if it's working, thumbs down if it's not. A thumbs-down automatically creates an entry on the Feedback board (with an optional note about what went wrong), so it's actually followed up on, not just a silent downvote.",
+    "date": "2026-07-22"
+  },
+  {
+    "id": "2026-07-22-solved-lock-fix",
+    "version": "v47",
+    "title": "Fixed Undo/Reset working after solving",
+    "body": "Undo and Reset stayed clickable even after a puzzle was solved. Undoing the winning move and re-entering it triggered a second save attempt, which hit the once-a-day database limit and kicked you to \"already completed\" with no explanation. Both are now locked the moment a puzzle is solved, across all four games.",
+    "date": "2026-07-22"
+  },
+  {
+    "id": "2026-07-22-rating-collapse",
+    "version": "v48",
+    "title": "Difficulty rating collapses after you pick",
+    "body": "Instead of staying open, it now shrinks to a small confirmation pill so the completed board underneath gets the space back.",
+    "date": "2026-07-22"
   }
 ]

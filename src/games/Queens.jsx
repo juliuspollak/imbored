@@ -772,7 +772,7 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
   }
 
   function handleUndo() {
-    if (history.length === 0) return;
+    if (solved || history.length === 0) return;
     const last = history[history.length - 1];
     setHistory((h) => h.slice(0, -1));
     setBoard(last.board);
@@ -784,6 +784,7 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
   }
 
   function handleReset() {
+    if (solved) return;
     const hadProgress = board.some((row) => row.some((v) => v !== 0));
     setBoard(Array.from({ length: boardSize }, () => Array(boardSize).fill(0)));
     setMistakes((m) => (hadProgress ? m + 1 : m)); // starting over is itself a mistake, not a clean slate
@@ -1188,8 +1189,8 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
         {/* toolbar */}
         <div className="flex items-center justify-center gap-2 mb-4">
           {[
-            { Icon: Undo2, label: "Undo", onClick: handleUndo, disabled: history.length === 0 },
-            { Icon: RotateCcw, label: "Reset", onClick: handleReset, disabled: false },
+            { Icon: Undo2, label: "Undo", onClick: handleUndo, disabled: solved || history.length === 0 },
+            { Icon: RotateCcw, label: "Reset", onClick: handleReset, disabled: solved },
             { Icon: Shuffle, label: "New", onClick: () => newPuzzle(n), disabled: isChallenge },
             {
               Icon: hintCooldown.locked ? Lock : Lightbulb,
