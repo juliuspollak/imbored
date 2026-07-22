@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { usePresence } from "../lib/usePresence.js";
 import { Sun, Moon, RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle } from "lucide-react";
 
 /* ---------------- puzzle generation ---------------- */
@@ -274,12 +275,13 @@ function fmtTime(s) {
 
 /* ---------------- component ---------------- */
 
-export default function TangoGame() {
+export default function TangoGame({ userId, onSolved } = {}) {
   const todayIdx = (() => {
     const d = new Date().getDay();
     return d === 0 ? 6 : d - 1;
   })();
   const [dayIdx, setDayIdx] = useState(todayIdx);
+  usePresence("tango");
   const [puzzle, setPuzzle] = useState(null);
   const [board, setBoard] = useState(null);
   const [seconds, setSeconds] = useState(0);
@@ -321,9 +323,10 @@ export default function TangoGame() {
     if (!board || !puzzle) return;
     const filled = board.every((row) => row.every((v) => v !== 0));
     if (!filled) return;
-    if (getConflicts(board, puzzle.edgeMap).size === 0) {
+    if (getConflicts(board, puzzle.edgeMap).size === 0 && !solved) {
       setSolved(true);
       setRunning(false);
+      onSolved && onSolved({ userId, game: "tango", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed });
     }
   }, [board, puzzle]);
 

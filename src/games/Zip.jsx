@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { usePresence } from "../lib/usePresence.js";
 import { RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, Flag } from "lucide-react";
 
 /* ---------------- puzzle generation ---------------- */
@@ -254,12 +255,13 @@ function fmtTime(s) {
 
 /* ---------------- component ---------------- */
 
-export default function ZipGame() {
+export default function ZipGame({ userId, onSolved } = {}) {
   const todayIdx = (() => {
     const d = new Date().getDay();
     return d === 0 ? 6 : d - 1;
   })();
   const [dayIdx, setDayIdx] = useState(todayIdx);
+  usePresence("zip");
   const [puzzle, setPuzzle] = useState(null);
   const [path, setPath] = useState(null);
   const [seconds, setSeconds] = useState(0);
@@ -306,9 +308,10 @@ export default function ZipGame() {
     const totalVisitable = puzzle.numberGrid.length * puzzle.numberGrid.length - puzzle.blocked.length;
     const [lastR, lastC] = path[path.length - 1];
     const lastIsMaxCheckpoint = puzzle.numberGrid[lastR][lastC] === puzzle.maxNum;
-    if (path.length === totalVisitable && lastIsMaxCheckpoint && !hasOrderConflict(path, puzzle.numberGrid)) {
+    if (path.length === totalVisitable && lastIsMaxCheckpoint && !hasOrderConflict(path, puzzle.numberGrid) && !solved) {
       setSolved(true);
       setRunning(false);
+      onSolved && onSolved({ userId, game: "zip", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed });
     }
   }, [path, puzzle]);
 

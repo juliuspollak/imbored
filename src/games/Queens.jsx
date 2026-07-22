@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { usePresence } from "../lib/usePresence.js";
 import { Crown, RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle } from "lucide-react";
 
 /* ---------------- puzzle generation ---------------- */
@@ -238,13 +239,14 @@ function fmtTime(s) {
 
 /* ---------------- component ---------------- */
 
-export default function QueensGame() {
+export default function QueensGame({ userId, onSolved } = {}) {
   const todayIdx = (() => {
     const d = new Date().getDay();
     return d === 0 ? 6 : d - 1;
   })();
   const [dayIdx, setDayIdx] = useState(todayIdx);
   const n = SIZES[dayIdx];
+  usePresence("queens");
 
   const [puzzle, setPuzzle] = useState(null);
   const [board, setBoard] = useState(null);
@@ -292,9 +294,10 @@ export default function QueensGame() {
     const size = board.length;
     const conflicts = getConflicts(board, puzzle.regionGrid, size);
     const count = board.flat().filter((v) => v === 2).length;
-    if (count === size && conflicts.size === 0) {
+    if (count === size && conflicts.size === 0 && !solved) {
       setSolved(true);
       setRunning(false);
+      onSolved && onSolved({ userId, game: "queens", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed });
     }
   }, [board, puzzle]);
 
