@@ -26,6 +26,7 @@ jobs:
             external_id: .id,
             title: .title,
             body: .body,
+            version: .version,
             created_at: (now - (.days_ago * 86400) | strftime("%Y-%m-%dT%H:%M:%SZ"))
           }]' CHANGELOG.json)
 
@@ -33,5 +34,5 @@ jobs:
             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Content-Type: application/json" \
-            -H "Prefer: resolution=ignore-duplicates,return=minimal" \
+            -H "Prefer: resolution=merge-duplicates,return=minimal" \
             -d "$PAYLOAD"
