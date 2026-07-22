@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock, Unlock, Users, ArrowLeft } from "lucide-react";
+import { Lock, Unlock, Users, ArrowLeft, Fingerprint, Trash2, Plus } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { PROFILE_ICONS } from "./lib/icons.js";
 
@@ -8,11 +8,13 @@ const PANEL = "#FFFFFF";
 const INK = "#1B2129";
 const ACCENT = "#2F6FED";
 
+const passkeySupported = typeof window !== "undefined" && !!window.PublicKeyCredential;
+
 // Used both as the mandatory first-login screen (no `onDone`/`onBack`
 // passed — nothing to go back to yet) and later as an editable "my
 // profile" screen reached from the home page.
 export default function ProfileSetup({ onDone, onOpenTeams }) {
-  const { profile, user, saveProfile, leaveTeam } = useAuth();
+  const { profile, user, saveProfile, leaveTeam, registerPasskey, listPasskeys, deletePasskey } = useAuth();
   const isFirstTime = !profile;
 
   const [name, setName] = useState(profile?.name || "");
@@ -21,6 +23,33 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
   const [mood, setMood] = useState(profile?.mood || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [passkeys, setPasskeys] = useState([]);
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
+  const [passkeyError, setPasskeyError] = useState(null);
+
+  async function refreshPasskeys() {
+    const { data } = await listPasskeys();
+    setPasskeys(data || []);
+  }
+
+  useEffect(() => {
+    if (!isFirstTime && passkeySupported) refreshPasskeys();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFirstTime]);
+
+  async function handleAddPasskey() {
+    setPasskeyError(null);
+    setPasskeyBusy(true);
+    const { error } = await registerPasskey();
+    setPasskeyBusy(false);
+    if (error) setPasskeyError(error.message);
+    else refreshPasskeys();
+  }
+
+  async function handleDeletePasskey(id) {
+    await deletePasskey(id);
+    refreshPasskeys();
+  }
 
   useEffect(() => {
     if (profile) {
@@ -140,6 +169,38 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
               />
             </div>
           </button>
+
+          {!isFirstTime && passkeySupported && (
+            <div className="rounded-lg px-3 py-2.5 mb-3" style={{ border: "1px solid rgba(16,24,40,0.14)" }}>
+              <div className="flex items-center gap-2.5 mb-2">
+                <Fingerprint size={15} style={{ color: INK, opacity: 0.6 }} />
+                <div style={{ color: INK }} className="text-xs font-medium">Passkeys</div>
+              </div>
+              {passkeys.length > 0 && (
+                <div className="flex flex-col gap-1 mb-2">
+                  {passkeys.map((pk) => (
+                    <div key={pk.id} className="flex items-center justify-between rounded-md px-2 py-1.5" style={{ background: "rgba(16,24,40,0.04)" }}>
+                      <span style={{ color: INK }} className="text-xs">{pk.friendly_name || "Passkey"}</span>
+                      <button type="button" onClick={() => handleDeletePasskey(pk.id)} style={{ color: "#B5433A", opacity: 0.7 }}>
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={handleAddPasskey}
+                disabled={passkeyBusy}
+                className="flex items-center gap-1.5 text-xs font-medium"
+                style={{ color: ACCENT, opacity: passkeyBusy ? 0.6 : 1 }}
+              >
+                <Plus size={12} />
+                {passkeyBusy ? "Waiting for device…" : "Add a passkey for this device"}
+              </button>
+              {passkeyError && <p className="text-[11px] mt-1.5" style={{ color: "#B5433A" }}>{passkeyError}</p>}
+            </div>
+          )}
 
           {!isFirstTime && (
             <button

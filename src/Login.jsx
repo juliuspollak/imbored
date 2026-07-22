@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Mail, ArrowRight } from "lucide-react";
+import { Mail, ArrowRight, Fingerprint } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { supabaseReady } from "./lib/supabase.js";
 
@@ -7,6 +7,8 @@ const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
 const INK = "#1B2129";
 const ACCENT = "#2F6FED";
+
+const passkeySupported = typeof window !== "undefined" && !!window.PublicKeyCredential;
 
 function GoogleIcon() {
   return (
@@ -20,7 +22,7 @@ function GoogleIcon() {
 }
 
 export default function Login() {
-  const { signInWithEmail, verifyCode, signInWithGoogle } = useAuth();
+  const { signInWithEmail, verifyCode, signInWithGoogle, signInWithPasskey } = useAuth();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
@@ -28,12 +30,24 @@ export default function Login() {
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
 
   useEffect(() => {
     if (cooldown <= 0) return;
     const t = setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
     return () => clearInterval(t);
   }, [cooldown]);
+
+  async function handlePasskey() {
+    setError(null);
+    setPasskeyBusy(true);
+    const { error } = await signInWithPasskey();
+    setPasskeyBusy(false);
+    // A cancelled prompt or "no passkey on this device" isn't really an
+    // error worth alarming someone with — just let them fall through to
+    // the other sign-in options below.
+    if (error && error.name !== "NotAllowedError") setError(error.message);
+  }
 
   async function handleGoogle() {
     setError(null);
@@ -90,6 +104,22 @@ export default function Login() {
 
         {!sent ? (
           <>
+            {passkeySupported && (
+              <>
+                <button
+                  onClick={handlePasskey}
+                  disabled={!supabaseReady || passkeyBusy}
+                  className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold mb-3"
+                  style={{ background: ACCENT, color: "#FFFFFF", opacity: passkeyBusy ? 0.7 : 1 }}
+                >
+                  <Fingerprint size={16} />
+                  {passkeyBusy ? "Waiting…" : "Sign in with a passkey"}
+                </button>
+                <p style={{ color: INK, opacity: 0.4 }} className="text-[11px] text-center mb-4">
+                  Only works if you've registered one on this device before — otherwise use an option below.
+                </p>
+              </>
+            )}
             <button
               onClick={handleGoogle}
               disabled={!supabaseReady}

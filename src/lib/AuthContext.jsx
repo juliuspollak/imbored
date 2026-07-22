@@ -54,6 +54,37 @@ export function AuthProvider({ children }) {
     });
   }
 
+  // Discoverable-credential sign-in: no email needed upfront, the
+  // authenticator's own picker resolves which account. Only works for
+  // someone who already registered a passkey on a previous visit.
+  async function signInWithPasskey() {
+    if (!supabaseReady) return { error: new Error("Supabase isn't configured yet") };
+    return supabase.auth.signInWithPasskey();
+  }
+
+  // Requires an existing signed-in session — this adds a passkey to the
+  // CURRENT account, it doesn't create a new one. Typically called from the
+  // profile screen.
+  async function registerPasskey() {
+    if (!supabaseReady || !session) return { error: new Error("Not logged in") };
+    return supabase.auth.registerPasskey();
+  }
+
+  async function listPasskeys() {
+    if (!supabaseReady) return { data: [] };
+    return supabase.auth.passkey.list();
+  }
+
+  async function renamePasskey(passkeyId, friendlyName) {
+    if (!supabaseReady) return { error: new Error("Not logged in") };
+    return supabase.auth.passkey.update({ passkeyId, friendlyName });
+  }
+
+  async function deletePasskey(passkeyId) {
+    if (!supabaseReady) return { error: new Error("Not logged in") };
+    return supabase.auth.passkey.delete({ passkeyId });
+  }
+
   async function signOut() {
     if (!supabaseReady) return;
     await supabase.auth.signOut();
@@ -115,6 +146,11 @@ export function AuthProvider({ children }) {
     signInWithEmail,
     verifyCode,
     signInWithGoogle,
+    signInWithPasskey,
+    registerPasskey,
+    listPasskeys,
+    renamePasskey,
+    deletePasskey,
     signOut,
     saveProfile,
     createTeam,
