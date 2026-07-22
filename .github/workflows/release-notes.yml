@@ -1,38 +1,69 @@
 name: Sync release notes
 
-# Syncs CHANGELOG.json to the release_notes table on every push. Content
-# is authored in that file (by Claude, alongside each shipped change) —
-# not derived from commit messages. Safe to run repeatedly: each entry has
-# a stable external_id, and the upsert (on_conflict=external_id) means
-# re-running never creates duplicates. Only new entries appended to the
-# file since the last run actually show up as new rows.
-
 on:
   push:
     branches: [main]
+    paths:
+      - CHANGELOG.json
+      - .github/workflows/release-notes.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   sync-release-notes:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Validate configuration and changelog
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -euo pipefail
+
+          test -n "$SUPABASE_URL" || {
+            echo "::error::Missing SUPABASE_URL repository secret"
+            exit 1
+          }
+
+          test -n "$SUPABASE_SERVICE_ROLE_KEY" || {
+            echo "::error::Missing SUPABASE_SERVICE_ROLE_KEY repository secret"
+            exit 1
+          }
+
+          jq -e '
+            type == "array" and
+            all(.[]; .id and .title and .body and .version and .date)
+          ' CHANGELOG.json >/dev/null
+
+      - name: Build Supabase payload
+        run: |
+          set -euo pipefail
+
+          jq -c '[.[] | {
+            external_id: .id,
+            title: .title,
+            body: .body,
+            version: .version,
+            created_at: (.date + "T12:00:00Z")
+          }]' CHANGELOG.json > /tmp/release-notes.json
 
       - name: Sync CHANGELOG.json to Supabase
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          PAYLOAD=$(jq '[.[] | {
-            external_id: .id,
-            title: .title,
-            body: .body,
-            version: .version,
-            created_at: (now - (.days_ago * 86400) | strftime("%Y-%m-%dT%H:%M:%SZ"))
-          }]' CHANGELOG.json)
+          set -euo pipefail
 
-          curl -sf -X POST "$SUPABASE_URL/rest/v1/release_notes?on_conflict=external_id" \
-            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
-            -H "Content-Type: application/json" \
-            -H "Prefer: resolution=merge-duplicates,return=minimal" \
-            -d "$PAYLOAD"
+          curl --fail-with-body --show-error --silent \
+            --request POST "$SUPABASE_URL/rest/v1/release_notes?on_conflict=external_id" \
+            --header "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            --header "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            --header "Content-Type: application/json" \
+            --header "Prefer: resolution=merge-duplicates,return=minimal" \
+            --data-binary @/tmp/release-notes.json
