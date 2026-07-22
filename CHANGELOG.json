@@ -166,5 +166,12 @@
     "title": "Fixed the mystery hide button",
     "body": "Admin's player-hide toggle only had a hover tooltip, which does nothing on a phone. Now has a visible text label.",
     "days_ago": 0.0
+  },
+  {
+    "id": "2026-07-22-sync-merge-fix",
+    "version": "v25",
+    "title": "Fixed release notes not updating",
+    "body": "The sync used 'ignore-duplicates', which skips any entry that already exists instead of updating it. Switched to 'merge-duplicates' so edits to CHANGELOG.json actually take effect on already-synced entries.",
+    "days_ago": 0.0
   }
 ]

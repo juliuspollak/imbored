@@ -1,0 +1,38 @@
+name: Sync release notes
+
+# Syncs CHANGELOG.json to the release_notes table on every push. Content
+# is authored in that file (by Claude, alongside each shipped change) —
+# not derived from commit messages. Safe to run repeatedly: each entry has
+# a stable external_id, and the upsert (on_conflict=external_id) means
+# re-running never creates duplicates. Only new entries appended to the
+# file since the last run actually show up as new rows.
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  sync-release-notes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync CHANGELOG.json to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          PAYLOAD=$(jq '[.[] | {
+            external_id: .id,
+            title: .title,
+            body: .body,
+            version: .version,
+            created_at: (now - (.days_ago * 86400) | strftime("%Y-%m-%dT%H:%M:%SZ"))
+          }]' CHANGELOG.json)
+
+          curl -sf -X POST "$SUPABASE_URL/rest/v1/release_notes?on_conflict=external_id" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: resolution=merge-duplicates,return=minimal" \
+            -d "$PAYLOAD"
