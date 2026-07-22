@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
-import { Grid3x3, RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, Delete } from "lucide-react";
+import { useHintCooldown } from "../lib/useHintCooldown.js";
+import { rateDifficulty } from "../lib/saveStats.js";
+import DifficultyRating from "../DifficultyRating.jsx";
+import { Grid3x3, RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, Delete, Lock } from "lucide-react";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -217,13 +220,15 @@ function NumBtn({ onClick, disabled, children, ...rest }) {
   );
 }
 
-export default function MiniSudokuGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate } = {}) {
+export default function MiniSudokuGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId } = {}) {
   const todayIdx = (() => {
     const d = new Date().getDay();
     return d === 0 ? 6 : d - 1;
   })();
   const isChallenge = mode === "challenge";
   const [dayIdx, setDayIdx] = useState(isChallenge ? forcedDayIdx ?? todayIdx : todayIdx);
+  const hintCooldownSeconds = (hintCooldownConfig?.hint_cooldown_base || 0) + (hintCooldownConfig?.hint_cooldown_per_day || 0) * dayIdx;
+  const hintCooldown = useHintCooldown(hintCooldownSeconds);
   const [puzzle, setPuzzle] = useState(null);
   const [board, setBoard] = useState(null);
   const [selected, setSelected] = useState(null); // {r, c}
@@ -235,6 +240,8 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   const [hintCell, setHintCell] = useState(null);
   const [history, setHistory] = useState([]);
   const [showHelp, setShowHelp] = useState(false);
+  const [celebratingCells, setCelebratingCells] = useState(new Set());
+  const prevCompleteSectionsRef = useRef(new Set());
   const timerRef = useRef(null);
 
   const newPuzzle = useCallback((dIdx) => {
@@ -250,6 +257,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     setHintsUsed(0);
     setHintCell(null);
     setHistory([]);
+    hintCooldown.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isChallenge, seed]);
 
@@ -275,6 +283,50 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
       onSolved && onSolved({ userId, game: "minisudoku", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed, mode, challengeDate: isChallenge ? challengeDate : undefined });
     }
   }, [board, puzzle]);
+
+  // Detect any row, column, or box that just became fully and correctly
+  // filled (compared to what was complete a moment ago) and flash it —
+  // small satisfying feedback along the way, not just at the very end.
+  useEffect(() => {
+    if (!board) return;
+    const currentComplete = new Set();
+    for (let r = 0; r < N; r++) {
+      const vals = board[r];
+      if (vals.every((v) => v !== 0) && new Set(vals).size === N) currentComplete.add(`row-${r}`);
+    }
+    for (let c = 0; c < N; c++) {
+      const vals = board.map((row) => row[c]);
+      if (vals.every((v) => v !== 0) && new Set(vals).size === N) currentComplete.add(`col-${c}`);
+    }
+    for (let br = 0; br < N; br += BOX_R) {
+      for (let bc = 0; bc < N; bc += BOX_C) {
+        const vals = [];
+        for (let rr = br; rr < br + BOX_R; rr++) for (let cc = bc; cc < bc + BOX_C; cc++) vals.push(board[rr][cc]);
+        if (vals.every((v) => v !== 0) && new Set(vals).size === N) currentComplete.add(`box-${br}-${bc}`);
+      }
+    }
+
+    const newlyCompleted = [...currentComplete].filter((k) => !prevCompleteSectionsRef.current.has(k));
+    prevCompleteSectionsRef.current = currentComplete;
+    if (newlyCompleted.length === 0) return;
+
+    const cellsToFlash = new Set();
+    for (const key of newlyCompleted) {
+      if (key.startsWith("row-")) {
+        const r = Number(key.split("-")[1]);
+        for (let c = 0; c < N; c++) cellsToFlash.add(`${r}-${c}`);
+      } else if (key.startsWith("col-")) {
+        const c = Number(key.split("-")[1]);
+        for (let r = 0; r < N; r++) cellsToFlash.add(`${r}-${c}`);
+      } else {
+        const [, br, bc] = key.split("-").map(Number);
+        for (let rr = br; rr < br + BOX_R; rr++) for (let cc = bc; cc < bc + BOX_C; cc++) cellsToFlash.add(`${rr}-${cc}`);
+      }
+    }
+    setCelebratingCells(cellsToFlash);
+    const t = setTimeout(() => setCelebratingCells(new Set()), 650);
+    return () => clearTimeout(t);
+  }, [board]);
 
   if (!board || !puzzle) {
     return (
@@ -347,7 +399,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   }
 
   function handleHint() {
-    if (solved) return;
+    if (solved || hintCooldown.locked) return;
     // 1) flag one wrong number already on the board — the only place a
     // mistake gets counted, not every wrong tap, only one hint catches you on
     for (let r = 0; r < N; r++) {
@@ -356,6 +408,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
           setHintCell({ r, c, type: "error" });
           setHintsUsed((h) => h + 1);
           setMistakes((m) => m + 1);
+          hintCooldown.startCooldown();
           return;
         }
       }
@@ -368,6 +421,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
       setSelected({ r: step.r, c: step.c });
       setHintCell({ r: step.r, c: step.c, type: step.type });
       setHintsUsed((h) => h + 1);
+      hintCooldown.startCooldown();
     }
   }
 
@@ -380,8 +434,15 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         @keyframes msPulseHint { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(47,111,237,1); } 50% { box-shadow: inset 0 0 0 3px rgba(47,111,237,0.2); } }
         .ms-hint-error { animation: msPulseError 1.1s ease-in-out infinite; }
         .ms-hint-naked, .ms-hint-hidden, .ms-hint-forced { animation: msPulseHint 1.1s ease-in-out infinite; }
+        @keyframes msCelebrate {
+          0% { transform: scale(1); }
+          30% { transform: scale(1.08); }
+          60% { transform: scale(0.97); }
+          100% { transform: scale(1); }
+        }
+        .ms-celebrate { animation: msCelebrate 0.5s ease-in-out; z-index: 1; }
         @media (prefers-reduced-motion: reduce) {
-          .ms-hint-error, .ms-hint-naked, .ms-hint-hidden, .ms-hint-forced { animation: none !important; }
+          .ms-hint-error, .ms-hint-naked, .ms-hint-hidden, .ms-hint-forced, .ms-celebrate { animation: none !important; }
         }
         @media (hover: hover) and (pointer: fine) {
           .ms-cell:not(:disabled):hover { filter: brightness(0.96); }
@@ -465,7 +526,12 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
           {[
             { Icon: RotateCcw, label: "Reset", onClick: handleReset, disabled: false },
             { Icon: Shuffle, label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
-            { Icon: Lightbulb, label: "Hint", onClick: handleHint, disabled: solved },
+            {
+              Icon: hintCooldown.locked ? Lock : Lightbulb,
+              label: hintCooldown.locked ? `${hintCooldown.remaining}s` : "Hint",
+              onClick: handleHint,
+              disabled: solved || hintCooldown.locked,
+            },
           ].map(({ Icon, label, onClick, disabled }) => (
             <button
               key={label}
@@ -514,6 +580,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
               const isConflict = conflicts.has(`${r}-${c}`);
               const isHint = hintCell && hintCell.r === r && hintCell.c === c;
               const isSelected = selected && selected.r === r && selected.c === c;
+              const isCelebrating = celebratingCells.has(`${r}-${c}`);
               const hintClass = isHint ? `ms-hint-${hintCell.type}` : "";
               // thicker border on the right/bottom edge of each 2x3 box
               const rightEdge = (c + 1) % BOX_C === 0 && c !== N - 1;
@@ -523,9 +590,9 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
                   key={`${r}-${c}`}
                   onClick={() => handleCellClick(r, c)}
                   disabled={isGiven}
-                  className={`ms-cell relative flex items-center justify-center transition-colors duration-150 ${hintClass}`}
+                  className={`ms-cell relative flex items-center justify-center transition-colors duration-150 ${hintClass} ${isCelebrating ? "ms-celebrate" : ""}`}
                   style={{
-                    background: PANEL,
+                    background: isCelebrating ? "rgba(34,197,94,0.18)" : PANEL,
                     borderRight: rightEdge ? "2px solid #6B6B70" : "1px solid rgba(16,24,40,0.08)",
                     borderBottom: bottomEdge ? "2px solid #6B6B70" : "1px solid rgba(16,24,40,0.08)",
                     boxShadow: isConflict
@@ -554,23 +621,26 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
 
           {solved && (
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl"
-              style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(3px)", zIndex: 3 }}
+              className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl p-4"
+              style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(3px)", zIndex: 3 }}
             >
-              <Grid3x3 size={28} style={{ color: GOLD }} />
+              <Grid3x3 size={26} style={{ color: GOLD }} />
               <p style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 600, color: CREAM }} className="text-2xl">
                 Solved
               </p>
-              <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
+              <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs mb-1">
                 {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
               </p>
-              <button
-                onClick={() => newPuzzle(dayIdx)}
-                className="ms-play-again mt-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors"
-                style={{ background: GOLD, color: "#FFFFFF" }}
-              >
-                Play again
-              </button>
+              {savedStatId && <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} />}
+              {!isChallenge && (
+                <button
+                  onClick={() => newPuzzle(dayIdx)}
+                  className="ms-play-again mt-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                  style={{ background: GOLD, color: "#FFFFFF" }}
+                >
+                  Play again
+                </button>
+              )}
             </div>
           )}
         </div>

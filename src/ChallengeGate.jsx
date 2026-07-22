@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, Home, Lock, Check, Play, X, PartyPopper } from "lucide-react";
+import { ArrowLeft, Home, Lock, Check, Play, X } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
-import { saveStats, rateDifficulty } from "./lib/saveStats.js";
+import { saveStats } from "./lib/saveStats.js";
 import { weekDates, todayIndex } from "./lib/week.js";
-import DifficultyRating from "./DifficultyRating.jsx";
 import ModePill from "./ModePill.jsx";
 
 const BG = "#F1F3F7";
@@ -26,7 +25,7 @@ function describeAvg(avg) {
   return "Felt hard";
 }
 
-export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId, onExit, onSwitchMode }) {
+export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId, onExit, onSwitchMode, hintCooldownConfig }) {
   const dates = weekDates();
   const todayIdx = todayIndex();
   const [results, setResults] = useState({});
@@ -34,7 +33,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   const [playingIdx, setPlayingIdx] = useState(null);
   const [viewingIdx, setViewingIdx] = useState(null);
   const [alreadyPlayedNotice, setAlreadyPlayedNotice] = useState(false);
-  const [justSolved, setJustSolved] = useState(null); // { statId, seconds, mistakes, hints }
+  const [savedStatId, setSavedStatId] = useState(null);
   const [communityRatings, setCommunityRatings] = useState({}); // date -> { avg, count }
   const [leaderboards, setLeaderboards] = useState({}); // date -> [{ user_id, seconds, profiles }]
 
@@ -105,12 +104,13 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   }, [refresh]);
 
   async function handleSolved(stats) {
+    setSavedStatId(null);
     const res = await saveStats(stats);
-    setPlayingIdx(null);
     if (res?.alreadyPlayed) {
       setAlreadyPlayedNotice(true);
+      setPlayingIdx(null);
     } else if (res?.data) {
-      setJustSolved({ statId: res.data.id, seconds: stats.seconds, mistakes: stats.mistakes, hints: stats.hints });
+      setSavedStatId(res.data.id);
     }
     refresh();
   }
@@ -140,49 +140,10 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           forcedDayIdx={playingIdx}
           seed={`${gameId}-${date}`}
           challengeDate={date}
+          hintCooldownConfig={hintCooldownConfig}
+          savedStatId={savedStatId}
         />
         {onSwitchMode && <ModePill mode="challenge" onSwitch={onSwitchMode} />}
-      </div>
-    );
-  }
-
-  if (justSolved) {
-    return (
-      <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-center justify-center p-4">
-        <button
-          onClick={onExit}
-          className="nav-btn"
-          style={{
-            "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)",
-            position: "fixed", top: 16, left: 16, zIndex: 50, width: 36, height: 36, borderRadius: "50%",
-            background: "rgba(255,255,255,0.9)", backdropFilter: "blur(6px)", border: "1px solid rgba(16,24,40,0.12)",
-            display: "flex", alignItems: "center", justifyContent: "center", color: INK,
-          }}
-          aria-label="Back to home"
-        >
-          <ArrowLeft size={18} />
-        </button>
-        <div className="w-full max-w-sm rounded-2xl p-6 text-center" style={{ background: PANEL, boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}>
-          <PartyPopper size={28} style={{ color: ACCENT, margin: "0 auto 10px" }} />
-          <h2 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl mb-1">
-            Solved!
-          </h2>
-          <div className="flex justify-center gap-4 mb-6">
-            <Stat label="Time" value={fmtTime(justSolved.seconds)} />
-            <Stat label="Mistakes" value={justSolved.mistakes} />
-            <Stat label="Hints" value={justSolved.hints} />
-          </div>
-
-          <DifficultyRating onRate={(value) => rateDifficulty(justSolved.statId, value)} />
-
-          <button
-            onClick={() => setJustSolved(null)}
-            className="w-full rounded-lg py-2.5 text-sm font-semibold mt-6"
-            style={{ background: ACCENT, color: "#FFFFFF" }}
-          >
-            Done
-          </button>
-        </div>
       </div>
     );
   }
@@ -233,7 +194,10 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                     onClick={() => {
                       if (isFuture) return;
                       if (result) setViewingIdx(isExpanded ? null : i);
-                      else setPlayingIdx(i);
+                      else {
+                        setSavedStatId(null);
+                        setPlayingIdx(i);
+                      }
                     }}
                     className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-left"
                     style={{

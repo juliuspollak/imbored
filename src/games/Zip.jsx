@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
-import { RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, Flag } from "lucide-react";
+import { useHintCooldown } from "../lib/useHintCooldown.js";
+import { rateDifficulty } from "../lib/saveStats.js";
+import DifficultyRating from "../DifficultyRating.jsx";
+import { RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, Flag, Lock } from "lucide-react";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -255,13 +258,15 @@ function fmtTime(s) {
 
 /* ---------------- component ---------------- */
 
-export default function ZipGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate } = {}) {
+export default function ZipGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId } = {}) {
   const todayIdx = (() => {
     const d = new Date().getDay();
     return d === 0 ? 6 : d - 1;
   })();
   const isChallenge = mode === "challenge";
   const [dayIdx, setDayIdx] = useState(isChallenge ? forcedDayIdx ?? todayIdx : todayIdx);
+  const hintCooldownSeconds = (hintCooldownConfig?.hint_cooldown_base || 0) + (hintCooldownConfig?.hint_cooldown_per_day || 0) * dayIdx;
+  const hintCooldown = useHintCooldown(hintCooldownSeconds);
   const [puzzle, setPuzzle] = useState(null);
   const [path, setPath] = useState(null);
   const [seconds, setSeconds] = useState(0);
@@ -290,6 +295,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
     setHintsUsed(0);
     setHintCell(null);
     setHistory([]);
+    hintCooldown.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isChallenge, seed]);
 
@@ -525,7 +531,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
   }
 
   function handleHint() {
-    if (solved) return;
+    if (solved || hintCooldown.locked) return;
     let matchLen = 0;
     while (
       matchLen < path.length &&
@@ -542,12 +548,14 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
       const [lr, lc] = path[matchLen - 1];
       setHintCell({ r: lr, c: lc, type: "error" });
       setHintsUsed((h) => h + 1);
+      hintCooldown.startCooldown();
       return;
     }
     if (matchLen < puzzle.path.length) {
       const [nr, nc] = puzzle.path[matchLen];
       setHintCell({ r: nr, c: nc, type: "next" });
       setHintsUsed((h) => h + 1);
+      hintCooldown.startCooldown();
     }
   }
 
@@ -653,7 +661,12 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
             { Icon: Undo2, label: "Undo", onClick: handleUndo, disabled: history.length === 0 },
             { Icon: RotateCcw, label: "Reset", onClick: handleReset, disabled: false },
             { Icon: Shuffle, label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
-            { Icon: Lightbulb, label: "Hint", onClick: handleHint, disabled: solved },
+            {
+              Icon: hintCooldown.locked ? Lock : Lightbulb,
+              label: hintCooldown.locked ? `${hintCooldown.remaining}s` : "Hint",
+              onClick: handleHint,
+              disabled: solved || hintCooldown.locked,
+            },
           ].map(({ Icon, label, onClick, disabled }) => (
             <button
               key={label}
@@ -862,21 +875,24 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
 
           {solved && (
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl"
-              style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(3px)", zIndex: 3 }}
+              className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl p-4"
+              style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(3px)", zIndex: 3 }}
             >
-              <Flag size={30} style={{ color: ZIP_GREEN }} />
+              <Flag size={28} style={{ color: ZIP_GREEN }} />
               <p style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 600, color: CREAM }} className="text-2xl">Solved</p>
-              <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
+              <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs mb-1">
                 {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
               </p>
-              <button
-                onClick={() => newPuzzle(dayIdx)}
-                className="zp-play-again mt-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors"
-                style={{ background: GOLD, color: "#FFFFFF" }}
-              >
-                Play again
-              </button>
+              {savedStatId && <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} />}
+              {!isChallenge && (
+                <button
+                  onClick={() => newPuzzle(dayIdx)}
+                  className="zp-play-again mt-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                  style={{ background: GOLD, color: "#FFFFFF" }}
+                >
+                  Play again
+                </button>
+              )}
             </div>
           )}
         </div>

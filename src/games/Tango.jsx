@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
-import { Sun, Moon, RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle } from "lucide-react";
+import { useHintCooldown } from "../lib/useHintCooldown.js";
+import { rateDifficulty } from "../lib/saveStats.js";
+import DifficultyRating from "../DifficultyRating.jsx";
+import { Sun, Moon, RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -275,13 +278,15 @@ function fmtTime(s) {
 
 /* ---------------- component ---------------- */
 
-export default function TangoGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate } = {}) {
+export default function TangoGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId } = {}) {
   const todayIdx = (() => {
     const d = new Date().getDay();
     return d === 0 ? 6 : d - 1;
   })();
   const isChallenge = mode === "challenge";
   const [dayIdx, setDayIdx] = useState(isChallenge ? forcedDayIdx ?? todayIdx : todayIdx);
+  const hintCooldownSeconds = (hintCooldownConfig?.hint_cooldown_base || 0) + (hintCooldownConfig?.hint_cooldown_per_day || 0) * dayIdx;
+  const hintCooldown = useHintCooldown(hintCooldownSeconds);
   const [puzzle, setPuzzle] = useState(null);
   const [board, setBoard] = useState(null);
   const [seconds, setSeconds] = useState(0);
@@ -306,6 +311,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     setHintsUsed(0);
     setHintCell(null);
     setHistory([]);
+    hintCooldown.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isChallenge, seed]);
 
@@ -387,7 +393,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
   }
 
   function handleHint() {
-    if (solved) return;
+    if (solved || hintCooldown.locked) return;
     // 1) flag one wrong symbol, if any — this is the only place a mistake
     // gets counted, not every wrong tap, only a wrong tap hint catches you on
     for (let r = 0; r < SIZE; r++) {
@@ -396,6 +402,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           setHintCell({ r, c, type: "error" });
           setHintsUsed((h) => h + 1);
           setMistakes((m) => m + 1);
+          hintCooldown.startCooldown();
           return;
         }
       }
@@ -405,6 +412,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     if (forced) {
       setHintCell({ r: forced.r, c: forced.c, type: "forced" });
       setHintsUsed((h) => h + 1);
+      hintCooldown.startCooldown();
       return;
     }
     // 3) nothing forced — just point at one blank cell
@@ -413,6 +421,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
         if (board[r][c] === 0) {
           setHintCell({ r, c, type: "next" });
           setHintsUsed((h) => h + 1);
+          hintCooldown.startCooldown();
           return;
         }
       }
@@ -521,7 +530,12 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
             { Icon: Undo2, label: "Undo", onClick: handleUndo, disabled: history.length === 0 },
             { Icon: RotateCcw, label: "Reset", onClick: handleReset, disabled: false },
             { Icon: Shuffle, label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
-            { Icon: Lightbulb, label: "Hint", onClick: handleHint, disabled: solved },
+            {
+              Icon: hintCooldown.locked ? Lock : Lightbulb,
+              label: hintCooldown.locked ? `${hintCooldown.remaining}s` : "Hint",
+              onClick: handleHint,
+              disabled: solved || hintCooldown.locked,
+            },
           ].map(({ Icon, label, onClick, disabled }) => (
             <button
               key={label}
@@ -627,26 +641,29 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
 
           {solved && (
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl"
-              style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(3px)", zIndex: 3 }}
+              className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl p-4"
+              style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(3px)", zIndex: 3 }}
             >
               <div className="flex items-center gap-1">
-                <Sun size={28} style={{ color: SUN_COLOR }} />
-                <Moon size={28} style={{ color: MOON_COLOR }} />
+                <Sun size={26} style={{ color: SUN_COLOR }} />
+                <Moon size={26} style={{ color: MOON_COLOR }} />
               </div>
               <p style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 600, color: CREAM }} className="text-2xl">
                 Solved
               </p>
-              <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
+              <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs mb-1">
                 {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
               </p>
-              <button
-                onClick={() => newPuzzle(dayIdx)}
-                className="tg-play-again mt-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors"
-                style={{ background: GOLD, color: "#FFFFFF" }}
-              >
-                Play again
-              </button>
+              {savedStatId && <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} />}
+              {!isChallenge && (
+                <button
+                  onClick={() => newPuzzle(dayIdx)}
+                  className="tg-play-again mt-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                  style={{ background: GOLD, color: "#FFFFFF" }}
+                >
+                  Play again
+                </button>
+              )}
             </div>
           )}
         </div>

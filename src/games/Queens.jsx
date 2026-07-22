@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
-import { Crown, RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle } from "lucide-react";
+import { useHintCooldown } from "../lib/useHintCooldown.js";
+import { rateDifficulty } from "../lib/saveStats.js";
+import DifficultyRating from "../DifficultyRating.jsx";
+import { Crown, RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -179,16 +182,307 @@ function repairToUnique(n, solution, grid, budget = 1200) {
   return { grid: best, count: bestCount };
 }
 
-function generatePuzzle(n, maxAttempts = 60) {
-  let fallback = null;
+function findNextLogicalStepPure(board, regionGrid, n) {
+  const rowHasQueen = new Array(n).fill(false);
+  const colHasQueen = new Array(n).fill(false);
+  const regionHasQueen = {};
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (board[r][c] === 2) {
+        rowHasQueen[r] = true;
+        colHasQueen[c] = true;
+        regionHasQueen[regionGrid[r][c]] = true;
+      }
+    }
+  }
+  function isCandidate(r, c) {
+    if (board[r][c] !== 0) return false;
+    if (rowHasQueen[r] || colHasQueen[c] || regionHasQueen[regionGrid[r][c]]) return false;
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const rr = r + dr, cc = c + dc;
+        if (rr >= 0 && rr < n && cc >= 0 && cc < n && board[rr][cc] === 2) return false;
+      }
+    }
+    return true;
+  }
+
+  // Checked first: any cell directly ruled out by a crown already on the
+  // board. These are the most obvious follow-up moves ("you placed a
+  // crown, now mark what it eliminates"), so they should be offered
+  // before anything requiring deeper reasoning.
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (board[r][c] !== 2) continue;
+      const region = regionGrid[r][c];
+      for (let rr = 0; rr < n; rr++) {
+        for (let cc = 0; cc < n; cc++) {
+          if (rr === r && cc === c) continue;
+          if (board[rr][cc] !== 0) continue;
+          const sameRow = rr === r, sameCol = cc === c, sameRegion = regionGrid[rr][cc] === region;
+          const adjacent = Math.abs(rr - r) <= 1 && Math.abs(cc - c) <= 1;
+          if (sameRow || sameCol || sameRegion || adjacent) return { r: rr, c: cc, type: "cross", src: "crown-elim" };
+        }
+      }
+    }
+  }
+
+  // naked singles: a row, column, or region with exactly one candidate left
+  for (let r = 0; r < n; r++) {
+    if (rowHasQueen[r]) continue;
+    const cands = [];
+    for (let c = 0; c < n; c++) if (isCandidate(r, c)) cands.push(c);
+    if (cands.length === 1) return { r, c: cands[0], type: "queen", src: "naked" };
+  }
+  for (let c = 0; c < n; c++) {
+    if (colHasQueen[c]) continue;
+    const cands = [];
+    for (let r = 0; r < n; r++) if (isCandidate(r, c)) cands.push(r);
+    if (cands.length === 1) return { r: cands[0], c, type: "queen", src: "naked" };
+  }
+  const regionCells = {};
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) (regionCells[regionGrid[r][c]] ||= []).push([r, c]);
+  }
+  for (const reg in regionCells) {
+    if (regionHasQueen[reg]) continue;
+    const cands = regionCells[reg].filter(([r, c]) => isCandidate(r, c));
+    if (cands.length === 1) return { r: cands[0][0], c: cands[0][1], type: "queen", src: "naked" };
+  }
+
+  function subsetsOfSize(arr, k) {
+    const results = [];
+    (function combo(start, chosen) {
+      if (chosen.length === k) {
+        results.push(chosen.slice());
+        return;
+      }
+      for (let i = start; i < arr.length; i++) {
+        chosen.push(arr[i]);
+        combo(i + 1, chosen);
+        chosen.pop();
+      }
+    })(0, []);
+    return results;
+  }
+
+  const openRows = [];
+  for (let r = 0; r < n; r++) if (!rowHasQueen[r]) openRows.push(r);
+  const openCols = [];
+  for (let c = 0; c < n; c++) if (!colHasQueen[c]) openCols.push(c);
+  // built from actual regionGrid values (not Object.keys, which returns
+  // strings — comparing those against regionGrid's numeric IDs via
+  // Set.has() would silently fail every check, since unlike plain object
+  // property access, Set/Map lookups require an exact type match)
+  const regionIdSet = new Set();
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) regionIdSet.add(regionGrid[r][c]);
+  const openRegions = [...regionIdSet].filter((reg) => !regionHasQueen[reg]);
+
+  // the dual direction of the row/column check below: instead of asking
+  // "do these k rows only have candidates from k regions", ask "do these
+  // k regions only have candidates within k rows (or columns)". These
+  // aren't equivalent — a single 2-cell region sitting entirely in one
+  // column is caught here (k=1) but not by scanning column subsets, since
+  // that column might still be touched by other regions elsewhere.
+  for (let k = 1; k < openRegions.length; k++) {
+    for (const regSet of subsetsOfSize(openRegions, k)) {
+      const regSetSet = new Set(regSet);
+      const rowsSpanned = new Set();
+      let any = false;
+      for (const reg of regSet) for (const [r, c] of regionCells[reg]) if (isCandidate(r, c)) { rowsSpanned.add(r); any = true; }
+      if (any && rowsSpanned.size === k) {
+        for (const r of rowsSpanned) {
+          for (let c = 0; c < n; c++) {
+            if (!isCandidate(r, c)) continue;
+            if (!regSetSet.has(regionGrid[r][c])) return { r, c, type: "cross", src: "subset" };
+          }
+        }
+      }
+      const colsSpanned = new Set();
+      any = false;
+      for (const reg of regSet) for (const [r, c] of regionCells[reg]) if (isCandidate(r, c)) { colsSpanned.add(c); any = true; }
+      if (any && colsSpanned.size === k) {
+        for (const c of colsSpanned) {
+          for (let r = 0; r < n; r++) {
+            if (!isCandidate(r, c)) continue;
+            if (!regSetSet.has(regionGrid[r][c])) return { r, c, type: "cross", src: "subset" };
+          }
+        }
+      }
+    }
+  }
+
+  for (let k = 2; k < openRows.length; k++) {
+    for (const rowSet of subsetsOfSize(openRows, k)) {
+      const rowSetSet = new Set(rowSet);
+      const regionsInSet = new Set();
+      for (const r of rowSet) for (let c = 0; c < n; c++) if (isCandidate(r, c)) regionsInSet.add(regionGrid[r][c]);
+      if (regionsInSet.size !== k) continue;
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          if (!isCandidate(r, c)) continue;
+          const regionInSet = regionsInSet.has(regionGrid[r][c]);
+          const inSet = rowSetSet.has(r);
+          if (regionInSet !== inSet) return { r, c, type: "cross", src: "subset" };
+        }
+      }
+    }
+  }
+  for (let k = 2; k < openCols.length; k++) {
+    for (const colSet of subsetsOfSize(openCols, k)) {
+      const colSetSet = new Set(colSet);
+      const regionsInSet = new Set();
+      for (const c of colSet) for (let r = 0; r < n; r++) if (isCandidate(r, c)) regionsInSet.add(regionGrid[r][c]);
+      if (regionsInSet.size !== k) continue;
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          if (!isCandidate(r, c)) continue;
+          const regionInSet = regionsInSet.has(regionGrid[r][c]);
+          const inSet = colSetSet.has(c);
+          if (regionInSet !== inSet) return { r, c, type: "cross", src: "subset" };
+        }
+      }
+    }
+  }
+
+  // Final tier, and the reason no guessing fallback is needed: try each
+  // remaining candidate in turn and check whether the puzzle is still
+  // solvable with a queen forced there. If it isn't, that cell is
+  // provably an X — a real deduction the player could have reached
+  // themselves ("if I put one here, everything breaks"), not a reveal.
+  // Because the puzzle has exactly one solution, any candidate that
+  // isn't part of it must fail this test, so a step is always available
+  // until the board is finished.
+  function solvableWith(testBoard) {
+    const cols = new Array(n).fill(-1);
+    const usedCols = new Set();
+    const usedRegions = new Set();
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        if (testBoard[r][c] === 2) {
+          cols[r] = c;
+          usedCols.add(c);
+          usedRegions.add(regionGrid[r][c]);
+        }
+      }
+    }
+    function place(r) {
+      if (r === n) return true;
+      if (cols[r] !== -1) {
+        if (r > 0 && cols[r - 1] !== -1 && Math.abs(cols[r] - cols[r - 1]) <= 1) return false;
+        return place(r + 1);
+      }
+      for (let c = 0; c < n; c++) {
+        if (testBoard[r][c] === 1) continue;
+        if (usedCols.has(c)) continue;
+        if (usedRegions.has(regionGrid[r][c])) continue;
+        if (r > 0 && cols[r - 1] !== -1 && Math.abs(c - cols[r - 1]) <= 1) continue;
+        cols[r] = c;
+        usedCols.add(c);
+        usedRegions.add(regionGrid[r][c]);
+        if (place(r + 1)) return true;
+        cols[r] = -1;
+        usedCols.delete(c);
+        usedRegions.delete(regionGrid[r][c]);
+      }
+      return false;
+    }
+    return place(0);
+  }
+
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (!isCandidate(r, c)) continue;
+      const testBoard = board.map((row) => row.slice());
+      testBoard[r][c] = 2;
+      if (!solvableWith(testBoard)) return { r, c, type: "cross", src: "contradiction" };
+    }
+  }
+
+  return null;
+}
+
+// How many steps, across a full solve of this specific region layout,
+// require the deepest tier (the brute-force contradiction test) rather
+// than a pattern a person could actually spot — crown elimination, a
+// naked single, or a region/line subset deduction. That tier is real
+// logic, but it means mentally simulating "if I placed a queen here, does
+// the *entire rest* of the board still work out" — nobody does that by
+// eye, so relying on it is what makes a puzzle feel like it needs a guess
+// even though it technically doesn't. Generation rejects any layout where
+// this is ever needed, not just ones that are merely non-unique.
+function countContradictionSteps(n, regionGrid, solution) {
+  const board = Array.from({ length: n }, () => Array(n).fill(0));
+  let contradictionCount = 0, steps = 0;
+  while (steps < n * n * 4) {
+    const step = findNextLogicalStepPure(board, regionGrid, n);
+    if (!step) break;
+    if (step.src === "contradiction") contradictionCount++;
+    steps++;
+    board[step.r][step.c] = step.type === "queen" ? 2 : 1;
+  }
+  const filled = board.flat().filter((v) => v === 2).length;
+  return filled === n ? contradictionCount : Infinity; // Infinity = didn't even finish, shouldn't happen once uniqueness is verified
+}
+
+// Runs after the layout is already uniquely solvable — keeps reshaping
+// (same single-cell neighbor swap as repairToUnique) but now optimizing
+// to eliminate reliance on the contradiction tier entirely, while never
+// giving up uniqueness along the way.
+function repairToHumanSolvable(n, solution, grid, budget = 800) {
+  let best = grid.map((row) => row.slice());
+  let bestBad = countContradictionSteps(n, best, solution);
+  const queenCell = new Set(solution.map((c, r) => `${r},${c}`));
+  for (let iter = 0; iter < budget && bestBad > 0; iter++) {
+    const r = Math.floor(Math.random() * n), c = Math.floor(Math.random() * n);
+    if (queenCell.has(`${r},${c}`)) continue;
+    const from = best[r][c];
+    const neigh = [];
+    for (const [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+      const nr = r + dr, nc = c + dc;
+      if (nr >= 0 && nr < n && nc >= 0 && nc < n && best[nr][nc] !== from) neigh.push(best[nr][nc]);
+    }
+    if (!neigh.length) continue;
+    const trial = best.map((row) => row.slice());
+    trial[r][c] = neigh[Math.floor(Math.random() * neigh.length)];
+    const fromCells = regionCellsOf(trial, n, from);
+    if (fromCells.length === 0 || !isContiguous(fromCells)) continue;
+    if (!isContiguous(regionCellsOf(trial, n, trial[r][c]))) continue;
+    if (countSolutions(n, trial, 2) !== 1) continue; // must stay uniquely solvable throughout
+    const bad = countContradictionSteps(n, trial, solution);
+    if (bad <= bestBad) {
+      best = trial;
+      bestBad = bad;
+    }
+  }
+  return { grid: best, contradictionSteps: bestBad };
+}
+
+function generatePuzzle(n, maxAttempts = 10) {
+  let fallback = null; // best-effort puzzle if zero contradiction reliance can't be reached
+  let fallbackBad = Infinity;
   for (let i = 0; i < maxAttempts; i++) {
     const solution = generateSolution(n);
     if (!solution) continue;
     const grown = growRegions(n, solution);
-    if (countSolutions(n, grown, 2) === 1) return { solution, regionGrid: grown };
-    const repaired = repairToUnique(n, solution, grown);
-    if (repaired.count === 1) return { solution, regionGrid: repaired.grid };
-    if (!fallback) fallback = { solution, regionGrid: repaired.grid };
+    let grid = grown;
+    if (countSolutions(n, grown, 2) !== 1) {
+      const repaired = repairToUnique(n, solution, grown);
+      if (repaired.count !== 1) continue; // couldn't even reach uniqueness with this solution, try another
+      grid = repaired.grid;
+    }
+    // Uniqueness alone isn't enough — also push the layout to never need
+    // the contradiction tier, so every hint is something a person could
+    // actually spot rather than a step requiring brute-force checking.
+    const humanRepaired = repairToHumanSolvable(n, solution, grid);
+    if (humanRepaired.contradictionSteps === 0) {
+      return { solution, regionGrid: humanRepaired.grid };
+    }
+    if (humanRepaired.contradictionSteps < fallbackBad) {
+      fallback = { solution, regionGrid: humanRepaired.grid };
+      fallbackBad = humanRepaired.contradictionSteps;
+    }
   }
   return fallback;
 }
@@ -239,13 +533,15 @@ function fmtTime(s) {
 
 /* ---------------- component ---------------- */
 
-export default function QueensGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate } = {}) {
+export default function QueensGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId } = {}) {
   const todayIdx = (() => {
     const d = new Date().getDay();
     return d === 0 ? 6 : d - 1;
   })();
   const isChallenge = mode === "challenge";
   const [dayIdx, setDayIdx] = useState(isChallenge ? forcedDayIdx ?? todayIdx : todayIdx);
+  const hintCooldownSeconds = (hintCooldownConfig?.hint_cooldown_base || 0) + (hintCooldownConfig?.hint_cooldown_per_day || 0) * dayIdx;
+  const hintCooldown = useHintCooldown(hintCooldownSeconds);
   const n = SIZES[dayIdx];
 
   const [puzzle, setPuzzle] = useState(null);
@@ -275,6 +571,7 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
     setHintsUsed(0);
     setHintCell(null);
     setHistory([]);
+    hintCooldown.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isChallenge, seed]);
 
@@ -487,8 +784,9 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
   }
 
   function handleReset() {
+    const hadProgress = board.some((row) => row.some((v) => v !== 0));
     setBoard(Array.from({ length: boardSize }, () => Array(boardSize).fill(0)));
-    setMistakes(0);
+    setMistakes((m) => (hadProgress ? m + 1 : m)); // starting over is itself a mistake, not a clean slate
     setHintsUsed(0);
     setHintCell(null);
     setHistory([]);
@@ -731,7 +1029,7 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
   }
 
   function handleHint() {
-    if (solved) return;
+    if (solved || hintCooldown.locked) return;
     // 1) flag anything already on the board that is wrong. Both directions
     // matter: a crown where no crown belongs, AND an x on a cell that must
     // hold a crown. Without the second check an x is never validated, so a
@@ -745,12 +1043,14 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
           setHintCell({ r, c, type: "error" });
           setHintsUsed((h) => h + 1);
           setMistakes((m) => m + 1);
+          hintCooldown.startCooldown();
           return;
         }
         if (board[r][c] === 1 && isSolutionCell) {
           setHintCell({ r, c, type: "error" });
           setHintsUsed((h) => h + 1);
           setMistakes((m) => m + 1);
+          hintCooldown.startCooldown();
           return;
         }
       }
@@ -762,6 +1062,7 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
     if (step) {
       setHintCell({ r: step.r, c: step.c, type: step.type });
       setHintsUsed((h) => h + 1);
+      hintCooldown.startCooldown();
     }
   }
 
@@ -890,7 +1191,12 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
             { Icon: Undo2, label: "Undo", onClick: handleUndo, disabled: history.length === 0 },
             { Icon: RotateCcw, label: "Reset", onClick: handleReset, disabled: false },
             { Icon: Shuffle, label: "New", onClick: () => newPuzzle(n), disabled: isChallenge },
-            { Icon: Lightbulb, label: "Hint", onClick: handleHint, disabled: solved },
+            {
+              Icon: hintCooldown.locked ? Lock : Lightbulb,
+              label: hintCooldown.locked ? `${hintCooldown.remaining}s` : "Hint",
+              onClick: handleHint,
+              disabled: solved || hintCooldown.locked,
+            },
           ].map(({ Icon, label, onClick, disabled }) => (
             <button
               key={label}
@@ -983,23 +1289,26 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
 
           {solved && (
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl"
-              style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(3px)" }}
+              className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl p-4"
+              style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(3px)" }}
             >
-              <Crown size={36} style={{ color: GOLD }} />
+              <Crown size={32} style={{ color: GOLD }} />
               <p style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 600, color: CREAM }} className="text-2xl">
                 Solved
               </p>
-              <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
+              <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs mb-1">
                 {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
               </p>
-              <button
-                onClick={() => newPuzzle(n)}
-                className="qp-play-again mt-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors"
-                style={{ background: GOLD, color: "#FFFFFF" }}
-              >
-                Play again
-              </button>
+              {savedStatId && <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} />}
+              {!isChallenge && (
+                <button
+                  onClick={() => newPuzzle(n)}
+                  className="qp-play-again mt-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                  style={{ background: GOLD, color: "#FFFFFF" }}
+                >
+                  Play again
+                </button>
+              )}
             </div>
           )}
         </div>

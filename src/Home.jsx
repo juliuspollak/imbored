@@ -1,5 +1,6 @@
-import { Crown, Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle } from "lucide-react";
+import { Crown, Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle, Check } from "lucide-react";
 import { useGameConfig } from "./lib/useGameConfig.js";
+import { useTodayCompletions } from "./lib/useTodayCompletions.js";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -16,21 +17,28 @@ export const GAME_META = [
   { id: "wend", label: "Wend", desc: "Weave hidden words through the grid", icon: Waves, accent: "#0EA5E9", available: false },
 ];
 
-export default function Home({ onSelect, playMode, onPlayModeChange, players = [] }) {
-  const gameConfig = useGameConfig();
+export default function Home({ onSelect, playMode, onPlayModeChange, players = [], userId }) {
+  const { config: gameConfig, loading: gameConfigLoading } = useGameConfig();
+  const todayCompletions = useTodayCompletions(playMode === "challenge" ? userId : undefined);
 
-  const visibleGames = GAME_META
-    .map((g, i) => {
-      const cfg = gameConfig?.[g.id];
-      return {
-        ...g,
-        available: cfg ? cfg.available : g.available,
-        visible: cfg ? cfg.visible : true,
-        sortOrder: cfg ? cfg.sort_order : i,
-      };
-    })
-    .filter((g) => g.visible)
-    .sort((a, b) => a.sortOrder - b.sortOrder);
+  // While the config is still loading, don't assume "no config yet" means
+  // "nothing is hidden" — that's exactly what caused hidden games to flash
+  // visible for a moment on every page load. Show nothing until we
+  // actually know.
+  const visibleGames = gameConfigLoading
+    ? []
+    : GAME_META
+        .map((g, i) => {
+          const cfg = gameConfig?.[g.id];
+          return {
+            ...g,
+            available: cfg ? cfg.available : g.available,
+            visible: cfg ? cfg.visible : true,
+            sortOrder: cfg ? cfg.sort_order : i,
+          };
+        })
+        .filter((g) => g.visible)
+        .sort((a, b) => a.sortOrder - b.sortOrder);
 
   return (
     <div style={{ background: BG, minHeight: "100vh" }} className="flex items-start justify-center p-4 pt-10 sm:pt-16">
@@ -80,6 +88,9 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
             : "any day, unlimited puzzles — nothing saved to your stats"}
         </p>
 
+        {gameConfigLoading ? (
+          <p style={{ color: CREAM, opacity: 0.3 }} className="text-xs text-center py-8">Loading…</p>
+        ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {visibleGames.map((g) => {
             const Icon = g.icon;
@@ -98,6 +109,15 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                   cursor: g.available ? "pointer" : "default",
                 }}
               >
+                {todayCompletions.has(g.id) && (
+                  <span
+                    className="absolute top-3 left-3 flex items-center justify-center rounded-full"
+                    style={{ width: 18, height: 18, background: "rgba(47,111,237,0.12)" }}
+                    title="Already played today"
+                  >
+                    <Check size={11} style={{ color: "#2F6FED" }} strokeWidth={3} />
+                  </span>
+                )}
                 {playingCount > 0 && (
                   <span
                     className="absolute top-3 right-3 flex items-center gap-1 rounded-full px-1.5 py-0.5"
@@ -126,6 +146,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
             );
           })}
         </div>
+        )}
       </div>
     </div>
   );

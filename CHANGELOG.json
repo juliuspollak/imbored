@@ -257,5 +257,54 @@
     "title": "Fixed a gap in the new Games admin screen",
     "body": "It didn't check admin status internally — the database would've blocked a non-admin from actually saving changes, but the screen would misleadingly let them try. Fixed.",
     "days_ago": 0.0
+  },
+  {
+    "id": "2026-07-22-queens-no-guessing-fix",
+    "version": "v38",
+    "title": "Fixed Queens sometimes requiring a guess",
+    "body": "Found the real cause: some puzzles needed a brute-force deduction technique that's essentially unspottable by eye. Generation now rejects any layout that ever needs it — every hint step is now something a person could actually reason out, verified across dozens of test puzzles at every size.",
+    "days_ago": 0.1
+  },
+  {
+    "id": "2026-07-22-played-today-badge",
+    "version": "v39",
+    "title": "Played-today badge on Home",
+    "body": "See at a glance which games you've already completed today's challenge for, without opening each one.",
+    "days_ago": 0.08
+  },
+  {
+    "id": "2026-07-22-reset-mistake",
+    "version": "v40",
+    "title": "Reset now counts as a mistake in Queens",
+    "body": "Starting over after making progress counts against you, same spirit as everything else.",
+    "days_ago": 0.06
+  },
+  {
+    "id": "2026-07-22-hint-cooldown",
+    "version": "v41",
+    "title": "Hint cooldown, admin-configurable",
+    "body": "Admin can set how long Hint locks after each use, per game, with an optional per-day ramp so it can get stricter as difficulty increases through the week. Off by default everywhere.",
+    "days_ago": 0.0
+  },
+  {
+    "id": "2026-07-22-sudoku-section-flash",
+    "version": "v42",
+    "title": "Sudoku flashes a completed section",
+    "body": "Finish a row, column, or box correctly and it briefly pulses, not just the final win.",
+    "days_ago": 0.06
+  },
+  {
+    "id": "2026-07-22-hide-flash-fix",
+    "version": "v43",
+    "title": "Fixed hidden games flashing visible",
+    "body": "A hidden game would show briefly on every page load before disappearing. The config was loading async and defaulting to \"show everything\" in the meantime — now waits for the real answer first.",
+    "days_ago": 0.04
+  },
+  {
+    "id": "2026-07-22-rating-inline",
+    "version": "v44",
+    "title": "Rating moved onto the game screen",
+    "body": "No more jumping to a separate page after solving — the difficulty rating now appears right on the completed board. Challenge mode hides \"Play again\" since it's one attempt only; your result stays visible on the challenge screen's day list any time.",
+    "days_ago": 0.0
   }
 ]

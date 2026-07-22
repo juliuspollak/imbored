@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, LogOut, Users, User, BarChart3, PartyPopper, MessageSquare, Sparkles, Shield, Grid3x3 } from "lucide-react";
+import { ArrowLeft, LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3 } from "lucide-react";
 import Home from "./Home.jsx";
 import QueensGame from "./games/Queens.jsx";
 import TangoGame from "./games/Tango.jsx";
@@ -16,12 +16,12 @@ import AdminGames from "./AdminGames.jsx";
 import ModePill from "./ModePill.jsx";
 import ChallengeGate from "./ChallengeGate.jsx";
 import OnlineWidget from "./OnlineWidget.jsx";
-import DifficultyRating from "./DifficultyRating.jsx";
 import PokeOverlay from "./PokeOverlay.jsx";
 import { AuthProvider, useAuth } from "./lib/AuthContext.jsx";
-import { saveStats, rateDifficulty } from "./lib/saveStats.js";
+import { saveStats } from "./lib/saveStats.js";
 import { supabaseReady } from "./lib/supabase.js";
 import { useOnlinePlayers } from "./lib/useOnlinePlayers.js";
+import { useGameConfig } from "./lib/useGameConfig.js";
 import { usePresence } from "./lib/usePresence.js";
 import { useOpenFeedbackCount } from "./lib/useOpenFeedbackCount.js";
 import { usePokes } from "./lib/pokes.js";
@@ -48,6 +48,7 @@ function AppShell() {
     }
   }, [profile]);
   const players = useOnlinePlayers();
+  const { config: gameConfig } = useGameConfig();
   usePresence(["queens", "tango", "zip", "minisudoku"].includes(active) ? active : null);
   const openFeedbackCount = useOpenFeedbackCount();
 
@@ -94,6 +95,7 @@ function AppShell() {
           playMode={supabaseReady ? playMode : "practice"}
           onPlayModeChange={supabaseReady ? setPlayMode : undefined}
           players={players}
+          userId={user?.id}
         />
         {supabaseReady && profile && (
           <AccountBadge
@@ -116,6 +118,7 @@ function AppShell() {
   }
 
   const { Component: Current, label } = GAME_COMPONENTS[active];
+  const cfg = gameConfig?.[active];
 
   if (playMode === "challenge" && supabaseReady) {
     return (
@@ -126,6 +129,7 @@ function AppShell() {
         userId={user?.id}
         onExit={() => setActive(null)}
         onSwitchMode={() => setPlayMode("practice")}
+        hintCooldownConfig={cfg}
       />
     );
   }
@@ -136,52 +140,20 @@ function AppShell() {
       userId={user?.id}
       onExit={() => setActive(null)}
       onSwitchMode={supabaseReady ? () => setPlayMode("challenge") : undefined}
+      hintCooldownConfig={cfg}
     />
   );
 }
 
-function PracticePlay({ Current, userId, onExit, onSwitchMode }) {
-  const [justSolved, setJustSolved] = useState(null);
+function PracticePlay({ Current, userId, onExit, onSwitchMode, hintCooldownConfig }) {
+  const [savedStatId, setSavedStatId] = useState(null);
 
   async function handleSolved(stats) {
+    setSavedStatId(null);
     const res = await saveStats(stats);
     if (res?.data) {
-      setJustSolved({ statId: res.data.id, seconds: stats.seconds, mistakes: stats.mistakes, hints: stats.hints });
+      setSavedStatId(res.data.id);
     }
-  }
-
-  if (justSolved) {
-    return (
-      <div style={{ background: "#F1F3F7", minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-center justify-center p-4">
-        <button
-          onClick={onExit}
-          className="nav-btn"
-          style={{
-            "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)",
-            position: "fixed", top: 16, left: 16, zIndex: 50, width: 36, height: 36, borderRadius: "50%",
-            background: "rgba(255,255,255,0.9)", backdropFilter: "blur(6px)", border: "1px solid rgba(16,24,40,0.12)",
-            display: "flex", alignItems: "center", justifyContent: "center", color: "#1B2129",
-          }}
-          aria-label="Back to home"
-        >
-          <ArrowLeft size={18} />
-        </button>
-        <div className="w-full max-w-sm rounded-2xl p-6 text-center" style={{ background: "#FFFFFF", boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}>
-          <PartyPopper size={28} style={{ color: "#2F6FED", margin: "0 auto 10px" }} />
-          <h2 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: "#1B2129" }} className="text-2xl mb-4">
-            Solved!
-          </h2>
-          <DifficultyRating onRate={(value) => rateDifficulty(justSolved.statId, value)} />
-          <button
-            onClick={() => setJustSolved(null)}
-            className="w-full rounded-lg py-2.5 text-sm font-semibold mt-6"
-            style={{ background: "#2F6FED", color: "#FFFFFF" }}
-          >
-            Keep practicing
-          </button>
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -215,6 +187,8 @@ function PracticePlay({ Current, userId, onExit, onSwitchMode }) {
         userId={userId}
         onSolved={handleSolved}
         mode="practice"
+        hintCooldownConfig={hintCooldownConfig}
+        savedStatId={savedStatId}
       />
       {onSwitchMode && <ModePill mode="practice" onSwitch={onSwitchMode} />}
     </div>

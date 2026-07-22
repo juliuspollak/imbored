@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Home, ChevronUp, ChevronDown, Eye, EyeOff, Lock, Unlock } from "lucide-react";
+import { Home, ChevronUp, ChevronDown, Eye, EyeOff, Lock, Unlock, Timer } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { GAME_META } from "./Home.jsx";
@@ -7,16 +7,20 @@ import { GAME_META } from "./Home.jsx";
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
 const INK = "#1B2129";
+const ACCENT = "#2F6FED";
 
 // Admin-only: control which games show on the home screen, whether
-// they're clickable ("Coming soon" vs playable), and what order they
-// appear in. Reads/writes the game_config table directly — Home.jsx picks
-// up any change on its next load.
+// they're clickable ("Coming soon" vs playable), what order they appear
+// in, and how long the Hint button locks after each use (with an optional
+// per-day ramp, so it can get stricter as difficulty increases through
+// the week). Reads/writes the game_config table directly — Home.jsx and
+// each game pick up any change on their next load.
 export default function AdminGames({ onBack }) {
   const { profile } = useAuth();
   const isAdmin = !!profile?.is_admin;
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(null); // game_id currently showing cooldown controls
 
   const refresh = useCallback(async () => {
     if (!supabaseReady || !isAdmin) {
@@ -34,6 +38,8 @@ export default function AdminGames({ onBack }) {
       visible: true,
       available: g.available,
       sort_order: (data?.length || 0) + i,
+      hint_cooldown_base: 0,
+      hint_cooldown_per_day: 0,
     }));
     setRows([...(data || []), ...missing]);
     setLoading(false);
@@ -46,7 +52,17 @@ export default function AdminGames({ onBack }) {
   async function updateRow(row, patch) {
     const updated = { ...row, ...patch };
     setRows((prev) => prev.map((r) => (r.game_id === row.game_id ? updated : r)));
-    await supabase.from("game_config").upsert({ game_id: row.game_id, visible: updated.visible, available: updated.available, sort_order: updated.sort_order });
+    // always send every relevant column explicitly, not just the changed
+    // one — avoids any ambiguity about whether an upsert preserves columns
+    // left out of the payload
+    await supabase.from("game_config").upsert({
+      game_id: row.game_id,
+      visible: updated.visible,
+      available: updated.available,
+      sort_order: updated.sort_order,
+      hint_cooldown_base: updated.hint_cooldown_base ?? 0,
+      hint_cooldown_per_day: updated.hint_cooldown_per_day ?? 0,
+    });
   }
 
   async function move(index, direction) {
@@ -54,11 +70,19 @@ export default function AdminGames({ onBack }) {
     if (target < 0 || target >= rows.length) return;
     const next = [...rows];
     [next[index], next[target]] = [next[target], next[index]];
-    // reassign sort_order to match the new array positions
     const reordered = next.map((r, i) => ({ ...r, sort_order: i }));
     setRows(reordered);
     await Promise.all(
-      reordered.map((r) => supabase.from("game_config").upsert({ game_id: r.game_id, visible: r.visible, available: r.available, sort_order: r.sort_order }))
+      reordered.map((r) =>
+        supabase.from("game_config").upsert({
+          game_id: r.game_id,
+          visible: r.visible,
+          available: r.available,
+          sort_order: r.sort_order,
+          hint_cooldown_base: r.hint_cooldown_base ?? 0,
+          hint_cooldown_per_day: r.hint_cooldown_per_day ?? 0,
+        })
+      )
     );
   }
 
@@ -79,7 +103,7 @@ export default function AdminGames({ onBack }) {
           </h1>
         </div>
         <p style={{ color: INK, opacity: 0.45 }} className="text-xs mb-6 ml-9">
-          control what shows on the home screen, whether it's playable, and the order
+          visibility, playability, order, and hint cooldown
         </p>
 
         {!supabaseReady ? (
@@ -96,56 +120,84 @@ export default function AdminGames({ onBack }) {
               const meta = GAME_META.find((g) => g.id === r.game_id);
               if (!meta) return null;
               const Icon = meta.icon;
+              const isExpanded = expanded === r.game_id;
+              const hasCooldown = (r.hint_cooldown_base || 0) > 0 || (r.hint_cooldown_per_day || 0) > 0;
               return (
-                <div
-                  key={r.game_id}
-                  className="rounded-xl p-3 flex items-center gap-3"
-                  style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)", opacity: r.visible ? 1 : 0.5 }}
-                >
-                  <div className="flex flex-col">
+                <div key={r.game_id} className="rounded-xl" style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)", opacity: r.visible ? 1 : 0.5 }}>
+                  <div className="p-3 flex items-center gap-3">
+                    <div className="flex flex-col">
+                      <button onClick={() => move(i, -1)} disabled={i === 0} style={{ color: INK, opacity: i === 0 ? 0.2 : 0.5 }}>
+                        <ChevronUp size={14} />
+                      </button>
+                      <button onClick={() => move(i, 1)} disabled={i === rows.length - 1} style={{ color: INK, opacity: i === rows.length - 1 ? 0.2 : 0.5 }}>
+                        <ChevronDown size={14} />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-center rounded-lg flex-shrink-0" style={{ width: 32, height: 32, background: `${meta.accent}22` }}>
+                      <Icon size={16} style={{ color: meta.accent }} />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div style={{ color: INK, fontWeight: 600 }} className="text-sm truncate">{meta.label}</div>
+                      <div style={{ color: INK, opacity: 0.4 }} className="text-[11px] truncate">{meta.desc}</div>
+                    </div>
+
                     <button
-                      onClick={() => move(i, -1)}
-                      disabled={i === 0}
-                      style={{ color: INK, opacity: i === 0 ? 0.2 : 0.5 }}
+                      onClick={() => setExpanded(isExpanded ? null : r.game_id)}
+                      className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
+                      style={{ background: hasCooldown ? "rgba(47,111,237,0.1)" : "rgba(16,24,40,0.05)", color: hasCooldown ? ACCENT : INK }}
+                      title="Hint cooldown"
                     >
-                      <ChevronUp size={14} />
+                      <Timer size={12} />
                     </button>
                     <button
-                      onClick={() => move(i, 1)}
-                      disabled={i === rows.length - 1}
-                      style={{ color: INK, opacity: i === rows.length - 1 ? 0.2 : 0.5 }}
+                      onClick={() => updateRow(r, { visible: !r.visible })}
+                      className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
+                      style={{ background: r.visible ? "rgba(16,24,40,0.05)" : "rgba(181,67,58,0.1)", color: r.visible ? INK : "#B5433A" }}
                     >
-                      <ChevronDown size={14} />
+                      {r.visible ? <Eye size={12} /> : <EyeOff size={12} />}
+                    </button>
+                    <button
+                      onClick={() => updateRow(r, { available: !r.available })}
+                      className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
+                      style={{ background: r.available ? "rgba(22,163,74,0.1)" : "rgba(16,24,40,0.05)", color: r.available ? "#16A34A" : INK }}
+                      title={r.available ? "Playable" : "Coming soon (shown, not clickable)"}
+                    >
+                      {r.available ? <Unlock size={12} /> : <Lock size={12} />}
                     </button>
                   </div>
 
-                  <div
-                    className="flex items-center justify-center rounded-lg flex-shrink-0"
-                    style={{ width: 32, height: 32, background: `${meta.accent}22` }}
-                  >
-                    <Icon size={16} style={{ color: meta.accent }} />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div style={{ color: INK, fontWeight: 600 }} className="text-sm truncate">{meta.label}</div>
-                    <div style={{ color: INK, opacity: 0.4 }} className="text-[11px] truncate">{meta.desc}</div>
-                  </div>
-
-                  <button
-                    onClick={() => updateRow(r, { visible: !r.visible })}
-                    className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
-                    style={{ background: r.visible ? "rgba(16,24,40,0.05)" : "rgba(181,67,58,0.1)", color: r.visible ? INK : "#B5433A" }}
-                  >
-                    {r.visible ? <Eye size={12} /> : <EyeOff size={12} />}
-                  </button>
-                  <button
-                    onClick={() => updateRow(r, { available: !r.available })}
-                    className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
-                    style={{ background: r.available ? "rgba(22,163,74,0.1)" : "rgba(16,24,40,0.05)", color: r.available ? "#16A34A" : INK }}
-                    title={r.available ? "Playable" : "Coming soon (shown, not clickable)"}
-                  >
-                    {r.available ? <Unlock size={12} /> : <Lock size={12} />}
-                  </button>
+                  {isExpanded && (
+                    <div className="px-3 pb-3 pt-1 flex gap-3" style={{ borderTop: "1px solid rgba(16,24,40,0.06)" }}>
+                      <div className="flex-1">
+                        <label style={{ color: INK, opacity: 0.5 }} className="text-[10px] font-medium block mb-1 mt-2">
+                          Base cooldown (sec)
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={r.hint_cooldown_base || 0}
+                          onChange={(e) => updateRow(r, { hint_cooldown_base: Math.max(0, parseInt(e.target.value) || 0) })}
+                          className="w-full rounded-lg px-2 py-1.5 text-xs outline-none"
+                          style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label style={{ color: INK, opacity: 0.5 }} className="text-[10px] font-medium block mb-1 mt-2">
+                          + per day (sec)
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={r.hint_cooldown_per_day || 0}
+                          onChange={(e) => updateRow(r, { hint_cooldown_per_day: Math.max(0, parseInt(e.target.value) || 0) })}
+                          className="w-full rounded-lg px-2 py-1.5 text-xs outline-none"
+                          style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -153,7 +205,7 @@ export default function AdminGames({ onBack }) {
         )}
 
         <p style={{ color: INK, opacity: 0.35 }} className="text-[11px] text-center mt-6">
-          Eye = shown on the home screen at all. Lock = playable vs "Coming soon" (shown but not clickable).
+          Eye = shown on home at all. Lock = playable vs "coming soon". Timer = seconds Hint locks for after each use — base + (per-day × day index, 0=Mon..6=Sun), so it can ramp up through the week.
         </p>
       </div>
     </div>
