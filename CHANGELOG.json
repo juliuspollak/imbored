@@ -1,0 +1,16 @@
+[
+  { "id": "2026-07-08-accounts", "title": "Accounts & sign-in", "body": "Email code sign-in, Google sign-in, and passkey support. No passwords, and no confusing magic links.", "days_ago": 14 },
+  { "id": "2026-07-09-stats", "title": "Stats tracking", "body": "Every solved puzzle records your time, mistakes, and hints used — see it all on the Stats page.", "days_ago": 13 },
+  { "id": "2026-07-10-teams", "title": "Teams", "body": "Create a team, join as many as you like, add other players, or leave any time. Private profiles can't be added by anyone but themselves.", "days_ago": 12 },
+  { "id": "2026-07-12-challenge", "title": "Challenge mode", "body": "One attempt per puzzle per day, the exact same puzzle for everyone, locked to real calendar dates. Miss a day? You can still catch it up later — still just one shot.", "days_ago": 10 },
+  { "id": "2026-07-13-mood", "title": "Mood status", "body": "Set a short status next to your name, visible to everyone.", "days_ago": 9 },
+  { "id": "2026-07-15-rating", "title": "Post-puzzle difficulty rating", "body": "Tap a bar right after solving to say how hard it felt. See the group's average difficulty before you even start a puzzle.", "days_ago": 7 },
+  { "id": "2026-07-16-feedback", "title": "Feedback board", "body": "Suggest ideas, upvote other people's. Admin can mark things done with a comment.", "days_ago": 6 },
+  { "id": "2026-07-17-online", "title": "Who's online", "body": "See who else currently has the app open and what they're playing. Tap someone to send them a fun poke.", "days_ago": 5 },
+  { "id": "2026-07-18-rename", "title": "Renamed to I'mBoredToday", "body": "New name, new font, nicer hover effects on all the buttons.", "days_ago": 4 },
+  { "id": "2026-07-19-mistakes-fix", "title": "Fixed mistake counting in Tango", "body": "Mistakes now only count when Hint actually catches something wrong — not on every tap. Matches how Queens already worked.", "days_ago": 3 },
+  { "id": "2026-07-20-admin-hide", "title": "Admin: hide a player", "body": "Admin can now make a player invisible to everyone but themselves, enforced by the database itself.", "days_ago": 2 },
+  { "id": "2026-07-21-presence-fix", "title": "Fixed online status", "body": "You now show as online for as long as the app is open, not just while mid-puzzle.", "days_ago": 1 },
+  { "id": "2026-07-22-recursion-fix", "title": "Fixed a login-breaking bug", "body": "A database policy bug could block sign-in entirely for everyone. Fixed.", "days_ago": 0 },
+  { "id": "2026-07-22-release-notes", "title": "This page", "body": "Release notes are now automatic — no one has to type these in by hand.", "days_ago": 0 }
+]
