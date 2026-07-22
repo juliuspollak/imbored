@@ -103,7 +103,10 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
       <div style={{ position: "relative" }}>
         <button
           onClick={() => setPlayingIdx(null)}
+          className="nav-btn"
           style={{
+            "--nav-glow": "rgba(47,111,237,0.35)",
+            "--nav-border": "rgba(47,111,237,0.4)",
             position: "fixed", top: 16, left: 16, zIndex: 50, width: 36, height: 36, borderRadius: "50%",
             background: "rgba(255,255,255,0.9)", backdropFilter: "blur(6px)", border: "1px solid rgba(16,24,40,0.12)",
             display: "flex", alignItems: "center", justifyContent: "center", color: INK,

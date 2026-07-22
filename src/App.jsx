@@ -131,7 +131,10 @@ function PracticePlay({ Current, userId, onExit }) {
     <div style={{ position: "relative" }}>
       <button
         onClick={onExit}
+        className="nav-btn"
         style={{
+          "--nav-glow": "rgba(47,111,237,0.35)",
+          "--nav-border": "rgba(47,111,237,0.4)",
           position: "fixed",
           top: 16,
           left: 16,
@@ -175,7 +178,10 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenSt
     >
       <button
         onClick={onOpenFeedback}
+        className="nav-btn"
         style={{
+          "--nav-glow": "rgba(139,92,246,0.35)",
+          "--nav-border": "rgba(139,92,246,0.4)",
           background: "rgba(255,255,255,0.9)",
           backdropFilter: "blur(6px)",
           border: "1px solid rgba(16,24,40,0.12)",
@@ -193,7 +199,10 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenSt
       </button>
       <button
         onClick={onOpenStats}
+        className="nav-btn"
         style={{
+          "--nav-glow": "rgba(47,111,237,0.35)",
+          "--nav-border": "rgba(47,111,237,0.4)",
           background: "rgba(255,255,255,0.9)",
           backdropFilter: "blur(6px)",
           border: "1px solid rgba(16,24,40,0.12)",
@@ -211,7 +220,10 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenSt
       </button>
       <button
         onClick={onOpenTeams}
+        className="nav-btn"
         style={{
+          "--nav-glow": "rgba(18,148,106,0.35)",
+          "--nav-border": "rgba(18,148,106,0.4)",
           background: "rgba(255,255,255,0.9)",
           backdropFilter: "blur(6px)",
           border: "1px solid rgba(16,24,40,0.12)",
@@ -229,8 +241,11 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenSt
       </button>
       <button
         onClick={onOpenProfile}
+        className="nav-btn"
         title={profile.mood || undefined}
         style={{
+          "--nav-glow": "rgba(47,111,237,0.3)",
+          "--nav-border": "rgba(47,111,237,0.4)",
           display: "flex",
           alignItems: "center",
           gap: 8,
@@ -248,7 +263,10 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenSt
       </button>
       <button
         onClick={onSignOut}
+        className="nav-btn"
         style={{
+          "--nav-glow": "rgba(229,72,77,0.35)",
+          "--nav-border": "rgba(229,72,77,0.4)",
           background: "rgba(255,255,255,0.9)",
           backdropFilter: "blur(6px)",
           border: "1px solid rgba(16,24,40,0.12)",
@@ -277,9 +295,28 @@ function FullScreenMessage({ text }) {
   );
 }
 
+const NAV_BTN_STYLE = `
+  .nav-btn {
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .nav-btn:hover {
+      transform: translateY(-2px) scale(1.08);
+      box-shadow: 0 8px 18px var(--nav-glow, rgba(16,24,40,0.18));
+      border-color: var(--nav-border, rgba(16,24,40,0.12)) !important;
+      background: #FFFFFF !important;
+    }
+  }
+  .nav-btn:active {
+    transform: scale(0.92);
+    transition-duration: 0.08s;
+  }
+`;
+
 export default function App() {
   return (
     <AuthProvider>
+      <style>{NAV_BTN_STYLE}</style>
       <AppShell />
     </AuthProvider>
   );

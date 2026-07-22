@@ -18,11 +18,16 @@ export default function OnlineWidget({ players, userId }) {
       <style>{`
         @keyframes onlineRingSpin { to { transform: rotate(360deg); } }
         .online-ring { animation: onlineRingSpin 3s linear infinite; }
+        .online-btn { transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .online-btn:active { transform: scale(0.9); }
+        @media (hover: hover) and (pointer: fine) {
+          .online-btn:hover { transform: scale(1.08); }
+        }
       `}</style>
 
       <button
         onClick={() => setOpen((o) => !o)}
-        className="relative flex items-center justify-center"
+        className="online-btn relative flex items-center justify-center"
         style={{ width: 44, height: 44 }}
         aria-label="Who's online"
       >
