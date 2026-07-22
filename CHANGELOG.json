@@ -152,5 +152,19 @@
     "title": "Release notes cleanup",
     "body": "Removed manual post/delete controls (the changelog file is the single source of truth now) and added version numbers to every entry.",
     "days_ago": 0.0
+  },
+  {
+    "id": "2026-07-22-stats-split",
+    "version": "v23",
+    "title": "Stats split by Challenge/Practice",
+    "body": "Toggle between the two — practice is unlimited so its counts aren't really comparable, challenge is the fair one-shot-a-day metric. Each game shown separately, plus a total.",
+    "days_ago": 0.0
+  },
+  {
+    "id": "2026-07-22-hide-label",
+    "version": "v24",
+    "title": "Fixed the mystery hide button",
+    "body": "Admin's player-hide toggle only had a hover tooltip, which does nothing on a phone. Now has a visible text label.",
+    "days_ago": 0.0
   }
 ]
