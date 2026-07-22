@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Crown, Moon, Waypoints, Home, EyeOff } from "lucide-react";
+import { Crown, Moon, Waypoints, Grid3x3, Home, EyeOff } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 
@@ -8,9 +8,9 @@ const PANEL = "#FFFFFF";
 const INK = "#1B2129";
 const ACCENT = "#2F6FED";
 
-const GAME_ICONS = { queens: Crown, tango: Moon, zip: Waypoints };
-const GAME_LABELS = { queens: "Queens", tango: "Tango", zip: "Zip" };
-const GAME_COLORS = { queens: "#2F6FED", tango: "#4A6FA5", zip: "#12946A" };
+const GAME_ICONS = { queens: Crown, tango: Moon, zip: Waypoints, minisudoku: Grid3x3 };
+const GAME_LABELS = { queens: "Queens", tango: "Tango", zip: "Zip", minisudoku: "Sudoku" };
+const GAME_COLORS = { queens: "#2F6FED", tango: "#4A6FA5", zip: "#12946A", minisudoku: "#0E7490" };
 
 export default function Stats({ onBack }) {
   const { profile: myProfile, setUserHidden } = useAuth();
@@ -46,11 +46,11 @@ export default function Stats({ onBack }) {
   }
 
   const modeRows = rows.filter((r) => r.mode === mode);
-  const totalsByGame = { queens: 0, tango: 0, zip: 0 };
+  const totalsByGame = { queens: 0, tango: 0, zip: 0, minisudoku: 0 };
   const byUser = {};
   modeRows.forEach((r) => {
     totalsByGame[r.game] = (totalsByGame[r.game] || 0) + 1;
-    byUser[r.user_id] ||= { queens: 0, tango: 0, zip: 0, total: 0 };
+    byUser[r.user_id] ||= { queens: 0, tango: 0, zip: 0, minisudoku: 0, total: 0 };
     byUser[r.user_id][r.game] = (byUser[r.user_id][r.game] || 0) + 1;
     byUser[r.user_id].total += 1;
   });
@@ -111,8 +111,8 @@ export default function Stats({ onBack }) {
               </p>
             ) : (
               <>
-                <div className="grid grid-cols-4 gap-2 mb-6">
-                  {["queens", "tango", "zip"].map((g) => {
+                <div className="grid grid-cols-5 gap-2 mb-6">
+                  {["queens", "tango", "zip", "minisudoku"].map((g) => {
                     const Icon = GAME_ICONS[g];
                     return (
                       <div key={g} className="rounded-xl p-3 text-center" style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)" }}>
@@ -145,7 +145,7 @@ export default function Stats({ onBack }) {
                           {p.profile.mood && <span style={{ fontWeight: 400, opacity: 0.5 }} className="text-xs"> · {p.profile.mood}</span>}
                         </div>
                         <div className="flex gap-2 mt-0.5">
-                          {["queens", "tango", "zip"].map((g) =>
+                          {["queens", "tango", "zip", "minisudoku"].map((g) =>
                             p[g] > 0 ? (
                               <span key={g} style={{ color: GAME_COLORS[g] }} className="text-[10px] font-medium">
                                 {GAME_LABELS[g]} ×{p[g]}

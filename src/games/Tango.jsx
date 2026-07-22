@@ -425,7 +425,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
       className="flex items-center justify-center p-4"
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;1,600&family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
         @keyframes popIn { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes fadeUp { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
         @keyframes hintPulseError { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(217,105,92,1); } 50% { box-shadow: inset 0 0 0 3px rgba(217,105,92,0.25); } }
@@ -463,7 +463,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
         {/* header */}
         <div className="text-center mb-4">
           <h1
-            style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, color: CREAM, letterSpacing: "-0.01em" }}
+            style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }}
             className="text-4xl lg:text-5xl"
           >
             Tango
@@ -634,7 +634,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                 <Sun size={28} style={{ color: SUN_COLOR }} />
                 <Moon size={28} style={{ color: MOON_COLOR }} />
               </div>
-              <p style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", color: CREAM }} className="text-2xl">
+              <p style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 600, color: CREAM }} className="text-2xl">
                 Solved
               </p>
               <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs">

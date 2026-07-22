@@ -4,6 +4,7 @@ import Home from "./Home.jsx";
 import QueensGame from "./games/Queens.jsx";
 import TangoGame from "./games/Tango.jsx";
 import ZipGame from "./games/Zip.jsx";
+import MiniSudokuGame from "./games/MiniSudoku.jsx";
 import Login from "./Login.jsx";
 import ProfileSetup from "./ProfileSetup.jsx";
 import Teams from "./Teams.jsx";
@@ -26,6 +27,7 @@ const GAME_COMPONENTS = {
   queens: { Component: QueensGame, label: "Queens" },
   tango: { Component: TangoGame, label: "Tango" },
   zip: { Component: ZipGame, label: "Zip" },
+  minisudoku: { Component: MiniSudokuGame, label: "Mini Sudoku" },
 };
 
 function AppShell() {
@@ -36,7 +38,7 @@ function AppShell() {
   const [playMode, setPlayMode] = useState("challenge");
   const { loading, user, profile, profileLoading, signOut } = useAuth();
   const players = useOnlinePlayers();
-  usePresence(["queens", "tango", "zip"].includes(active) ? active : null);
+  usePresence(["queens", "tango", "zip", "minisudoku"].includes(active) ? active : null);
   const openFeedbackCount = useOpenFeedbackCount();
 
   if (supabaseReady) {
@@ -123,6 +125,19 @@ function PracticePlay({ Current, userId, onExit }) {
   if (justSolved) {
     return (
       <div style={{ background: "#F1F3F7", minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-center justify-center p-4">
+        <button
+          onClick={onExit}
+          className="nav-btn"
+          style={{
+            "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)",
+            position: "fixed", top: 16, left: 16, zIndex: 50, width: 36, height: 36, borderRadius: "50%",
+            background: "rgba(255,255,255,0.9)", backdropFilter: "blur(6px)", border: "1px solid rgba(16,24,40,0.12)",
+            display: "flex", alignItems: "center", justifyContent: "center", color: "#1B2129",
+          }}
+          aria-label="Back to home"
+        >
+          <ArrowLeft size={18} />
+        </button>
         <div className="w-full max-w-sm rounded-2xl p-6 text-center" style={{ background: "#FFFFFF", boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}>
           <PartyPopper size={28} style={{ color: "#2F6FED", margin: "0 auto 10px" }} />
           <h2 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: "#1B2129" }} className="text-2xl mb-4">

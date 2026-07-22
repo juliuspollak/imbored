@@ -173,5 +173,19 @@
     "title": "Fixed release notes not updating",
     "body": "The sync used 'ignore-duplicates', which skips any entry that already exists instead of updating it. Switched to 'merge-duplicates' so edits to CHANGELOG.json actually take effect on already-synced entries.",
     "days_ago": 0.0
+  },
+  {
+    "id": "2026-07-22-solved-home-button",
+    "version": "v26",
+    "title": "Fixed missing Home button on the Solved! screen",
+    "body": "The post-puzzle rating screen (challenge and practice mode both) had no way back to Home at all — only its own continue button. Added a back arrow, top-left.",
+    "days_ago": 0.0
+  },
+  {
+    "id": "2026-07-22-mini-sudoku",
+    "version": "v27",
+    "title": "New game: Mini Sudoku",
+    "body": "6x6 sudoku, verified unique every time, difficulty scales through the week via clue count. Hint uses real solving techniques (naked/hidden singles, contradiction test) — never a guess. Works in both Challenge and Practice mode, same as the others. Also brought Queens/Tango/Zip's fonts in line with the rest of the app.",
+    "days_ago": 0.0
   }
 ]

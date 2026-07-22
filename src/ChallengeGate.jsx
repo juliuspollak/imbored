@@ -130,6 +130,19 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   if (justSolved) {
     return (
       <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-center justify-center p-4">
+        <button
+          onClick={onExit}
+          className="nav-btn"
+          style={{
+            "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)",
+            position: "fixed", top: 16, left: 16, zIndex: 50, width: 36, height: 36, borderRadius: "50%",
+            background: "rgba(255,255,255,0.9)", backdropFilter: "blur(6px)", border: "1px solid rgba(16,24,40,0.12)",
+            display: "flex", alignItems: "center", justifyContent: "center", color: INK,
+          }}
+          aria-label="Back to home"
+        >
+          <ArrowLeft size={18} />
+        </button>
         <div className="w-full max-w-sm rounded-2xl p-6 text-center" style={{ background: PANEL, boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}>
           <PartyPopper size={28} style={{ color: ACCENT, margin: "0 auto 10px" }} />
           <h2 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl mb-1">
