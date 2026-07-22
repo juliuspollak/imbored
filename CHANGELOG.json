@@ -369,5 +369,12 @@
     "title": "Clearer reactions on What's New",
     "body": "Thumbs up and thumbs down now always show their counts and update immediately. Your selected reaction changes colour, tapping it again removes it, and choosing the opposite reaction switches your vote instead of allowing both.",
     "date": "2026-07-23"
+  },
+  {
+    "id": "v54-release-reaction-persistence",
+    "version": "v54",
+    "date": "2026-07-23",
+    "title": "What's New reactions now persist",
+    "body": "Fixed release-note reactions reverting immediately after selection by using explicit insert, update and delete operations instead of an RLS-sensitive upsert."
   }
 ]

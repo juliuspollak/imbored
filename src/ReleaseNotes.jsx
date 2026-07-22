@@ -91,16 +91,23 @@ export default function ReleaseNotes({ onBack }) {
         .delete()
         .eq("release_note_id", noteId)
         .eq("user_id", user.id));
-    } else {
+    } else if (mine) {
+      // Switching an existing vote must be an UPDATE. Using upsert here can
+      // be rejected by RLS and causes the optimistic UI to snap back.
       ({ error } = await supabase
         .from("release_note_reactions")
-        .upsert(
-          { release_note_id: noteId, user_id: user.id, reaction },
-          { onConflict: "release_note_id,user_id" },
-        ));
+        .update({ reaction })
+        .eq("release_note_id", noteId)
+        .eq("user_id", user.id));
+    } else {
+      // A first-time vote is a plain INSERT.
+      ({ error } = await supabase
+        .from("release_note_reactions")
+        .insert({ release_note_id: noteId, user_id: user.id, reaction }));
     }
 
     if (error) {
+      console.error("Unable to save release-note reaction:", error);
       // Restore the previous display if Supabase rejects the change.
       setReactions(previousReactions);
     }
