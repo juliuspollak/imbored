@@ -2,49 +2,57 @@ import { useState } from "react";
 
 const INK = "#1B2129";
 const ACCENT = "#2F6FED";
+const TRACK = "rgba(16,24,40,0.08)";
 
-// A simple, low-friction post-puzzle prompt: tap a point along a triangle
-// that grows from short (easy) to tall (hard) — same pattern as Apple
-// Fitness's perceived-effort rating. No numbers, no forced choice, just
-// "point at about where it felt."
+const BAR_COUNT = 6;
+
 export default function DifficultyRating({ onRate }) {
-  const [value, setValue] = useState(null); // 0-100
+  const [selected, setSelected] = useState(null); // bar index, 0-based
   const [rated, setRated] = useState(false);
 
-  function handlePick(e) {
-    const svg = e.currentTarget;
-    const rect = svg.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const pct = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
-    setValue(pct);
+  function pick(i) {
+    setSelected(i);
     setRated(true);
-    onRate && onRate(Math.round(pct));
+    const value = Math.round((i / (BAR_COUNT - 1)) * 100);
+    onRate && onRate(value);
   }
-
-  const dotX = value ?? 50;
-  const dotY = 54 - (dotX / 100) * 48; // taller (smaller y) further right
 
   return (
     <div className="flex flex-col items-center">
-      <div style={{ color: INK, opacity: 0.5 }} className="text-xs mb-2">
+      <div style={{ color: INK, opacity: 0.5 }} className="text-xs mb-3">
         {rated ? "Thanks — noted for next time" : "How did that feel?"}
       </div>
-      <svg
-        viewBox="0 0 280 60"
-        onClick={handlePick}
-        style={{ width: "100%", maxWidth: 280, height: 60, cursor: "pointer", touchAction: "none" }}
-      >
-        <polygon points="0,60 280,4 280,60" fill="rgba(16,24,40,0.07)" />
-        {value !== null && (
-          <>
-            <line x1={(dotX / 100) * 280} y1={dotY} x2={(dotX / 100) * 280} y2={60} stroke={ACCENT} strokeWidth={1.5} strokeDasharray="3,3" opacity={0.5} />
-            <circle cx={(dotX / 100) * 280} cy={dotY} r={7} fill={ACCENT} stroke="#FFFFFF" strokeWidth={2} />
-          </>
-        )}
-      </svg>
-      <div className="flex justify-between w-full max-w-[280px] mt-1">
+      <div className="flex items-end gap-1.5" style={{ height: 52 }}>
+        {Array.from({ length: BAR_COUNT }, (_, i) => {
+          const heightPct = 30 + (i / (BAR_COUNT - 1)) * 70; // short to tall, left to right
+          const isFilled = selected !== null && i <= selected;
+          const isTip = selected === i;
+          return (
+            <button
+              key={i}
+              onClick={() => pick(i)}
+              aria-label={`Difficulty level ${i + 1} of ${BAR_COUNT}`}
+              className="flex items-end"
+              style={{ width: 28, height: 52 }}
+            >
+              <div
+                style={{
+                  width: "100%",
+                  height: `${heightPct}%`,
+                  borderRadius: 6,
+                  background: isFilled ? ACCENT : TRACK,
+                  opacity: isTip ? 1 : isFilled ? 0.75 : 1,
+                  transform: isTip ? "scaleY(1.06)" : "scaleY(1)",
+                  transformOrigin: "bottom",
+                  transition: "background 0.15s ease, transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                }}
+              />
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex justify-between w-full mt-2" style={{ maxWidth: BAR_COUNT * 28 + (BAR_COUNT - 1) * 6 }}>
         <span style={{ color: INK, opacity: 0.4 }} className="text-[10px]">Too easy</span>
-        <span style={{ color: INK, opacity: 0.4 }} className="text-[10px]">Just right</span>
         <span style={{ color: INK, opacity: 0.4 }} className="text-[10px]">Too hard</span>
       </div>
     </div>

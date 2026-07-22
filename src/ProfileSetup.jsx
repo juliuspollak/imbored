@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock, Unlock, Users, ArrowLeft, Fingerprint, Trash2, Plus } from "lucide-react";
+import { Lock, Unlock, Users, ArrowLeft, Home, Fingerprint, Trash2, Plus } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { PROFILE_ICONS } from "./lib/icons.js";
 
@@ -78,8 +78,13 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
         style={{ background: PANEL, boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}
       >
         {onDone && (
-          <button onClick={onDone} style={{ color: INK, opacity: 0.4 }} className="absolute top-5 left-5">
-            <ArrowLeft size={18} />
+          <button
+            onClick={onDone}
+            className="nav-btn absolute top-5 left-5 flex items-center gap-1.5 rounded-full pl-2 pr-3 py-1.5"
+            style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)" }}
+          >
+            <Home size={15} />
+            <span className="text-xs font-medium">Home</span>
           </button>
         )}
 

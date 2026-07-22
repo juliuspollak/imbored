@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Crown, Moon, Waypoints } from "lucide-react";
+import { ArrowLeft, Crown, Moon, Waypoints, Home } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 
 const BG = "#F1F3F7";
@@ -46,8 +46,13 @@ export default function Stats({ onBack }) {
     <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex justify-center p-4 pt-10">
       <div className="w-full max-w-md">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={onBack} style={{ color: INK, opacity: 0.5 }}>
-            <ArrowLeft size={18} />
+          <button
+            onClick={onBack}
+            className="nav-btn flex items-center gap-1.5 rounded-full pl-2 pr-3 py-1.5"
+            style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)" }}
+          >
+            <Home size={15} />
+            <span className="text-xs font-medium">Home</span>
           </button>
           <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl">
             Stats

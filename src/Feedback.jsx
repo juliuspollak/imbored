@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, ThumbsUp, Check, X, Plus, MessageSquare } from "lucide-react";
+import { ArrowLeft, ThumbsUp, Check, X, Plus, MessageSquare, Home } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 
@@ -90,8 +90,13 @@ export default function Feedback({ onBack }) {
     <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex justify-center p-4 pt-10">
       <div className="w-full max-w-md">
         <div className="flex items-center gap-3 mb-2">
-          <button onClick={onBack} style={{ color: INK, opacity: 0.5 }}>
-            <ArrowLeft size={18} />
+          <button
+            onClick={onBack}
+            className="nav-btn flex items-center gap-1.5 rounded-full pl-2 pr-3 py-1.5"
+            style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)" }}
+          >
+            <Home size={15} />
+            <span className="text-xs font-medium">Home</span>
           </button>
           <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl">
             Feedback
