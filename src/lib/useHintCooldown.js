@@ -1,34 +1,47 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
-// Shared cooldown logic for the Hint button, used identically across all
-// four games. cooldownSeconds is the effective duration for the current
-// day (already computed by the caller from admin config); 0 or undefined
-// means no cooldown at all — the button behaves exactly as before.
+// Shared cooldown logic for every game. A ref is used as the immediate lock
+// because React state updates are asynchronous; without it, two rapid clicks
+// can both enter the hint handler before the button re-renders as disabled.
 export function useHintCooldown(cooldownSeconds) {
   const [remaining, setRemaining] = useState(0);
   const intervalRef = useRef(null);
+  const lockedRef = useRef(false);
 
-  useEffect(() => () => clearInterval(intervalRef.current), []);
+  const reset = useCallback(() => {
+    clearInterval(intervalRef.current);
+    intervalRef.current = null;
+    lockedRef.current = false;
+    setRemaining(0);
+  }, []);
 
-  function startCooldown() {
-    if (!cooldownSeconds) return;
-    setRemaining(cooldownSeconds);
+  useEffect(() => reset, [reset]);
+
+  const startCooldown = useCallback(() => {
+    const duration = Math.max(0, Number(cooldownSeconds) || 0);
+    if (!duration) return;
+
+    lockedRef.current = true;
+    setRemaining(duration);
     clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
-      setRemaining((r) => {
-        if (r <= 1) {
+      setRemaining((current) => {
+        if (current <= 1) {
           clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          lockedRef.current = false;
           return 0;
         }
-        return r - 1;
+        return current - 1;
       });
     }, 1000);
-  }
+  }, [cooldownSeconds]);
 
-  function reset() {
-    clearInterval(intervalRef.current);
-    setRemaining(0);
-  }
-
-  return { remaining, startCooldown, reset, locked: remaining > 0 };
+  return {
+    remaining,
+    startCooldown,
+    reset,
+    locked: remaining > 0,
+    isLocked: () => lockedRef.current,
+  };
 }

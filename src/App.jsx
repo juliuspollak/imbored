@@ -49,7 +49,7 @@ function AppShell() {
   }, [profile]);
   const players = useOnlinePlayers();
   const { config: gameConfig } = useGameConfig();
-  usePresence(["queens", "tango", "zip", "minisudoku"].includes(active) ? active : null);
+  usePresence(["queens", "tango", "zip", "minisudoku"].includes(active) ? active : null, playMode);
   const openFeedbackCount = useOpenFeedbackCount();
 
   if (supabaseReady) {

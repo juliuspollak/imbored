@@ -94,7 +94,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {visibleGames.map((g) => {
             const Icon = g.icon;
-            const playingCount = players.filter((p) => p.game === g.id).length;
+            const playingCount = players.filter((p) => p.game === g.id && p.mode === playMode).length;
             return (
               <button
                 key={g.id}

@@ -37,10 +37,7 @@ export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hin
 // value: 0-100, where the person tapped on the difficulty triangle.
 export async function rateDifficulty(statId, value) {
   if (!supabaseReady || !statId) return {};
-  try {
-    const { error } = await supabase.from("game_stats").update({ difficulty_rating: value }).eq("id", statId);
-    return { error };
-  } catch (error) {
-    return { error };
-  }
+  const { error } = await supabase.from("game_stats").update({ difficulty_rating: value }).eq("id", statId);
+  if (error) throw error;
+  return {};
 }

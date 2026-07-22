@@ -237,6 +237,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   const [solved, setSolved] = useState(false);
   const [mistakes, setMistakes] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
+  const [difficultyRating, setDifficultyRating] = useState(null);
   const [hintCell, setHintCell] = useState(null);
   const [history, setHistory] = useState([]);
   const [showHelp, setShowHelp] = useState(false);
@@ -255,6 +256,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     setSolved(false);
     setMistakes(0);
     setHintsUsed(0);
+    setDifficultyRating(null);
     setHintCell(null);
     setHistory([]);
     hintCooldown.reset();
@@ -354,12 +356,17 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     if (solved || !selected) return;
     const { r, c } = selected;
     if (puzzle.givens[r][c] !== 0) return;
+    const current = board[r][c];
+    const nextValue = current === d ? 0 : d;
     pushHistory();
     setBoard((prev) => {
       const next = prev.map((row) => row.slice());
-      next[r][c] = next[r][c] === d ? 0 : d; // tap same number again to clear
+      next[r][c] = nextValue;
       return next;
     });
+    if (nextValue !== 0 && nextValue !== puzzle.solution[r][c] && nextValue !== current) {
+      setMistakes((m) => m + 1);
+    }
   }
 
   function handleErase() {
@@ -392,6 +399,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     setSelected(null);
     setMistakes(0);
     setHintsUsed(0);
+    setDifficultyRating(null);
     setHintCell(null);
     setHistory([]);
     setSeconds(0);
@@ -400,25 +408,36 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   }
 
   function handleHint() {
-    if (solved || hintCooldown.locked) return;
-    // 1) flag one wrong number already on the board — the only place a
-    // mistake gets counted, not every wrong tap, only one hint catches you on
+    if (solved || hintCooldown.isLocked()) return;
+    // First correct one wrong entry so the hint always leaves a useful number
+    // on the board. Mistakes are counted when entered, not again here.
     for (let r = 0; r < N; r++) {
       for (let c = 0; c < N; c++) {
         if (board[r][c] !== 0 && board[r][c] !== puzzle.solution[r][c]) {
-          setHintCell({ r, c, type: "error" });
+          pushHistory();
+          setBoard((prev) => {
+            const next = prev.map((row) => row.slice());
+            next[r][c] = puzzle.solution[r][c];
+            return next;
+          });
+          setSelected({ r, c });
+          setHintCell({ r, c, type: "forced" });
           setHintsUsed((h) => h + 1);
-          setMistakes((m) => m + 1);
           hintCooldown.startCooldown();
           return;
         }
       }
     }
-    // 2/3/4) a genuinely forced cell — naked single, hidden single, or (as
-    // a last resort) the contradiction test. No guessing fallback below
-    // this: with a uniquely-solvable puzzle, one of these always fires.
+
+    // Otherwise reveal the value of a logically forced empty cell.
     const step = findNakedSingle(board) || findHiddenSingle(board) || findByContradiction(board);
     if (step) {
+      pushHistory();
+      setBoard((prev) => {
+        const next = prev.map((row) => row.slice());
+        next[step.r][step.c] = puzzle.solution[step.r][step.c];
+        return next;
+      });
       setSelected({ r: step.r, c: step.c });
       setHintCell({ r: step.r, c: step.c, type: step.type });
       setHintsUsed((h) => h + 1);
@@ -505,6 +524,14 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
                 <span className="text-[10px] opacity-70">{GIVEN_TARGETS[i]}</span>
               </button>
             ))}
+          </div>
+        )}
+
+        {solved && difficultyRating !== null && (
+          <div className="flex justify-center mb-3">
+            <span className="rounded-full px-3 py-1 text-[11px] font-semibold" style={{ background: "rgba(22,163,74,0.10)", color: "#16A34A" }}>
+              Your difficulty rating: {difficultyRating}/100
+            </span>
           </div>
         )}
 
@@ -620,7 +647,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
             })
           )}
 
-          {solved && (
+          {solved && difficultyRating === null && (
             <div
               className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl p-4"
               style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(3px)", zIndex: 3 }}
@@ -632,7 +659,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
               <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs mb-1">
                 {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
               </p>
-              {savedStatId && <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} />}
+              {savedStatId && <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} onRated={setDifficultyRating} />}
               {!isChallenge && (
                 <button
                   onClick={() => newPuzzle(dayIdx)}

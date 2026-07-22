@@ -14,15 +14,20 @@ function describe(i) {
   return "Too hard";
 }
 
-export default function DifficultyRating({ onRate }) {
+export default function DifficultyRating({ onRate, onRated }) {
   const [selected, setSelected] = useState(null); // bar index, 0-based
   const [rated, setRated] = useState(false);
 
-  function pick(i) {
-    setSelected(i);
-    setRated(true);
+  async function pick(i) {
     const value = Math.round((i / (BAR_COUNT - 1)) * 100);
-    onRate && onRate(value);
+    try {
+      if (onRate) await onRate(value);
+      setSelected(i);
+      setRated(true);
+      onRated?.(value);
+    } catch (error) {
+      console.error("Unable to save difficulty rating", error);
+    }
   }
 
   // Once rated, collapse to a small pill instead of taking up the same

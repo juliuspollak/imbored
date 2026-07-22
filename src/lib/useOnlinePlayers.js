@@ -17,7 +17,7 @@ export function useOnlinePlayers() {
       const cutoff = new Date(Date.now() - ONLINE_WINDOW_MS).toISOString();
       const { data } = await supabase
         .from("presence")
-        .select("user_id, game, last_seen, profiles(name, icon, mood, is_private)")
+        .select("user_id, game, mode, last_seen, profiles(name, icon, mood, is_private)")
         .gte("last_seen", cutoff);
       // usePresence already skips writing for private profiles; a null
       // embedded profile here means RLS blocked it (a player an admin has

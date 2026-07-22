@@ -13,7 +13,7 @@ import { useAuth } from "./AuthContext.jsx";
 // were last around, rather than vanishing the moment they close the tab.
 // A private profile is the one exception — going private clears any
 // existing row immediately, since privacy means not being tracked at all.
-export function usePresence(game) {
+export function usePresence(game, mode) {
   const { user, profile } = useAuth();
   const isPrivate = profile?.is_private;
 
@@ -28,7 +28,7 @@ export function usePresence(game) {
     let cancelled = false;
     const beat = () => {
       if (cancelled) return;
-      supabase.from("presence").upsert({ user_id: user.id, game, last_seen: new Date().toISOString() }).then();
+      supabase.from("presence").upsert({ user_id: user.id, game, mode: game ? mode : null, last_seen: new Date().toISOString() }).then();
     };
 
     beat();
@@ -38,5 +38,5 @@ export function usePresence(game) {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [game, user, isPrivate]);
+  }, [game, mode, user, isPrivate]);
 }

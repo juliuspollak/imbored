@@ -274,6 +274,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
   const [solved, setSolved] = useState(false);
   const [mistakes, setMistakes] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
+  const [difficultyRating, setDifficultyRating] = useState(null);
   const [hintCell, setHintCell] = useState(null);
   const [history, setHistory] = useState([]);
   const [showHelp, setShowHelp] = useState(false);
@@ -293,6 +294,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
     setSolved(false);
     setMistakes(0);
     setHintsUsed(0);
+    setDifficultyRating(null);
     setHintCell(null);
     setHistory([]);
     hintCooldown.reset();
@@ -524,6 +526,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
     setPath([puzzle.path[0]]);
     setMistakes(0);
     setHintsUsed(0);
+    setDifficultyRating(null);
     setHintCell(null);
     setHistory([]);
     setSeconds(0);
@@ -532,7 +535,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
   }
 
   function handleHint() {
-    if (solved || hintCooldown.locked) return;
+    if (solved || hintCooldown.isLocked()) return;
     let matchLen = 0;
     while (
       matchLen < path.length &&
@@ -874,7 +877,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
             ))}
           </svg>
 
-          {solved && (
+          {solved && difficultyRating === null && (
             <div
               className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl p-4"
               style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(3px)", zIndex: 3 }}
@@ -884,7 +887,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
               <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs mb-1">
                 {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
               </p>
-              {savedStatId && <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} />}
+              {savedStatId && <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} onRated={setDifficultyRating} />}
               {!isChallenge && (
                 <button
                   onClick={() => newPuzzle(dayIdx)}
@@ -897,6 +900,14 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
             </div>
           )}
         </div>
+
+        {solved && difficultyRating !== null && (
+          <div className="flex justify-center mt-3">
+            <span className="rounded-full px-3 py-1 text-[11px] font-semibold" style={{ background: "rgba(22,163,74,0.10)", color: "#16A34A" }}>
+              Your difficulty rating: {difficultyRating}/100
+            </span>
+          </div>
+        )}
 
         <p style={{ color: CREAM, opacity: 0.35 }} className="text-center text-[11px] mt-3">
           {path.length}/{totalVisitable} cells filled

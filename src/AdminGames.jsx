@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Home, ChevronUp, ChevronDown, Eye, EyeOff, Lock, Unlock, Timer } from "lucide-react";
+import { Home, ChevronUp, ChevronDown, Eye, EyeOff, Lock, Unlock, Timer, RotateCcw } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { GAME_META } from "./Home.jsx";
@@ -21,6 +21,8 @@ export default function AdminGames({ onBack }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(null); // game_id currently showing cooldown controls
+  const [resetting, setResetting] = useState(null);
+  const [message, setMessage] = useState("");
 
   const refresh = useCallback(async () => {
     if (!supabaseReady || !isAdmin) {
@@ -65,6 +67,20 @@ export default function AdminGames({ onBack }) {
     });
   }
 
+  async function resetTodayChallenge(gameId, label) {
+    if (!window.confirm(`Reset today's ${label} challenge for every player? This removes today's saved results and ratings.`)) return;
+    setResetting(gameId);
+    setMessage("");
+    const localDate = new Date().toLocaleDateString("en-CA");
+    const { data, error } = await supabase.rpc("admin_reset_daily_challenge", { p_game: gameId, p_challenge_date: localDate });
+    setResetting(null);
+    if (error) {
+      setMessage(`Reset failed: ${error.message}`);
+      return;
+    }
+    setMessage(`${label}: removed ${data ?? 0} result${data === 1 ? "" : "s"} for today.`);
+  }
+
   async function move(index, direction) {
     const target = index + direction;
     if (target < 0 || target >= rows.length) return;
@@ -102,9 +118,14 @@ export default function AdminGames({ onBack }) {
             Games
           </h1>
         </div>
-        <p style={{ color: INK, opacity: 0.45 }} className="text-xs mb-6 ml-9">
-          visibility, playability, order, and hint cooldown
+        <p style={{ color: INK, opacity: 0.45 }} className="text-xs mb-4 ml-9">
+          visibility, playability, order, hint cooldown, and daily resets
         </p>
+        {message && (
+          <div className="text-xs rounded-lg p-3 mb-4" style={{ background: message.startsWith("Reset failed") ? "rgba(217,105,92,0.1)" : "rgba(22,163,74,0.1)", color: message.startsWith("Reset failed") ? "#B5433A" : "#15803D" }}>
+            {message}
+          </div>
+        )}
 
         {!supabaseReady ? (
           <div className="text-xs rounded-lg p-3" style={{ background: "rgba(217,105,92,0.1)", color: "#B5433A" }}>
@@ -143,6 +164,15 @@ export default function AdminGames({ onBack }) {
                       <div style={{ color: INK, opacity: 0.4 }} className="text-[11px] truncate">{meta.desc}</div>
                     </div>
 
+                    <button
+                      onClick={() => resetTodayChallenge(r.game_id, meta.label)}
+                      disabled={resetting === r.game_id || !r.available}
+                      className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
+                      style={{ background: "rgba(234,88,12,0.1)", color: "#C2410C", opacity: !r.available ? 0.35 : 1 }}
+                      title="Reset today's challenge results"
+                    >
+                      <RotateCcw size={12} className={resetting === r.game_id ? "animate-spin" : ""} />
+                    </button>
                     <button
                       onClick={() => setExpanded(isExpanded ? null : r.game_id)}
                       className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"

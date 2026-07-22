@@ -551,6 +551,7 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
   const [solved, setSolved] = useState(false);
   const [mistakes, setMistakes] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
+  const [difficultyRating, setDifficultyRating] = useState(null);
   const [hintCell, setHintCell] = useState(null);
   const [history, setHistory] = useState([]);
   const [showHelp, setShowHelp] = useState(false);
@@ -569,6 +570,7 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
     setSolved(false);
     setMistakes(0);
     setHintsUsed(0);
+    setDifficultyRating(null);
     setHintCell(null);
     setHistory([]);
     hintCooldown.reset();
@@ -789,6 +791,7 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
     setBoard(Array.from({ length: boardSize }, () => Array(boardSize).fill(0)));
     setMistakes((m) => (hadProgress ? m + 1 : m)); // starting over is itself a mistake, not a clean slate
     setHintsUsed(0);
+    setDifficultyRating(null);
     setHintCell(null);
     setHistory([]);
     setSeconds(0);
@@ -1030,7 +1033,7 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
   }
 
   function handleHint() {
-    if (solved || hintCooldown.locked) return;
+    if (solved || hintCooldown.isLocked()) return;
     // 1) flag anything already on the board that is wrong. Both directions
     // matter: a crown where no crown belongs, AND an x on a cell that must
     // hold a crown. Without the second check an x is never validated, so a
@@ -1172,6 +1175,14 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
           </div>
         )}
 
+        {solved && difficultyRating !== null && (
+          <div className="flex justify-center mb-3">
+            <span className="rounded-full px-3 py-1 text-[11px] font-semibold" style={{ background: "rgba(22,163,74,0.10)", color: "#16A34A" }}>
+              Your difficulty rating: {difficultyRating}/100
+            </span>
+          </div>
+        )}
+
         {/* stats row */}
         <div className="flex items-center justify-center gap-4 mb-3 px-1">
           <div className="flex items-center gap-1.5" style={{ color: CREAM, opacity: 0.7 }}>
@@ -1288,7 +1299,7 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
             })
           )}
 
-          {solved && (
+          {solved && difficultyRating === null && (
             <div
               className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl p-4"
               style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(3px)" }}
@@ -1300,7 +1311,7 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
               <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs mb-1">
                 {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
               </p>
-              {savedStatId && <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} />}
+              {savedStatId && <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} onRated={setDifficultyRating} />}
               {!isChallenge && (
                 <button
                   onClick={() => newPuzzle(n)}
