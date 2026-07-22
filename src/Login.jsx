@@ -159,7 +159,7 @@ export default function Login() {
               {!sending && <ArrowRight size={15} />}
             </button>
             <p style={{ color: INK, opacity: 0.4 }} className="text-[11px] text-center mt-3">
-              No password — we'll email you a 6-digit code instead.
+              No password — we'll email you a one-time code instead.
             </p>
             </form>
           </>
@@ -168,7 +168,7 @@ export default function Login() {
             <div className="text-center mb-4">
               <Mail size={24} style={{ color: ACCENT, margin: "0 auto 8px" }} />
               <p style={{ color: INK }} className="text-xs">
-                Enter the 6-digit code sent to <strong>{email}</strong>
+                Enter the code sent to <strong>{email}</strong>
               </p>
             </div>
             <input
@@ -176,10 +176,10 @@ export default function Login() {
               autoFocus
               inputMode="numeric"
               value={code}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder="123456"
-              maxLength={6}
-              className="w-full rounded-lg px-3 py-2.5 text-center text-lg tracking-[0.3em] mb-3 outline-none"
+              onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ""))}
+              placeholder="Enter code"
+              maxLength={10}
+              className="w-full rounded-lg px-3 py-2.5 text-center text-lg tracking-[0.2em] mb-3 outline-none"
               style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
             />
             {error && <p className="text-xs mb-3 text-center" style={{ color: "#B5433A" }}>{error}</p>}
