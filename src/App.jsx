@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, LogOut, Users, User, BarChart3, PartyPopper, MessageSquare } from "lucide-react";
+import { ArrowLeft, LogOut, Users, User, BarChart3, PartyPopper, MessageSquare, Sparkles } from "lucide-react";
 import Home from "./Home.jsx";
 import QueensGame from "./games/Queens.jsx";
 import TangoGame from "./games/Tango.jsx";
@@ -9,6 +9,7 @@ import ProfileSetup from "./ProfileSetup.jsx";
 import Teams from "./Teams.jsx";
 import Stats from "./Stats.jsx";
 import Feedback from "./Feedback.jsx";
+import ReleaseNotes from "./ReleaseNotes.jsx";
 import ChallengeGate from "./ChallengeGate.jsx";
 import OnlineWidget from "./OnlineWidget.jsx";
 import DifficultyRating from "./DifficultyRating.jsx";
@@ -59,6 +60,10 @@ function AppShell() {
     return <Feedback onBack={() => setActive(null)} />;
   }
 
+  if (active === "whatsnew") {
+    return <ReleaseNotes onBack={() => setActive(null)} />;
+  }
+
   if (!active) {
     return (
       <>
@@ -76,6 +81,7 @@ function AppShell() {
             onOpenTeams={() => setActive("teams")}
             onOpenStats={() => setActive("stats")}
             onOpenFeedback={() => setActive("feedback")}
+            onOpenWhatsNew={() => setActive("whatsnew")}
             players={players}
             userId={user?.id}
             openFeedbackCount={openFeedbackCount}
@@ -169,12 +175,13 @@ function PracticePlay({ Current, userId, onExit }) {
   );
 }
 
-function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenStats, onOpenFeedback, players, userId, openFeedbackCount = 0 }) {
+function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenStats, onOpenFeedback, onOpenWhatsNew, players, userId, openFeedbackCount = 0 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const hasOpenFeedback = openFeedbackCount > 0;
 
   const items = [
     { onClick: onOpenProfile, icon: User, label: "My profile", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
+    { onClick: onOpenWhatsNew, icon: Sparkles, label: "What's new", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
     { onClick: onOpenFeedback, icon: MessageSquare, label: "Feedback", glow: "rgba(139,92,246,0.35)", border: "rgba(139,92,246,0.4)", badge: openFeedbackCount },
     { onClick: onOpenStats, icon: BarChart3, label: "Stats", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
     { onClick: onOpenTeams, icon: Users, label: "Teams", glow: "rgba(18,148,106,0.35)", border: "rgba(18,148,106,0.4)" },

@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { ArrowLeft, Crown, Moon, Waypoints, Home } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Crown, Moon, Waypoints, Home, EyeOff, Eye } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
+import { useAuth } from "./lib/AuthContext.jsx";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -11,18 +12,21 @@ const GAME_LABELS = { queens: "Queens", tango: "Tango", zip: "Zip" };
 const GAME_COLORS = { queens: "#2F6FED", tango: "#4A6FA5", zip: "#12946A" };
 
 export default function Stats({ onBack }) {
+  const { profile: myProfile, setUserHidden } = useAuth();
+  const isAdmin = !!myProfile?.is_admin;
+
   const [rows, setRows] = useState([]);
   const [profiles, setProfiles] = useState({});
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const refresh = useCallback(() => {
     if (!supabaseReady) {
       setLoading(false);
       return;
     }
     Promise.all([
       supabase.from("game_stats").select("user_id, game"),
-      supabase.from("profiles").select("id, name, icon, mood"),
+      supabase.from("profiles").select("id, name, icon, mood, hidden_from_others"),
     ]).then(([{ data: statsData }, { data: profilesData }]) => {
       setRows(statsData || []);
       setProfiles(Object.fromEntries((profilesData || []).map((p) => [p.id, p])));
@@ -30,8 +34,17 @@ export default function Stats({ onBack }) {
     });
   }, []);
 
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  async function handleToggleHidden(userId, currentlyHidden) {
+    await setUserHidden(userId, !currentlyHidden);
+    refresh();
+  }
+
   const totalsByGame = { queens: 0, tango: 0, zip: 0 };
-  const byUser = {}; // user_id -> { queens: n, tango: n, zip: n, total: n }
+  const byUser = {};
   rows.forEach((r) => {
     totalsByGame[r.game] = (totalsByGame[r.game] || 0) + 1;
     byUser[r.user_id] ||= { queens: 0, tango: 0, zip: 0, total: 0 };
@@ -40,6 +53,9 @@ export default function Stats({ onBack }) {
   });
   const players = Object.entries(byUser)
     .map(([userId, counts]) => ({ userId, profile: profiles[userId], ...counts }))
+    // a missing profile here means RLS hid this player from us entirely —
+    // don't show a mystery "Unknown" row, just leave them out
+    .filter((p) => p.profile)
     .sort((a, b) => b.total - a.total);
 
   return (
@@ -87,12 +103,16 @@ export default function Stats({ onBack }) {
             </p>
             <div className="flex flex-col gap-2">
               {players.map((p) => (
-                <div key={p.userId} className="rounded-xl p-3 flex items-center gap-3" style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)" }}>
-                  <span style={{ fontSize: 18 }}>{p.profile?.icon || "🙂"}</span>
+                <div
+                  key={p.userId}
+                  className="rounded-xl p-3 flex items-center gap-3"
+                  style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)", opacity: p.profile.hidden_from_others ? 0.5 : 1 }}
+                >
+                  <span style={{ fontSize: 18 }}>{p.profile.icon || "🙂"}</span>
                   <div className="flex-1">
                     <div style={{ color: INK, fontWeight: 600 }} className="text-sm">
-                      {p.profile?.name || "Unknown"}
-                      {p.profile?.mood && <span style={{ fontWeight: 400, opacity: 0.5 }} className="text-xs"> · {p.profile.mood}</span>}
+                      {p.profile.name}
+                      {p.profile.mood && <span style={{ fontWeight: 400, opacity: 0.5 }} className="text-xs"> · {p.profile.mood}</span>}
                     </div>
                     <div className="flex gap-2 mt-0.5">
                       {["queens", "tango", "zip"].map((g) =>
@@ -104,6 +124,15 @@ export default function Stats({ onBack }) {
                       )}
                     </div>
                   </div>
+                  {isAdmin && (
+                    <button
+                      onClick={() => handleToggleHidden(p.userId, p.profile.hidden_from_others)}
+                      title={p.profile.hidden_from_others ? "Hidden from everyone else — tap to unhide" : "Visible to everyone — tap to hide from everyone but you"}
+                      style={{ color: p.profile.hidden_from_others ? "#B5433A" : INK, opacity: p.profile.hidden_from_others ? 1 : 0.3 }}
+                    >
+                      {p.profile.hidden_from_others ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  )}
                   <div style={{ color: INK, opacity: 0.4 }} className="text-xs font-semibold">{p.total}</div>
                 </div>
               ))}

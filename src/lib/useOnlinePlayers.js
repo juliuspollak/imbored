@@ -19,9 +19,10 @@ export function useOnlinePlayers() {
         .from("presence")
         .select("user_id, game, last_seen, profiles(name, icon, mood, is_private)")
         .gte("last_seen", cutoff);
-      // usePresence already skips writing for private profiles — this is
-      // just a second layer of protection against any stale/racy row.
-      const visible = (data || []).filter((row) => !row.profiles?.is_private);
+      // usePresence already skips writing for private profiles; a null
+      // embedded profile here means RLS blocked it (a player an admin has
+      // hidden from everyone else) — either way, don't show the row.
+      const visible = (data || []).filter((row) => row.profiles && !row.profiles.is_private);
       if (!cancelled) setPlayers(visible);
     }
 

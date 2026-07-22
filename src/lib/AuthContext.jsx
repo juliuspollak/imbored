@@ -137,6 +137,14 @@ export function AuthProvider({ children }) {
     return { error };
   }
 
+  // Admin-only: hides a player from everyone but themselves and other
+  // admins. Enforced server-side via RLS, not just filtered client-side —
+  // see migration_release_notes_and_hiding.sql.
+  async function setUserHidden(targetUserId, hidden) {
+    if (!supabaseReady) return { error: new Error("Not logged in") };
+    return supabase.rpc("set_user_hidden", { target_user_id: targetUserId, hidden });
+  }
+
   const value = {
     session,
     user: session?.user ?? null,
@@ -157,6 +165,7 @@ export function AuthProvider({ children }) {
     addPlayerToTeam,
     joinTeam,
     leaveTeam,
+    setUserHidden,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
