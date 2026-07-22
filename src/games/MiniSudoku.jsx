@@ -199,6 +199,24 @@ function fmtTime(s) {
 
 /* ---------------- component ---------------- */
 
+function NumBtn({ onClick, disabled, children, ...rest }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="ms-num-btn flex items-center justify-center rounded-xl py-3.5 text-lg font-semibold transition-all"
+      style={{
+        background: "rgba(16,24,40,0.045)",
+        color: disabled ? "rgba(27,33,41,0.3)" : CREAM,
+        cursor: disabled ? "default" : "pointer",
+      }}
+      {...rest}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function MiniSudokuGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate } = {}) {
   const todayIdx = (() => {
     const d = new Date().getDay();
@@ -445,7 +463,6 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         {/* toolbar */}
         <div className="flex items-center justify-center gap-2 mb-4">
           {[
-            { Icon: Undo2, label: "Undo", onClick: handleUndo, disabled: history.length === 0 },
             { Icon: RotateCcw, label: "Reset", onClick: handleReset, disabled: false },
             { Icon: Shuffle, label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
             { Icon: Lightbulb, label: "Hint", onClick: handleHint, disabled: solved },
@@ -487,8 +504,8 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
             display: "grid",
             gridTemplateColumns: `repeat(${N}, 1fr)`,
             gridTemplateRows: `repeat(${N}, 1fr)`,
-            background: "#2B2B2E",
-            gap: "1px",
+            background: PANEL,
+            border: "2px solid #6B6B70",
           }}
         >
           {board.map((row, r) =>
@@ -508,10 +525,14 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
                   disabled={isGiven}
                   className={`ms-cell relative flex items-center justify-center transition-colors duration-150 ${hintClass}`}
                   style={{
-                    background: isSelected ? "rgba(47,111,237,0.14)" : isGiven ? "rgba(16,24,40,0.045)" : PANEL,
-                    borderRight: rightEdge ? "2.5px solid #2B2B2E" : "none",
-                    borderBottom: bottomEdge ? "2.5px solid #2B2B2E" : "none",
-                    boxShadow: isConflict ? `inset 0 0 0 3px ${RED}` : "none",
+                    background: PANEL,
+                    borderRight: rightEdge ? "2px solid #6B6B70" : "1px solid rgba(16,24,40,0.08)",
+                    borderBottom: bottomEdge ? "2px solid #6B6B70" : "1px solid rgba(16,24,40,0.08)",
+                    boxShadow: isConflict
+                      ? `inset 0 0 0 3px ${RED}`
+                      : isSelected
+                      ? "inset 0 0 0 2.5px #22C55E"
+                      : "none",
                     cursor: isGiven ? "default" : "pointer",
                   }}
                 >
@@ -520,7 +541,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
                       style={{
                         fontSize: "clamp(16px, 5vw, 26px)",
                         fontWeight: isGiven ? 700 : 500,
-                        color: isConflict ? RED : isGiven ? CREAM : GOLD,
+                        color: isConflict ? RED : isGiven ? CREAM : "rgba(27,33,41,0.5)",
                       }}
                     >
                       {val}
@@ -555,39 +576,23 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         </div>
 
         {/* number palette */}
-        <div className="grid grid-cols-7 gap-1.5 mt-4">
-          {[1, 2, 3, 4, 5, 6].map((d) => (
-            <button
-              key={d}
-              onClick={() => handleNumberPick(d)}
-              disabled={solved || !selected}
-              className="ms-num-btn rounded-lg py-2.5 text-base font-semibold transition-all"
-              style={{
-                background: PANEL,
-                border: "1.5px solid rgba(16,24,40,0.12)",
-                color: CREAM,
-                opacity: !selected && !solved ? 0.4 : 1,
-                cursor: !selected || solved ? "default" : "pointer",
-              }}
-            >
+        <div className="grid grid-cols-4 gap-2 mt-4">
+          {[1, 2, 3].map((d) => (
+            <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={solved || !selected}>
               {d}
-            </button>
+            </NumBtn>
           ))}
-          <button
-            onClick={handleErase}
-            disabled={solved || !selected}
-            className="ms-num-btn flex items-center justify-center rounded-lg py-2.5 transition-all"
-            style={{
-              background: PANEL,
-              border: "1.5px solid rgba(16,24,40,0.12)",
-              color: CREAM,
-              opacity: !selected && !solved ? 0.4 : 1,
-              cursor: !selected || solved ? "default" : "pointer",
-            }}
-            aria-label="Erase"
-          >
-            <Delete size={16} />
-          </button>
+          <NumBtn onClick={handleErase} disabled={solved || !selected} aria-label="Erase">
+            <Delete size={18} />
+          </NumBtn>
+          {[4, 5, 6].map((d) => (
+            <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={solved || !selected}>
+              {d}
+            </NumBtn>
+          ))}
+          <NumBtn onClick={handleUndo} disabled={history.length === 0} aria-label="Undo">
+            <Undo2 size={18} />
+          </NumBtn>
         </div>
 
         <p style={{ color: CREAM, opacity: 0.35 }} className="text-center text-[11px] mt-3">

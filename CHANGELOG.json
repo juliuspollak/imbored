@@ -194,5 +194,12 @@
     "title": "New admin screen: Players",
     "body": "Lists every signed-up player, not just ones who've played something (unlike Stats' hide toggle, which only shows players with game history). Admin-only, hide/unhide from here.",
     "days_ago": 0.0
+  },
+  {
+    "id": "2026-07-22-sudoku-restyle",
+    "version": "v29",
+    "title": "Mini Sudoku redesigned",
+    "body": "White cells throughout, bold black for given numbers vs. light gray for your own entries (not blue), a green outline for the selected cell instead of a filled tint, and a proper 4-column number pad with Erase and Undo built right in.",
+    "days_ago": 0.0
   }
 ]
