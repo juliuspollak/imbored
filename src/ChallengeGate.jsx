@@ -4,6 +4,7 @@ import { supabase, supabaseReady } from "./lib/supabase.js";
 import { saveStats } from "./lib/saveStats.js";
 import { weekDates, todayIndex } from "./lib/week.js";
 import ModePill from "./ModePill.jsx";
+import PointsToast from "./PointsToast.jsx";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -34,6 +35,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   const [viewingIdx, setViewingIdx] = useState(null);
   const [alreadyPlayedNotice, setAlreadyPlayedNotice] = useState(false);
   const [savedStatId, setSavedStatId] = useState(null);
+  const [rewardResult, setRewardResult] = useState(null);
   const [communityRatings, setCommunityRatings] = useState({}); // date -> { avg, count }
   const [leaderboards, setLeaderboards] = useState({}); // date -> [{ user_id, seconds, profiles }]
 
@@ -111,6 +113,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
       setPlayingIdx(null);
     } else if (res?.data) {
       setSavedStatId(res.data.id);
+      if (res.reward) setRewardResult(res.reward);
     }
     refresh();
   }
@@ -144,6 +147,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           savedStatId={savedStatId}
         />
         {onSwitchMode && <ModePill mode="challenge" onSwitch={onSwitchMode} />}
+        <PointsToast reward={rewardResult} onDone={() => setRewardResult(null)} />
       </div>
     );
   }

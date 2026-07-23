@@ -1,5 +1,12 @@
 [
   {
+    "version": "v60",
+    "title": "Rewards & Progression",
+    "date": "2026-07-23",
+    "id": "v60-release",
+    "body": "Earn Points for completed games Daily streaks and levels Simple My Progress and rewards UI Player wishes and Point transfers Streak protection using Points Admin rules, rewards, redemptions and adjustments"
+  },
+  {
     "version": "v59",
     "title": "Daily stats and privacy",
     "id": "v59-release",

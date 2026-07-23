@@ -49,3 +49,11 @@ supabase/migration_complete_hidden_user_privacy.sql
 ```
 
 The earlier implementation hid only the `profiles` row. This migration also hides the player's statistics, leaderboard entries, presence, team memberships, feedback, votes, release-note reactions and pokes at database level. Admins and the hidden player can still see the player's own data.
+
+## Rewards & Progression v60
+
+Run `supabase/migration_rewards_progression_v60.sql` after the v59 migrations.
+It adds secure server-side Points awarding, streaks, levels, transfers, rewards,
+wishes, redemptions, streak protection, and admin configuration. Players only
+see a simple Points/Streak/Level interface; calculation details remain stored
+in the private ledger for tuning and audit.

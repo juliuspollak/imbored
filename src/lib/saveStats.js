@@ -28,6 +28,10 @@ export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hin
     if (error && error.code === "23505") {
       return { alreadyPlayed: true };
     }
+    if (data?.id) {
+      const { data: reward, error: rewardError } = await supabase.rpc("award_game_points", { target_stat_id: data.id });
+      return { data, error, reward, rewardError };
+    }
     return { data, error };
   } catch (error) {
     return { error };

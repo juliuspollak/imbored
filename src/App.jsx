@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3 } from "lucide-react";
+import { ArrowLeft, LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3, Star, Gift } from "lucide-react";
 import Home from "./Home.jsx";
 import QueensGame from "./games/Queens.jsx";
 import TangoGame from "./games/Tango.jsx";
@@ -13,6 +13,9 @@ import Feedback from "./Feedback.jsx";
 import ReleaseNotes from "./ReleaseNotes.jsx";
 import AdminPlayers from "./AdminPlayers.jsx";
 import AdminGames from "./AdminGames.jsx";
+import Progress from "./Progress.jsx";
+import AdminRewards from "./AdminRewards.jsx";
+import PointsToast from "./PointsToast.jsx";
 import ModePill from "./ModePill.jsx";
 import ChallengeGate from "./ChallengeGate.jsx";
 import OnlineWidget from "./OnlineWidget.jsx";
@@ -71,6 +74,10 @@ function AppShell() {
     return <Stats onBack={() => setActive(null)} />;
   }
 
+  if (active === "progress") {
+    return <Progress onBack={() => setActive(null)} />;
+  }
+
   if (active === "feedback") {
     return <Feedback onBack={() => setActive(null)} />;
   }
@@ -85,6 +92,10 @@ function AppShell() {
 
   if (active === "admingames") {
     return <AdminGames onBack={() => setActive(null)} />;
+  }
+
+  if (active === "adminrewards") {
+    return <AdminRewards onBack={() => setActive(null)} />;
   }
 
   if (!active) {
@@ -104,10 +115,12 @@ function AppShell() {
             onOpenProfile={() => setActive("profile")}
             onOpenTeams={() => setActive("teams")}
             onOpenStats={() => setActive("stats")}
+            onOpenProgress={() => setActive("progress")}
             onOpenFeedback={() => setActive("feedback")}
             onOpenWhatsNew={() => setActive("whatsnew")}
             onOpenAdminPlayers={() => setActive("adminplayers")}
             onOpenAdminGames={() => setActive("admingames")}
+            onOpenAdminRewards={() => setActive("adminrewards")}
             players={players}
             userId={user?.id}
             openFeedbackCount={openFeedbackCount}
@@ -147,12 +160,14 @@ function AppShell() {
 
 function PracticePlay({ Current, userId, onExit, onSwitchMode, hintCooldownConfig }) {
   const [savedStatId, setSavedStatId] = useState(null);
+  const [rewardResult, setRewardResult] = useState(null);
 
   async function handleSolved(stats) {
     setSavedStatId(null);
     const res = await saveStats(stats);
     if (res?.data) {
       setSavedStatId(res.data.id);
+      if (res.reward) setRewardResult(res.reward);
     }
   }
 
@@ -191,11 +206,12 @@ function PracticePlay({ Current, userId, onExit, onSwitchMode, hintCooldownConfi
         savedStatId={savedStatId}
       />
       {onSwitchMode && <ModePill mode="practice" onSwitch={onSwitchMode} />}
+      <PointsToast reward={rewardResult} onDone={() => setRewardResult(null)} />
     </div>
   );
 }
 
-function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenStats, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, players, userId, openFeedbackCount = 0 }) {
+function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, players, userId, openFeedbackCount = 0 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const hasOpenFeedback = openFeedbackCount > 0;
   const isAdmin = !!profile.is_admin;
@@ -205,9 +221,11 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenSt
     { onClick: onOpenWhatsNew, icon: Sparkles, label: "What's new", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
     { onClick: onOpenFeedback, icon: MessageSquare, label: "Feedback", glow: "rgba(139,92,246,0.35)", border: "rgba(139,92,246,0.4)", badge: openFeedbackCount },
     { onClick: onOpenStats, icon: BarChart3, label: "Stats", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
+    { onClick: onOpenProgress, icon: Star, label: "My progress", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
     { onClick: onOpenTeams, icon: Users, label: "Teams", glow: "rgba(18,148,106,0.35)", border: "rgba(18,148,106,0.4)" },
     ...(isAdmin ? [{ onClick: onOpenAdminPlayers, icon: Shield, label: "Players (admin)", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" }] : []),
     ...(isAdmin ? [{ onClick: onOpenAdminGames, icon: Grid3x3, label: "Games (admin)", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" }] : []),
+    ...(isAdmin ? [{ onClick: onOpenAdminRewards, icon: Gift, label: "Rewards (admin)", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" }] : []),
     { onClick: onSignOut, icon: LogOut, label: "Sign out", glow: "rgba(229,72,77,0.35)", border: "rgba(229,72,77,0.4)" },
   ];
 
