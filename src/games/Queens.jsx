@@ -513,8 +513,15 @@ function getConflicts(board, regionGrid, n) {
 // than saturated candy tones — a soft peachy tan, lavender, periwinkle
 // blue, sage green, terracotta, light gray, chartreuse, and taupe.
 const REGION_COLORS = [
-  "#F0C48A", "#A88FD1", "#7FA8E8", "#93CC8E",
-  "#DE7350", "#D2CFC6", "#D6DC5E", "#A39A82", "#C79CA8",
+  "#F6C58F", // soft peach
+  "#B19AD9", // lavender
+  "#88A9E6", // cornflower blue
+  "#B6D99A", // sage green
+  "#FF7663", // coral
+  "#D8D8D8", // light grey
+  "#DFF07A", // soft lime
+  "#BEB59C", // warm stone
+  "#E5B4C4", // blush for larger boards
 ];
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";

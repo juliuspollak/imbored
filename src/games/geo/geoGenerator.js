@@ -16,7 +16,7 @@ const HISTORY_LIMIT = 5000;
 const STRICT_RECENT_SOURCE_COUNT = 300;
 const STRICT_RECENT_FACT_COUNT = 800;
 
-const DIFFICULTY_CEILING = [1, 1, 2, 2, 3, 3, 3];
+const DIFFICULTY_CEILING = [2, 2, 2, 3, 3, 3, 3];
 
 const QUESTION_TEMPLATES = {
   city: [
@@ -105,6 +105,11 @@ function chooseFact(pool, usedSources, historyIndex) {
   const candidates = pool.filter((fact) => !usedSources.has(fact.sourceId));
   if (!candidates.length) return null;
 
+  // Never repeat a fact while there are unseen facts available. A different
+  // wording does not make an already-used fact "new".
+  const neverSeen = candidates.filter((fact) => !historyIndex.factRank.has(fact.factId));
+  if (neverSeen.length) return shuffle(neverSeen)[0];
+
   const fresh = candidates.filter((fact) => {
     const sourcePosition = historyIndex.sourceRank.get(fact.sourceId);
     const factPosition = historyIndex.factRank.get(fact.factId);
@@ -171,7 +176,7 @@ function generateQuiz(dayIdx, history = []) {
     city: CITIES.filter((q) => q.difficulty <= ceiling).map((q) => tag("city", q)),
     animalLegacy: ANIMALS.filter((q) => q.difficulty <= ceiling).map((q) => tag("animalLegacy", q)),
     landmarkLegacy: LANDMARKS.filter((q) => q.difficulty <= ceiling).map((q) => tag("landmarkLegacy", q)),
-    polar: POLAR_FACTS.filter((q) => q.difficulty <= ceiling).map((q) => ({
+    polar: POLAR_FACTS.filter((q) => q.id !== "mcmurdo" && q.difficulty <= ceiling).map((q) => ({
       ...q,
       sourceId: `polar:${q.id}`,
       factId: `polar:${q.id}`,

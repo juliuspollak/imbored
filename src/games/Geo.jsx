@@ -115,11 +115,12 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
   }
 
   function handleHint() {
-    if (solved || answered || hintCooldown.locked || eliminated.length > 0) return;
+    if (solved || answered || hintCooldown.locked) return;
     const candidates = q.mode === "choice" ? q.options : MAP_REGIONS;
-    const wrongAnswers = candidates.filter((option) => option !== q.answer);
-    const toEliminate = shuffle(wrongAnswers).slice(0, 2);
-    setEliminated(toEliminate);
+    const remainingWrong = candidates.filter((option) => option !== q.answer && !eliminated.includes(option));
+    if (!remainingWrong.length) return;
+    const toEliminate = shuffle(remainingWrong).slice(0, 1);
+    setEliminated((current) => [...current, ...toEliminate]);
     setHintsUsed((h) => h + 1);
     hintCooldown.startCooldown();
   }
@@ -205,7 +206,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
               Icon: hintCooldown.locked ? Lock : Lightbulb,
               label: hintCooldown.locked ? `${hintCooldown.remaining}s` : "Hint",
               onClick: handleHint,
-              disabled: solved || answered || hintCooldown.locked || eliminated.length > 0,
+              disabled: solved || answered || hintCooldown.locked || (q.mode === "choice" ? q.options : MAP_REGIONS).every((option) => option === q.answer || eliminated.includes(option)),
             },
           ].map(({ Icon, label, onClick, disabled }) => (
             <button
@@ -223,7 +224,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
 
         {showHelp && (
           <div className="text-xs rounded-lg p-2.5 mb-3" style={{ background: "rgba(16,24,40,0.05)", color: INK, opacity: 0.75, lineHeight: 1.4 }}>
-            Five quick geography questions. Some use the map; others use four answers. On four-answer questions, the hint removes two wrong choices. On map questions, it fades two wrong continents.
+            Five quick geography questions. Some use the map; others use four answers. Each hint removes one more wrong answer or fades one more incorrect continent. You can keep using Hint until only the correct answer remains.
           </div>
         )}
 

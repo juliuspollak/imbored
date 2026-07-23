@@ -3,7 +3,7 @@ const STRICT_RECENT_SOURCE_COUNT = 60;
 const STRICT_RECENT_FACT_COUNT = 180;
 
 function historyKey(userId) {
-  return `geo_question_history_v2:${userId || "guest"}`;
+  return `geo_question_history_v3:${userId || "guest"}`;
 }
 
 function getQuestionHistory(userId) {

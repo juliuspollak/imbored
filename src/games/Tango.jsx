@@ -3,7 +3,35 @@ import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx";
-import { Sun, Moon, RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
+import { Moon, RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
+
+
+function SunBurstIcon({ size = 24, className = "", style, ...props }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      className={className}
+      style={style}
+      fill="none"
+      aria-hidden="true"
+      {...props}
+    >
+      <circle cx="12" cy="12" r="4.15" fill="currentColor" />
+      <g stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <path d="M12 2.25v2.1" />
+        <path d="M12 19.65v2.1" />
+        <path d="M2.25 12h2.1" />
+        <path d="M19.65 12h2.1" />
+        <path d="m5.1 5.1 1.48 1.48" />
+        <path d="m17.42 17.42 1.48 1.48" />
+        <path d="m18.9 5.1-1.48 1.48" />
+        <path d="m6.58 17.42-1.48 1.48" />
+      </g>
+    </svg>
+  );
+}
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -264,8 +292,8 @@ const CREAM = "#1B2129";
 const GOLD = "#2F6FED";
 const RED = "#E5484D";
 const TEAL = "#5FA8A3";
-const SUN_COLOR = "#E8A020";
-const MOON_COLOR = "#3E6BC2";
+const SUN_COLOR = "#F2A43A";
+const MOON_COLOR = "#6F82C8";
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const GIVEN_TARGETS = [16, 14, 12, 10, 9, 8, 7];
 const EDGE_TARGETS = [6, 5, 5, 4, 4, 3, 3];
@@ -607,7 +635,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                   }}
                 >
                   {val === SUN && (
-                    <Sun key={`sun-${r}-${c}`} className="tg-symbol" size={Math.max(16, 26 - SIZE)} style={{ color: isConflict ? RED : SUN_COLOR }} strokeWidth={2.25} />
+                    <SunBurstIcon key={`sun-${r}-${c}`} className="tg-symbol" size={Math.max(18, 28 - SIZE)} style={{ color: isConflict ? RED : SUN_COLOR }} />
                   )}
                   {val === MOON && (
                     <Moon key={`moon-${r}-${c}`} className="tg-symbol" size={Math.max(16, 26 - SIZE)} style={{ color: isConflict ? RED : MOON_COLOR }} strokeWidth={2.25} />
@@ -655,7 +683,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
               style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(3px)", zIndex: 3 }}
             >
               <div className="flex items-center gap-1">
-                <Sun size={26} style={{ color: SUN_COLOR }} />
+                <SunBurstIcon size={27} style={{ color: SUN_COLOR }} />
                 <Moon size={26} style={{ color: MOON_COLOR }} />
               </div>
               <p style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 600, color: CREAM }} className="text-2xl">

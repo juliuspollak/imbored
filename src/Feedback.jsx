@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, ThumbsUp, Check, X, Plus, MessageSquare, Home } from "lucide-react";
+import { ThumbsUp, Check, X, Plus, MessageSquare, Home, Trash2, RotateCcw } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 
@@ -22,7 +22,7 @@ export default function Feedback({ onBack }) {
   const [submitting, setSubmitting] = useState(false);
   const [closingId, setClosingId] = useState(null);
   const [closeComment, setCloseComment] = useState("");
-  const [filter, setFilter] = useState("open"); // 'open' | 'closed' | 'all'
+  const [filter, setFilter] = useState("open"); // open | closed | all | deleted
 
   const refresh = useCallback(async () => {
     if (!supabaseReady) return;
@@ -77,7 +77,20 @@ export default function Feedback({ onBack }) {
     refresh();
   }
 
-  const visible = items.filter((it) => filter === "all" || it.status === filter);
+  async function handleSoftDelete(feedbackId, deleted) {
+    if (!isAdmin) return;
+    await supabase
+      .from("feedback")
+      .update({ deleted_at: deleted ? new Date().toISOString() : null })
+      .eq("id", feedbackId);
+    refresh();
+  }
+
+  const visible = items.filter((it) => {
+    if (it.deleted_at) return isAdmin && filter === "deleted";
+    if (filter === "deleted") return false;
+    return filter === "all" || it.status === filter;
+  });
   const voteCounts = {};
   const myVotes = new Set();
   votes.forEach((v) => {
@@ -146,7 +159,7 @@ export default function Feedback({ onBack }) {
             )}
 
             <div className="flex gap-1.5 mb-4">
-              {["open", "closed", "all"].map((f) => (
+              {["open", "closed", "all", ...(isAdmin ? ["deleted"] : [])].map((f) => (
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
@@ -185,10 +198,16 @@ export default function Feedback({ onBack }) {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span style={{ color: INK, fontWeight: 600 }} className="text-sm">{it.title}</span>
-                          {it.status === "closed" && (
+                          {it.status === "closed" && !it.deleted_at && (
                             <span className="flex items-center gap-0.5 rounded-full px-1.5 py-0.5" style={{ background: "rgba(22,163,74,0.12)", color: GREEN }}>
                               <Check size={9} />
                               <span className="text-[9px] font-semibold uppercase">Done</span>
+                            </span>
+                          )}
+                          {it.deleted_at && (
+                            <span className="flex items-center gap-0.5 rounded-full px-1.5 py-0.5" style={{ background: "rgba(181,67,58,0.12)", color: "#B5433A" }}>
+                              <Trash2 size={9} />
+                              <span className="text-[9px] font-semibold uppercase">Deleted</span>
                             </span>
                           )}
                         </div>
@@ -207,8 +226,12 @@ export default function Feedback({ onBack }) {
                         )}
 
                         {isAdmin && (
-                          <div className="mt-2">
-                            {it.status === "open" ? (
+                          <div className="mt-2 flex flex-wrap items-center gap-3">
+                            {it.deleted_at ? (
+                              <button onClick={() => handleSoftDelete(it.id, false)} className="flex items-center gap-1 text-xs font-medium" style={{ color: ACCENT }}>
+                                <RotateCcw size={12} /> Restore
+                              </button>
+                            ) : it.status === "open" ? (
                               closingId === it.id ? (
                                 <div className="flex flex-col gap-1.5">
                                   <input
@@ -239,6 +262,11 @@ export default function Feedback({ onBack }) {
                             ) : (
                               <button onClick={() => handleReopen(it.id)} className="flex items-center gap-1 text-xs font-medium" style={{ color: INK, opacity: 0.5 }}>
                                 <X size={12} /> Reopen
+                              </button>
+                            )}
+                            {!it.deleted_at && (
+                              <button onClick={() => handleSoftDelete(it.id, true)} className="flex items-center gap-1 text-xs font-medium" style={{ color: "#B5433A" }}>
+                                <Trash2 size={12} /> Delete
                               </button>
                             )}
                           </div>

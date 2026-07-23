@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Home, Sparkles, ThumbsUp, ThumbsDown, Check, Eye, EyeOff } from "lucide-react";
+import { Home, Sparkles, ThumbsUp, ThumbsDown, Check, Eye, EyeOff, Trash2, RotateCcw } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 
@@ -30,6 +30,8 @@ export default function ReleaseNotes({ onBack }) {
   const [justReported, setJustReported] = useState(null); // release note id that was just sent to feedback
   const [savingReactionId, setSavingReactionId] = useState(null);
   const [savingVisibilityId, setSavingVisibilityId] = useState(null);
+  const [savingDeleteId, setSavingDeleteId] = useState(null);
+  const [showDeleted, setShowDeleted] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!supabaseReady) {
@@ -131,6 +133,24 @@ export default function ReleaseNotes({ onBack }) {
     setSavingVisibilityId(null);
   }
 
+  async function setNoteDeleted(noteId, deleted) {
+    if (!profile?.is_admin || savingDeleteId === noteId) return;
+    setSavingDeleteId(noteId);
+    const previousNotes = notes;
+    setNotes((current) => current.map((note) =>
+      note.id === noteId ? { ...note, deleted_at: deleted ? new Date().toISOString() : null } : note
+    ));
+    const { error } = await supabase.rpc("set_release_note_deleted", {
+      target_release_note_id: noteId,
+      deleted,
+    });
+    if (error) {
+      console.error("Unable to soft-delete release note:", error);
+      setNotes(previousNotes);
+    }
+    setSavingDeleteId(null);
+  }
+
   async function submitReport(note) {
     if (!user) return;
     await supabase.from("feedback").insert({
@@ -169,7 +189,16 @@ export default function ReleaseNotes({ onBack }) {
           <p style={{ color: INK, opacity: 0.4 }} className="text-sm text-center py-8">Nothing posted yet.</p>
         ) : (
           <div className="flex flex-col gap-3">
-            {notes.map((n) => {
+            {profile?.is_admin && notes.some((note) => note.deleted_at) && (
+              <button
+                onClick={() => setShowDeleted((value) => !value)}
+                className="self-end rounded-full px-3 py-1 text-xs font-semibold"
+                style={{ background: "rgba(16,24,40,0.06)", color: INK }}
+              >
+                {showDeleted ? "Hide deleted" : "Show deleted"}
+              </button>
+            )}
+            {notes.filter((note) => !note.deleted_at || (profile?.is_admin && showDeleted)).map((n) => {
               const noteReactions = reactions.filter((r) => r.release_note_id === n.id);
               const upCount = noteReactions.filter((r) => r.reaction === "up").length;
               const downCount = noteReactions.filter((r) => r.reaction === "down").length;
@@ -177,7 +206,7 @@ export default function ReleaseNotes({ onBack }) {
               const isReporting = reportingId === n.id;
 
               return (
-                <div key={n.id} className="rounded-2xl p-4" style={{ background: PANEL, border: n.is_hidden ? "1px dashed rgba(181,67,58,0.45)" : "1px solid rgba(16,24,40,0.09)", opacity: n.is_hidden ? 0.78 : 1 }}>
+                <div key={n.id} className="rounded-2xl p-4" style={{ background: PANEL, border: n.deleted_at || n.is_hidden ? "1px dashed rgba(181,67,58,0.45)" : "1px solid rgba(16,24,40,0.09)", opacity: n.deleted_at ? 0.55 : (n.is_hidden ? 0.78 : 1) }}>
                   <div className="flex items-start gap-2">
                     <Sparkles size={14} style={{ color: ACCENT, marginTop: 2, flexShrink: 0 }} />
                     <div className="flex-1">
@@ -197,6 +226,18 @@ export default function ReleaseNotes({ onBack }) {
                           >
                             {n.is_hidden ? <Eye size={11} /> : <EyeOff size={11} />}
                             {n.is_hidden ? "Show" : "Hide"}
+                          </button>
+                        )}
+                        {profile?.is_admin && (
+                          <button
+                            onClick={() => setNoteDeleted(n.id, !n.deleted_at)}
+                            disabled={savingDeleteId === n.id}
+                            title={n.deleted_at ? "Restore this update" : "Soft delete this update"}
+                            className="flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold disabled:opacity-50"
+                            style={{ background: n.deleted_at ? "rgba(47,111,237,0.10)" : "rgba(181,67,58,0.10)", color: n.deleted_at ? ACCENT : RED }}
+                          >
+                            {n.deleted_at ? <RotateCcw size={11} /> : <Trash2 size={11} />}
+                            {n.deleted_at ? "Restore" : "Delete"}
                           </button>
                         )}
                       </div>

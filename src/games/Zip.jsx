@@ -716,6 +716,50 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
             touchAction: "none",
           }}
         >
+          {path.length > 0 && (
+            <svg
+              aria-hidden="true"
+              viewBox={`0 0 ${boardSize} ${boardSize}`}
+              preserveAspectRatio="none"
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 3, pointerEvents: "none", overflow: "visible" }}
+            >
+              <defs>
+                <linearGradient id="zipSnakeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#FF6B6B" />
+                  <stop offset="24%" stopColor="#F6C85F" />
+                  <stop offset="48%" stopColor="#62C370" />
+                  <stop offset="72%" stopColor="#4D96FF" />
+                  <stop offset="100%" stopColor="#9B5DE5" />
+                </linearGradient>
+                <filter id="zipSnakeShadow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feDropShadow dx="0" dy="0.05" stdDeviation="0.06" floodColor="#101828" floodOpacity="0.28" />
+                </filter>
+              </defs>
+              <polyline
+                points={path.map(([row, col]) => `${col + 0.5},${row + 0.5}`).join(" ")}
+                fill="none"
+                stroke="rgba(255,255,255,0.88)"
+                strokeWidth="0.34"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <polyline
+                points={path.map(([row, col]) => `${col + 0.5},${row + 0.5}`).join(" ")}
+                fill="none"
+                stroke="url(#zipSnakeGradient)"
+                strokeWidth="0.23"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter="url(#zipSnakeShadow)"
+              />
+              {path.length > 1 && (
+                <circle cx={path[0][1] + 0.5} cy={path[0][0] + 0.5} r="0.13" fill="#FF6B6B" stroke="#FFFFFF" strokeWidth="0.055" />
+              )}
+              <circle cx={path[path.length - 1][1] + 0.5} cy={path[path.length - 1][0] + 0.5} r="0.17" fill="#9B5DE5" stroke="#FFFFFF" strokeWidth="0.06" />
+              <circle cx={path[path.length - 1][1] + 0.45} cy={path[path.length - 1][0] + 0.46} r="0.025" fill="#FFFFFF" />
+              <circle cx={path[path.length - 1][1] + 0.55} cy={path[path.length - 1][0] + 0.46} r="0.025" fill="#FFFFFF" />
+            </svg>
+          )}
           {Array.from({ length: boardSize }, (_, r) =>
             Array.from({ length: boardSize }, (_, c) => {
               const key = `${r}-${c}`;
@@ -798,13 +842,12 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
                         fontWeight: 700,
                         fontSize: Math.max(11, 18 - boardSize),
                         border: orderConflict && isVisited ? `2px solid ${RED}` : "none",
+                        position: "relative",
+                        zIndex: 5,
                       }}
                     >
                       {num}
                     </span>
-                  )}
-                  {num === 0 && isVisited && (
-                    <span className="zp-dot rounded-full" style={{ width: "26%", height: "26%", background: ZIP_GREEN }} />
                   )}
                   {tunnel && (
                     <span
