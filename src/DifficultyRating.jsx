@@ -75,8 +75,6 @@ export default function DifficultyRating({ onRate, onRated }) {
       if (onRate) await onRate(value);
       setRated(true);
       setSaving(false);
-      // Keep the success confirmation visible briefly before returning to the board.
-      window.setTimeout(() => onRated?.(value), 900);
     } catch (error) {
       setSaving(false);
       setSelected(null);
@@ -93,6 +91,16 @@ export default function DifficultyRating({ onRate, onRated }) {
         </div>
         <RatingBars selected={selected} compact activeColor={GREEN} />
         <span className="text-[10px] font-medium" style={{ color: GREEN }}>{describe(selected)}</span>
+        {onRated && (
+          <button
+            type="button"
+            onClick={() => onRated(Math.round((selected / (BAR_COUNT - 1)) * 100))}
+            className="mt-1 rounded-full px-4 py-1.5 text-xs font-semibold transition-colors"
+            style={{ background: ACCENT, color: "#FFFFFF" }}
+          >
+            View board
+          </button>
+        )}
       </div>
     );
   }

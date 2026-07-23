@@ -1,5 +1,12 @@
 [
   {
+    "id": "v60.5-rating-flow",
+    "title": "Improved completed-game flow",
+    "body": "After saving a difficulty rating, the completed-game panel now stays open. Players can choose View board when ready instead of being redirected automatically, while Play again remains available.",
+    "version": "v60.5",
+    "date": "2026-07-23"
+  },
+  {
     "id": "v60-4-persistent-points-result",
     "title": "Points remain visible after completion",
     "body": "The temporary Points popup now hides without clearing the awarded result. Points remain visible on the completed game page beside the final rating, so players can still see what they earned after the popup disappears.",
