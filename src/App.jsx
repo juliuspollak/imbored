@@ -86,7 +86,7 @@ function AppShell() {
       // non-fatal — the choice just won't survive a refresh this time
     }
   }, [playMode, user?.id]);
-  const players = useOnlinePlayers();
+  const players = useOnlinePlayers({ includeHidden: !!profile?.is_admin });
   const { config: gameConfig, refetch: refetchGameConfig } = useGameConfig();
   usePresence(["queens", "tango", "zip", "minisudoku", "geo"].includes(active) ? active : null, playMode);
   const openFeedbackCount = useOpenFeedbackCount();
@@ -302,6 +302,7 @@ function PracticePlay({ Current, userId, onExit, onSwitchMode, hintCooldownConfi
 
 function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
   const isAdmin = !!profile.is_admin;
   // Admins care about the queue of open tickets; everyone else only cares
   // about their own feedback getting a reply — each role sees its own count,
@@ -318,10 +319,13 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenSt
     { id: "stats", onClick: onOpenStats, icon: BarChart3, label: "Stats", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
     { id: "progress", onClick: onOpenProgress, icon: Star, label: newTransfersCount > 0 ? "My progress · new" : "My progress", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)", badge: newTransfersCount },
     { id: "teams", onClick: onOpenTeams, icon: Users, label: "Teams", glow: "rgba(18,148,106,0.35)", border: "rgba(18,148,106,0.4)" },
-    ...(isAdmin ? [{ id: "adminplayers", onClick: onOpenAdminPlayers, icon: Shield, label: "Players (admin)", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" }] : []),
-    ...(isAdmin ? [{ id: "admingames", onClick: onOpenAdminGames, icon: Grid3x3, label: "Games (admin)", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" }] : []),
-    ...(isAdmin ? [{ id: "adminrewards", onClick: onOpenAdminRewards, icon: Gift, label: "Rewards (admin)", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" }] : []),
     { id: "signout", onClick: onSignOut, icon: LogOut, label: "Sign out", glow: "rgba(229,72,77,0.35)", border: "rgba(229,72,77,0.4)" },
+  ];
+
+  const adminItems = [
+    { id: "adminplayers", onClick: onOpenAdminPlayers, icon: Shield, label: "Players", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
+    { id: "admingames", onClick: onOpenAdminGames, icon: Grid3x3, label: "Games", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
+    { id: "adminrewards", onClick: onOpenAdminRewards, icon: Gift, label: "Rewards", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
   ];
 
   return (
@@ -352,7 +356,7 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenSt
 
       <div style={{ position: "relative" }}>
         <button
-          onClick={() => setMenuOpen((o) => !o)}
+          onClick={() => { setAdminOpen(false); setMenuOpen((o) => !o); }}
           className={`nav-btn ${hasNotifications ? "feedback-wiggle" : ""}`}
           title={profile.mood || undefined}
           style={{
@@ -435,6 +439,58 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenSt
               </span>
             </button>
           ))}
+        </div>
+      )}
+
+      {isAdmin && (
+        <div style={{ position: "relative" }}>
+          <button
+            onClick={() => { setMenuOpen(false); setAdminOpen((o) => !o); }}
+            className="nav-btn relative flex items-center justify-center rounded-full"
+            style={{
+              "--nav-glow": "rgba(217,174,88,0.35)",
+              "--nav-border": "rgba(217,174,88,0.55)",
+              width: 34,
+              height: 34,
+              background: "rgba(255,255,255,0.95)",
+              border: "1px solid rgba(217,174,88,0.45)",
+              color: "#9A6B12",
+              boxShadow: "0 5px 14px rgba(16,24,40,0.10)",
+            }}
+            aria-label="Admin tools"
+            title="Admin tools"
+          >
+            <Shield size={15} />
+          </button>
+          {adminOpen && (
+            <div className="absolute top-full right-0 mt-2 flex flex-col items-end gap-1.5" style={{ zIndex: 60 }}>
+              <div className="menu-balloon text-[10px] font-semibold uppercase tracking-wide rounded-full px-2.5 py-1" style={{ background: "#FFF8E7", color: "#9A6B12", border: "1px solid rgba(217,174,88,0.25)" }}>
+                Admin
+              </div>
+              {adminItems.map((item, i) => (
+                <button
+                  key={item.id}
+                  onClick={() => { setAdminOpen(false); item.onClick(); }}
+                  className="menu-balloon nav-btn flex items-center gap-2 rounded-full pl-3 pr-1.5 py-1.5"
+                  style={{
+                    "--nav-glow": item.glow,
+                    "--nav-border": item.border,
+                    animationDelay: `${i * 0.04}s`,
+                    background: "#FFFFFF",
+                    boxShadow: "0 6px 16px rgba(16,24,40,0.14)",
+                    border: "1px solid rgba(217,174,88,0.22)",
+                    color: "#1B2129",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  <span className="text-xs font-medium">{item.label}</span>
+                  <span className="flex items-center justify-center rounded-full" style={{ width: 24, height: 24, background: "rgba(217,174,88,0.14)", color: "#9A6B12" }}>
+                    <item.icon size={12} />
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

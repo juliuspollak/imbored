@@ -6,7 +6,7 @@ import { supabase, supabaseReady } from "./supabase.js";
 // interval so a slightly-delayed beat doesn't flicker someone offline.
 const ONLINE_WINDOW_MS = 45000;
 
-export function useOnlinePlayers() {
+export function useOnlinePlayers({ includeHidden = false } = {}) {
   const [players, setPlayers] = useState([]);
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export function useOnlinePlayers() {
       // widget, a casual "who's online / poke someone" feature rather than
       // an admin tool, must also explicitly filter hidden_from_others,
       // or a hidden player shows up (and becomes pokeable) for admins.
-      const visible = (data || []).filter((row) => row.profiles && !row.profiles.is_private && !row.profiles.hidden_from_others);
+      const visible = (data || []).filter((row) => row.profiles && !row.profiles.is_private && (includeHidden || !row.profiles.hidden_from_others));
       if (!cancelled) setPlayers(visible);
     }
 
@@ -37,7 +37,7 @@ export function useOnlinePlayers() {
       cancelled = true;
       clearInterval(interval);
     };
-  }, []);
+  }, [includeHidden]);
 
   return players;
 }

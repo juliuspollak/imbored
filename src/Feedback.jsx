@@ -68,12 +68,24 @@ export default function Feedback({ onBack }) {
     const nextTitle = editTitle.trim();
     if (!nextTitle) return;
     setMessage(null);
-    const { error } = await supabase
+    let { error } = await supabase
       .from("feedback")
       .update({ title: nextTitle, updated_at: new Date().toISOString() })
       .eq("id", feedbackId)
       .eq("user_id", user.id)
       .eq("status", "open");
+
+    // Older deployments may not have refreshed PostgREST's schema cache yet.
+    // The title edit itself does not depend on updated_at, so retry without it
+    // rather than blocking the player while the v70 migration is applied.
+    if (error && /updated_at.*schema cache|schema cache.*updated_at/i.test(error.message || "")) {
+      ({ error } = await supabase
+        .from("feedback")
+        .update({ title: nextTitle })
+        .eq("id", feedbackId)
+        .eq("user_id", user.id)
+        .eq("status", "open"));
+    }
     if (error) {
       setMessage({ type: "error", text: `Couldn't save that edit: ${error.message}` });
       return;
