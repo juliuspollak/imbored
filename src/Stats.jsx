@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Crown, Moon, Waypoints, Grid3x3, Home, EyeOff, ChevronDown, ChevronUp, Clock, TriangleAlert, Lightbulb, Globe2 } from "lucide-react";
+import { Crown, Moon, Waypoints, Grid3x3, ArrowLeft, EyeOff, ChevronDown, ChevronUp, Clock, TriangleAlert, Lightbulb, Globe2 } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 
@@ -81,8 +81,8 @@ export default function Stats({ onBack }) {
     <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex justify-center p-4 pt-10">
       <div className="w-full max-w-md">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={onBack} className="nav-btn flex items-center gap-1.5 rounded-full pl-2 pr-3 py-1.5" style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)" }}>
-            <Home size={15} /><span className="text-xs font-medium">Home</span>
+          <button onClick={onBack} className="nav-btn flex items-center justify-center rounded-full" style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)", width: 34, height: 34 }} aria-label="Back to home">
+            <ArrowLeft size={16} />
           </button>
           <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl">Stats</h1>
         </div>

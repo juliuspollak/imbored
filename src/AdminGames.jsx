@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Home, ChevronUp, ChevronDown, Eye, EyeOff, Lock, Unlock, Timer, RotateCcw } from "lucide-react";
+import { ArrowLeft, ChevronUp, ChevronDown, Eye, EyeOff, Lock, Unlock, Timer, RotateCcw } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { GAME_META } from "./Home.jsx";
@@ -108,11 +108,11 @@ export default function AdminGames({ onBack }) {
         <div className="flex items-center gap-3 mb-2">
           <button
             onClick={onBack}
-            className="nav-btn flex items-center gap-1.5 rounded-full pl-2 pr-3 py-1.5"
-            style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)" }}
+            className="nav-btn flex items-center justify-center rounded-full"
+            style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)", width: 34, height: 34 }}
+            aria-label="Back to home"
           >
-            <Home size={15} />
-            <span className="text-xs font-medium">Home</span>
+            <ArrowLeft size={16} />
           </button>
           <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl">
             Games

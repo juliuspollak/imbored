@@ -11,6 +11,7 @@ create table profiles (
   mood text,
   is_admin boolean not null default false,
   show_stats_to_others boolean not null default true,
+  week_starts_on integer not null default 1 check (week_starts_on in (0, 1)),
   created_at timestamptz default now()
 );
 
@@ -65,7 +66,10 @@ create table feedback (
   status text not null default 'open', -- 'open' | 'closed'
   admin_comment text,
   created_at timestamptz default now(),
-  closed_at timestamptz
+  closed_at timestamptz,
+  updated_at timestamptz,
+  user_seen_at timestamptz,
+  deleted_at timestamptz
 );
 
 create table feedback_votes (
@@ -106,6 +110,9 @@ create policy "feedback is publicly readable" on feedback for select using (true
 create policy "users can submit feedback" on feedback for insert with check (auth.uid() = user_id);
 create policy "admins can update feedback" on feedback for update
   using (is_admin(auth.uid()));
+create policy "authors can update open feedback" on feedback for update
+  using (auth.uid() = user_id and status = 'open' and deleted_at is null)
+  with check (auth.uid() = user_id and status = 'open' and deleted_at is null);
 
 create policy "votes are publicly readable" on feedback_votes for select using (true);
 create policy "users can vote" on feedback_votes for insert with check (auth.uid() = user_id);
@@ -151,3 +158,16 @@ grant execute on function add_player_to_team to authenticated;
 -- run this on its own, with your real email:
 --
 -- update profiles set is_admin = true where id = (select id from auth.users where email = 'you@example.com');
+
+
+create or replace function public.mark_my_feedback_seen()
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update public.feedback
+  set user_seen_at = now()
+  where user_id = auth.uid() and status = 'closed' and user_seen_at is null;
+$$;
+grant execute on function public.mark_my_feedback_seen() to authenticated;

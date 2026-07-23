@@ -28,6 +28,7 @@ import { useOnlinePlayers } from "./lib/useOnlinePlayers.js";
 import { useGameConfig } from "./lib/useGameConfig.js";
 import { usePresence } from "./lib/usePresence.js";
 import { useOpenFeedbackCount } from "./lib/useOpenFeedbackCount.js";
+import { useCompletedFeedbackCount } from "./lib/useCompletedFeedbackCount.js";
 import { usePokes } from "./lib/pokes.js";
 
 const GAME_COMPONENTS = {
@@ -56,6 +57,7 @@ function AppShell() {
   const { config: gameConfig, refetch: refetchGameConfig } = useGameConfig();
   usePresence(["queens", "tango", "zip", "minisudoku", "geo"].includes(active) ? active : null, playMode);
   const openFeedbackCount = useOpenFeedbackCount();
+  const completedFeedbackCount = useCompletedFeedbackCount(user?.id);
 
   if (supabaseReady) {
     if (loading) return <FullScreenMessage text="Loading…" />;
@@ -130,6 +132,7 @@ function AppShell() {
             players={players}
             userId={user?.id}
             openFeedbackCount={openFeedbackCount}
+            completedFeedbackCount={completedFeedbackCount}
           />
         )}
       </>
@@ -149,6 +152,7 @@ function AppShell() {
         onExit={() => setActive(null)}
         onSwitchMode={() => setPlayMode("practice")}
         hintCooldownConfig={cfg}
+        weekStartsOn={profile?.week_starts_on ?? 1}
       />
     );
   }
@@ -187,7 +191,7 @@ function PracticePlay({ Current, userId, onExit, onSwitchMode, hintCooldownConfi
           "--nav-border": "rgba(47,111,237,0.4)",
           position: "fixed",
           top: 16,
-          left: 16,
+          left: "max(16px, calc((100vw - var(--game-nav-width, 512px)) / 2))",
           zIndex: 50,
           width: 36,
           height: 36,
@@ -218,15 +222,15 @@ function PracticePlay({ Current, userId, onExit, onSwitchMode, hintCooldownConfi
   );
 }
 
-function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, players, userId, openFeedbackCount = 0 }) {
+function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const hasOpenFeedback = openFeedbackCount > 0;
+  const hasOpenFeedback = openFeedbackCount > 0 || completedFeedbackCount > 0;
   const isAdmin = !!profile.is_admin;
 
   const items = [
     { onClick: onOpenProfile, icon: User, label: "My profile", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
     { onClick: onOpenWhatsNew, icon: Sparkles, label: "What's new", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
-    { onClick: onOpenFeedback, icon: MessageSquare, label: "Feedback", glow: "rgba(139,92,246,0.35)", border: "rgba(139,92,246,0.4)", badge: openFeedbackCount },
+    { onClick: onOpenFeedback, icon: MessageSquare, label: completedFeedbackCount > 0 ? "Feedback · update" : "Feedback", glow: "rgba(139,92,246,0.35)", border: "rgba(139,92,246,0.4)", badge: isAdmin ? openFeedbackCount : completedFeedbackCount },
     { onClick: onOpenStats, icon: BarChart3, label: "Stats", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
     { onClick: onOpenProgress, icon: Star, label: "My progress", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
     { onClick: onOpenTeams, icon: Users, label: "Teams", glow: "rgba(18,148,106,0.35)", border: "rgba(18,148,106,0.4)" },

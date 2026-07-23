@@ -18,7 +18,7 @@ export default function ModePill({ mode, onSwitch }) {
         "--nav-border": isChallenge ? "rgba(217,174,88,0.4)" : "rgba(18,148,106,0.4)",
         position: "fixed",
         top: 16,
-        right: 16,
+        right: "max(16px, calc((100vw - var(--game-nav-width, 512px)) / 2))",
         zIndex: 50,
         background: "rgba(255,255,255,0.9)",
         backdropFilter: "blur(6px)",

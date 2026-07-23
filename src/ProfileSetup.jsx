@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock, Unlock, Users, ArrowLeft, Home, Fingerprint, Trash2, Plus } from "lucide-react";
+import { Lock, Unlock, Users, ArrowLeft, Fingerprint, Trash2, Plus } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { PROFILE_ICONS } from "./lib/icons.js";
 
@@ -23,6 +23,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
   const [mood, setMood] = useState(profile?.mood || "");
   const [defaultMode, setDefaultMode] = useState(profile?.default_mode || "challenge");
   const [showStatsToOthers, setShowStatsToOthers] = useState(profile?.show_stats_to_others ?? true);
+  const [weekStartsOn, setWeekStartsOn] = useState(profile?.week_starts_on ?? 1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [passkeys, setPasskeys] = useState([]);
@@ -60,6 +61,8 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
       setIsPrivate(profile.is_private || false);
       setMood(profile.mood || "");
       setDefaultMode(profile.default_mode || "challenge");
+      setShowStatsToOthers(profile.show_stats_to_others ?? true);
+      setWeekStartsOn(profile.week_starts_on ?? 1);
     }
   }, [profile]);
 
@@ -68,7 +71,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
     if (!name.trim() || saving) return;
     setSaving(true);
     setError(null);
-    const { error } = await saveProfile({ name: name.trim(), icon, is_private: isPrivate, mood: mood.trim() || null, default_mode: defaultMode, show_stats_to_others: showStatsToOthers });
+    const { error } = await saveProfile({ name: name.trim(), icon, is_private: isPrivate, mood: mood.trim() || null, default_mode: defaultMode, show_stats_to_others: showStatsToOthers, week_starts_on: weekStartsOn });
     setSaving(false);
     if (error) setError(error.message);
     else if (onDone) onDone();
@@ -83,11 +86,11 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
         {onDone && (
           <button
             onClick={onDone}
-            className="nav-btn absolute top-5 left-5 flex items-center gap-1.5 rounded-full pl-2 pr-3 py-1.5"
-            style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)" }}
+            className="nav-btn absolute top-5 left-5 flex items-center justify-center rounded-full"
+            style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)", width: 34, height: 34 }}
+            aria-label="Back to home"
           >
-            <Home size={15} />
-            <span className="text-xs font-medium">Home</span>
+            <ArrowLeft size={16} />
           </button>
         )}
 
@@ -171,6 +174,28 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
                 }}
               >
                 {m}
+              </button>
+            ))}
+          </div>
+
+
+          <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
+            Week starts on
+          </label>
+          <div className="flex rounded-lg p-1 mb-4" style={{ background: "rgba(16,24,40,0.05)" }}>
+            {[{ value: 1, label: "Monday" }, { value: 0, label: "Sunday" }].map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setWeekStartsOn(option.value)}
+                className="flex-1 rounded-md py-1.5 text-xs font-semibold"
+                style={{
+                  background: weekStartsOn === option.value ? "#FFFFFF" : "transparent",
+                  color: weekStartsOn === option.value ? INK : "rgba(27,33,41,0.5)",
+                  boxShadow: weekStartsOn === option.value ? "0 2px 6px rgba(16,24,40,0.10)" : "none",
+                }}
+              >
+                {option.label}
               </button>
             ))}
           </div>

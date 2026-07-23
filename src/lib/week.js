@@ -1,6 +1,5 @@
-// All challenge-mode logic is anchored to the real calendar, in the
-// player's local time zone — a fresh set of 7 puzzles per game each week,
-// Monday through Sunday.
+// Challenge calendars use the player's local time zone and can start on
+// either Monday (default) or Sunday, according to their profile preference.
 
 function toDateString(d) {
   const y = d.getFullYear();
@@ -9,30 +8,37 @@ function toDateString(d) {
   return `${y}-${m}-${day}`;
 }
 
-// Monday of the week containing `date` (defaults to today), at local midnight.
-export function mondayOf(date = new Date()) {
+export function startOfWeek(date = new Date(), weekStartsOn = 1) {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
-  const dow = d.getDay(); // 0=Sun..6=Sat
-  const diff = dow === 0 ? -6 : 1 - dow; // days to subtract to reach Monday
-  d.setDate(d.getDate() + diff);
+  const startDay = weekStartsOn === 0 ? 0 : 1;
+  const diff = (d.getDay() - startDay + 7) % 7;
+  d.setDate(d.getDate() - diff);
   return d;
 }
 
-// The 7 calendar dates (as 'YYYY-MM-DD' strings) for the week containing today.
-export function weekDates(date = new Date()) {
-  const monday = mondayOf(date);
+export function mondayOf(date = new Date()) {
+  return startOfWeek(date, 1);
+}
+
+export function weekDates(date = new Date(), weekStartsOn = 1) {
+  const start = startOfWeek(date, weekStartsOn);
   return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday);
+    const d = new Date(start);
     d.setDate(d.getDate() + i);
     return toDateString(d);
   });
 }
 
-// Index of today within Mon(0)..Sun(6).
-export function todayIndex(date = new Date()) {
-  const dow = date.getDay();
-  return dow === 0 ? 6 : dow - 1;
+export function todayIndex(date = new Date(), weekStartsOn = 1) {
+  const startDay = weekStartsOn === 0 ? 0 : 1;
+  return (date.getDay() - startDay + 7) % 7;
+}
+
+export function weekDayLabels(weekStartsOn = 1) {
+  return weekStartsOn === 0
+    ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 }
 
 export { toDateString };

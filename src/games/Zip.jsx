@@ -429,19 +429,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
     if (latest.current.solved) return;
     setPath((prev) => {
       const p = latest.current.puzzle;
-      const next = processStep(prev, r, c, p.wallSet, p.numberGrid, p.tunnelMap, p.blockedSet, restrictRollback);
-      if (next === prev) return prev;
-      if (next.length > prev.length) {
-        const prevConflict = hasOrderConflict(prev, p.numberGrid);
-        const nextConflict = hasOrderConflict(next, p.numberGrid);
-        if (!prevConflict && nextConflict) setMistakes((m) => m + 1);
-      } else if (next.length < prev.length && prev.length - next.length > 1) {
-        // rolling back MORE than one cell means the route since then was
-        // wrong, whether you tapped a numbered checkpoint or a plain cell —
-        // worth counting, unlike a simple one-step undo
-        setMistakes((m) => m + 1);
-      }
-      return next;
+      return processStep(prev, r, c, p.wallSet, p.numberGrid, p.tunnelMap, p.blockedSet, restrictRollback);
     });
   }
 
@@ -653,7 +641,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
             <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
           </div>
           <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
-            mistakes: <span style={{ color: mistakes > 0 ? RED : CREAM }}>{mistakes}</span>
+            route: <span style={{ color: ZIP_GREEN }}>explore freely</span>
           </div>
           <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
             hints: <span style={{ color: hintsUsed > 0 ? GOLD : CREAM }}>{hintsUsed}</span>
@@ -755,9 +743,8 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
               {path.length > 1 && (
                 <circle cx={path[0][1] + 0.5} cy={path[0][0] + 0.5} r="0.13" fill="#FF6B6B" stroke="#FFFFFF" strokeWidth="0.055" />
               )}
-              <circle cx={path[path.length - 1][1] + 0.5} cy={path[path.length - 1][0] + 0.5} r="0.17" fill="#9B5DE5" stroke="#FFFFFF" strokeWidth="0.06" />
-              <circle cx={path[path.length - 1][1] + 0.45} cy={path[path.length - 1][0] + 0.46} r="0.025" fill="#FFFFFF" />
-              <circle cx={path[path.length - 1][1] + 0.55} cy={path[path.length - 1][0] + 0.46} r="0.025" fill="#FFFFFF" />
+              <circle cx={path[path.length - 1][1] + 0.5} cy={path[path.length - 1][0] + 0.5} r="0.19" fill="#FFFFFF" stroke="#12946A" strokeWidth="0.09" />
+              <circle cx={path[path.length - 1][1] + 0.5} cy={path[path.length - 1][0] + 0.5} r="0.075" fill="#12946A" />
             </svg>
           )}
           {Array.from({ length: boardSize }, (_, r) =>
@@ -831,7 +818,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
                     userSelect: "none",
                   }}
                 >
-                  {num !== 0 && (
+                  {num !== 0 && !solved && (
                     <span
                       className="zp-dot flex items-center justify-center rounded-full"
                       style={{
@@ -923,12 +910,12 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
           {solved && difficultyRating === null && (
             <div
               className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl p-4"
-              style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(3px)", zIndex: 3 }}
+              style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(4px)", zIndex: 20 }}
             >
               <Flag size={28} style={{ color: ZIP_GREEN }} />
               <p style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 600, color: CREAM }} className="text-2xl">Solved</p>
               <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs mb-1">
-                {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
+                {fmtTime(seconds)} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
               </p>
               {rewardResult?.points_awarded != null && (
                 <div

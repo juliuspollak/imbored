@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ThumbsUp, Check, X, Plus, MessageSquare, Home, Trash2, RotateCcw } from "lucide-react";
+import { ThumbsUp, Check, X, Plus, MessageSquare, ArrowLeft, Trash2, RotateCcw, Pencil, Bell } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 
@@ -23,6 +23,8 @@ export default function Feedback({ onBack }) {
   const [closingId, setClosingId] = useState(null);
   const [closeComment, setCloseComment] = useState("");
   const [filter, setFilter] = useState("open"); // open | closed | all | deleted
+  const [editingId, setEditingId] = useState(null);
+  const [editTitle, setEditTitle] = useState("");
 
   const refresh = useCallback(async () => {
     if (!supabaseReady) return;
@@ -36,6 +38,10 @@ export default function Feedback({ onBack }) {
     setVotes(votesData || []);
     setProfiles(Object.fromEntries((profilesData || []).map((p) => [p.id, p])));
     setLoading(false);
+    const unseenIds = (feedbackData || []).filter((it) => it.user_id === user?.id && it.status === "closed" && !it.user_seen_at).map((it) => it.id);
+    if (unseenIds.length) {
+      await supabase.rpc("mark_my_feedback_seen");
+    }
   }, []);
 
   useEffect(() => {
@@ -53,6 +59,15 @@ export default function Feedback({ onBack }) {
     refresh();
   }
 
+  async function handleUpdate(feedbackId) {
+    const nextTitle = editTitle.trim();
+    if (!nextTitle) return;
+    await supabase.from("feedback").update({ title: nextTitle, updated_at: new Date().toISOString() }).eq("id", feedbackId).eq("user_id", user.id).eq("status", "open");
+    setEditingId(null);
+    setEditTitle("");
+    refresh();
+  }
+
   async function toggleVote(feedbackId, alreadyVoted) {
     if (alreadyVoted) {
       await supabase.from("feedback_votes").delete().eq("feedback_id", feedbackId).eq("user_id", user.id);
@@ -65,7 +80,7 @@ export default function Feedback({ onBack }) {
   async function handleClose(feedbackId) {
     await supabase
       .from("feedback")
-      .update({ status: "closed", admin_comment: closeComment.trim() || null, closed_at: new Date().toISOString() })
+      .update({ status: "closed", admin_comment: closeComment.trim() || null, closed_at: new Date().toISOString(), user_seen_at: null })
       .eq("id", feedbackId);
     setClosingId(null);
     setCloseComment("");
@@ -73,7 +88,7 @@ export default function Feedback({ onBack }) {
   }
 
   async function handleReopen(feedbackId) {
-    await supabase.from("feedback").update({ status: "open", admin_comment: null, closed_at: null }).eq("id", feedbackId);
+    await supabase.from("feedback").update({ status: "open", admin_comment: null, closed_at: null, user_seen_at: null }).eq("id", feedbackId);
     refresh();
   }
 
@@ -105,11 +120,11 @@ export default function Feedback({ onBack }) {
         <div className="flex items-center gap-3 mb-2">
           <button
             onClick={onBack}
-            className="nav-btn flex items-center gap-1.5 rounded-full pl-2 pr-3 py-1.5"
-            style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)" }}
+            className="nav-btn flex items-center justify-center rounded-full"
+            style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)", width: 34, height: 34 }}
+            aria-label="Back to home"
           >
-            <Home size={15} />
-            <span className="text-xs font-medium">Home</span>
+            <ArrowLeft size={16} />
           </button>
           <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl">
             Feedback
@@ -197,7 +212,17 @@ export default function Feedback({ onBack }) {
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span style={{ color: INK, fontWeight: 600 }} className="text-sm">{it.title}</span>
+                          {editingId === it.id ? (
+                            <div className="flex-1">
+                              <textarea value={editTitle} onChange={(e) => setEditTitle(e.target.value)} rows={2} maxLength={300} className="w-full rounded-lg px-2 py-1.5 text-sm outline-none resize-none" style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }} />
+                              <div className="flex gap-2 mt-1">
+                                <button onClick={() => handleUpdate(it.id)} className="text-xs font-semibold" style={{ color: ACCENT }}>Save</button>
+                                <button onClick={() => { setEditingId(null); setEditTitle(""); }} className="text-xs" style={{ color: INK, opacity: 0.5 }}>Cancel</button>
+                              </div>
+                            </div>
+                          ) : (
+                            <span style={{ color: INK, fontWeight: 600 }} className="text-sm">{it.title}</span>
+                          )}
                           {it.status === "closed" && !it.deleted_at && (
                             <span className="flex items-center gap-0.5 rounded-full px-1.5 py-0.5" style={{ background: "rgba(22,163,74,0.12)", color: GREEN }}>
                               <Check size={9} />
@@ -222,6 +247,17 @@ export default function Feedback({ onBack }) {
                           <div className="flex items-start gap-1.5 rounded-lg px-2 py-1.5 mt-2" style={{ background: "rgba(22,163,74,0.06)" }}>
                             <MessageSquare size={11} style={{ color: GREEN, marginTop: 2, flexShrink: 0 }} />
                             <span style={{ color: INK, opacity: 0.7 }} className="text-xs">{it.admin_comment}</span>
+                          </div>
+                        )}
+
+                        {it.user_id === user?.id && it.status === "open" && !it.deleted_at && editingId !== it.id && (
+                          <button onClick={() => { setEditingId(it.id); setEditTitle(it.title); }} className="mt-2 flex items-center gap-1 text-xs font-medium" style={{ color: ACCENT }}>
+                            <Pencil size={12} /> Edit feedback
+                          </button>
+                        )}
+                        {it.user_id === user?.id && it.status === "closed" && (
+                          <div className="mt-2 flex items-center gap-1 text-[10px] font-medium" style={{ color: GREEN }}>
+                            <Bell size={11} /> You were notified when this was completed
                           </div>
                         )}
 

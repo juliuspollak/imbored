@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, Home, Lock, Check, Play, X } from "lucide-react";
+import { ArrowLeft, Lock, Check, Play, X } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { saveStats } from "./lib/saveStats.js";
-import { weekDates, todayIndex } from "./lib/week.js";
+import { weekDates, todayIndex, weekDayLabels } from "./lib/week.js";
 import ModePill from "./ModePill.jsx";
 import PointsToast from "./PointsToast.jsx";
 
@@ -12,7 +12,6 @@ const INK = "#1B2129";
 const ACCENT = "#2F6FED";
 const GREEN = "#16A34A";
 
-const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 function fmtTime(s) {
   const m = Math.floor(s / 60);
@@ -26,9 +25,10 @@ function describeAvg(avg) {
   return "Felt hard";
 }
 
-export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId, onExit, onSwitchMode, hintCooldownConfig }) {
-  const dates = weekDates();
-  const todayIdx = todayIndex();
+export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId, onExit, onSwitchMode, hintCooldownConfig, weekStartsOn = 1 }) {
+  const dates = weekDates(new Date(), weekStartsOn);
+  const todayIdx = todayIndex(new Date(), weekStartsOn);
+  const dayLabels = weekDayLabels(weekStartsOn);
   const [results, setResults] = useState({});
   const [loading, setLoading] = useState(true);
   const [playingIdx, setPlayingIdx] = useState(null);
@@ -128,7 +128,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           style={{
             "--nav-glow": "rgba(47,111,237,0.35)",
             "--nav-border": "rgba(47,111,237,0.4)",
-            position: "fixed", top: 16, left: 16, zIndex: 50, width: 36, height: 36, borderRadius: "50%",
+            position: "fixed", top: 16, left: "max(16px, calc((100vw - var(--game-nav-width, 512px)) / 2))", zIndex: 50, width: 36, height: 36, borderRadius: "50%",
             background: "rgba(255,255,255,0.9)", backdropFilter: "blur(6px)", border: "1px solid rgba(16,24,40,0.12)",
             display: "flex", alignItems: "center", justifyContent: "center", color: INK,
           }}
@@ -157,22 +157,25 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
     <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex justify-center p-4 pt-10">
       {onSwitchMode && <ModePill mode="challenge" onSwitch={onSwitchMode} />}
       <div className="w-full max-w-md">
-        <div className="flex items-center gap-3 mb-2">
+        <div className="relative text-center mb-6">
           <button
             onClick={onExit}
-            className="nav-btn flex items-center gap-1.5 rounded-full pl-2 pr-3 py-1.5"
-            style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)" }}
+            className="nav-btn absolute left-0 top-1 flex items-center justify-center rounded-full"
+            style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)", width: 34, height: 34 }}
+            aria-label="Back to home"
           >
-            <Home size={15} />
-            <span className="text-xs font-medium">Home</span>
+            <ArrowLeft size={16} />
           </button>
-          <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl">
-            {gameLabel} — Challenge
+          <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK, letterSpacing: "-0.01em" }} className="text-4xl">
+            {gameLabel}
           </h1>
+          <div className="inline-flex items-center rounded-full px-3 py-1 mt-2 text-xs font-semibold" style={{ background: "rgba(217,174,88,0.16)", color: "#9A6A12" }}>
+            Weekly Challenge
+          </div>
+          <p style={{ color: INK, opacity: 0.45 }} className="text-xs mt-2">
+            one attempt per day, same puzzle for everyone
+          </p>
         </div>
-        <p style={{ color: INK, opacity: 0.45 }} className="text-xs mb-6 ml-9">
-          one attempt per day, same puzzle for everyone
-        </p>
 
         {alreadyPlayedNotice && (
           <div className="text-xs rounded-lg p-3 mb-4 flex items-center justify-between" style={{ background: "rgba(217,105,92,0.1)", color: "#B5433A" }}>
@@ -229,7 +232,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                     </div>
                     <div className="flex-1">
                       <div style={{ color: INK, fontWeight: 600 }} className="text-sm">
-                        {DAY_LABELS[i]}{isToday ? " · Today" : ""}
+                        {dayLabels[i]}{isToday ? " · Today" : ""}
                       </div>
                       <div style={{ color: INK, opacity: 0.45 }} className="text-[11px]">
                         {isFuture

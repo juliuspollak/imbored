@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Home, Star, Flame, Trophy, Gift, Send, Plus, ShieldCheck, ExternalLink } from "lucide-react";
+import { ArrowLeft, Star, Flame, Trophy, Gift, Send, Plus, ShieldCheck, ExternalLink } from "lucide-react";
 import { supabase } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 
@@ -38,7 +38,7 @@ export default function Progress({ onBack }) {
   async function protect(){const {error}=await supabase.rpc("protect_streak"); setMessage(error?.message||"Streak protected"); refresh();}
 
   return <div style={{background:BG,minHeight:"100vh",fontFamily:"'Inter',sans-serif"}} className="p-4 pt-10 flex justify-center"><div className="w-full max-w-md">
-    <div className="flex items-center gap-3 mb-5"><button onClick={onBack} className="nav-btn flex gap-1.5 items-center rounded-full px-3 py-1.5" style={{background:"rgba(16,24,40,.05)",color:INK}}><Home size={15}/><span className="text-xs font-medium">Home</span></button><h1 className="text-2xl" style={{fontFamily:"'Fredoka',sans-serif",fontWeight:700,color:INK}}>My Progress</h1></div>
+    <div className="flex items-center gap-3 mb-5"><button onClick={onBack} className="nav-btn flex items-center justify-center rounded-full" style={{background:"rgba(16,24,40,.05)",color:INK,width:34,height:34}} aria-label="Back to home"><ArrowLeft size={16}/></button><h1 className="text-2xl" style={{fontFamily:"'Fredoka',sans-serif",fontWeight:700,color:INK}}>My Progress</h1></div>
     {loading?<p className="text-center text-sm opacity-40">Loading…</p>:<>
       <div className="grid grid-cols-3 gap-2 mb-3">
         <div className="p-3 text-center" style={card}><Star size={20} fill="currentColor" className="mx-auto mb-1" style={{color:"#D9AE58"}}/><div className="text-xl font-bold" style={{color:INK}}>{progress?.available_points?.toLocaleString()}</div><div className="text-[10px] opacity-45">Points</div></div>
