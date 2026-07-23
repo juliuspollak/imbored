@@ -3,11 +3,27 @@ import { supabase, supabaseReady } from "./supabase.js";
 
 const storageKey = (userId) => `queens-seen-closed-feedback-${userId}`;
 
+// Corrupted or unexpectedly-shaped localStorage data (manual edits, a future
+// schema change, a partial write) shouldn't throw and break the read/write
+// cycle — worst case we just forget which feedback items were already seen.
+function readSeenIds(userId) {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(storageKey(userId)) || "[]");
+    return new Set(Array.isArray(parsed) ? parsed : []);
+  } catch {
+    return new Set();
+  }
+}
+
 export function markClosedFeedbackSeen(userId, ids) {
   if (!userId || typeof window === "undefined") return;
-  const seen = new Set(JSON.parse(window.localStorage.getItem(storageKey(userId)) || "[]"));
+  const seen = readSeenIds(userId);
   ids.forEach((id) => seen.add(id));
-  window.localStorage.setItem(storageKey(userId), JSON.stringify([...seen]));
+  try {
+    window.localStorage.setItem(storageKey(userId), JSON.stringify([...seen]));
+  } catch {
+    // Storage full/unavailable — non-fatal, just means it may resurface next time.
+  }
   window.dispatchEvent(new CustomEvent("closed-feedback-seen"));
 }
 
@@ -36,7 +52,7 @@ export function useCompletedFeedbackCount(userId) {
         return;
       }
 
-      const seen = new Set(JSON.parse(window.localStorage.getItem(storageKey(userId)) || "[]"));
+      const seen = readSeenIds(userId);
       setCount((data || []).filter((item) => !seen.has(item.id)).length);
     }
 

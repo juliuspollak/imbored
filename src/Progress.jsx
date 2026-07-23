@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Star, Flame, Trophy, Gift, Send, Plus, ShieldCheck, ExternalLink } from "lucide-react";
+import { ArrowLeft, Star, Flame, Trophy, Gift, Send, Plus, ShieldCheck, ExternalLink, PartyPopper, X } from "lucide-react";
 import { supabase } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
+import { getLastSeenTransferId, markTransfersSeen } from "./lib/useNewTransfers.js";
 
 const BG="#F1F3F7", PANEL="#fff", INK="#1B2129", ACCENT="#2F6FED";
 const card={background:PANEL,border:"1px solid rgba(16,24,40,.09)",borderRadius:16};
@@ -13,20 +14,32 @@ export default function Progress({ onBack }) {
   const [tab,setTab]=useState("rewards"), [message,setMessage]=useState(""), [loading,setLoading]=useState(true);
   const [wish,setWish]=useState({name:"",product_url:"",note:""});
   const [transfer,setTransfer]=useState({player:"",amount:""});
+  const [newTransfers,setNewTransfers]=useState([]); // points received since this player last opened My Progress
 
   const refresh=useCallback(async()=>{
     setLoading(true);
     await supabase.rpc("ensure_player_progress",{uid:user.id});
-    const [{data:p},{data:r},{data:rw},{data:w},{data:ps}] = await Promise.all([
+    // Captured before this load marks anything seen, so we know exactly
+    // which received transfers are new to show in the banner below.
+    const lastSeenBefore = getLastSeenTransferId(user.id);
+    const [{data:p},{data:r},{data:rw},{data:w},{data:ps},{data:tx}] = await Promise.all([
       supabase.from("player_progress").select("*").eq("player_id",user.id).single(),
       supabase.from("reward_rules").select("*").eq("is_active",true).maybeSingle(),
       supabase.from("rewards").select("*").eq("is_active",true).order("points_cost"),
       supabase.from("reward_wishes").select("*").eq("player_id",user.id).order("created_at",{ascending:false}),
-      supabase.from("profiles").select("id,name,icon").neq("id",user.id).order("name")
+      supabase.from("profiles").select("id,name,icon").neq("id",user.id).order("name"),
+      supabase.from("points_transactions").select("id,points,related_player_id,created_at")
+        .eq("player_id",user.id).eq("reason_code","TRANSFER_RECEIVED").order("id",{ascending:false}).limit(20),
     ]);
     setProgress(p); setRules(r); setRewards(rw||[]); setWishes(w||[]); setPlayers(ps||[]); setLoading(false);
+
+    const senderById = Object.fromEntries((ps||[]).map(pl=>[pl.id,pl]));
+    setNewTransfers((tx||[]).filter(t=>t.id>lastSeenBefore).map(t=>({id:t.id,points:t.points,sender:senderById[t.related_player_id]||null})));
+    if ((tx||[]).length>0) markTransfersSeen(user.id, Math.max(...tx.map(t=>t.id)));
   },[user.id]);
   useEffect(()=>{refresh()},[refresh]);
+
+  function dismissTransferNotice(id){ setNewTransfers(list=>list.filter(n=>n.id!==id)); }
 
   const pct=useMemo(()=>{if(!progress)return 0; const prev=500*(progress.current_level-1)*(progress.current_level-1); const next=nextLevelThreshold(progress.current_level); return Math.max(0,Math.min(100,((progress.lifetime_points-prev)/(next-prev))*100));},[progress]);
   const today=new Date(); today.setHours(0,0,0,0); const last=progress?.last_completed_date ? new Date(progress.last_completed_date+"T00:00:00") : null;
@@ -40,6 +53,7 @@ export default function Progress({ onBack }) {
   return <div style={{background:BG,minHeight:"100vh",fontFamily:"'Inter',sans-serif"}} className="p-4 pt-10 flex justify-center"><div className="w-full max-w-md">
     <div className="flex items-center gap-3 mb-5"><button onClick={onBack} className="nav-btn flex items-center justify-center rounded-full" style={{background:"rgba(16,24,40,.05)",color:INK,width:34,height:34}} aria-label="Back to home"><ArrowLeft size={16}/></button><h1 className="text-2xl" style={{fontFamily:"'Fredoka',sans-serif",fontWeight:700,color:INK}}>My Progress</h1></div>
     {loading?<p className="text-center text-sm opacity-40">Loading…</p>:<>
+      {newTransfers.length>0&&<div className="flex flex-col gap-2 mb-3">{newTransfers.map(n=><div key={n.id} className="rounded-xl p-3 flex items-center gap-2.5" style={{background:"rgba(139,92,246,.10)",border:"1px solid rgba(139,92,246,.28)"}}><PartyPopper size={18} style={{color:"#8B5CF6",flexShrink:0}}/><div className="flex-1 text-xs" style={{color:INK}}><span className="font-semibold">{n.sender?.icon||"🙂"} {n.sender?.name||"Someone"}</span> sent you <span className="font-semibold">{n.points.toLocaleString()} points</span>!</div><button onClick={()=>dismissTransferNotice(n.id)} aria-label="Dismiss" style={{color:INK,opacity:.4}}><X size={14}/></button></div>)}</div>}
       <div className="grid grid-cols-3 gap-2 mb-3">
         <div className="p-3 text-center" style={card}><Star size={20} fill="currentColor" className="mx-auto mb-1" style={{color:"#D9AE58"}}/><div className="text-xl font-bold" style={{color:INK}}>{progress?.available_points?.toLocaleString()}</div><div className="text-[10px] opacity-45">Points</div></div>
         <div className="p-3 text-center" style={card}><Flame size={20} className="mx-auto mb-1" style={{color:"#E05A47"}}/><div className="text-xl font-bold" style={{color:INK}}>{progress?.current_streak||0}</div><div className="text-[10px] opacity-45">Day streak</div></div>

@@ -154,7 +154,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   }
 
   return (
-    <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex justify-center p-4 pt-[72px]">
+    <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-start justify-center p-4 pt-[72px]">
       <button
         onClick={onExit}
         className="nav-btn"
@@ -170,9 +170,16 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
         <ArrowLeft size={18} />
       </button>
       {onSwitchMode && <ModePill mode="challenge" onSwitch={onSwitchMode} />}
-      <div className="w-full max-w-lg">
+
+      {/* Same rounded white panel + shadow as the game screens themselves,
+          so picking a day feels like the same surface you're about to play
+          on, not a separate, plainer page. */}
+      <div
+        className="w-full max-w-sm sm:max-w-md lg:max-w-lg rounded-2xl p-5 lg:p-6 relative"
+        style={{ background: PANEL, boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}
+      >
         <div className="relative text-center mb-6">
-          <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK, letterSpacing: "-0.01em" }} className="text-4xl">
+          <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK, letterSpacing: "-0.01em" }} className="text-4xl lg:text-5xl">
             {gameLabel}
           </h1>
           <div className="inline-flex items-center rounded-full px-3 py-1 mt-2 text-xs font-semibold" style={{ background: "rgba(217,174,88,0.16)", color: "#9A6A12" }}>
@@ -215,8 +222,8 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                     }}
                     className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-left"
                     style={{
-                      background: PANEL,
-                      border: isPlayable ? `1.5px solid ${isToday ? ACCENT : "rgba(47,111,237,0.4)"}` : "1px solid rgba(16,24,40,0.09)",
+                      background: result ? "rgba(22,163,74,0.05)" : isPlayable ? "rgba(47,111,237,0.05)" : "rgba(16,24,40,0.03)",
+                      border: isPlayable ? `1.5px solid ${isToday ? ACCENT : "rgba(47,111,237,0.4)"}` : "1px solid rgba(16,24,40,0.07)",
                       opacity: isFuture ? 0.45 : 1,
                       cursor: isFuture ? "default" : "pointer",
                     }}

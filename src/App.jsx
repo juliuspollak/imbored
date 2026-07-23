@@ -1,27 +1,33 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { ArrowLeft, LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3, Star, Gift } from "lucide-react";
 import Home from "./Home.jsx";
-import QueensGame from "./games/Queens.jsx";
-import TangoGame from "./games/Tango.jsx";
-import ZipGame from "./games/Zip.jsx";
-import MiniSudokuGame from "./games/MiniSudoku.jsx";
-import GeoGame from "./games/Geo.jsx";
 import Login from "./Login.jsx";
 import ProfileSetup from "./ProfileSetup.jsx";
-import Teams from "./Teams.jsx";
-import Stats from "./Stats.jsx";
-import Feedback from "./Feedback.jsx";
-import ReleaseNotes from "./ReleaseNotes.jsx";
-import AdminPlayers from "./AdminPlayers.jsx";
-import AdminGames from "./AdminGames.jsx";
-import Progress from "./Progress.jsx";
-import AdminRewards from "./AdminRewards.jsx";
 import PointsToast from "./PointsToast.jsx";
 import ModePill from "./ModePill.jsx";
 import ChallengeGate from "./ChallengeGate.jsx";
 import OnlineWidget from "./OnlineWidget.jsx";
 import PokeOverlay from "./PokeOverlay.jsx";
+import ErrorBoundary from "./ErrorBoundary.jsx";
 import { AuthProvider, useAuth } from "./lib/AuthContext.jsx";
+
+// Games and the less-frequently-visited screens (teams/stats/admin/etc.) are
+// code-split so a first-time visitor's initial bundle only has to include
+// Home + Login + auth plumbing, not all five puzzle games and every admin
+// tool. Each chunk loads on demand the first time its screen is opened.
+const QueensGame = lazy(() => import("./games/Queens.jsx"));
+const TangoGame = lazy(() => import("./games/Tango.jsx"));
+const ZipGame = lazy(() => import("./games/Zip.jsx"));
+const MiniSudokuGame = lazy(() => import("./games/MiniSudoku.jsx"));
+const GeoGame = lazy(() => import("./games/Geo.jsx"));
+const Teams = lazy(() => import("./Teams.jsx"));
+const Stats = lazy(() => import("./Stats.jsx"));
+const Feedback = lazy(() => import("./Feedback.jsx"));
+const ReleaseNotes = lazy(() => import("./ReleaseNotes.jsx"));
+const AdminPlayers = lazy(() => import("./AdminPlayers.jsx"));
+const AdminGames = lazy(() => import("./AdminGames.jsx"));
+const Progress = lazy(() => import("./Progress.jsx"));
+const AdminRewards = lazy(() => import("./AdminRewards.jsx"));
 import { saveStats } from "./lib/saveStats.js";
 import { supabaseReady } from "./lib/supabase.js";
 import { useOnlinePlayers } from "./lib/useOnlinePlayers.js";
@@ -29,6 +35,7 @@ import { useGameConfig } from "./lib/useGameConfig.js";
 import { usePresence } from "./lib/usePresence.js";
 import { useOpenFeedbackCount } from "./lib/useOpenFeedbackCount.js";
 import { useCompletedFeedbackCount } from "./lib/useCompletedFeedbackCount.js";
+import { useNewTransfersCount } from "./lib/useNewTransfers.js";
 import { usePokes } from "./lib/pokes.js";
 
 const GAME_COMPONENTS = {
@@ -58,6 +65,7 @@ function AppShell() {
   usePresence(["queens", "tango", "zip", "minisudoku", "geo"].includes(active) ? active : null, playMode);
   const openFeedbackCount = useOpenFeedbackCount();
   const completedFeedbackCount = useCompletedFeedbackCount(user?.id);
+  const newTransfersCount = useNewTransfersCount(user?.id);
 
   if (supabaseReady) {
     if (loading) return <FullScreenMessage text="Loading…" />;
@@ -71,35 +79,67 @@ function AppShell() {
   }
 
   if (active === "teams") {
-    return <Teams onBack={() => setActive(null)} />;
+    return (
+      <Suspense fallback={<FullScreenMessage text="Loading…" />}>
+        <Teams onBack={() => setActive(null)} />
+      </Suspense>
+    );
   }
 
   if (active === "stats") {
-    return <Stats onBack={() => setActive(null)} />;
+    return (
+      <Suspense fallback={<FullScreenMessage text="Loading…" />}>
+        <Stats onBack={() => setActive(null)} />
+      </Suspense>
+    );
   }
 
   if (active === "progress") {
-    return <Progress onBack={() => setActive(null)} />;
+    return (
+      <Suspense fallback={<FullScreenMessage text="Loading…" />}>
+        <Progress onBack={() => setActive(null)} />
+      </Suspense>
+    );
   }
 
   if (active === "feedback") {
-    return <Feedback onBack={() => setActive(null)} />;
+    return (
+      <Suspense fallback={<FullScreenMessage text="Loading…" />}>
+        <Feedback onBack={() => setActive(null)} />
+      </Suspense>
+    );
   }
 
   if (active === "whatsnew") {
-    return <ReleaseNotes onBack={() => setActive(null)} />;
+    return (
+      <Suspense fallback={<FullScreenMessage text="Loading…" />}>
+        <ReleaseNotes onBack={() => setActive(null)} />
+      </Suspense>
+    );
   }
 
   if (active === "adminplayers") {
-    return <AdminPlayers onBack={() => setActive(null)} />;
+    return (
+      <Suspense fallback={<FullScreenMessage text="Loading…" />}>
+        <AdminPlayers onBack={() => setActive(null)} />
+      </Suspense>
+    );
   }
 
   if (active === "admingames") {
-    return <AdminGames onBack={() => setActive(null)} />;
+    return (
+      <Suspense fallback={<FullScreenMessage text="Loading…" />}>
+        <AdminGames onBack={() => setActive(null)} />
+      </Suspense>
+    );
   }
 
   if (active === "adminrewards") {
-    return <AdminRewards onBack={() => setActive(null)} />;
+    return (
+      <Suspense fallback={<FullScreenMessage text="Loading…" />}>
+        <AdminRewards onBack={() => setActive(null)} />
+      </Suspense>
+    );
   }
 
   if (!active) {
@@ -133,6 +173,7 @@ function AppShell() {
             userId={user?.id}
             openFeedbackCount={openFeedbackCount}
             completedFeedbackCount={completedFeedbackCount}
+            newTransfersCount={newTransfersCount}
           />
         )}
       </>
@@ -142,29 +183,40 @@ function AppShell() {
   const { Component: Current, label } = GAME_COMPONENTS[active];
   const cfg = gameConfig?.[active];
 
+  // Puzzle generation/rendering bugs in one game shouldn't be able to take
+  // the whole app down — a reset here just drops the player back to Home
+  // rather than forcing a full page reload.
   if (playMode === "challenge" && supabaseReady) {
     return (
-      <ChallengeGate
-        gameId={active}
-        gameLabel={label}
-        GameComponent={Current}
-        userId={user?.id}
-        onExit={() => setActive(null)}
-        onSwitchMode={() => setPlayMode("practice")}
-        hintCooldownConfig={cfg}
-        weekStartsOn={profile?.week_starts_on ?? 1}
-      />
+      <ErrorBoundary key={active} onReset={() => setActive(null)}>
+        <Suspense fallback={<FullScreenMessage text="Loading…" />}>
+          <ChallengeGate
+            gameId={active}
+            gameLabel={label}
+            GameComponent={Current}
+            userId={user?.id}
+            onExit={() => setActive(null)}
+            onSwitchMode={() => setPlayMode("practice")}
+            hintCooldownConfig={cfg}
+            weekStartsOn={profile?.week_starts_on ?? 1}
+          />
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 
   return (
-    <PracticePlay
-      Current={Current}
-      userId={user?.id}
-      onExit={() => setActive(null)}
-      onSwitchMode={supabaseReady ? () => setPlayMode("challenge") : undefined}
-      hintCooldownConfig={cfg}
-    />
+    <ErrorBoundary key={active} onReset={() => setActive(null)}>
+      <Suspense fallback={<FullScreenMessage text="Loading…" />}>
+        <PracticePlay
+          Current={Current}
+          userId={user?.id}
+          onExit={() => setActive(null)}
+          onSwitchMode={supabaseReady ? () => setPlayMode("challenge") : undefined}
+          hintCooldownConfig={cfg}
+        />
+      </Suspense>
+    </ErrorBoundary>
   );
 }
 
@@ -222,22 +274,28 @@ function PracticePlay({ Current, userId, onExit, onSwitchMode, hintCooldownConfi
   );
 }
 
-function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0 }) {
+function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const hasOpenFeedback = openFeedbackCount > 0 || completedFeedbackCount > 0;
   const isAdmin = !!profile.is_admin;
+  // Admins care about the queue of open tickets; everyone else only cares
+  // about their own feedback getting a reply — each role sees its own count,
+  // both here and on the bubble badge below (previously the bubble always
+  // showed the admin count even for regular players).
+  const feedbackBadgeCount = isAdmin ? openFeedbackCount : completedFeedbackCount;
+  const totalNotifications = feedbackBadgeCount + newTransfersCount;
+  const hasNotifications = totalNotifications > 0;
 
   const items = [
-    { onClick: onOpenProfile, icon: User, label: "My profile", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
-    { onClick: onOpenWhatsNew, icon: Sparkles, label: "What's new", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
-    { onClick: onOpenFeedback, icon: MessageSquare, label: completedFeedbackCount > 0 ? "Feedback · update" : "Feedback", glow: "rgba(139,92,246,0.35)", border: "rgba(139,92,246,0.4)", badge: isAdmin ? openFeedbackCount : completedFeedbackCount },
-    { onClick: onOpenStats, icon: BarChart3, label: "Stats", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
-    { onClick: onOpenProgress, icon: Star, label: "My progress", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
-    { onClick: onOpenTeams, icon: Users, label: "Teams", glow: "rgba(18,148,106,0.35)", border: "rgba(18,148,106,0.4)" },
-    ...(isAdmin ? [{ onClick: onOpenAdminPlayers, icon: Shield, label: "Players (admin)", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" }] : []),
-    ...(isAdmin ? [{ onClick: onOpenAdminGames, icon: Grid3x3, label: "Games (admin)", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" }] : []),
-    ...(isAdmin ? [{ onClick: onOpenAdminRewards, icon: Gift, label: "Rewards (admin)", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" }] : []),
-    { onClick: onSignOut, icon: LogOut, label: "Sign out", glow: "rgba(229,72,77,0.35)", border: "rgba(229,72,77,0.4)" },
+    { id: "profile", onClick: onOpenProfile, icon: User, label: "My profile", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
+    { id: "whatsnew", onClick: onOpenWhatsNew, icon: Sparkles, label: "What's new", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
+    { id: "feedback", onClick: onOpenFeedback, icon: MessageSquare, label: completedFeedbackCount > 0 ? "Feedback · update" : "Feedback", glow: "rgba(139,92,246,0.35)", border: "rgba(139,92,246,0.4)", badge: feedbackBadgeCount },
+    { id: "stats", onClick: onOpenStats, icon: BarChart3, label: "Stats", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
+    { id: "progress", onClick: onOpenProgress, icon: Star, label: newTransfersCount > 0 ? "My progress · new" : "My progress", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)", badge: newTransfersCount },
+    { id: "teams", onClick: onOpenTeams, icon: Users, label: "Teams", glow: "rgba(18,148,106,0.35)", border: "rgba(18,148,106,0.4)" },
+    ...(isAdmin ? [{ id: "adminplayers", onClick: onOpenAdminPlayers, icon: Shield, label: "Players (admin)", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" }] : []),
+    ...(isAdmin ? [{ id: "admingames", onClick: onOpenAdminGames, icon: Grid3x3, label: "Games (admin)", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" }] : []),
+    ...(isAdmin ? [{ id: "adminrewards", onClick: onOpenAdminRewards, icon: Gift, label: "Rewards (admin)", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" }] : []),
+    { id: "signout", onClick: onSignOut, icon: LogOut, label: "Sign out", glow: "rgba(229,72,77,0.35)", border: "rgba(229,72,77,0.4)" },
   ];
 
   return (
@@ -269,7 +327,7 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenSt
       <div style={{ position: "relative" }}>
         <button
           onClick={() => setMenuOpen((o) => !o)}
-          className={`nav-btn ${hasOpenFeedback ? "feedback-wiggle" : ""}`}
+          className={`nav-btn ${hasNotifications ? "feedback-wiggle" : ""}`}
           title={profile.mood || undefined}
           style={{
             "--nav-glow": "rgba(47,111,237,0.3)",
@@ -299,15 +357,16 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenSt
             ADMIN
           </div>
         )}
-        {hasOpenFeedback && (
+        {hasNotifications && (
           <div
             className="dot-pulse flex items-center justify-center rounded-full"
+            title={newTransfersCount > 0 ? "You have new points and updates" : "You have updates"}
             style={{
               position: "absolute", top: -4, right: -4, minWidth: 15, height: 15, padding: "0 3px",
               background: "#8B5CF6", color: "#FFFFFF", fontSize: 9, fontWeight: 700, border: "1.5px solid #F1F3F7",
             }}
           >
-            {openFeedbackCount}
+            {totalNotifications}
           </div>
         )}
       </div>
@@ -316,7 +375,7 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenSt
         <div className="flex flex-col items-end gap-1.5">
           {items.map((item, i) => (
             <button
-              key={item.label}
+              key={item.id}
               onClick={() => {
                 setMenuOpen(false);
                 item.onClick();
