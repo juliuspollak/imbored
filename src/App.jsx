@@ -5,6 +5,7 @@ import QueensGame from "./games/Queens.jsx";
 import TangoGame from "./games/Tango.jsx";
 import ZipGame from "./games/Zip.jsx";
 import MiniSudokuGame from "./games/MiniSudoku.jsx";
+import GeoGame from "./games/Geo.jsx";
 import Login from "./Login.jsx";
 import ProfileSetup from "./ProfileSetup.jsx";
 import Teams from "./Teams.jsx";
@@ -34,6 +35,7 @@ const GAME_COMPONENTS = {
   tango: { Component: TangoGame, label: "Tango" },
   zip: { Component: ZipGame, label: "Zip" },
   minisudoku: { Component: MiniSudokuGame, label: "Mini Sudoku" },
+  geo: { Component: GeoGame, label: "Geo" },
 };
 
 function AppShell() {
@@ -51,8 +53,8 @@ function AppShell() {
     }
   }, [profile]);
   const players = useOnlinePlayers();
-  const { config: gameConfig } = useGameConfig();
-  usePresence(["queens", "tango", "zip", "minisudoku"].includes(active) ? active : null, playMode);
+  const { config: gameConfig, refetch: refetchGameConfig } = useGameConfig();
+  usePresence(["queens", "tango", "zip", "minisudoku", "geo"].includes(active) ? active : null, playMode);
   const openFeedbackCount = useOpenFeedbackCount();
 
   if (supabaseReady) {
@@ -102,7 +104,10 @@ function AppShell() {
     return (
       <>
         <Home
-          onSelect={setActive}
+          onSelect={(id) => {
+            refetchGameConfig();
+            setActive(id);
+          }}
           playMode={supabaseReady ? playMode : "practice"}
           onPlayModeChange={supabaseReady ? setPlayMode : undefined}
           players={players}

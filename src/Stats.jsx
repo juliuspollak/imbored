@@ -8,9 +8,9 @@ const PANEL = "#FFFFFF";
 const INK = "#1B2129";
 const ACCENT = "#2F6FED";
 
-const GAME_ICONS = { queens: Crown, tango: Moon, zip: Waypoints, minisudoku: Grid3x3 };
-const GAME_LABELS = { queens: "Queens", tango: "Tango", zip: "Zip", minisudoku: "Sudoku" };
-const GAME_COLORS = { queens: "#2F6FED", tango: "#4A6FA5", zip: "#12946A", minisudoku: "#0E7490" };
+const GAME_ICONS = { queens: Crown, tango: Moon, zip: Waypoints, minisudoku: Grid3x3, geo: Globe2 };
+const GAME_LABELS = { queens: "Queens", tango: "Tango", zip: "Zip", minisudoku: "Sudoku", geo: "Geo" };
+const GAME_COLORS = { queens: "#2F6FED", tango: "#4A6FA5", zip: "#12946A", minisudoku: "#0E7490", geo: "#DB2777" };
 
 function statDate(row) {
   return row.challenge_date || row.completed_at?.slice(0, 10) || "Unknown date";
@@ -63,11 +63,11 @@ export default function Stats({ onBack }) {
   }
 
   const modeRows = rows.filter((r) => r.mode === mode);
-  const totalsByGame = { queens: 0, tango: 0, zip: 0, minisudoku: 0 };
+  const totalsByGame = { queens: 0, tango: 0, zip: 0, minisudoku: 0, geo: 0 };
   const byUser = {};
   modeRows.forEach((r) => {
     totalsByGame[r.game] = (totalsByGame[r.game] || 0) + 1;
-    byUser[r.user_id] ||= { queens: 0, tango: 0, zip: 0, minisudoku: 0, total: 0, rows: [] };
+    byUser[r.user_id] ||= { queens: 0, tango: 0, zip: 0, minisudoku: 0, geo: 0, total: 0, rows: [] };
     byUser[r.user_id][r.game] = (byUser[r.user_id][r.game] || 0) + 1;
     byUser[r.user_id].total += 1;
     byUser[r.user_id].rows.push(r);
@@ -103,8 +103,8 @@ export default function Stats({ onBack }) {
               <p style={{ color: INK, opacity: 0.4 }} className="text-sm text-center py-8">No {mode} games played yet.</p>
             ) : (
               <>
-                <div className="grid grid-cols-5 gap-2 mb-6">
-                  {["queens", "tango", "zip", "minisudoku"].map((g) => { const Icon = GAME_ICONS[g]; return (
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-6">
+                  {["queens", "tango", "zip", "minisudoku", "geo"].map((g) => { const Icon = GAME_ICONS[g]; return (
                     <div key={g} className="rounded-xl p-3 text-center" style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)" }}><Icon size={16} style={{ color: GAME_COLORS[g], margin: "0 auto 4px" }} /><div style={{ color: INK, fontWeight: 700 }} className="text-lg">{totalsByGame[g]}</div><div style={{ color: INK, opacity: 0.45 }} className="text-[10px]">{GAME_LABELS[g]}</div></div>
                   ); })}
                   <div className="rounded-xl p-3 text-center flex flex-col items-center justify-center" style={{ background: ACCENT }}><div style={{ color: "#FFFFFF", fontWeight: 700 }} className="text-lg">{modeRows.length}</div><div style={{ color: "#FFFFFF", opacity: 0.8 }} className="text-[10px]">Total</div></div>
@@ -120,7 +120,7 @@ export default function Stats({ onBack }) {
                         <div className="p-3 flex items-center gap-3">
                           <button className="flex flex-1 items-center gap-3 text-left min-w-0" onClick={() => setExpandedUserId(expanded ? null : p.userId)} aria-expanded={expanded}>
                             <span style={{ fontSize: 18 }}>{p.profile.icon || "🙂"}</span>
-                            <div className="flex-1 min-w-0"><div style={{ color: INK, fontWeight: 600 }} className="text-sm truncate">{p.profile.name}{p.profile.mood && <span style={{ fontWeight: 400, opacity: 0.5 }} className="text-xs"> · {p.profile.mood}</span>}</div><div className="flex gap-2 mt-0.5 flex-wrap">{["queens", "tango", "zip", "minisudoku"].map((g) => p[g] > 0 ? <span key={g} style={{ color: GAME_COLORS[g] }} className="text-[10px] font-medium">{GAME_LABELS[g]} ×{p[g]}</span> : null)}</div></div>
+                            <div className="flex-1 min-w-0"><div style={{ color: INK, fontWeight: 600 }} className="text-sm truncate">{p.profile.name}{p.profile.mood && <span style={{ fontWeight: 400, opacity: 0.5 }} className="text-xs"> · {p.profile.mood}</span>}</div><div className="flex gap-2 mt-0.5 flex-wrap">{["queens", "tango", "zip", "minisudoku", "geo"].map((g) => p[g] > 0 ? <span key={g} style={{ color: GAME_COLORS[g] }} className="text-[10px] font-medium">{GAME_LABELS[g]} ×{p[g]}</span> : null)}</div></div>
                             <div style={{ color: INK, opacity: 0.4 }} className="text-xs font-semibold">{p.total}</div>
                             {expanded ? <ChevronUp size={15} style={{ color: INK, opacity: 0.45 }} /> : <ChevronDown size={15} style={{ color: INK, opacity: 0.45 }} />}
                           </button>

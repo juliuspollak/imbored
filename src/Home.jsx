@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Crown, Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle, Check, Star, Flame, ChevronRight } from "lucide-react";
+import { Crown, Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle, Check, Star, Flame, ChevronRight, Globe2 } from "lucide-react";
 import { useGameConfig } from "./lib/useGameConfig.js";
 import { useTodayCompletions } from "./lib/useTodayCompletions.js";
 import { supabase, supabaseReady } from "./lib/supabase.js";
@@ -17,6 +17,7 @@ export const GAME_META = [
   { id: "minisudoku", label: "Mini Sudoku", desc: "Classic sudoku, bite-sized", icon: Grid3x3, accent: "#0E7490", available: true },
   { id: "patches", label: "Patches", desc: "Fit every shape into the frame", icon: Puzzle, accent: "#B45309", available: false },
   { id: "wend", label: "Wend", desc: "Weave hidden words through the grid", icon: Waves, accent: "#0EA5E9", available: false },
+  { id: "geo", label: "Geo", desc: "Capitals, landmarks & wildlife by continent", icon: Globe2, accent: "#DB2777", available: true },
 ];
 
 export default function Home({ onSelect, playMode, onPlayModeChange, players = [], userId, onOpenProgress }) {
