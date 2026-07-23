@@ -154,7 +154,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   }
 
   return (
-    <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex justify-center p-4 pt-10">
+    <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex justify-center p-4 pt-[72px]">
       <button
         onClick={onExit}
         className="nav-btn"
@@ -170,7 +170,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
         <ArrowLeft size={18} />
       </button>
       {onSwitchMode && <ModePill mode="challenge" onSwitch={onSwitchMode} />}
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-lg">
         <div className="relative text-center mb-6">
           <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK, letterSpacing: "-0.01em" }} className="text-4xl">
             {gameLabel}

@@ -1090,7 +1090,7 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
   return (
     <div
       style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}
-      className="flex items-center justify-center p-4"
+      className="flex items-start justify-center p-4 pt-[72px]"
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
