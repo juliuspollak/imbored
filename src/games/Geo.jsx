@@ -3,7 +3,7 @@ import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating from "../DifficultyRating.jsx";
-import { Globe2, RotateCcw, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, Lock, Check, X } from "lucide-react";
+import { Globe2, RotateCcw, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
 
 /* ---------------- continents & map ---------------- */
 
@@ -105,6 +105,139 @@ const LANDMARKS = [
   { name: "Great Barrier Reef", continent: "Oceania", difficulty: 3 },
 ];
 
+// Deliberately excludes every genuinely transcontinental or contested case
+// (Russia, Turkey, Kazakhstan, Georgia, Azerbaijan, Armenia, Cyprus) so
+// nothing here is actually debatable — same standard as everything else
+// in this file. This is the real fix for question-pool size: country
+// membership is about as stable and verifiable a fact as exists, and
+// there are ~195 to draw from, which is what actually solves repetition
+// at daily-play scale rather than a live API that could just go down.
+const COUNTRIES = [
+  { name: "Canada", continent: "North America", difficulty: 1 },
+  { name: "United States", continent: "North America", difficulty: 1 },
+  { name: "Mexico", continent: "North America", difficulty: 1 },
+  { name: "Cuba", continent: "North America", difficulty: 2 },
+  { name: "Jamaica", continent: "North America", difficulty: 2 },
+  { name: "Panama", continent: "North America", difficulty: 2 },
+  { name: "Costa Rica", continent: "North America", difficulty: 2 },
+  { name: "Guatemala", continent: "North America", difficulty: 2 },
+  { name: "Honduras", continent: "North America", difficulty: 3 },
+  { name: "Haiti", continent: "North America", difficulty: 3 },
+  { name: "Dominican Republic", continent: "North America", difficulty: 3 },
+  { name: "Belize", continent: "North America", difficulty: 3 },
+  { name: "Nicaragua", continent: "North America", difficulty: 3 },
+  { name: "El Salvador", continent: "North America", difficulty: 3 },
+  { name: "Bahamas", continent: "North America", difficulty: 3 },
+  { name: "Trinidad and Tobago", continent: "North America", difficulty: 3 },
+
+  { name: "Brazil", continent: "South America", difficulty: 1 },
+  { name: "Argentina", continent: "South America", difficulty: 1 },
+  { name: "Chile", continent: "South America", difficulty: 1 },
+  { name: "Peru", continent: "South America", difficulty: 1 },
+  { name: "Colombia", continent: "South America", difficulty: 2 },
+  { name: "Venezuela", continent: "South America", difficulty: 2 },
+  { name: "Ecuador", continent: "South America", difficulty: 2 },
+  { name: "Bolivia", continent: "South America", difficulty: 2 },
+  { name: "Paraguay", continent: "South America", difficulty: 3 },
+  { name: "Uruguay", continent: "South America", difficulty: 3 },
+  { name: "Guyana", continent: "South America", difficulty: 3 },
+  { name: "Suriname", continent: "South America", difficulty: 3 },
+
+  { name: "France", continent: "Europe", difficulty: 1 },
+  { name: "Germany", continent: "Europe", difficulty: 1 },
+  { name: "Italy", continent: "Europe", difficulty: 1 },
+  { name: "Spain", continent: "Europe", difficulty: 1 },
+  { name: "United Kingdom", continent: "Europe", difficulty: 1 },
+  { name: "Portugal", continent: "Europe", difficulty: 2 },
+  { name: "Netherlands", continent: "Europe", difficulty: 2 },
+  { name: "Switzerland", continent: "Europe", difficulty: 2 },
+  { name: "Sweden", continent: "Europe", difficulty: 2 },
+  { name: "Norway", continent: "Europe", difficulty: 2 },
+  { name: "Poland", continent: "Europe", difficulty: 2 },
+  { name: "Greece", continent: "Europe", difficulty: 2 },
+  { name: "Austria", continent: "Europe", difficulty: 2 },
+  { name: "Belgium", continent: "Europe", difficulty: 2 },
+  { name: "Ireland", continent: "Europe", difficulty: 2 },
+  { name: "Finland", continent: "Europe", difficulty: 3 },
+  { name: "Denmark", continent: "Europe", difficulty: 3 },
+  { name: "Iceland", continent: "Europe", difficulty: 3 },
+  { name: "Hungary", continent: "Europe", difficulty: 3 },
+  { name: "Czech Republic", continent: "Europe", difficulty: 3 },
+  { name: "Romania", continent: "Europe", difficulty: 3 },
+  { name: "Croatia", continent: "Europe", difficulty: 3 },
+  { name: "Slovakia", continent: "Europe", difficulty: 3 },
+  { name: "Slovenia", continent: "Europe", difficulty: 3 },
+  { name: "Luxembourg", continent: "Europe", difficulty: 3 },
+  { name: "Malta", continent: "Europe", difficulty: 3 },
+  { name: "Estonia", continent: "Europe", difficulty: 3 },
+  { name: "Latvia", continent: "Europe", difficulty: 3 },
+  { name: "Lithuania", continent: "Europe", difficulty: 3 },
+  { name: "Serbia", continent: "Europe", difficulty: 3 },
+  { name: "Bulgaria", continent: "Europe", difficulty: 3 },
+
+  { name: "Egypt", continent: "Africa", difficulty: 1 },
+  { name: "Nigeria", continent: "Africa", difficulty: 1 },
+  { name: "Kenya", continent: "Africa", difficulty: 1 },
+  { name: "South Africa", continent: "Africa", difficulty: 1 },
+  { name: "Morocco", continent: "Africa", difficulty: 1 },
+  { name: "Ghana", continent: "Africa", difficulty: 2 },
+  { name: "Ethiopia", continent: "Africa", difficulty: 2 },
+  { name: "Tanzania", continent: "Africa", difficulty: 2 },
+  { name: "Uganda", continent: "Africa", difficulty: 2 },
+  { name: "Senegal", continent: "Africa", difficulty: 2 },
+  { name: "Zimbabwe", continent: "Africa", difficulty: 2 },
+  { name: "Tunisia", continent: "Africa", difficulty: 2 },
+  { name: "Algeria", continent: "Africa", difficulty: 2 },
+  { name: "Zambia", continent: "Africa", difficulty: 3 },
+  { name: "Namibia", continent: "Africa", difficulty: 3 },
+  { name: "Botswana", continent: "Africa", difficulty: 3 },
+  { name: "Rwanda", continent: "Africa", difficulty: 3 },
+  { name: "Mozambique", continent: "Africa", difficulty: 3 },
+  { name: "Angola", continent: "Africa", difficulty: 3 },
+  { name: "Cameroon", continent: "Africa", difficulty: 3 },
+  { name: "Ivory Coast", continent: "Africa", difficulty: 3 },
+  { name: "Mali", continent: "Africa", difficulty: 3 },
+  { name: "Madagascar", continent: "Africa", difficulty: 3 },
+  { name: "Sudan", continent: "Africa", difficulty: 3 },
+
+  { name: "Japan", continent: "Asia", difficulty: 1 },
+  { name: "China", continent: "Asia", difficulty: 1 },
+  { name: "India", continent: "Asia", difficulty: 1 },
+  { name: "Thailand", continent: "Asia", difficulty: 1 },
+  { name: "South Korea", continent: "Asia", difficulty: 1 },
+  { name: "Vietnam", continent: "Asia", difficulty: 2 },
+  { name: "Indonesia", continent: "Asia", difficulty: 2 },
+  { name: "Philippines", continent: "Asia", difficulty: 2 },
+  { name: "Malaysia", continent: "Asia", difficulty: 2 },
+  { name: "Singapore", continent: "Asia", difficulty: 2 },
+  { name: "Saudi Arabia", continent: "Asia", difficulty: 2 },
+  { name: "Israel", continent: "Asia", difficulty: 2 },
+  { name: "United Arab Emirates", continent: "Asia", difficulty: 2 },
+  { name: "Pakistan", continent: "Asia", difficulty: 2 },
+  { name: "Sri Lanka", continent: "Asia", difficulty: 3 },
+  { name: "Nepal", continent: "Asia", difficulty: 3 },
+  { name: "Cambodia", continent: "Asia", difficulty: 3 },
+  { name: "Laos", continent: "Asia", difficulty: 3 },
+  { name: "Mongolia", continent: "Asia", difficulty: 3 },
+  { name: "Bangladesh", continent: "Asia", difficulty: 3 },
+  { name: "Myanmar", continent: "Asia", difficulty: 3 },
+  { name: "Bhutan", continent: "Asia", difficulty: 3 },
+  { name: "Jordan", continent: "Asia", difficulty: 3 },
+  { name: "Lebanon", continent: "Asia", difficulty: 3 },
+  { name: "Qatar", continent: "Asia", difficulty: 3 },
+  { name: "Kuwait", continent: "Asia", difficulty: 3 },
+  { name: "Oman", continent: "Asia", difficulty: 3 },
+
+  { name: "Australia", continent: "Oceania", difficulty: 1 },
+  { name: "New Zealand", continent: "Oceania", difficulty: 1 },
+  { name: "Fiji", continent: "Oceania", difficulty: 2 },
+  { name: "Papua New Guinea", continent: "Oceania", difficulty: 2 },
+  { name: "Samoa", continent: "Oceania", difficulty: 3 },
+  { name: "Tonga", continent: "Oceania", difficulty: 3 },
+  { name: "Vanuatu", continent: "Oceania", difficulty: 3 },
+  { name: "Solomon Islands", continent: "Oceania", difficulty: 3 },
+];
+
 /* ---------------- generation ---------------- */
 
 function shuffle(arr) {
@@ -116,35 +249,99 @@ function shuffle(arr) {
   return a;
 }
 
-function buildOptions(correctContinent) {
-  const wrong = shuffle(CONTINENTS.filter((c) => c !== correctContinent)).slice(0, 3);
-  return shuffle([correctContinent, ...wrong]);
-}
-
 // Mon..Sun: difficulty ceiling ramps from "easy only" to "anything goes".
 const DIFFICULTY_CEILING = [1, 1, 2, 2, 3, 3, 3];
 
-function generateQuiz(dayIdx) {
-  const ceiling = DIFFICULTY_CEILING[dayIdx];
-  const pools = {
-    city: CITIES.filter((q) => q.difficulty <= ceiling),
-    animal: ANIMALS.filter((q) => q.difficulty <= ceiling),
-    landmark: LANDMARKS.filter((q) => q.difficulty <= ceiling),
+const QUESTION_TEMPLATES = {
+  city: [
+    ({ name }) => `Which continent is ${name} in?`,
+    ({ name }) => `${name} is a city on which continent?`,
+    ({ name }) => `Tap the continent where you would find ${name}.`,
+  ],
+  animal: [
+    ({ name }) => `Which continent is the ${name} native to?`,
+    ({ name }) => `Where does the ${name} naturally live?`,
+    ({ name }) => `Tap the home continent of the ${name}.`,
+  ],
+  landmark: [
+    ({ name }) => `Which continent is the ${name} in?`,
+    ({ name }) => `Tap the continent where the ${name} is located.`,
+    ({ name }) => `Where in the world would you find the ${name}?`,
+  ],
+  country: [
+    ({ name }) => `Which continent is ${name} in?`,
+    ({ name }) => `${name} belongs to which continent?`,
+    ({ name }) => `Tap the continent containing ${name}.`,
+  ],
+  map: [
+    () => "Tap the highlighted continent.",
+    () => "Which continent is highlighted?",
+  ],
+};
+
+function makeQuestion(type, fact) {
+  const templates = QUESTION_TEMPLATES[type];
+  const templateIndex = Math.floor(Math.random() * templates.length);
+  return {
+    id: `${type}:${fact.id || fact.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}:${templateIndex}`,
+    factId: `${type}:${fact.id || fact.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    type,
+    prompt: templates[templateIndex](fact),
+    answer: fact.continent,
+    highlight: type === "map" ? fact.continent : null,
   };
+}
+
+function getRecentFactIds(userId) {
+  if (typeof window === "undefined") return [];
+  try {
+    const key = `geo_recent_facts:${userId || "guest"}`;
+    const parsed = JSON.parse(window.localStorage.getItem(key) || "[]");
+    return Array.isArray(parsed) ? parsed.slice(0, 80) : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberFacts(userId, questions) {
+  if (typeof window === "undefined") return;
+  try {
+    const key = `geo_recent_facts:${userId || "guest"}`;
+    const existing = getRecentFactIds(userId);
+    const next = [...questions.map((q) => q.factId), ...existing.filter((id) => !questions.some((q) => q.factId === id))].slice(0, 80);
+    window.localStorage.setItem(key, JSON.stringify(next));
+  } catch {
+    // Local history is a best-effort repetition guard only.
+  }
+}
+
+function chooseFact(pool, used, recent) {
+  const unseen = pool.filter((q) => !used.has(q.name) && !recent.has(q.factId));
+  const fallback = pool.filter((q) => !used.has(q.name));
+  return shuffle(unseen.length ? unseen : fallback)[0];
+}
+
+function generateQuiz(dayIdx, recentFactIds = []) {
+  const ceiling = DIFFICULTY_CEILING[dayIdx];
+  const recent = new Set(recentFactIds);
+  const tag = (type, q) => ({ ...q, factId: `${type}:${q.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}` });
+  const pools = {
+    city: CITIES.filter((q) => q.difficulty <= ceiling).map((q) => tag("city", q)),
+    animal: ANIMALS.filter((q) => q.difficulty <= ceiling).map((q) => tag("animal", q)),
+    landmark: LANDMARKS.filter((q) => q.difficulty <= ceiling).map((q) => tag("landmark", q)),
+    country: COUNTRIES.filter((q) => q.difficulty <= ceiling).map((q) => tag("country", q)),
+  };
+
   const mapContinent = shuffle(CONTINENTS)[0];
-  const questions = [
-    { type: "map", prompt: "Which continent is highlighted?", answer: mapContinent, options: buildOptions(mapContinent) },
-  ];
-  const types = shuffle(["city", "animal", "landmark", "city", "animal"]);
+  const questions = [makeQuestion("map", { id: mapContinent.toLowerCase().replace(/ /g, "-"), continent: mapContinent })];
+  const types = shuffle(["city", "animal", "landmark", "country", "country"]);
   const used = new Set();
+
   for (const type of types) {
-    const pool = pools[type].filter((q) => !used.has(q.name));
-    const pick = shuffle(pool)[0];
-    if (!pick) continue;
-    used.add(pick.name);
-    const prompt =
-      type === "city" ? `Which continent is ${pick.name} in?` : type === "animal" ? `Which continent is the ${pick.name} native to?` : `Which continent is the ${pick.name} in?`;
-    questions.push({ type, prompt, answer: pick.continent, options: buildOptions(pick.continent) });
+    const fact = chooseFact(pools[type], used, recent);
+    if (!fact) continue;
+    used.add(fact.name);
+    questions.push(makeQuestion(type, fact));
   }
   return questions.slice(0, 5);
 }
@@ -181,7 +378,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
   const [qIdx, setQIdx] = useState(0);
   const [selected, setSelected] = useState(null);
   const [answered, setAnswered] = useState(false);
-  const [eliminated, setEliminated] = useState([]); // options removed by the 50/50 hint, this question only
+  const [eliminated, setEliminated] = useState([]); // continents faded by the map hint, this question only
   const [seconds, setSeconds] = useState(0);
   const [running, setRunning] = useState(false);
   const [solved, setSolved] = useState(false);
@@ -191,9 +388,11 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
   const timerRef = useRef(null);
 
   const newQuiz = useCallback((dIdx) => {
-    const gen = () => generateQuiz(dIdx);
+    const recent = isChallenge ? [] : getRecentFactIds(userId);
+    const gen = () => generateQuiz(dIdx, recent);
     const qs = isChallenge && seed ? withSeededRandom(seed, gen) : gen();
     setQuestions(qs);
+    if (!isChallenge) rememberFacts(userId, qs);
     setQIdx(0);
     setSelected(null);
     setAnswered(false);
@@ -205,7 +404,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
     setHintsUsed(0);
     hintCooldown.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isChallenge, seed]);
+  }, [isChallenge, seed, userId]);
 
   useEffect(() => {
     newQuiz(dayIdx);
@@ -252,8 +451,8 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
 
   function handleHint() {
     if (solved || answered || hintCooldown.locked || eliminated.length > 0) return;
-    const wrongOptions = q.options.filter((o) => o !== q.answer);
-    const toEliminate = shuffle(wrongOptions).slice(0, 2);
+    const wrongContinents = CONTINENTS.filter((continent) => continent !== q.answer);
+    const toEliminate = shuffle(wrongContinents).slice(0, 2);
     setEliminated(toEliminate);
     setHintsUsed((h) => h + 1);
     hintCooldown.startCooldown();
@@ -275,6 +474,13 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
           .geo-icon-btn:hover { opacity: 0.85; }
           .geo-toolbar-btn:not(:disabled):hover { background: rgba(16,24,40,0.10) !important; }
           .geo-next-btn:hover { filter: brightness(1.08); }
+          .geo-continent:not([aria-disabled="true"]):hover { filter: brightness(1.08); }
+        }
+        .geo-continent:focus-visible { outline: none; filter: drop-shadow(0 0 4px rgba(47,111,237,0.8)); }
+        .geo-map-shell { box-shadow: inset 0 0 0 1px rgba(47,111,237,0.08); }
+        @media (max-width: 420px) {
+          .geo-card { padding: 16px !important; }
+          .geo-map-shell { margin-left: -4px; width: calc(100% + 8px); }
         }
       `}</style>
 
@@ -290,7 +496,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
           <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK, letterSpacing: "-0.01em" }} className="text-4xl lg:text-5xl">
             Geo
           </h1>
-          <p style={{ color: INK, opacity: 0.45 }} className="text-xs mt-1">five questions a day — capitals, landmarks &amp; wildlife</p>
+          <p style={{ color: INK, opacity: 0.45 }} className="text-xs mt-1">five quick questions — tap the map</p>
         </div>
 
         {isChallenge ? (
@@ -322,9 +528,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
           <div style={{ color: INK, opacity: 0.7 }} className="text-xs">
             question <span style={{ color: ACCENT, fontWeight: 600 }}>{Math.min(qIdx + 1, questions.length)}</span>/{questions.length}
           </div>
-          <div style={{ color: INK, opacity: 0.7 }} className="text-xs">
-            missed: <span style={{ color: mistakes > 0 ? RED : INK }}>{mistakes}</span>
-          </div>
+
         </div>
 
         <div className="flex items-center justify-center gap-2 mb-4">
@@ -333,7 +537,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
             { Icon: Shuffle, label: "New", onClick: () => newQuiz(dayIdx), disabled: isChallenge },
             {
               Icon: hintCooldown.locked ? Lock : Lightbulb,
-              label: hintCooldown.locked ? `${hintCooldown.remaining}s` : "50/50",
+              label: hintCooldown.locked ? `${hintCooldown.remaining}s` : "Hint",
               onClick: handleHint,
               disabled: solved || answered || hintCooldown.locked || eliminated.length > 0,
             },
@@ -353,54 +557,77 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
 
         {showHelp && (
           <div className="text-xs rounded-lg p-2.5 mb-3" style={{ background: "rgba(16,24,40,0.05)", color: INK, opacity: 0.75, lineHeight: 1.4 }}>
-            Five questions, one tap each. 50/50 removes two wrong options — it locks for a bit after use if the admin's set a cooldown.
-            Missed answers don't block you from continuing, they just count against your result.
+            Five questions, one map tap each. The hint fades two wrong continents and may lock briefly after use. Wrong answers do not block the next question.
           </div>
         )}
 
         {!solved && (
           <>
-            {q.type === "map" && (
-              <div className="relative w-full rounded-xl overflow-hidden mb-4">
-                <svg viewBox={MAP_VIEWBOX} className="w-full" style={{ background: "#DCE9F7", borderRadius: 12 }}>
-                  <path d={ANTARCTICA_D} fill="#D6DEE8" stroke="#FFFFFF" strokeWidth={1} />
-                  {Object.entries(CONTINENT_SHAPES).map(([name, shape]) => (
-                    <path key={name} d={shape.d} fill={name === q.answer ? ACCENT : "#B9CDE0"} stroke="#FFFFFF" strokeWidth={1.5} />
-                  ))}
-                </svg>
-              </div>
-            )}
-
-            <p style={{ color: INK, fontWeight: 600 }} className="text-base text-center mb-4">
+            <p style={{ color: INK, fontWeight: 600 }} className="text-base text-center mb-3 min-h-[48px] flex items-center justify-center">
               {q.prompt}
             </p>
 
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {q.options.map((opt) => {
-                const isEliminated = eliminated.includes(opt);
-                const isCorrectAnswer = opt === q.answer;
-                const isPicked = opt === selected;
-                let bg = PANEL, border = "1.5px solid rgba(16,24,40,0.12)", color = INK;
-                if (answered && isCorrectAnswer) {
-                  bg = "rgba(22,163,74,0.1)"; border = `1.5px solid ${GREEN}`; color = GREEN;
-                } else if (answered && isPicked && !isCorrectAnswer) {
-                  bg = "rgba(229,72,77,0.1)"; border = `1.5px solid ${RED}`; color = RED;
-                }
-                return (
-                  <button
-                    key={opt}
-                    onClick={() => pick(opt)}
-                    disabled={answered || isEliminated}
-                    className="geo-option rounded-xl py-3 px-2 text-sm font-medium transition-all flex items-center justify-center gap-1.5"
-                    style={{ background: isEliminated ? "rgba(16,24,40,0.03)" : bg, border, color: isEliminated ? "rgba(27,33,41,0.25)" : color, textDecoration: isEliminated ? "line-through" : "none" }}
-                  >
-                    {answered && isCorrectAnswer && <Check size={14} />}
-                    {answered && isPicked && !isCorrectAnswer && <X size={14} />}
-                    {opt}
-                  </button>
-                );
-              })}
+            <div className="relative w-full rounded-xl overflow-hidden mb-3 geo-map-shell">
+              <svg
+                viewBox={MAP_VIEWBOX}
+                className="w-full block"
+                role="group"
+                aria-label="Tap a continent to answer"
+                style={{ background: "linear-gradient(180deg, #DCEAF8 0%, #EAF3FB 100%)", borderRadius: 12, touchAction: "manipulation" }}
+              >
+                <path d={ANTARCTICA_D} fill="#D6DEE8" stroke="#FFFFFF" strokeWidth={1} opacity={0.65} />
+                {Object.entries(CONTINENT_SHAPES).map(([name, shape]) => {
+                  const isEliminated = eliminated.includes(name);
+                  const isPicked = selected === name;
+                  const isCorrect = answered && name === q.answer;
+                  const isWrong = answered && isPicked && name !== q.answer;
+                  const isHighlighted = !answered && q.highlight === name;
+                  let fill = "#AFC6DB";
+                  if (isHighlighted) fill = ACCENT;
+                  if (isPicked && !answered) fill = ACCENT;
+                  if (isCorrect) fill = GREEN;
+                  if (isWrong) fill = RED;
+
+                  return (
+                    <path
+                      key={name}
+                      d={shape.d}
+                      fill={fill}
+                      stroke="#FFFFFF"
+                      strokeWidth={1.8}
+                      opacity={isEliminated ? 0.18 : 1}
+                      onClick={() => !isEliminated && pick(name)}
+                      onKeyDown={(event) => {
+                        if (!isEliminated && (event.key === "Enter" || event.key === " ")) {
+                          event.preventDefault();
+                          pick(name);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={answered || isEliminated ? -1 : 0}
+                      aria-label={name}
+                      aria-disabled={answered || isEliminated}
+                      className="geo-continent"
+                      style={{ cursor: answered || isEliminated ? "default" : "pointer", transformOrigin: "center", transition: "fill 180ms ease, opacity 180ms ease, filter 140ms ease" }}
+                    />
+                  );
+                })}
+              </svg>
             </div>
+
+            {!answered && (
+              <p className="text-center text-xs mb-3" style={{ color: INK, opacity: 0.52 }}>
+                Tap a continent
+              </p>
+            )}
+
+            {answered && (
+              <div className="mb-3 text-center rounded-xl px-3 py-2.5" style={{ background: selected === q.answer ? "rgba(22,163,74,0.09)" : "rgba(229,72,77,0.08)" }}>
+                <div className="text-sm font-semibold" style={{ color: selected === q.answer ? GREEN : RED }}>
+                  {selected === q.answer ? `Correct — ${q.answer}` : `${selected} — the answer is ${q.answer}`}
+                </div>
+              </div>
+            )}
 
             {answered && (
               <button onClick={next} className="geo-next-btn w-full rounded-lg py-2.5 text-sm font-semibold transition-all" style={{ background: ACCENT, color: "#FFFFFF" }}>

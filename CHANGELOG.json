@@ -503,5 +503,12 @@
     "title": "Added New Zealand, Greenland, Madagascar & Antarctica to Geo's map",
     "body": "The first real-data pass only kept the single largest landmass per continent, silently dropping genuinely significant secondary ones. Now keeps any landmass at least 1.5% of the mainland's size, plus a simple decorative Antarctica band so the map doesn't look cropped.",
     "date": "2026-07-23"
+  },
+  {
+    "id": "2026-07-23-geo-countries-expansion",
+    "version": "v66",
+    "title": "Geo's question pool nearly tripled",
+    "body": "Added 118 countries (deliberately excluding every transcontinental/contested case — Russia, Turkey, Kazakhstan, the Caucasus, Cyprus — so nothing is debatable), bringing the total pool from ~60 facts to 177. Static data, no external API dependency, and this scale should hold up to daily play for a long time before repetition becomes noticeable.",
+    "date": "2026-07-23"
   }
 ]
