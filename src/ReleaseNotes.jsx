@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, Sparkles, ThumbsUp, ThumbsDown, Check, Eye, EyeOff, Trash2, RotateCcw } from "lucide-react";
+import { ArrowLeft, Sparkles, ThumbsUp, ThumbsDown, Check, Eye, EyeOff } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 
@@ -9,6 +9,7 @@ const INK = "#1B2129";
 const ACCENT = "#2F6FED";
 const GREEN = "#16A34A";
 const RED = "#B5433A";
+const APP_VERSION = "v66";
 
 function fmtDate(iso) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
@@ -30,8 +31,7 @@ export default function ReleaseNotes({ onBack }) {
   const [justReported, setJustReported] = useState(null); // release note id that was just sent to feedback
   const [savingReactionId, setSavingReactionId] = useState(null);
   const [savingVisibilityId, setSavingVisibilityId] = useState(null);
-  const [savingDeleteId, setSavingDeleteId] = useState(null);
-  const [showDeleted, setShowDeleted] = useState(false);
+  const [showHidden, setShowHidden] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!supabaseReady) {
@@ -133,23 +133,6 @@ export default function ReleaseNotes({ onBack }) {
     setSavingVisibilityId(null);
   }
 
-  async function setNoteDeleted(noteId, deleted) {
-    if (!profile?.is_admin || savingDeleteId === noteId) return;
-    setSavingDeleteId(noteId);
-    const previousNotes = notes;
-    setNotes((current) => current.map((note) =>
-      note.id === noteId ? { ...note, deleted_at: deleted ? new Date().toISOString() : null } : note
-    ));
-    const { error } = await supabase.rpc("set_release_note_deleted", {
-      target_release_note_id: noteId,
-      deleted,
-    });
-    if (error) {
-      console.error("Unable to soft-delete release note:", error);
-      setNotes(previousNotes);
-    }
-    setSavingDeleteId(null);
-  }
 
   async function submitReport(note) {
     if (!user) return;
@@ -174,9 +157,10 @@ export default function ReleaseNotes({ onBack }) {
           >
             <ArrowLeft size={16} />
           </button>
-          <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl">
-            What's New
-          </h1>
+          <div className="flex-1">
+            <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl">What's New</h1>
+            <div className="text-[11px] mt-0.5" style={{ color: INK, opacity: 0.45 }}>Current app version {APP_VERSION}</div>
+          </div>
         </div>
 
         {!supabaseReady ? (
@@ -189,16 +173,22 @@ export default function ReleaseNotes({ onBack }) {
           <p style={{ color: INK, opacity: 0.4 }} className="text-sm text-center py-8">Nothing posted yet.</p>
         ) : (
           <div className="flex flex-col gap-3">
-            {profile?.is_admin && notes.some((note) => note.deleted_at) && (
-              <button
-                onClick={() => setShowDeleted((value) => !value)}
-                className="self-end rounded-full px-3 py-1 text-xs font-semibold"
-                style={{ background: "rgba(16,24,40,0.06)", color: INK }}
-              >
-                {showDeleted ? "Hide deleted" : "Show deleted"}
-              </button>
+            {profile?.is_admin && (
+              <div className="flex items-center justify-between rounded-xl px-3 py-2 mb-1" style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.08)" }}>
+                <div>
+                  <div className="text-xs font-semibold" style={{ color: INK }}>Admin visibility</div>
+                  <div className="text-[10px]" style={{ color: INK, opacity: 0.45 }}>Hidden updates are excluded by default</div>
+                </div>
+                <button
+                  onClick={() => setShowHidden((value) => !value)}
+                  className="rounded-full px-3 py-1.5 text-xs font-semibold"
+                  style={{ background: showHidden ? INK : "rgba(16,24,40,0.06)", color: showHidden ? "#FFFFFF" : INK }}
+                >
+                  {showHidden ? "Showing hidden" : "Show hidden"}
+                </button>
+              </div>
             )}
-            {notes.filter((note) => !note.deleted_at || (profile?.is_admin && showDeleted)).map((n) => {
+            {notes.filter((note) => !note.deleted_at && (!note.is_hidden || (profile?.is_admin && showHidden))).map((n) => {
               const noteReactions = reactions.filter((r) => r.release_note_id === n.id);
               const upCount = noteReactions.filter((r) => r.reaction === "up").length;
               const downCount = noteReactions.filter((r) => r.reaction === "down").length;
@@ -206,7 +196,7 @@ export default function ReleaseNotes({ onBack }) {
               const isReporting = reportingId === n.id;
 
               return (
-                <div key={n.id} className="rounded-2xl p-4" style={{ background: PANEL, border: n.deleted_at || n.is_hidden ? "1px dashed rgba(181,67,58,0.45)" : "1px solid rgba(16,24,40,0.09)", opacity: n.deleted_at ? 0.55 : (n.is_hidden ? 0.78 : 1) }}>
+                <div key={n.id} className="rounded-2xl p-4" style={{ background: PANEL, border: n.is_hidden ? "2px dashed rgba(181,67,58,0.55)" : "1px solid rgba(16,24,40,0.09)", opacity: n.is_hidden ? 0.72 : 1 }}>
                   <div className="flex items-start gap-2">
                     <Sparkles size={14} style={{ color: ACCENT, marginTop: 2, flexShrink: 0 }} />
                     <div className="flex-1">
@@ -219,25 +209,13 @@ export default function ReleaseNotes({ onBack }) {
                             title={n.is_hidden ? "Show this update" : "Hide this update"}
                             className="flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold disabled:opacity-50"
                             style={{
-                              background: n.is_hidden ? "rgba(181,67,58,0.12)" : "rgba(16,24,40,0.05)",
-                              color: n.is_hidden ? RED : INK,
-                              opacity: n.is_hidden ? 1 : 0.55,
+                              background: n.is_hidden ? "rgba(22,163,74,0.12)" : "rgba(181,67,58,0.10)",
+                              color: n.is_hidden ? GREEN : RED,
+                              opacity: 1,
                             }}
                           >
                             {n.is_hidden ? <Eye size={11} /> : <EyeOff size={11} />}
                             {n.is_hidden ? "Show" : "Hide"}
-                          </button>
-                        )}
-                        {profile?.is_admin && (
-                          <button
-                            onClick={() => setNoteDeleted(n.id, !n.deleted_at)}
-                            disabled={savingDeleteId === n.id}
-                            title={n.deleted_at ? "Restore this update" : "Soft delete this update"}
-                            className="flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold disabled:opacity-50"
-                            style={{ background: n.deleted_at ? "rgba(47,111,237,0.10)" : "rgba(181,67,58,0.10)", color: n.deleted_at ? ACCENT : RED }}
-                          >
-                            {n.deleted_at ? <RotateCcw size={11} /> : <Trash2 size={11} />}
-                            {n.deleted_at ? "Restore" : "Delete"}
                           </button>
                         )}
                       </div>

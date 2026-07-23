@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ThumbsUp, Check, X, Plus, MessageSquare, ArrowLeft, Trash2, RotateCcw, Pencil, Bell } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
+import { markClosedFeedbackSeen } from "./lib/useCompletedFeedbackCount.js";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -38,10 +39,8 @@ export default function Feedback({ onBack }) {
     setVotes(votesData || []);
     setProfiles(Object.fromEntries((profilesData || []).map((p) => [p.id, p])));
     setLoading(false);
-    const unseenIds = (feedbackData || []).filter((it) => it.user_id === user?.id && it.status === "closed" && !it.user_seen_at).map((it) => it.id);
-    if (unseenIds.length) {
-      await supabase.rpc("mark_my_feedback_seen");
-    }
+    const closedIds = (feedbackData || []).filter((it) => it.user_id === user?.id && it.status === "closed").map((it) => it.id);
+    markClosedFeedbackSeen(user?.id, closedIds);
   }, []);
 
   useEffect(() => {
@@ -80,7 +79,7 @@ export default function Feedback({ onBack }) {
   async function handleClose(feedbackId) {
     await supabase
       .from("feedback")
-      .update({ status: "closed", admin_comment: closeComment.trim() || null, closed_at: new Date().toISOString(), user_seen_at: null })
+      .update({ status: "closed", admin_comment: closeComment.trim() || null, closed_at: new Date().toISOString() })
       .eq("id", feedbackId);
     setClosingId(null);
     setCloseComment("");
@@ -88,7 +87,7 @@ export default function Feedback({ onBack }) {
   }
 
   async function handleReopen(feedbackId) {
-    await supabase.from("feedback").update({ status: "open", admin_comment: null, closed_at: null, user_seen_at: null }).eq("id", feedbackId);
+    await supabase.from("feedback").update({ status: "open", admin_comment: null, closed_at: null }).eq("id", feedbackId);
     refresh();
   }
 

@@ -24,6 +24,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
   const [defaultMode, setDefaultMode] = useState(profile?.default_mode || "challenge");
   const [showStatsToOthers, setShowStatsToOthers] = useState(profile?.show_stats_to_others ?? true);
   const [weekStartsOn, setWeekStartsOn] = useState(profile?.week_starts_on ?? 1);
+  const [showIconPicker, setShowIconPicker] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [passkeys, setPasskeys] = useState([]);
@@ -123,27 +124,39 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
           />
 
           <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
-            Icon
+            Avatar
           </label>
-          <div className="grid grid-cols-8 gap-1.5 mb-4">
-            {PROFILE_ICONS.map((ic) => (
-              <button
-                type="button"
-                key={ic}
-                onClick={() => setIcon(ic)}
-                className="flex items-center justify-center rounded-lg"
-                style={{
-                  width: 32,
-                  height: 32,
-                  fontSize: 16,
-                  background: icon === ic ? "rgba(47,111,237,0.15)" : "transparent",
-                  border: icon === ic ? "1.5px solid #2F6FED" : "1px solid rgba(16,24,40,0.08)",
-                }}
-              >
-                {ic}
-              </button>
-            ))}
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowIconPicker((value) => !value)}
+            className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 mb-2 text-left"
+            style={{ border: "1px solid rgba(16,24,40,0.12)", background: "rgba(16,24,40,0.025)" }}
+          >
+            <span className="flex items-center justify-center rounded-full" style={{ width: 38, height: 38, fontSize: 21, background: "#FFFFFF", boxShadow: "0 2px 8px rgba(16,24,40,0.08)" }}>{icon}</span>
+            <span className="flex-1">
+              <span className="block text-xs font-semibold" style={{ color: INK }}>Choose avatar</span>
+              <span className="block text-[11px] mt-0.5" style={{ color: INK, opacity: 0.45 }}>Tap to change your profile icon</span>
+            </span>
+            <span className="text-xs font-semibold" style={{ color: ACCENT }}>{showIconPicker ? "Close" : "Change"}</span>
+          </button>
+          {showIconPicker && (
+            <div className="grid grid-cols-6 gap-2 rounded-xl p-3 mb-4" style={{ background: "rgba(16,24,40,0.04)", border: "1px solid rgba(16,24,40,0.08)" }}>
+              {PROFILE_ICONS.map((ic) => (
+                <button
+                  type="button"
+                  key={ic}
+                  onClick={() => { setIcon(ic); setShowIconPicker(false); }}
+                  className="flex items-center justify-center rounded-full"
+                  style={{
+                    width: 38, height: 38, fontSize: 20,
+                    background: icon === ic ? "rgba(47,111,237,0.14)" : "#FFFFFF",
+                    border: icon === ic ? "2px solid #2F6FED" : "1px solid rgba(16,24,40,0.08)",
+                    boxShadow: "0 2px 6px rgba(16,24,40,0.05)",
+                  }}
+                >{ic}</button>
+              ))}
+            </div>
+          )}
 
           <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
             Mood <span style={{ opacity: 0.5 }}>(visible to everyone)</span>

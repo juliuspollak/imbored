@@ -155,17 +155,23 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
 
   return (
     <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex justify-center p-4 pt-10">
+      <button
+        onClick={onExit}
+        className="nav-btn"
+        style={{
+          "--nav-glow": "rgba(47,111,237,0.35)", "--nav-border": "rgba(47,111,237,0.4)",
+          position: "fixed", top: 16, left: "max(16px, calc((100vw - var(--game-nav-width, 512px)) / 2))", zIndex: 50,
+          width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.9)",
+          backdropFilter: "blur(6px)", border: "1px solid rgba(16,24,40,0.12)",
+          display: "flex", alignItems: "center", justifyContent: "center", color: INK,
+        }}
+        aria-label="Back to all games"
+      >
+        <ArrowLeft size={18} />
+      </button>
       {onSwitchMode && <ModePill mode="challenge" onSwitch={onSwitchMode} />}
       <div className="w-full max-w-md">
         <div className="relative text-center mb-6">
-          <button
-            onClick={onExit}
-            className="nav-btn absolute left-0 top-1 flex items-center justify-center rounded-full"
-            style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)", width: 34, height: 34 }}
-            aria-label="Back to home"
-          >
-            <ArrowLeft size={16} />
-          </button>
           <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK, letterSpacing: "-0.01em" }} className="text-4xl">
             {gameLabel}
           </h1>
