@@ -489,5 +489,12 @@
     "title": "Fixed Geo's map — it was genuinely bad",
     "body": "The first version was built blind, without ever actually seeing it rendered, and it showed — unrecognizable blob shapes. Rebuilt with real visual verification this time (actual screenshots checked at each step, not guessed coordinates), so the continents now read clearly and are properly proportioned.",
     "date": "2026-07-23"
+  },
+  {
+    "id": "2026-07-23-geo-map-real-data",
+    "version": "v64",
+    "title": "Geo's map now uses real geographic data",
+    "body": "Replaced the hand-drawn continent shapes with ones traced from actual Natural Earth coastline data, simplified down cleanly. Should read as real continents now, not abstract blobs.",
+    "date": "2026-07-23"
   }
 ]
