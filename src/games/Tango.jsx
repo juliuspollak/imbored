@@ -278,7 +278,7 @@ function fmtTime(s) {
 
 /* ---------------- component ---------------- */
 
-export default function TangoGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId } = {}) {
+export default function TangoGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId, rewardResult } = {}) {
   const todayIdx = (() => {
     const d = new Date().getDay();
     return d === 0 ? 6 : d - 1;
@@ -664,6 +664,16 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
               <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs mb-1">
                 {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
               </p>
+              {rewardResult?.points_awarded != null && (
+                <div
+                  className="rounded-full px-3 py-1 text-sm font-bold"
+                  style={{ background: "rgba(217,174,88,0.14)", color: "#B88724" }}
+                >
+                  {rewardResult.points_awarded > 0
+                    ? `★ +${rewardResult.points_awarded} Points`
+                    : "No Points awarded"}
+                </div>
+              )}
               {savedStatId ? (
                 <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} onRated={setDifficultyRating} />
               ) : (
