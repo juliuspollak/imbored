@@ -1093,7 +1093,6 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
       className="flex items-start justify-center p-4 pt-[72px]"
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
         @keyframes popIn { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes fadeUp { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
         @keyframes hintPulseError {

@@ -53,13 +53,39 @@ function AppShell() {
   // is the only real option.
   const [playMode, setPlayMode] = useState("challenge");
   const { loading, user, profile, profileLoading, signOut } = useAuth();
+  // profile.default_mode is a standing preference set in My Profile; it's
+  // only meant to seed the FIRST session on a device. Once the player has
+  // actually picked a mode here, that choice should survive a refresh
+  // rather than snapping back to the profile default every time — so the
+  // real last-used mode is cached locally per-user and takes priority.
   const appliedDefaultModeRef = useRef(false);
   useEffect(() => {
-    if (!appliedDefaultModeRef.current && profile?.default_mode) {
+    if (appliedDefaultModeRef.current || !user?.id) return;
+    let stored = null;
+    try {
+      stored = window.localStorage.getItem(`queens-play-mode-${user.id}`);
+    } catch {
+      // localStorage unavailable — fall through to the profile default below
+    }
+    if (stored === "practice" || stored === "challenge") {
+      setPlayMode(stored);
+      appliedDefaultModeRef.current = true;
+    } else if (profile?.default_mode) {
       setPlayMode(profile.default_mode);
       appliedDefaultModeRef.current = true;
     }
-  }, [profile]);
+  }, [user?.id, profile]);
+  useEffect(() => {
+    // Only persist once we've settled on a real initial value — otherwise
+    // the very first render's "challenge" placeholder would overwrite a
+    // stored preference before the effect above has had a chance to read it.
+    if (!user?.id || !appliedDefaultModeRef.current) return;
+    try {
+      window.localStorage.setItem(`queens-play-mode-${user.id}`, playMode);
+    } catch {
+      // non-fatal — the choice just won't survive a refresh this time
+    }
+  }, [playMode, user?.id]);
   const players = useOnlinePlayers();
   const { config: gameConfig, refetch: refetchGameConfig } = useGameConfig();
   usePresence(["queens", "tango", "zip", "minisudoku", "geo"].includes(active) ? active : null, playMode);
@@ -385,7 +411,7 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenSt
                 "--nav-glow": item.glow,
                 "--nav-border": item.border,
                 animationDelay: `${i * 0.04}s`,
-                background: item.badge > 0 ? "rgba(139,92,246,0.08)" : "#FFFFFF",
+                background: item.badge > 0 ? "#F4EEFE" : "#FFFFFF",
                 boxShadow: "0 6px 16px rgba(16,24,40,0.14)",
                 border: item.badge > 0 ? "1px solid rgba(139,92,246,0.3)" : "1px solid rgba(16,24,40,0.08)",
                 color: "#1B2129",

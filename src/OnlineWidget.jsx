@@ -22,7 +22,8 @@ export default function OnlineWidget({ players, userId, myName }) {
   if (others.length === 0) return null;
 
   async function handlePoke(p) {
-    await sendPoke(userId, p.user_id, myName);
+    const { error } = await sendPoke(userId, p.user_id, myName);
+    if (error) return; // failed silently server-side (e.g. RLS) — no false "Poked!" confirmation
     setPoked(p.user_id);
     setTimeout(() => setPoked(null), 1200);
   }

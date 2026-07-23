@@ -431,7 +431,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     for (let r = 0; r < SIZE; r++) {
       for (let c = 0; c < SIZE; c++) {
         if (board[r][c] !== 0 && board[r][c] !== puzzle.solution[r][c]) {
-          setHintCell({ r, c, type: "error" });
+          setHintCell({ r, c, type: "error", symbol: puzzle.solution[r][c] });
           setHintsUsed((h) => h + 1);
           setMistakes((m) => m + 1);
           hintCooldown.startCooldown();
@@ -442,7 +442,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     // 2) a cell whose symbol is already logically forced but not filled yet
     const forced = findForcedCell(board, puzzle.edgeMap);
     if (forced) {
-      setHintCell({ r: forced.r, c: forced.c, type: "forced" });
+      setHintCell({ r: forced.r, c: forced.c, type: "forced", symbol: puzzle.solution[forced.r][forced.c] });
       setHintsUsed((h) => h + 1);
       hintCooldown.startCooldown();
       return;
@@ -451,7 +451,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     for (let r = 0; r < SIZE; r++) {
       for (let c = 0; c < SIZE; c++) {
         if (board[r][c] === 0) {
-          setHintCell({ r, c, type: "next" });
+          setHintCell({ r, c, type: "next", symbol: puzzle.solution[r][c] });
           setHintsUsed((h) => h + 1);
           hintCooldown.startCooldown();
           return;
@@ -466,7 +466,6 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
       className="flex items-start justify-center p-4 pt-[72px]"
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
         @keyframes popIn { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes fadeUp { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
         @keyframes hintPulseError { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(217,105,92,1); } 50% { box-shadow: inset 0 0 0 3px rgba(217,105,92,0.25); } }
@@ -639,6 +638,38 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                   )}
                   {val === MOON && (
                     <Moon key={`moon-${r}-${c}`} className="tg-symbol" size={Math.max(16, 26 - SIZE)} style={{ color: isConflict ? RED : MOON_COLOR }} strokeWidth={2.25} />
+                  )}
+                  {/* The pulsing border alone doesn't say what belongs here —
+                      show a faint preview of the actual symbol. For an empty
+                      hinted cell it sits centred like a real placement; for a
+                      wrong existing symbol (val !== EMPTY) it sits as a small
+                      corner badge instead, so it doesn't visually collide
+                      with the (still-visible, still red) wrong symbol. */}
+                  {isHint && hintCell.symbol && !solved && (
+                    val === EMPTY ? (
+                      <span className="tg-hint-ghost" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+                        {hintCell.symbol === SUN ? (
+                          <SunBurstIcon size={Math.max(18, 28 - SIZE)} style={{ color: SUN_COLOR, opacity: 0.4 }} />
+                        ) : (
+                          <Moon size={Math.max(16, 26 - SIZE)} style={{ color: MOON_COLOR, opacity: 0.4 }} strokeWidth={2.25} />
+                        )}
+                      </span>
+                    ) : (
+                      <span
+                        className="tg-hint-ghost-badge"
+                        style={{
+                          position: "absolute", top: 2, right: 2, width: 14, height: 14, borderRadius: "50%",
+                          background: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center",
+                          boxShadow: "0 1px 3px rgba(16,24,40,0.35)", pointerEvents: "none",
+                        }}
+                      >
+                        {hintCell.symbol === SUN ? (
+                          <SunBurstIcon size={10} style={{ color: SUN_COLOR }} />
+                        ) : (
+                          <Moon size={9} style={{ color: MOON_COLOR }} strokeWidth={2.5} />
+                        )}
+                      </span>
+                    )
                   )}
                 </button>
               );

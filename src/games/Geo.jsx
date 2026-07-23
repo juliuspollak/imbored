@@ -133,7 +133,6 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
   return (
     <div style={{ background: BG, minHeight: "100vh" }} className="flex items-start justify-center p-4 pt-[72px]">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
         .geo-card { font-family: 'Inter', sans-serif; }
         @media (hover: hover) and (pointer: fine) {
           .geo-option:not(:disabled):hover { filter: brightness(0.97); transform: translateY(-1px); }
@@ -143,6 +142,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
           .geo-next-btn:hover { filter: brightness(1.08); }
           .geo-continent:not([aria-disabled="true"]):hover { filter: brightness(1.08); }
         }
+        .geo-continent { outline: none; }
         .geo-continent:focus-visible { outline: none; filter: drop-shadow(0 0 4px rgba(47,111,237,0.8)); }
         .geo-map-shell { box-shadow: inset 0 0 0 1px rgba(47,111,237,0.08); }
         @media (max-width: 420px) {

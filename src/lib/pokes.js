@@ -15,9 +15,11 @@ export const POKE_MESSAGES = [
 ];
 
 export async function sendPoke(fromUserId, toUserId, fromName) {
-  if (!supabaseReady || !fromUserId || !toUserId) return;
+  if (!supabaseReady || !fromUserId || !toUserId) return { error: new Error("Not signed in") };
   const message = POKE_MESSAGES[Math.floor(Math.random() * POKE_MESSAGES.length)](fromName || "Someone");
-  await supabase.from("pokes").insert({ from_user: fromUserId, to_user: toUserId, message });
+  const { error } = await supabase.from("pokes").insert({ from_user: fromUserId, to_user: toUserId, message });
+  if (error) console.error("Unable to send poke:", error.message);
+  return { error };
 }
 
 // Polls for unseen pokes directed at the current user. Returns the most

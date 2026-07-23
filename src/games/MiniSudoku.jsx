@@ -448,7 +448,6 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   return (
     <div style={{ background: BG, minHeight: "100vh" }} className="flex items-start justify-center p-4 pt-[72px]">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
         .ms-card, .ms-cell { font-family: 'Inter', sans-serif; }
         @keyframes msPulseError { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(229,72,77,1); } 50% { box-shadow: inset 0 0 0 3px rgba(229,72,77,0.25); } }
         @keyframes msPulseHint { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(47,111,237,1); } 50% { box-shadow: inset 0 0 0 3px rgba(47,111,237,0.2); } }

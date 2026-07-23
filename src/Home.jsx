@@ -63,7 +63,6 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   return (
     <div style={{ background: BG, minHeight: "100vh" }} className="flex items-start justify-center p-4 pt-10 sm:pt-16">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
         @media (hover: hover) and (pointer: fine) {
           .home-tile:not(:disabled):hover { transform: translateY(-2px); filter: brightness(1.08); }
         }

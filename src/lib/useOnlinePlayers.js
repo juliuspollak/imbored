@@ -17,12 +17,17 @@ export function useOnlinePlayers() {
       const cutoff = new Date(Date.now() - ONLINE_WINDOW_MS).toISOString();
       const { data } = await supabase
         .from("presence")
-        .select("user_id, game, mode, last_seen, profiles(name, icon, mood, is_private)")
+        .select("user_id, game, mode, last_seen, profiles(name, icon, mood, is_private, hidden_from_others)")
         .gte("last_seen", cutoff);
-      // usePresence already skips writing for private profiles; a null
-      // embedded profile here means RLS blocked it (a player an admin has
-      // hidden from everyone else) — either way, don't show the row.
-      const visible = (data || []).filter((row) => row.profiles && !row.profiles.is_private);
+      // For a regular player, RLS already blocks the embedded profile for
+      // anyone hidden (it comes back null) or private, so `row.profiles`
+      // being falsy is enough on its own. But an ADMIN's RLS lets them see
+      // hidden profiles too (so admins can manage them), which means for an
+      // admin `row.profiles` is NOT null for a hidden player — so this
+      // widget, a casual "who's online / poke someone" feature rather than
+      // an admin tool, must also explicitly filter hidden_from_others,
+      // or a hidden player shows up (and becomes pokeable) for admins.
+      const visible = (data || []).filter((row) => row.profiles && !row.profiles.is_private && !row.profiles.hidden_from_others);
       if (!cancelled) setPlayers(visible);
     }
 

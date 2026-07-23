@@ -1,8 +1,15 @@
 [
   {
+    "id": "v69-bugfix-round",
+    "title": "Poking, feedback editing, hint clarity, and hidden-player privacy fixes",
+    "body": "Fixed a chain where an admin-hidden player could still show up as \"online\" and pokeable \u2014 poking them was then silently blocked server-side with no feedback to the sender, which looked like poking was broken entirely. Feedback editing (and every other Feedback action) now surfaces a clear message if a save fails instead of quietly doing nothing. Tango's hint now shows which symbol (sun or moon) actually belongs in the highlighted cell. Geo's map no longer shows a stray focus-outline rectangle after tapping a region. Practice/Challenge mode now remembers your last choice across a refresh instead of reverting to your profile default every time. The \"new feedback\" balloon in the account menu is no longer near-transparent and hard to read on small screens. Also hardened the admin Games settings screen (including hint-cooldown values) to surface save failures instead of looking successful either way, and added a missing database policy that could silently block saving cooldown settings for a game.",
+    "version": "v69",
+    "date": "2026-07-24"
+  },
+  {
     "id": "v68-challenge-parity-transfer-notifications",
     "title": "Challenge/Practice visual parity, points-transfer notifications, and stability fixes",
-    "body": "The Challenge weekly-calendar screen now sits inside the same rounded white panel used by the actual game screens, matching Practice mode's look and feel instead of floating loosely on the grey background. Receiving points now surfaces a notification: a badge appears under the account bubble and on the My progress menu item, and My Progress shows who sent you points and how many. Also added: an app-wide error boundary so a crash in one game no longer takes down the whole app, code-splitting so games and admin screens load on demand, a fix for corrupted-data crashes in feedback notifications, and restored pinch-to-zoom for accessibility.",
+    "body": "The Challenge weekly-calendar screen now sits inside the same rounded white panel used by the actual game screens, matching Practice mode's look and feel instead of floating loosely on the grey background. Receiving points now surfaces a notification: a badge appears under the account bubble and on the My progress menu item, and My Progress shows who sent you points and how many. Also added: an app-wide error boundary so a crash in one game no longer takes down the whole app, code-splitting so games and admin screens load on demand, a fix for corrupted-data crashes in feedback notifications, and restored pinch-to-zoom for accessibility. Also fixed the real cause of headings looking inconsistent between screens (e.g. Geo's heading on Challenge vs Practice): the Fredoka font was only ever loaded by whichever game/Home/Login screen happened to be mounted, so leaving it removed the font for every other screen (Challenge's weekly calendar, Progress, Teams, Stats, Feedback, admin screens, etc.), silently falling back to the browser default. The font is now loaded once, globally, in index.html.",
     "version": "v68",
     "date": "2026-07-23"
   },

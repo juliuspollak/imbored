@@ -26,6 +26,7 @@ export default function Feedback({ onBack }) {
   const [filter, setFilter] = useState("open"); // open | closed | all | deleted
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
+  const [message, setMessage] = useState(null);
 
   const refresh = useCallback(async () => {
     if (!supabaseReady) return;
@@ -51,8 +52,13 @@ export default function Feedback({ onBack }) {
     e.preventDefault();
     if (!title.trim() || submitting) return;
     setSubmitting(true);
-    await supabase.from("feedback").insert({ user_id: user.id, title: title.trim() });
+    setMessage(null);
+    const { error } = await supabase.from("feedback").insert({ user_id: user.id, title: title.trim() });
     setSubmitting(false);
+    if (error) {
+      setMessage({ type: "error", text: `Couldn't submit that: ${error.message}` });
+      return;
+    }
     setTitle("");
     setShowForm(false);
     refresh();
@@ -61,42 +67,70 @@ export default function Feedback({ onBack }) {
   async function handleUpdate(feedbackId) {
     const nextTitle = editTitle.trim();
     if (!nextTitle) return;
-    await supabase.from("feedback").update({ title: nextTitle, updated_at: new Date().toISOString() }).eq("id", feedbackId).eq("user_id", user.id).eq("status", "open");
+    setMessage(null);
+    const { error } = await supabase
+      .from("feedback")
+      .update({ title: nextTitle, updated_at: new Date().toISOString() })
+      .eq("id", feedbackId)
+      .eq("user_id", user.id)
+      .eq("status", "open");
+    if (error) {
+      setMessage({ type: "error", text: `Couldn't save that edit: ${error.message}` });
+      return;
+    }
     setEditingId(null);
     setEditTitle("");
     refresh();
   }
 
   async function toggleVote(feedbackId, alreadyVoted) {
-    if (alreadyVoted) {
-      await supabase.from("feedback_votes").delete().eq("feedback_id", feedbackId).eq("user_id", user.id);
-    } else {
-      await supabase.from("feedback_votes").insert({ feedback_id: feedbackId, user_id: user.id });
+    setMessage(null);
+    const { error } = alreadyVoted
+      ? await supabase.from("feedback_votes").delete().eq("feedback_id", feedbackId).eq("user_id", user.id)
+      : await supabase.from("feedback_votes").insert({ feedback_id: feedbackId, user_id: user.id });
+    if (error) {
+      setMessage({ type: "error", text: `Couldn't update your vote: ${error.message}` });
+      return;
     }
     refresh();
   }
 
   async function handleClose(feedbackId) {
-    await supabase
+    setMessage(null);
+    const { error } = await supabase
       .from("feedback")
       .update({ status: "closed", admin_comment: closeComment.trim() || null, closed_at: new Date().toISOString() })
       .eq("id", feedbackId);
+    if (error) {
+      setMessage({ type: "error", text: `Couldn't close that: ${error.message}` });
+      return;
+    }
     setClosingId(null);
     setCloseComment("");
     refresh();
   }
 
   async function handleReopen(feedbackId) {
-    await supabase.from("feedback").update({ status: "open", admin_comment: null, closed_at: null }).eq("id", feedbackId);
+    setMessage(null);
+    const { error } = await supabase.from("feedback").update({ status: "open", admin_comment: null, closed_at: null }).eq("id", feedbackId);
+    if (error) {
+      setMessage({ type: "error", text: `Couldn't reopen that: ${error.message}` });
+      return;
+    }
     refresh();
   }
 
   async function handleSoftDelete(feedbackId, deleted) {
     if (!isAdmin) return;
-    await supabase
+    setMessage(null);
+    const { error } = await supabase
       .from("feedback")
       .update({ deleted_at: deleted ? new Date().toISOString() : null })
       .eq("id", feedbackId);
+    if (error) {
+      setMessage({ type: "error", text: `Couldn't ${deleted ? "delete" : "restore"} that: ${error.message}` });
+      return;
+    }
     refresh();
   }
 
@@ -139,6 +173,18 @@ export default function Feedback({ onBack }) {
           </div>
         ) : (
           <>
+            {message && (
+              <div
+                className="text-xs rounded-lg p-3 mb-4 flex items-center justify-between gap-2"
+                style={{
+                  background: message.type === "error" ? "rgba(217,105,92,0.1)" : "rgba(22,163,74,0.1)",
+                  color: message.type === "error" ? "#B5433A" : "#15803D",
+                }}
+              >
+                <span>{message.text}</span>
+                <button onClick={() => setMessage(null)} aria-label="Dismiss"><X size={13} /></button>
+              </div>
+            )}
             <button
               onClick={() => setShowForm((s) => !s)}
               className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold mb-4"

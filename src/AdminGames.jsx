@@ -57,7 +57,7 @@ export default function AdminGames({ onBack }) {
     // always send every relevant column explicitly, not just the changed
     // one — avoids any ambiguity about whether an upsert preserves columns
     // left out of the payload
-    await supabase.from("game_config").upsert({
+    const { error } = await supabase.from("game_config").upsert({
       game_id: row.game_id,
       visible: updated.visible,
       available: updated.available,
@@ -65,6 +65,13 @@ export default function AdminGames({ onBack }) {
       hint_cooldown_base: updated.hint_cooldown_base ?? 0,
       hint_cooldown_per_day: updated.hint_cooldown_per_day ?? 0,
     });
+    if (error) {
+      // Roll back the optimistic update so the UI doesn't claim a setting
+      // is saved when it silently wasn't (e.g. this row never existed yet
+      // and an insert-level policy blocked creating it).
+      setRows((prev) => prev.map((r) => (r.game_id === row.game_id ? row : r)));
+      setMessage(`Couldn't save that setting: ${error.message}`);
+    }
   }
 
   async function resetTodayChallenge(gameId, label) {
@@ -84,11 +91,12 @@ export default function AdminGames({ onBack }) {
   async function move(index, direction) {
     const target = index + direction;
     if (target < 0 || target >= rows.length) return;
+    const previous = rows;
     const next = [...rows];
     [next[index], next[target]] = [next[target], next[index]];
     const reordered = next.map((r, i) => ({ ...r, sort_order: i }));
     setRows(reordered);
-    await Promise.all(
+    const results = await Promise.all(
       reordered.map((r) =>
         supabase.from("game_config").upsert({
           game_id: r.game_id,
@@ -100,6 +108,11 @@ export default function AdminGames({ onBack }) {
         })
       )
     );
+    const failed = results.find((r) => r.error);
+    if (failed) {
+      setRows(previous);
+      setMessage(`Couldn't save the new order: ${failed.error.message}`);
+    }
   }
 
   return (
@@ -122,7 +135,7 @@ export default function AdminGames({ onBack }) {
           visibility, playability, order, hint cooldown, and daily resets
         </p>
         {message && (
-          <div className="text-xs rounded-lg p-3 mb-4" style={{ background: message.startsWith("Reset failed") ? "rgba(217,105,92,0.1)" : "rgba(22,163,74,0.1)", color: message.startsWith("Reset failed") ? "#B5433A" : "#15803D" }}>
+          <div className="text-xs rounded-lg p-3 mb-4" style={{ background: message.startsWith("Reset failed") || message.startsWith("Couldn't") ? "rgba(217,105,92,0.1)" : "rgba(22,163,74,0.1)", color: message.startsWith("Reset failed") || message.startsWith("Couldn't") ? "#B5433A" : "#15803D" }}>
             {message}
           </div>
         )}
