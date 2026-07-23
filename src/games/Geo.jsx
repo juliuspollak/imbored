@@ -8,7 +8,7 @@ import { Globe2, RotateCcw, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, 
 
 /* ---------------- continents & map ---------------- */
 
-const CONTINENTS = ["North America", "South America", "Europe", "Africa", "Asia", "Oceania"];
+const CONTINENTS = ["North America", "South America", "Europe", "Africa", "Asia", "Oceania", "Antarctica"];
 
 // Traced from real geographic data (Natural Earth, via Highcharts' map
 // collection), simplified down to a clean point count — not hand-drawn
@@ -22,10 +22,11 @@ const CONTINENT_SHAPES = {
   Europe: { d: "M 242.8 99.7 L 232.1 113.2 L 222.8 100.8 L 228.5 108.7 L 225.7 111.6 L 217.3 102.8 L 204.9 113.2 L 196.5 110.6 L 196.9 104.5 L 205.6 103.9 L 201.4 97.0 L 217.1 89.3 L 217.2 83.6 L 223.6 88.7 L 235.2 83.4 L 229.9 78.7 L 235.4 68.4 L 227.3 74.3 L 224.6 87.0 L 213.2 80.1 L 229.9 59.6 L 254.3 64.7 L 244.2 65.8 L 247.9 71.2 L 257.8 68.2 L 256.9 62.9 L 284.4 62.5 L 277.1 93.4 L 266.8 94.3 L 262.1 107.2 L 249.2 101.7 L 252.2 98.7 L 242.8 99.7 Z M 285.7 44.6 L 286.2 45.6 L 284.1 46.7 L 273.9 50.2 L 274.5 51.0 L 270.7 55.2 L 272.7 59.1 L 266.3 56.8 L 269.7 52.4 L 268.7 52.1 L 271.7 50.4 L 270.8 50.0 L 272.6 48.3 L 285.7 44.6 Z M 199.3 81.7 L 200.2 81.3 L 200.4 83.2 L 201.6 81.1 L 204.4 80.3 L 202.5 83.0 L 205.1 82.7 L 203.7 85.3 L 207.2 88.4 L 207.3 90.3 L 209.3 91.0 L 208.9 93.0 L 201.4 94.8 L 204.2 92.3 L 201.3 91.8 L 202.5 91.3 L 202.1 89.6 L 204.1 88.4 L 203.4 87.2 L 201.4 87.3 L 202.0 86.2 L 201.2 85.6 L 200.7 86.5 L 200.8 83.5 L 199.9 83.7 L 199.3 81.7 Z M 227.4 37.3 L 229.0 39.2 L 231.9 40.0 L 229.1 40.9 L 226.6 45.6 L 223.2 43.2 L 226.5 42.4 L 222.9 41.9 L 226.7 41.2 L 224.3 40.3 L 223.2 41.6 L 221.1 40.5 L 221.2 41.6 L 219.4 40.1 L 220.9 37.4 L 224.0 37.5 L 226.0 39.8 L 225.3 37.3 L 227.4 37.3 Z" },
   Africa: { d: "M 201.1 114.3 L 218.6 112.4 L 229.0 121.4 L 246.5 120.1 L 252.8 139.5 L 266.0 143.4 L 237.7 196.8 L 228.3 197.4 L 218.3 152.5 L 197.9 151.7 L 188.2 142.8 L 187.9 131.8 L 201.1 114.3 Z M 264.1 174.7 L 261.2 185.9 L 257.7 185.9 L 256.8 182.6 L 258.2 179.9 L 258.2 175.5 L 261.1 174.4 L 263.7 170.6 L 265.1 174.6 L 264.1 174.7 Z" },
   Asia: { d: "M 425.0 67.7 L 409.1 70.1 L 412.0 74.7 L 394.5 78.7 L 386.6 93.4 L 385.9 84.2 L 395.0 76.4 L 395.6 74.1 L 362.0 87.2 L 369.1 91.8 L 353.2 109.2 L 355.1 115.2 L 342.4 109.9 L 347.7 112.3 L 346.5 123.8 L 328.6 133.9 L 329.2 146.1 L 321.8 141.6 L 326.7 155.3 L 312.0 130.6 L 296.0 147.7 L 290.3 131.3 L 264.6 121.5 L 266.0 128.8 L 271.8 126.2 L 275.7 131.3 L 257.6 142.5 L 247.0 124.1 L 248.6 112.9 L 237.3 111.1 L 253.8 104.0 L 269.1 113.0 L 265.3 98.3 L 277.5 92.8 L 283.9 57.4 L 290.6 54.3 L 289.5 56.9 L 291.6 63.1 L 289.2 66.7 L 288.2 67.0 L 287.2 66.4 L 286.2 66.4 L 286.7 67.0 L 289.7 67.5 L 294.7 62.1 L 295.5 64.6 L 297.7 64.9 L 296.2 62.4 L 293.7 61.6 L 291.7 61.7 L 292.1 53.7 L 303.2 59.1 L 299.2 53.1 L 317.8 44.0 L 337.1 46.1 L 337.3 48.6 L 329.9 52.4 L 328.0 54.2 L 349.9 51.7 L 357.1 58.5 L 373.7 54.7 L 425.0 67.7 Z" },
-  Oceania: { d: "M 370.0 168.6 L 382.8 186.0 L 378.4 202.1 L 369.4 202.9 L 357.4 194.0 L 339.0 197.6 L 337.4 183.1 L 350.5 173.5 L 363.5 170.1 L 367.5 177.3 L 370.0 168.6 Z M 368.6 167.3 L 368.6 159.9 L 372.2 160.6 L 376.5 164.2 L 375.5 164.6 L 377.3 167.2 L 379.8 167.7 L 380.0 168.5 L 376.6 168.5 L 374.5 166.1 L 371.8 165.6 L 371.4 167.2 L 368.6 167.3 Z M 401.4 214.2 L 398.9 215.1 L 399.2 213.6 L 397.8 213.4 L 404.9 205.7 L 405.4 206.8 L 406.6 206.4 L 405.4 210.3 L 403.4 210.9 L 401.4 214.2 Z M 407.9 207.2 L 407.1 206.8 L 407.8 205.4 L 406.2 204.2 L 407.4 202.0 L 406.8 200.0 L 404.9 197.8 L 408.2 200.0 L 408.7 201.9 L 411.6 202.0 L 407.9 207.2 Z" },
+  Oceania: { d: "M 370.0 168.6 L 382.8 186.0 L 378.4 202.1 L 369.4 202.9 L 357.4 194.0 L 339.0 197.6 L 337.4 183.1 L 350.5 173.5 L 363.5 170.1 L 367.5 177.3 L 370.0 168.6 Z M 368.6 167.3 L 368.6 159.9 L 372.2 160.6 L 376.5 164.2 L 375.5 164.6 L 377.3 167.2 L 379.8 167.7 L 380.0 168.5 L 376.6 168.5 L 374.5 166.1 L 371.8 165.6 L 371.4 167.2 L 368.6 167.3 Z M 401.4 214.2 L 398.9 215.1 L 399.2 213.6 L 397.8 213.4 L 404.9 205.7 L 405.4 206.8 L 406.6 206.4 L 405.4 210.3 L 403.4 210.9 L 401.4 214.2 Z M 407.9 207.2 L 407.1 206.8 L 407.8 205.4 L 406.2 204.2 L 407.4 202.0 L 406.8 200.0 L 404.9 197.8 L 408.2 200.0 L 408.7 201.9 L 411.6 202.0 L 407.9 207.2 Z" },,
+  Antarctica: { d: "M 15 232 Q 100 224 220 230 Q 340 224 425 232 L 425 245 L 15 245 Z" }
 };
 
-const MAP_VIEWBOX = "0 18 440 218";
+const MAP_VIEWBOX = "0 0 440 260";
 
 /* ---------------- question bank ----------------
    Every fact below is a well-established, unambiguous one — deliberately
@@ -99,6 +100,16 @@ const LANDMARKS = [
   { name: "Great Barrier Reef", continent: "Oceania", difficulty: 3 },
 ];
 
+const POLAR_FACTS = [
+  { id: "south-pole", type: "polar", name: "South Pole", prompt: "Which continent contains the South Pole?", answer: "Antarctica", difficulty: 1 },
+  { id: "emperor-penguin", type: "polar", name: "Emperor penguin", prompt: "Which continent is the emperor penguin native to?", answer: "Antarctica", difficulty: 1 },
+  { id: "mount-erebus", type: "polar", name: "Mount Erebus", prompt: "Mount Erebus is located on which continent?", answer: "Antarctica", difficulty: 2 },
+  { id: "mcmurdo", type: "polar", name: "McMurdo Station", prompt: "McMurdo Station is on which continent?", answer: "Antarctica", difficulty: 2 },
+  { id: "north-pole-region", type: "region", name: "North Pole", prompt: "Which polar region surrounds the North Pole?", answer: "Arctic", options: ["Arctic", "Antarctica", "Oceania", "Europe"], difficulty: 1 },
+  { id: "polar-bear-region", type: "region", name: "Polar bear", prompt: "Polar bears naturally live in which polar region?", answer: "Arctic", options: ["Arctic", "Antarctica", "Asia", "North America"], difficulty: 1 },
+  { id: "arctic-ocean-pole", type: "region", name: "Arctic Ocean", prompt: "The Arctic Ocean surrounds which pole?", answer: "North Pole", options: ["North Pole", "South Pole", "Equator", "Prime Meridian"], difficulty: 2 },
+];
+
 const COUNTRIES = geoFacts.countries;
 
 
@@ -158,15 +169,25 @@ const QUESTION_TEMPLATES = {
 
 function makeQuestion(type, fact) {
   const templates = QUESTION_TEMPLATES[type];
-  const templateIndex = Math.floor(Math.random() * templates.length);
+  const templateIndex = templates ? Math.floor(Math.random() * templates.length) : 0;
   const baseId = fact.id || fact.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const answer = fact.answer || fact.continent;
+  const mode = fact.options ? "choice" : (Math.random() < 0.55 ? "map" : "choice");
+  const options = fact.options || shuffle([
+    answer,
+    ...shuffle(CONTINENTS.filter((continent) => continent !== answer)).slice(0, 3),
+  ]);
+
   return {
-    id: `${type}:${baseId}:${templateIndex}`,
+    id: `${type}:${baseId}:${templateIndex}:${mode}`,
     factId: `${type}:${baseId}`,
     sourceId: fact.sourceId || baseId,
     type,
-    prompt: templates[templateIndex](fact),
-    answer: fact.continent,
+    mode,
+    prompt: fact.prompt || templates[templateIndex](fact),
+    answer,
+    options,
+    fixedChoice: Boolean(fact.options),
   };
 }
 
@@ -253,12 +274,17 @@ function generateQuiz(dayIdx, recentFactIds = []) {
     city: CITIES.filter((q) => q.difficulty <= ceiling).map((q) => tag("city", q)),
     animal: ANIMALS.filter((q) => q.difficulty <= ceiling).map((q) => tag("animal", q)),
     landmark: LANDMARKS.filter((q) => q.difficulty <= ceiling).map((q) => tag("landmark", q)),
+    polar: POLAR_FACTS.filter((q) => q.difficulty <= ceiling).map((q) => ({
+      ...q,
+      sourceId: `polar:${q.id}`,
+      factId: `polar:${q.id}`,
+    })),
     ...structured,
   };
 
   const questions = [];
 
-  const categoryOrder = shuffle(["country", "capital", "flag", "city", "animal", "landmark", "currency", "language"]);
+  const categoryOrder = shuffle(["country", "capital", "flag", "city", "animal", "landmark", "currency", "language", "polar"]);
   const usedSources = new Set();
 
   for (const type of categoryOrder) {
@@ -269,7 +295,10 @@ function generateQuiz(dayIdx, recentFactIds = []) {
     questions.push(makeQuestion(type, fact));
   }
 
-  return questions;
+  return questions.map((question, index) => ({
+    ...question,
+    mode: question.fixedChoice ? "choice" : (index % 2 === 0 ? "map" : "choice"),
+  }));
 }
 
 /* ---------------- design tokens ---------------- */
@@ -377,8 +406,9 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
 
   function handleHint() {
     if (solved || answered || hintCooldown.locked || eliminated.length > 0) return;
-    const wrongContinents = CONTINENTS.filter((continent) => continent !== q.answer);
-    const toEliminate = shuffle(wrongContinents).slice(0, 2);
+    const candidates = q.mode === "choice" ? q.options : CONTINENTS;
+    const wrongAnswers = candidates.filter((option) => option !== q.answer);
+    const toEliminate = shuffle(wrongAnswers).slice(0, 2);
     setEliminated(toEliminate);
     setHintsUsed((h) => h + 1);
     hintCooldown.startCooldown();
@@ -422,7 +452,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
           <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK, letterSpacing: "-0.01em" }} className="text-4xl lg:text-5xl">
             Geo
           </h1>
-          <p style={{ color: INK, opacity: 0.45 }} className="text-xs mt-1">five quick questions — tap the map</p>
+          <p style={{ color: INK, opacity: 0.45 }} className="text-xs mt-1">five quick questions — tap or choose</p>
         </div>
 
         {isChallenge ? (
@@ -483,7 +513,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
 
         {showHelp && (
           <div className="text-xs rounded-lg p-2.5 mb-3" style={{ background: "rgba(16,24,40,0.05)", color: INK, opacity: 0.75, lineHeight: 1.4 }}>
-            Five questions, one map tap each. The hint fades two wrong continents and may lock briefly after use. Wrong answers do not block the next question.
+            Five quick geography questions. Some use the map; others use four answers. On four-answer questions, the hint removes two wrong choices. On map questions, it fades two wrong continents.
           </div>
         )}
 
@@ -493,6 +523,8 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
               {q.prompt}
             </p>
 
+            {q.mode === "map" ? (
+              <>
             <div className="relative w-full rounded-xl overflow-hidden mb-3 geo-map-shell">
               <svg
                 viewBox={MAP_VIEWBOX}
@@ -564,6 +596,34 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
               <p className="text-center text-xs mb-3" style={{ color: INK, opacity: 0.52 }}>
                 Tap a continent
               </p>
+            )}
+
+              </>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {q.options.map((option) => {
+                  const isEliminated = eliminated.includes(option);
+                  const isPicked = selected === option;
+                  const isCorrect = answered && option === q.answer;
+                  const isWrong = answered && isPicked && option !== q.answer;
+                  let background = "rgba(16,24,40,0.05)";
+                  let color = INK;
+                  let border = "1px solid rgba(16,24,40,0.10)";
+                  if (isCorrect) { background = "rgba(22,163,74,0.11)"; color = GREEN; border = `1px solid ${GREEN}55`; }
+                  if (isWrong) { background = "rgba(229,72,77,0.10)"; color = RED; border = `1px solid ${RED}55`; }
+                  return (
+                    <button
+                      key={option}
+                      onClick={() => !isEliminated && pick(option)}
+                      disabled={answered || isEliminated}
+                      className="geo-option rounded-xl px-3 py-3 text-sm font-semibold transition-all min-h-[52px]"
+                      style={{ background, color, border, opacity: isEliminated ? 0.22 : 1, cursor: answered || isEliminated ? "default" : "pointer" }}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
             )}
 
             {answered && (
