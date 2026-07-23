@@ -1,6 +1,7 @@
 -- v65: editable open feedback, completion notifications, and week-start preference
 alter table public.profiles add column if not exists week_starts_on integer not null default 1 check (week_starts_on in (0, 1));
 
+alter table public.feedback add column if not exists deleted_at timestamptz;
 alter table public.feedback add column if not exists updated_at timestamptz;
 alter table public.feedback add column if not exists user_seen_at timestamptz;
 

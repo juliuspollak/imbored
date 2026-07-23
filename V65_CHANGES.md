@@ -10,4 +10,4 @@
 - Closing feedback creates an in-app notification badge for its author until Feedback is opened.
 - Added Monday/Sunday week-start setting to My Profile and challenge calendar ordering.
 
-Run `supabase/migration_v65_feedback_week_start.sql` before deploying this version.
+Run `supabase/migration_v65_feedback_week_start.sql` before deploying this version. The migration is self-contained and safely adds any required feedback columns if they are missing.
