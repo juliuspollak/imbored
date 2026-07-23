@@ -107,6 +107,7 @@ function AppShell() {
           onPlayModeChange={supabaseReady ? setPlayMode : undefined}
           players={players}
           userId={user?.id}
+          onOpenProgress={() => setActive("progress")}
         />
         {supabaseReady && profile && (
           <AccountBadge

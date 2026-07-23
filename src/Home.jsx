@@ -1,6 +1,8 @@
-import { Crown, Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle, Check } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Crown, Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle, Check, Star, Flame, ChevronRight } from "lucide-react";
 import { useGameConfig } from "./lib/useGameConfig.js";
 import { useTodayCompletions } from "./lib/useTodayCompletions.js";
+import { supabase, supabaseReady } from "./lib/supabase.js";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -17,9 +19,26 @@ export const GAME_META = [
   { id: "wend", label: "Wend", desc: "Weave hidden words through the grid", icon: Waves, accent: "#0EA5E9", available: false },
 ];
 
-export default function Home({ onSelect, playMode, onPlayModeChange, players = [], userId }) {
+export default function Home({ onSelect, playMode, onPlayModeChange, players = [], userId, onOpenProgress }) {
   const { config: gameConfig, loading: gameConfigLoading } = useGameConfig();
   const todayCompletions = useTodayCompletions(playMode === "challenge" ? userId : undefined);
+  const [progress, setProgress] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadProgress() {
+      if (!supabaseReady || !userId) return;
+      await supabase.rpc("ensure_player_progress", { uid: userId });
+      const { data } = await supabase
+        .from("player_progress")
+        .select("available_points,current_streak")
+        .eq("player_id", userId)
+        .maybeSingle();
+      if (!cancelled) setProgress(data);
+    }
+    loadProgress();
+    return () => { cancelled = true; };
+  }, [userId]);
 
   // While the config is still loading, don't assume "no config yet" means
   // "nothing is hidden" — that's exactly what caused hidden games to flash
@@ -61,6 +80,31 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
             new puzzles every day &mdash; Monday easiest, Sunday hardest
           </p>
         </div>
+
+        {progress && onOpenProgress && (
+          <button
+            onClick={onOpenProgress}
+            className="mx-auto mb-5 flex items-center gap-4 rounded-2xl px-4 py-3"
+            style={{
+              background: PANEL,
+              border: "1px solid rgba(16,24,40,0.09)",
+              boxShadow: "0 6px 20px rgba(16,24,40,0.07)",
+              color: CREAM,
+            }}
+            aria-label="Open My Progress"
+          >
+            <span className="flex items-center gap-1.5 text-sm font-semibold">
+              <Star size={17} fill="currentColor" style={{ color: "#D9AE58" }} />
+              {(progress.available_points || 0).toLocaleString()} Points
+            </span>
+            <span className="h-5 w-px" style={{ background: "rgba(16,24,40,0.10)" }} />
+            <span className="flex items-center gap-1.5 text-sm font-semibold">
+              <Flame size={17} style={{ color: "#E05A47" }} />
+              {progress.current_streak || 0} day{progress.current_streak === 1 ? "" : "s"}
+            </span>
+            <ChevronRight size={16} style={{ opacity: 0.35 }} />
+          </button>
+        )}
 
         {onPlayModeChange && (
           <div className="flex justify-center mb-6">
