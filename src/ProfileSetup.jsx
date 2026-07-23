@@ -22,6 +22,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
   const [isPrivate, setIsPrivate] = useState(profile?.is_private || false);
   const [mood, setMood] = useState(profile?.mood || "");
   const [defaultMode, setDefaultMode] = useState(profile?.default_mode || "challenge");
+  const [showStatsToOthers, setShowStatsToOthers] = useState(profile?.show_stats_to_others ?? true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [passkeys, setPasskeys] = useState([]);
@@ -67,7 +68,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
     if (!name.trim() || saving) return;
     setSaving(true);
     setError(null);
-    const { error } = await saveProfile({ name: name.trim(), icon, is_private: isPrivate, mood: mood.trim() || null, default_mode: defaultMode });
+    const { error } = await saveProfile({ name: name.trim(), icon, is_private: isPrivate, mood: mood.trim() || null, default_mode: defaultMode, show_stats_to_others: showStatsToOthers });
     setSaving(false);
     if (error) setError(error.message);
     else if (onDone) onDone();
@@ -173,6 +174,30 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
               </button>
             ))}
           </div>
+
+          <button
+            type="button"
+            onClick={() => setShowStatsToOthers((value) => !value)}
+            className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 mb-3 text-left"
+            style={{ border: "1px solid rgba(16,24,40,0.14)" }}
+          >
+            {showStatsToOthers ? <Unlock size={15} style={{ color: INK, opacity: 0.4 }} /> : <Lock size={15} style={{ color: INK }} />}
+            <div className="flex-1">
+              <div style={{ color: INK }} className="text-xs font-medium">Show my stats to others</div>
+              <div style={{ color: INK, opacity: 0.5 }} className="text-[11px]">
+                {showStatsToOthers ? "Other players can see your totals and daily results" : "Only you and administrators can see your stats"}
+              </div>
+            </div>
+            <div
+              className="rounded-full flex-shrink-0"
+              style={{ width: 32, height: 18, background: showStatsToOthers ? ACCENT : "rgba(16,24,40,0.15)", position: "relative", transition: "background 0.15s" }}
+            >
+              <div
+                className="rounded-full absolute"
+                style={{ width: 14, height: 14, top: 2, left: showStatsToOthers ? 16 : 2, background: "#FFFFFF", transition: "left 0.15s" }}
+              />
+            </div>
+          </button>
 
           <button
             type="button"

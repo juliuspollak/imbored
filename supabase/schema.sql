@@ -10,6 +10,7 @@ create table profiles (
   is_private boolean not null default false,
   mood text,
   is_admin boolean not null default false,
+  show_stats_to_others boolean not null default true,
   created_at timestamptz default now()
 );
 
