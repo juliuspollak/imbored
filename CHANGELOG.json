@@ -482,5 +482,12 @@
     "title": "Fixed a blank-page crash",
     "body": "A missing icon import in Stats.jsx crashed the entire app before anything could render, including login. This time verified by actually running the built app in a real browser and checking for errors, not just a successful build.",
     "date": "2026-07-23"
+  },
+  {
+    "id": "2026-07-23-geo-map-redesign",
+    "version": "v63",
+    "title": "Fixed Geo's map — it was genuinely bad",
+    "body": "The first version was built blind, without ever actually seeing it rendered, and it showed — unrecognizable blob shapes. Rebuilt with real visual verification this time (actual screenshots checked at each step, not guessed coordinates), so the continents now read clearly and are properly proportioned.",
+    "date": "2026-07-23"
   }
 ]
