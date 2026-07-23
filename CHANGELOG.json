@@ -11,7 +11,8 @@
     "date": "2026-07-23",
     "title": "Hidden players are now fully hidden",
     "body": "Fixed player hiding so it applies to all user-owned activity, not only the profile card. Hidden players are now excluded from public statistics, leaderboards, online presence, teams, feedback, votes, reactions and pokes. Admins can still see everything.",
-    "type": "fix"
+    "type": "fix",
+    "version": "v58"
   },
   {
     "id": "v57-solved-rating-loading-state",
