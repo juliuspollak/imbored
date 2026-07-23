@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, Plus, UserPlus, LogOut, Crown, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus, UserPlus, LogOut, Crown } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 
