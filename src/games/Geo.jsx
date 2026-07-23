@@ -3,6 +3,7 @@ import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating from "../DifficultyRating.jsx";
+import geoFacts from "./geo/geoFacts.json";
 import { Globe2, RotateCcw, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
 
 /* ---------------- continents & map ---------------- */
@@ -13,7 +14,7 @@ const CONTINENTS = ["North America", "South America", "Europe", "Africa", "Asia"
 // collection), simplified down to a clean point count — not hand-drawn
 // approximations. Each continent keeps its mainland plus any secondary
 // landmass at least 1.5% of the mainland's area, which is what brings in
-// Greenland, New Zealand, Madagascar, and a few others that a
+// Greenland, Madagascar, and a few others that a
 // single-polygon simplification would otherwise drop entirely.
 const CONTINENT_SHAPES = {
   "North America": { d: "M 118.8 147.1 L 113.7 148.7 L 88.9 135.9 L 76.1 119.6 L 82.0 130.2 L 79.5 128.8 L 65.0 108.3 L 67.2 96.8 L 52.5 80.0 L 34.1 80.3 L 35.1 76.4 L 27.9 85.1 L 26.8 84.3 L 21.3 87.9 L 18.6 87.7 L 27.6 80.6 L 18.0 77.8 L 23.3 70.5 L 15.0 68.7 L 24.0 67.0 L 17.1 62.4 L 27.9 57.4 L 59.0 60.1 L 56.3 61.0 L 54.7 62.4 L 55.5 62.6 L 59.7 60.7 L 60.6 58.7 L 98.3 66.3 L 97.8 52.3 L 104.1 51.7 L 99.1 55.9 L 103.7 63.2 L 111.4 60.4 L 114.4 65.2 L 99.8 76.2 L 101.2 83.9 L 116.1 93.0 L 118.0 74.3 L 122.6 74.1 L 143.5 89.4 L 128.3 96.6 L 137.5 101.5 L 120.9 109.5 L 115.4 127.6 L 106.6 120.9 L 95.8 125.1 L 97.7 135.4 L 108.1 132.5 L 105.6 138.6 L 118.8 147.1 Z M 176.7 56.9 L 178.1 57.6 L 176.7 58.1 L 178.4 58.7 L 175.2 59.2 L 176.2 58.4 L 175.4 58.3 L 175.0 59.3 L 176.7 59.1 L 175.4 59.9 L 181.7 59.8 L 173.7 63.7 L 171.1 63.9 L 170.2 62.9 L 170.7 64.0 L 167.7 67.3 L 164.8 68.9 L 163.9 68.5 L 164.7 67.3 L 163.8 67.5 L 161.4 69.0 L 161.0 72.2 L 158.8 74.3 L 157.1 79.1 L 152.1 77.3 L 147.7 71.5 L 145.9 67.7 L 147.5 66.2 L 145.6 65.9 L 147.6 65.4 L 145.7 65.6 L 145.9 64.5 L 148.5 63.7 L 146.3 63.6 L 146.6 62.8 L 149.9 62.1 L 149.0 60.1 L 144.9 58.6 L 146.0 57.3 L 146.2 58.5 L 148.3 59.2 L 146.5 57.3 L 148.1 56.8 L 143.4 56.6 L 143.0 54.3 L 144.6 53.8 L 140.5 47.5 L 134.7 46.0 L 129.0 46.7 L 125.7 44.5 L 127.8 42.9 L 123.9 41.7 L 124.3 40.8 L 131.9 39.3 L 132.9 36.9 L 130.1 36.1 L 131.5 34.8 L 137.6 33.8 L 137.0 32.3 L 138.6 31.7 L 145.0 30.5 L 145.8 32.8 L 146.3 30.9 L 150.7 31.7 L 148.9 30.2 L 155.7 32.2 L 156.7 32.0 L 152.9 29.4 L 156.5 30.5 L 156.1 31.3 L 157.3 30.5 L 155.0 29.4 L 161.6 29.6 L 153.7 28.8 L 156.2 28.2 L 172.3 27.0 L 178.0 27.9 L 177.5 28.2 L 172.2 28.4 L 167.3 29.0 L 178.5 28.3 L 182.9 29.8 L 169.8 32.0 L 170.6 32.5 L 179.2 31.6 L 177.1 33.2 L 182.9 31.4 L 183.0 32.9 L 180.9 34.5 L 186.0 32.1 L 186.9 33.2 L 187.0 32.3 L 187.6 33.0 L 189.3 32.1 L 194.3 33.1 L 189.7 35.3 L 186.0 35.5 L 189.3 35.9 L 188.5 36.4 L 184.0 37.3 L 185.3 37.7 L 185.4 40.1 L 183.4 40.1 L 182.2 42.9 L 185.2 42.3 L 185.2 41.2 L 186.3 40.5 L 185.2 43.3 L 183.5 43.0 L 185.5 44.1 L 187.1 42.6 L 186.1 47.0 L 185.5 44.9 L 181.3 45.2 L 184.5 46.3 L 185.1 48.7 L 182.5 47.9 L 184.2 50.0 L 185.7 50.0 L 186.6 48.3 L 187.5 49.2 L 185.1 50.9 L 182.4 50.5 L 181.9 51.3 L 183.8 52.8 L 177.4 53.2 L 180.9 56.5 L 182.3 56.4 L 182.7 59.0 L 180.6 59.2 L 179.5 57.8 L 176.7 56.9 Z M 114.9 43.7 L 118.4 45.4 L 116.1 47.2 L 116.3 46.2 L 114.2 46.5 L 114.7 45.8 L 103.7 45.2 L 107.9 43.9 L 106.4 42.6 L 107.6 42.3 L 109.2 43.3 L 111.8 43.7 L 112.9 42.2 L 109.4 43.2 L 110.3 41.2 L 107.2 41.8 L 108.2 40.1 L 113.8 39.9 L 114.1 39.4 L 110.9 39.7 L 108.4 37.6 L 108.4 36.1 L 111.5 36.3 L 113.9 38.0 L 115.1 38.0 L 112.1 36.1 L 119.7 34.6 L 117.1 34.7 L 118.5 33.5 L 110.8 35.6 L 108.1 35.4 L 108.8 34.4 L 107.5 35.3 L 105.1 34.7 L 108.1 34.3 L 110.4 33.6 L 104.5 34.3 L 106.2 32.7 L 102.1 32.6 L 106.6 31.3 L 110.3 31.6 L 108.1 31.2 L 109.2 30.3 L 115.7 31.7 L 112.7 30.5 L 115.6 28.9 L 120.5 29.9 L 118.8 28.8 L 120.2 28.6 L 127.6 28.4 L 131.4 29.1 L 128.8 29.8 L 133.3 29.0 L 136.9 30.2 L 137.2 31.0 L 133.7 32.4 L 127.1 33.9 L 133.5 32.8 L 124.7 36.8 L 126.5 36.6 L 125.6 37.7 L 118.8 38.4 L 122.1 39.0 L 121.7 40.6 L 119.8 40.7 L 121.4 41.2 L 117.9 42.2 L 117.7 43.6 L 114.9 43.7 Z M 128.8 59.8 L 127.8 60.5 L 129.4 59.4 L 131.0 61.7 L 128.4 61.4 L 129.8 62.1 L 129.1 62.9 L 137.2 66.7 L 134.7 70.0 L 130.8 67.0 L 129.7 67.1 L 130.6 68.0 L 128.9 67.6 L 134.0 72.6 L 132.8 72.5 L 132.7 73.9 L 128.5 72.4 L 133.1 76.4 L 126.4 74.3 L 125.8 72.5 L 124.0 72.3 L 122.6 70.4 L 118.1 71.8 L 118.7 69.0 L 121.0 70.4 L 120.4 69.2 L 123.3 69.0 L 122.1 67.7 L 124.5 65.8 L 123.8 63.6 L 122.7 63.3 L 123.3 64.5 L 122.2 64.5 L 122.4 63.1 L 121.0 63.1 L 121.9 62.4 L 119.6 62.8 L 120.7 61.5 L 118.8 61.6 L 118.4 59.7 L 116.8 59.0 L 116.3 59.3 L 117.3 60.1 L 115.7 61.4 L 114.0 60.1 L 107.7 60.1 L 104.9 57.8 L 107.5 58.0 L 104.5 57.3 L 104.2 56.1 L 105.4 53.2 L 110.0 51.9 L 108.1 54.1 L 108.8 56.3 L 110.2 57.4 L 108.9 57.7 L 110.2 57.7 L 110.6 57.0 L 108.9 55.8 L 110.0 55.4 L 109.4 53.8 L 114.0 52.1 L 115.2 55.5 L 116.0 54.8 L 117.3 56.1 L 118.6 54.3 L 121.3 54.8 L 121.9 56.6 L 125.4 56.9 L 126.1 58.8 L 129.1 58.9 L 127.6 59.8 L 128.8 59.8 Z" },
@@ -24,12 +25,7 @@ const CONTINENT_SHAPES = {
   Oceania: { d: "M 370.0 168.6 L 382.8 186.0 L 378.4 202.1 L 369.4 202.9 L 357.4 194.0 L 339.0 197.6 L 337.4 183.1 L 350.5 173.5 L 363.5 170.1 L 367.5 177.3 L 370.0 168.6 Z M 368.6 167.3 L 368.6 159.9 L 372.2 160.6 L 376.5 164.2 L 375.5 164.6 L 377.3 167.2 L 379.8 167.7 L 380.0 168.5 L 376.6 168.5 L 374.5 166.1 L 371.8 165.6 L 371.4 167.2 L 368.6 167.3 Z M 401.4 214.2 L 398.9 215.1 L 399.2 213.6 L 397.8 213.4 L 404.9 205.7 L 405.4 206.8 L 406.6 206.4 L 405.4 210.3 L 403.4 210.9 L 401.4 214.2 Z M 407.9 207.2 L 407.1 206.8 L 407.8 205.4 L 406.2 204.2 L 407.4 202.0 L 406.8 200.0 L 404.9 197.8 L 408.2 200.0 L 408.7 201.9 L 411.6 202.0 L 407.9 207.2 Z" },
 };
 
-// Antarctica isn't a quiz answer (nothing to ask about it), but a world
-// map that just stops without it looks oddly cropped — a simple
-// decorative band across the bottom completes the picture without
-// needing a real (and much more complex, differently-projected) shape.
-const ANTARCTICA_D = "M 15 232 Q 100 224 220 230 Q 340 224 425 232 L 425 245 L 15 245 Z";
-const MAP_VIEWBOX = "0 0 440 260";
+const MAP_VIEWBOX = "0 18 440 218";
 
 /* ---------------- question bank ----------------
    Every fact below is a well-established, unambiguous one — deliberately
@@ -49,14 +45,12 @@ const CITIES = [
   { name: "Toronto", continent: "North America", difficulty: 2 },
   { name: "Lima", continent: "South America", difficulty: 2 },
   { name: "Berlin", continent: "Europe", difficulty: 2 },
-  { name: "Auckland", continent: "Oceania", difficulty: 2 },
   { name: "Marrakesh", continent: "Africa", difficulty: 2 },
   { name: "Ho Chi Minh City", continent: "Asia", difficulty: 2 },
   { name: "Bogotá", continent: "South America", difficulty: 2 },
   { name: "Ulaanbaatar", continent: "Asia", difficulty: 3 },
   { name: "Ouagadougou", continent: "Africa", difficulty: 3 },
   { name: "Quito", continent: "South America", difficulty: 3 },
-  { name: "Wellington", continent: "Oceania", difficulty: 3 },
   { name: "Reykjavik", continent: "Europe", difficulty: 3 },
   { name: "Winnipeg", continent: "North America", difficulty: 3 },
 ];
@@ -105,138 +99,8 @@ const LANDMARKS = [
   { name: "Great Barrier Reef", continent: "Oceania", difficulty: 3 },
 ];
 
-// Deliberately excludes every genuinely transcontinental or contested case
-// (Russia, Turkey, Kazakhstan, Georgia, Azerbaijan, Armenia, Cyprus) so
-// nothing here is actually debatable — same standard as everything else
-// in this file. This is the real fix for question-pool size: country
-// membership is about as stable and verifiable a fact as exists, and
-// there are ~195 to draw from, which is what actually solves repetition
-// at daily-play scale rather than a live API that could just go down.
-const COUNTRIES = [
-  { name: "Canada", continent: "North America", difficulty: 1 },
-  { name: "United States", continent: "North America", difficulty: 1 },
-  { name: "Mexico", continent: "North America", difficulty: 1 },
-  { name: "Cuba", continent: "North America", difficulty: 2 },
-  { name: "Jamaica", continent: "North America", difficulty: 2 },
-  { name: "Panama", continent: "North America", difficulty: 2 },
-  { name: "Costa Rica", continent: "North America", difficulty: 2 },
-  { name: "Guatemala", continent: "North America", difficulty: 2 },
-  { name: "Honduras", continent: "North America", difficulty: 3 },
-  { name: "Haiti", continent: "North America", difficulty: 3 },
-  { name: "Dominican Republic", continent: "North America", difficulty: 3 },
-  { name: "Belize", continent: "North America", difficulty: 3 },
-  { name: "Nicaragua", continent: "North America", difficulty: 3 },
-  { name: "El Salvador", continent: "North America", difficulty: 3 },
-  { name: "Bahamas", continent: "North America", difficulty: 3 },
-  { name: "Trinidad and Tobago", continent: "North America", difficulty: 3 },
+const COUNTRIES = geoFacts.countries;
 
-  { name: "Brazil", continent: "South America", difficulty: 1 },
-  { name: "Argentina", continent: "South America", difficulty: 1 },
-  { name: "Chile", continent: "South America", difficulty: 1 },
-  { name: "Peru", continent: "South America", difficulty: 1 },
-  { name: "Colombia", continent: "South America", difficulty: 2 },
-  { name: "Venezuela", continent: "South America", difficulty: 2 },
-  { name: "Ecuador", continent: "South America", difficulty: 2 },
-  { name: "Bolivia", continent: "South America", difficulty: 2 },
-  { name: "Paraguay", continent: "South America", difficulty: 3 },
-  { name: "Uruguay", continent: "South America", difficulty: 3 },
-  { name: "Guyana", continent: "South America", difficulty: 3 },
-  { name: "Suriname", continent: "South America", difficulty: 3 },
-
-  { name: "France", continent: "Europe", difficulty: 1 },
-  { name: "Germany", continent: "Europe", difficulty: 1 },
-  { name: "Italy", continent: "Europe", difficulty: 1 },
-  { name: "Spain", continent: "Europe", difficulty: 1 },
-  { name: "United Kingdom", continent: "Europe", difficulty: 1 },
-  { name: "Portugal", continent: "Europe", difficulty: 2 },
-  { name: "Netherlands", continent: "Europe", difficulty: 2 },
-  { name: "Switzerland", continent: "Europe", difficulty: 2 },
-  { name: "Sweden", continent: "Europe", difficulty: 2 },
-  { name: "Norway", continent: "Europe", difficulty: 2 },
-  { name: "Poland", continent: "Europe", difficulty: 2 },
-  { name: "Greece", continent: "Europe", difficulty: 2 },
-  { name: "Austria", continent: "Europe", difficulty: 2 },
-  { name: "Belgium", continent: "Europe", difficulty: 2 },
-  { name: "Ireland", continent: "Europe", difficulty: 2 },
-  { name: "Finland", continent: "Europe", difficulty: 3 },
-  { name: "Denmark", continent: "Europe", difficulty: 3 },
-  { name: "Iceland", continent: "Europe", difficulty: 3 },
-  { name: "Hungary", continent: "Europe", difficulty: 3 },
-  { name: "Czech Republic", continent: "Europe", difficulty: 3 },
-  { name: "Romania", continent: "Europe", difficulty: 3 },
-  { name: "Croatia", continent: "Europe", difficulty: 3 },
-  { name: "Slovakia", continent: "Europe", difficulty: 3 },
-  { name: "Slovenia", continent: "Europe", difficulty: 3 },
-  { name: "Luxembourg", continent: "Europe", difficulty: 3 },
-  { name: "Malta", continent: "Europe", difficulty: 3 },
-  { name: "Estonia", continent: "Europe", difficulty: 3 },
-  { name: "Latvia", continent: "Europe", difficulty: 3 },
-  { name: "Lithuania", continent: "Europe", difficulty: 3 },
-  { name: "Serbia", continent: "Europe", difficulty: 3 },
-  { name: "Bulgaria", continent: "Europe", difficulty: 3 },
-
-  { name: "Egypt", continent: "Africa", difficulty: 1 },
-  { name: "Nigeria", continent: "Africa", difficulty: 1 },
-  { name: "Kenya", continent: "Africa", difficulty: 1 },
-  { name: "South Africa", continent: "Africa", difficulty: 1 },
-  { name: "Morocco", continent: "Africa", difficulty: 1 },
-  { name: "Ghana", continent: "Africa", difficulty: 2 },
-  { name: "Ethiopia", continent: "Africa", difficulty: 2 },
-  { name: "Tanzania", continent: "Africa", difficulty: 2 },
-  { name: "Uganda", continent: "Africa", difficulty: 2 },
-  { name: "Senegal", continent: "Africa", difficulty: 2 },
-  { name: "Zimbabwe", continent: "Africa", difficulty: 2 },
-  { name: "Tunisia", continent: "Africa", difficulty: 2 },
-  { name: "Algeria", continent: "Africa", difficulty: 2 },
-  { name: "Zambia", continent: "Africa", difficulty: 3 },
-  { name: "Namibia", continent: "Africa", difficulty: 3 },
-  { name: "Botswana", continent: "Africa", difficulty: 3 },
-  { name: "Rwanda", continent: "Africa", difficulty: 3 },
-  { name: "Mozambique", continent: "Africa", difficulty: 3 },
-  { name: "Angola", continent: "Africa", difficulty: 3 },
-  { name: "Cameroon", continent: "Africa", difficulty: 3 },
-  { name: "Ivory Coast", continent: "Africa", difficulty: 3 },
-  { name: "Mali", continent: "Africa", difficulty: 3 },
-  { name: "Madagascar", continent: "Africa", difficulty: 3 },
-  { name: "Sudan", continent: "Africa", difficulty: 3 },
-
-  { name: "Japan", continent: "Asia", difficulty: 1 },
-  { name: "China", continent: "Asia", difficulty: 1 },
-  { name: "India", continent: "Asia", difficulty: 1 },
-  { name: "Thailand", continent: "Asia", difficulty: 1 },
-  { name: "South Korea", continent: "Asia", difficulty: 1 },
-  { name: "Vietnam", continent: "Asia", difficulty: 2 },
-  { name: "Indonesia", continent: "Asia", difficulty: 2 },
-  { name: "Philippines", continent: "Asia", difficulty: 2 },
-  { name: "Malaysia", continent: "Asia", difficulty: 2 },
-  { name: "Singapore", continent: "Asia", difficulty: 2 },
-  { name: "Saudi Arabia", continent: "Asia", difficulty: 2 },
-  { name: "Israel", continent: "Asia", difficulty: 2 },
-  { name: "United Arab Emirates", continent: "Asia", difficulty: 2 },
-  { name: "Pakistan", continent: "Asia", difficulty: 2 },
-  { name: "Sri Lanka", continent: "Asia", difficulty: 3 },
-  { name: "Nepal", continent: "Asia", difficulty: 3 },
-  { name: "Cambodia", continent: "Asia", difficulty: 3 },
-  { name: "Laos", continent: "Asia", difficulty: 3 },
-  { name: "Mongolia", continent: "Asia", difficulty: 3 },
-  { name: "Bangladesh", continent: "Asia", difficulty: 3 },
-  { name: "Myanmar", continent: "Asia", difficulty: 3 },
-  { name: "Bhutan", continent: "Asia", difficulty: 3 },
-  { name: "Jordan", continent: "Asia", difficulty: 3 },
-  { name: "Lebanon", continent: "Asia", difficulty: 3 },
-  { name: "Qatar", continent: "Asia", difficulty: 3 },
-  { name: "Kuwait", continent: "Asia", difficulty: 3 },
-  { name: "Oman", continent: "Asia", difficulty: 3 },
-
-  { name: "Australia", continent: "Oceania", difficulty: 1 },
-  { name: "New Zealand", continent: "Oceania", difficulty: 1 },
-  { name: "Fiji", continent: "Oceania", difficulty: 2 },
-  { name: "Papua New Guinea", continent: "Oceania", difficulty: 2 },
-  { name: "Samoa", continent: "Oceania", difficulty: 3 },
-  { name: "Tonga", continent: "Oceania", difficulty: 3 },
-  { name: "Vanuatu", continent: "Oceania", difficulty: 3 },
-  { name: "Solomon Islands", continent: "Oceania", difficulty: 3 },
-];
 
 /* ---------------- generation ---------------- */
 
@@ -273,22 +137,36 @@ const QUESTION_TEMPLATES = {
     ({ name }) => `${name} belongs to which continent?`,
     ({ name }) => `Tap the continent containing ${name}.`,
   ],
-  map: [
-    () => "Tap the highlighted continent.",
-    () => "Which continent is highlighted?",
+  capital: [
+    ({ name }) => `${name} is a capital city on which continent?`,
+    ({ name, countryName }) => `${name}, the capital of ${countryName}, is on which continent?`,
+    ({ name }) => `Tap the continent where the capital ${name} is located.`,
+  ],
+  currency: [
+    ({ name, countryName }) => `${countryName} uses the ${name}. Tap its continent.`,
+    ({ code, countryName }) => `The currency code ${code} is used in ${countryName}. Which continent is it in?`,
+  ],
+  language: [
+    ({ name, countryName }) => `${name} is a main language of ${countryName}. Tap its continent.`,
+    ({ countryName }) => `Tap the continent containing ${countryName}.`,
+  ],
+  flag: [
+    ({ name }) => `Which continent does this flag belong to? ${name}`,
+    ({ name, countryName }) => `${name} is the flag of ${countryName}. Tap its continent.`,
   ],
 };
 
 function makeQuestion(type, fact) {
   const templates = QUESTION_TEMPLATES[type];
   const templateIndex = Math.floor(Math.random() * templates.length);
+  const baseId = fact.id || fact.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
   return {
-    id: `${type}:${fact.id || fact.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}:${templateIndex}`,
-    factId: `${type}:${fact.id || fact.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    id: `${type}:${baseId}:${templateIndex}`,
+    factId: `${type}:${baseId}`,
+    sourceId: fact.sourceId || baseId,
     type,
     prompt: templates[templateIndex](fact),
     answer: fact.continent,
-    highlight: type === "map" ? fact.continent : null,
   };
 }
 
@@ -315,35 +193,83 @@ function rememberFacts(userId, questions) {
   }
 }
 
-function chooseFact(pool, used, recent) {
-  const unseen = pool.filter((q) => !used.has(q.name) && !recent.has(q.factId));
-  const fallback = pool.filter((q) => !used.has(q.name));
+function chooseFact(pool, usedSources, recent) {
+  const unseen = pool.filter((q) => !usedSources.has(q.sourceId) && !recent.has(q.factId));
+  const fallback = pool.filter((q) => !usedSources.has(q.sourceId));
   return shuffle(unseen.length ? unseen : fallback)[0];
+}
+
+function countryFactPools(ceiling) {
+  const records = COUNTRIES.filter((country) => country.difficulty <= ceiling);
+  return {
+    country: records.map((country) => ({
+      id: country.id,
+      sourceId: `country:${country.id}`,
+      name: country.name,
+      continent: country.continent,
+    })),
+    capital: records.filter((country) => country.capital).map((country) => ({
+      id: country.id,
+      sourceId: `country:${country.id}`,
+      name: country.capital,
+      countryName: country.name,
+      continent: country.continent,
+    })),
+    currency: records.filter((country) => country.currencyName).map((country) => ({
+      id: country.id,
+      sourceId: `country:${country.id}`,
+      name: country.currencyName,
+      code: country.currencyCode,
+      countryName: country.name,
+      continent: country.continent,
+    })),
+    language: records.filter((country) => country.languageName).map((country) => ({
+      id: country.id,
+      sourceId: `country:${country.id}`,
+      name: country.languageName,
+      countryName: country.name,
+      continent: country.continent,
+    })),
+    flag: records.filter((country) => country.flag).map((country) => ({
+      id: country.id,
+      sourceId: `country:${country.id}`,
+      name: country.flag,
+      countryName: country.name,
+      continent: country.continent,
+    })),
+  };
 }
 
 function generateQuiz(dayIdx, recentFactIds = []) {
   const ceiling = DIFFICULTY_CEILING[dayIdx];
   const recent = new Set(recentFactIds);
-  const tag = (type, q) => ({ ...q, factId: `${type}:${q.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}` });
+  const tag = (type, q) => ({
+    ...q,
+    sourceId: `${type}:${q.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    factId: `${type}:${q.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+  });
+  const structured = countryFactPools(ceiling);
   const pools = {
     city: CITIES.filter((q) => q.difficulty <= ceiling).map((q) => tag("city", q)),
     animal: ANIMALS.filter((q) => q.difficulty <= ceiling).map((q) => tag("animal", q)),
     landmark: LANDMARKS.filter((q) => q.difficulty <= ceiling).map((q) => tag("landmark", q)),
-    country: COUNTRIES.filter((q) => q.difficulty <= ceiling).map((q) => tag("country", q)),
+    ...structured,
   };
 
-  const mapContinent = shuffle(CONTINENTS)[0];
-  const questions = [makeQuestion("map", { id: mapContinent.toLowerCase().replace(/ /g, "-"), continent: mapContinent })];
-  const types = shuffle(["city", "animal", "landmark", "country", "country"]);
-  const used = new Set();
+  const questions = [];
 
-  for (const type of types) {
-    const fact = chooseFact(pools[type], used, recent);
+  const categoryOrder = shuffle(["country", "capital", "flag", "city", "animal", "landmark", "currency", "language"]);
+  const usedSources = new Set();
+
+  for (const type of categoryOrder) {
+    if (questions.length >= 5) break;
+    const fact = chooseFact(pools[type] || [], usedSources, recent);
     if (!fact) continue;
-    used.add(fact.name);
+    usedSources.add(fact.sourceId);
     questions.push(makeQuestion(type, fact));
   }
-  return questions.slice(0, 5);
+
+  return questions;
 }
 
 /* ---------------- design tokens ---------------- */
@@ -573,17 +499,34 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
                 className="w-full block"
                 role="group"
                 aria-label="Tap a continent to answer"
-                style={{ background: "linear-gradient(180deg, #DCEAF8 0%, #EAF3FB 100%)", borderRadius: 12, touchAction: "manipulation" }}
+                style={{ background: "linear-gradient(180deg, #D7ECFA 0%, #EEF7FC 100%)", borderRadius: 16, touchAction: "manipulation" }}
               >
-                <path d={ANTARCTICA_D} fill="#D6DEE8" stroke="#FFFFFF" strokeWidth={1} opacity={0.65} />
+                <defs>
+                  <linearGradient id="geo-land" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#B9D2E6" />
+                    <stop offset="100%" stopColor="#91B5D1" />
+                  </linearGradient>
+                  <filter id="geo-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#315A7A" floodOpacity="0.20" />
+                  </filter>
+                  <filter id="geo-active" x="-25%" y="-25%" width="150%" height="150%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#163B5C" floodOpacity="0.28" />
+                  </filter>
+                </defs>
+                <g opacity="0.20" fill="none" stroke="#6EA4C8" strokeWidth="0.7">
+                  <path d="M 16 68 Q 220 50 424 68" />
+                  <path d="M 16 118 Q 220 104 424 118" />
+                  <path d="M 16 168 Q 220 156 424 168" />
+                  <path d="M 110 22 Q 96 118 110 232" />
+                  <path d="M 220 20 Q 220 118 220 234" />
+                  <path d="M 330 22 Q 344 118 330 232" />
+                </g>
                 {Object.entries(CONTINENT_SHAPES).map(([name, shape]) => {
                   const isEliminated = eliminated.includes(name);
                   const isPicked = selected === name;
                   const isCorrect = answered && name === q.answer;
                   const isWrong = answered && isPicked && name !== q.answer;
-                  const isHighlighted = !answered && q.highlight === name;
-                  let fill = "#AFC6DB";
-                  if (isHighlighted) fill = ACCENT;
+                  let fill = "url(#geo-land)";
                   if (isPicked && !answered) fill = ACCENT;
                   if (isCorrect) fill = GREEN;
                   if (isWrong) fill = RED;
@@ -593,8 +536,10 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
                       key={name}
                       d={shape.d}
                       fill={fill}
-                      stroke="#FFFFFF"
-                      strokeWidth={1.8}
+                      stroke="#F8FCFF"
+                      strokeWidth={2.2}
+                      strokeLinejoin="round"
+                      filter={isPicked || isCorrect || isWrong ? "url(#geo-active)" : "url(#geo-shadow)"}
                       opacity={isEliminated ? 0.18 : 1}
                       onClick={() => !isEliminated && pick(name)}
                       onKeyDown={(event) => {

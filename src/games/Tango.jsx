@@ -391,7 +391,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     setDifficultyRating(null);
     setHintCell(null);
     setHistory([]);
-    setSeconds(0);
+    // Keep the elapsed time when resetting the current puzzle.
     setSolved(false);
     setRunning(true);
   }

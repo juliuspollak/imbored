@@ -1,5 +1,12 @@
 [
   {
+    "id": "v61.3-geo-sudoku-polish",
+    "title": "Geo and Mini Sudoku polish",
+    "body": "Geo now uses fact-based questions only, removes polar and New Zealand-specific content, and has a cleaner compact map with improved land styling and touch feedback. Mini Sudoku Reset now clears only player-entered cells while preserving elapsed time, mistakes, hints and hint cooldown; New still starts a completely fresh puzzle.",
+    "version": "v61.3",
+    "date": "2026-07-23"
+  },
+  {
     "id": "v60.5-rating-flow",
     "title": "Improved completed-game flow",
     "body": "After saving a difficulty rating, the completed-game panel now stays open. Players can choose View board when ready instead of being redirected automatically, while Play again remains available.",

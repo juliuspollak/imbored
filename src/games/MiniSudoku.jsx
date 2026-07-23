@@ -395,14 +395,14 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
 
   function handleReset() {
     if (solved) return;
+    // Reset only the entries on the current puzzle. Time, mistakes, hints,
+    // and hint cooldown belong to the same solving attempt and are kept.
     setBoard(puzzle.givens.map((row) => row.slice()));
     setSelected(null);
-    setMistakes(0);
-    setHintsUsed(0);
-    setDifficultyRating(null);
     setHintCell(null);
     setHistory([]);
-    setSeconds(0);
+    setCelebratingCells(new Set());
+    prevCompleteSectionsRef.current = new Set();
     setSolved(false);
     setRunning(true);
   }
