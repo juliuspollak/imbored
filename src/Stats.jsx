@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Crown, Moon, Waypoints, Grid3x3, Home, EyeOff, ChevronDown, ChevronUp, Clock, TriangleAlert, Lightbulb } from "lucide-react";
+import { Crown, Moon, Waypoints, Grid3x3, Home, EyeOff, ChevronDown, ChevronUp, Clock, TriangleAlert, Lightbulb, Globe2 } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 

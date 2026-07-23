@@ -475,5 +475,12 @@
     "title": "New game: Geo",
     "body": "Five geography questions a day — a simplified world map plus capitals, landmarks, and native wildlife by continent. Difficulty ramps through the week from famous/easy to properly obscure. 50/50 hint available, same cooldown system as the other games.",
     "date": "2026-07-23"
+  },
+  {
+    "id": "2026-07-23-blank-page-fix",
+    "version": "v62",
+    "title": "Fixed a blank-page crash",
+    "body": "A missing icon import in Stats.jsx crashed the entire app before anything could render, including login. This time verified by actually running the built app in a real browser and checking for errors, not just a successful build.",
+    "date": "2026-07-23"
   }
 ]
