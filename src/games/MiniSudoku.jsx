@@ -657,8 +657,20 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
               <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs mb-1">
                 {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
               </p>
-              {savedStatId && <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} onRated={setDifficultyRating} />}
-              {!isChallenge && (
+              {savedStatId ? (
+                <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} onRated={setDifficultyRating} />
+              ) : (
+                <div className="flex items-center gap-2 py-3" role="status" aria-live="polite">
+                  <span
+                    className="inline-block rounded-full animate-pulse"
+                    style={{ width: 8, height: 8, background: GOLD }}
+                  />
+                  <span className="text-xs font-medium" style={{ color: CREAM, opacity: 0.65 }}>
+                    Finalising your result…
+                  </span>
+                </div>
+              )}
+              {!isChallenge && savedStatId && (
                 <button
                   onClick={() => newPuzzle(dayIdx)}
                   className="ms-play-again mt-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors"

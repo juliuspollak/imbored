@@ -39,3 +39,13 @@ Outputs static files to `dist/`.
 
 Both Vercel and Netlify let you attach your own domain for free under
 Project Settings → Domains — just point a CNAME/A record at them.
+
+## Hidden-player privacy migration
+
+After deploying this version, run this file once in **Supabase Dashboard → SQL Editor**:
+
+```text
+supabase/migration_complete_hidden_user_privacy.sql
+```
+
+The earlier implementation hid only the `profiles` row. This migration also hides the player's statistics, leaderboard entries, presence, team memberships, feedback, votes, release-note reactions and pokes at database level. Admins and the hidden player can still see the player's own data.

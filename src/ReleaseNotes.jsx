@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Home, Sparkles, ThumbsUp, ThumbsDown, Check } from "lucide-react";
+import { Home, Sparkles, ThumbsUp, ThumbsDown, Check, Eye, EyeOff } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 
@@ -21,7 +21,7 @@ function fmtDate(iso) {
 // entry on the Feedback board too, so it's actually actionable instead of
 // a silent downvote nobody follows up on.
 export default function ReleaseNotes({ onBack }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [notes, setNotes] = useState([]);
   const [reactions, setReactions] = useState([]); // all rows: release_note_id, user_id, reaction
   const [loading, setLoading] = useState(true);
@@ -29,6 +29,7 @@ export default function ReleaseNotes({ onBack }) {
   const [reportText, setReportText] = useState("");
   const [justReported, setJustReported] = useState(null); // release note id that was just sent to feedback
   const [savingReactionId, setSavingReactionId] = useState(null);
+  const [savingVisibilityId, setSavingVisibilityId] = useState(null);
 
   const refresh = useCallback(async () => {
     if (!supabaseReady) {
@@ -109,6 +110,27 @@ export default function ReleaseNotes({ onBack }) {
     setSavingReactionId(null);
   }
 
+  async function setNoteHidden(noteId, hidden) {
+    if (!profile?.is_admin || savingVisibilityId === noteId) return;
+
+    setSavingVisibilityId(noteId);
+    const previousNotes = notes;
+    setNotes((current) => current.map((note) =>
+      note.id === noteId ? { ...note, is_hidden: hidden } : note
+    ));
+
+    const { error } = await supabase.rpc("set_release_note_hidden", {
+      target_release_note_id: noteId,
+      hidden,
+    });
+
+    if (error) {
+      console.error("Unable to change release-note visibility:", error);
+      setNotes(previousNotes);
+    }
+    setSavingVisibilityId(null);
+  }
+
   async function submitReport(note) {
     if (!user) return;
     await supabase.from("feedback").insert({
@@ -155,11 +177,36 @@ export default function ReleaseNotes({ onBack }) {
               const isReporting = reportingId === n.id;
 
               return (
-                <div key={n.id} className="rounded-2xl p-4" style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)" }}>
+                <div key={n.id} className="rounded-2xl p-4" style={{ background: PANEL, border: n.is_hidden ? "1px dashed rgba(181,67,58,0.45)" : "1px solid rgba(16,24,40,0.09)", opacity: n.is_hidden ? 0.78 : 1 }}>
                   <div className="flex items-start gap-2">
                     <Sparkles size={14} style={{ color: ACCENT, marginTop: 2, flexShrink: 0 }} />
                     <div className="flex-1">
-                      <div style={{ color: INK, fontWeight: 600 }} className="text-sm">{n.title}</div>
+                      <div className="flex items-start gap-2">
+                        <div style={{ color: INK, fontWeight: 600 }} className="text-sm flex-1">{n.title}</div>
+                        {profile?.is_admin && (
+                          <button
+                            onClick={() => setNoteHidden(n.id, !n.is_hidden)}
+                            disabled={savingVisibilityId === n.id}
+                            title={n.is_hidden ? "Show this update" : "Hide this update"}
+                            className="flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold disabled:opacity-50"
+                            style={{
+                              background: n.is_hidden ? "rgba(181,67,58,0.12)" : "rgba(16,24,40,0.05)",
+                              color: n.is_hidden ? RED : INK,
+                              opacity: n.is_hidden ? 1 : 0.55,
+                            }}
+                          >
+                            {n.is_hidden ? <Eye size={11} /> : <EyeOff size={11} />}
+                            {n.is_hidden ? "Show" : "Hide"}
+                          </button>
+                        )}
+                      </div>
+                      {n.is_hidden && profile?.is_admin && (
+                        <div className="mt-1">
+                          <span className="text-[10px] rounded-full px-2 py-0.5 font-bold" style={{ background: "rgba(181,67,58,0.12)", color: RED }}>
+                            Hidden from players
+                          </span>
+                        </div>
+                      )}
                       {n.body && <p style={{ color: INK, opacity: 0.6 }} className="text-xs mt-1">{n.body}</p>}
                       <div className="flex items-center gap-2 mt-2">
                         {n.version && (

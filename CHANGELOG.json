@@ -1,7 +1,21 @@
 [
   {
+    "id": "2026-07-23-hidden-player-complete",
+    "date": "2026-07-23",
+    "title": "Hidden players are now fully hidden",
+    "body": "Fixed player hiding so it applies to all user-owned activity, not only the profile card. Hidden players are now excluded from public statistics, leaderboards, online presence, teams, feedback, votes, reactions and pokes. Admins can still see everything.",
+    "type": "fix"
+  },
+  {
+    "id": "v57-solved-rating-loading-state",
+    "version": "v57",
+    "date": "2026-07-23",
+    "title": "Smooth end-of-game rating flow",
+    "body": "Fixed the solved panel briefly showing Play again before the difficulty question loaded. It now shows a short finalising state and then displays the correct rating prompt without flickering between layouts."
+  },
+  {
     "id": "v55-release-reaction-rpc",
-    "title": "Reliable What\u2019s New reactions",
+    "title": "Reliable What’s New reactions",
     "body": "Fixed thumbs-up and thumbs-down reactions reverting after selection by saving them through an atomic authenticated database function.",
     "version": "v55",
     "date": "2026-07-23"
@@ -17,7 +31,7 @@
     "id": "2026-07-09-stats",
     "version": "v2",
     "title": "Stats tracking",
-    "body": "Every solved puzzle records your time, mistakes, and hints used \u2014 see it all on the Stats page.",
+    "body": "Every solved puzzle records your time, mistakes, and hints used — see it all on the Stats page.",
     "date": "2026-07-09"
   },
   {
@@ -31,7 +45,7 @@
     "id": "2026-07-12-challenge",
     "version": "v4",
     "title": "Challenge mode",
-    "body": "One attempt per puzzle per day, the exact same puzzle for everyone, locked to real calendar dates. Miss a day? You can still catch it up later \u2014 still just one shot.",
+    "body": "One attempt per puzzle per day, the exact same puzzle for everyone, locked to real calendar dates. Miss a day? You can still catch it up later — still just one shot.",
     "date": "2026-07-12"
   },
   {
@@ -73,7 +87,7 @@
     "id": "2026-07-19-mistakes-fix",
     "version": "v10",
     "title": "Fixed mistake counting in Tango",
-    "body": "Mistakes now only count when Hint actually catches something wrong \u2014 not on every tap. Matches how Queens already worked.",
+    "body": "Mistakes now only count when Hint actually catches something wrong — not on every tap. Matches how Queens already worked.",
     "date": "2026-07-19"
   },
   {
@@ -122,7 +136,7 @@
     "id": "2026-07-22-home-buttons",
     "version": "v17",
     "title": "Fixed missing Home buttons",
-    "body": "Teams, Stats, Feedback, Profile, and the Challenge screen all had a barely-visible back arrow \u2014 replaced with a clear, labeled Home button everywhere.",
+    "body": "Teams, Stats, Feedback, Profile, and the Challenge screen all had a barely-visible back arrow — replaced with a clear, labeled Home button everywhere.",
     "date": "2026-07-22"
   },
   {
@@ -150,7 +164,7 @@
     "id": "2026-07-22-release-notes",
     "version": "v21",
     "title": "This page",
-    "body": "Release notes are now fully automatic, synced from a changelog file on every deploy \u2014 nobody types these in by hand.",
+    "body": "Release notes are now fully automatic, synced from a changelog file on every deploy — nobody types these in by hand.",
     "date": "2026-07-22"
   },
   {
@@ -164,7 +178,7 @@
     "id": "2026-07-22-stats-split",
     "version": "v23",
     "title": "Stats split by Challenge/Practice",
-    "body": "Toggle between the two \u2014 practice is unlimited so its counts aren't really comparable, challenge is the fair one-shot-a-day metric. Each game shown separately, plus a total.",
+    "body": "Toggle between the two — practice is unlimited so its counts aren't really comparable, challenge is the fair one-shot-a-day metric. Each game shown separately, plus a total.",
     "date": "2026-07-22"
   },
   {
@@ -185,14 +199,14 @@
     "id": "2026-07-22-solved-home-button",
     "version": "v26",
     "title": "Fixed missing Home button on the Solved! screen",
-    "body": "The post-puzzle rating screen (challenge and practice mode both) had no way back to Home at all \u2014 only its own continue button. Added a back arrow, top-left.",
+    "body": "The post-puzzle rating screen (challenge and practice mode both) had no way back to Home at all — only its own continue button. Added a back arrow, top-left.",
     "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-mini-sudoku",
     "version": "v27",
     "title": "New game: Mini Sudoku",
-    "body": "6x6 sudoku, verified unique every time, difficulty scales through the week via clue count. Hint uses real solving techniques (naked/hidden singles, contradiction test) \u2014 never a guess. Works in both Challenge and Practice mode, same as the others. Also brought Queens/Tango/Zip's fonts in line with the rest of the app.",
+    "body": "6x6 sudoku, verified unique every time, difficulty scales through the week via clue count. Hint uses real solving techniques (naked/hidden singles, contradiction test) — never a guess. Works in both Challenge and Practice mode, same as the others. Also brought Queens/Tango/Zip's fonts in line with the rest of the app.",
     "date": "2026-07-22"
   },
   {
@@ -262,14 +276,14 @@
     "id": "2026-07-22-admingames-security-fix",
     "version": "v37",
     "title": "Fixed a gap in the new Games admin screen",
-    "body": "It didn't check admin status internally \u2014 the database would've blocked a non-admin from actually saving changes, but the screen would misleadingly let them try. Fixed.",
+    "body": "It didn't check admin status internally — the database would've blocked a non-admin from actually saving changes, but the screen would misleadingly let them try. Fixed.",
     "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-queens-no-guessing-fix",
     "version": "v38",
     "title": "Fixed Queens sometimes requiring a guess",
-    "body": "Found the real cause: some puzzles needed a brute-force deduction technique that's essentially unspottable by eye. Generation now rejects any layout that ever needs it \u2014 every hint step is now something a person could actually reason out, verified across dozens of test puzzles at every size.",
+    "body": "Found the real cause: some puzzles needed a brute-force deduction technique that's essentially unspottable by eye. Generation now rejects any layout that ever needs it — every hint step is now something a person could actually reason out, verified across dozens of test puzzles at every size.",
     "date": "2026-07-22"
   },
   {
@@ -304,14 +318,14 @@
     "id": "2026-07-22-hide-flash-fix",
     "version": "v43",
     "title": "Fixed hidden games flashing visible",
-    "body": "A hidden game would show briefly on every page load before disappearing. The config was loading async and defaulting to \"show everything\" in the meantime \u2014 now waits for the real answer first.",
+    "body": "A hidden game would show briefly on every page load before disappearing. The config was loading async and defaulting to \"show everything\" in the meantime — now waits for the real answer first.",
     "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-rating-inline",
     "version": "v44",
     "title": "Rating moved onto the game screen",
-    "body": "No more jumping to a separate page after solving \u2014 the difficulty rating now appears right on the completed board. Challenge mode hides \"Play again\" since it's one attempt only; your result stays visible on the challenge screen's day list any time.",
+    "body": "No more jumping to a separate page after solving — the difficulty rating now appears right on the completed board. Challenge mode hides \"Play again\" since it's one attempt only; your result stays visible on the challenge screen's day list any time.",
     "date": "2026-07-22"
   },
   {
@@ -325,7 +339,7 @@
     "id": "2026-07-22-release-notes-reactions",
     "version": "v46",
     "title": "Thumbs up/down on What's New",
-    "body": "React to any update \u2014 thumbs up if it's working, thumbs down if it's not. A thumbs-down automatically creates an entry on the Feedback board (with an optional note about what went wrong), so it's actually followed up on, not just a silent downvote.",
+    "body": "React to any update — thumbs up if it's working, thumbs down if it's not. A thumbs-down automatically creates an entry on the Feedback board (with an optional note about what went wrong), so it's actually followed up on, not just a silent downvote.",
     "date": "2026-07-22"
   },
   {
@@ -383,5 +397,12 @@
     "date": "2026-07-23",
     "title": "What's New reactions now persist",
     "body": "Fixed release-note reactions reverting immediately after selection by using explicit insert, update and delete operations instead of an RLS-sensitive upsert."
+  },
+  {
+    "id": "v56-hide-release-notes",
+    "version": "v56",
+    "date": "2026-07-23",
+    "title": "Admins can hide What's New entries",
+    "body": "Admins can now hide or show individual What's New entries. Hidden updates remain visible to admins with a clear badge, are excluded for ordinary players, and retain their existing reaction counts."
   }
 ]
