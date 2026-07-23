@@ -1,5 +1,12 @@
 [
   {
+    "id": "v60-4-persistent-points-result",
+    "title": "Points remain visible after completion",
+    "body": "The temporary Points popup now hides without clearing the awarded result. Points remain visible on the completed game page beside the final rating, so players can still see what they earned after the popup disappears.",
+    "version": "v60.4",
+    "date": "2026-07-23"
+  },
+  {
     "id": "v60.3-points-on-result-card",
     "title": "Points stay visible on solved card",
     "body": "The Points awarded for a completed puzzle now remain visible inside the solved result card after the temporary celebration disappears.",

@@ -208,7 +208,7 @@ function PracticePlay({ Current, userId, onExit, onSwitchMode, hintCooldownConfi
         rewardResult={rewardResult}
       />
       {onSwitchMode && <ModePill mode="practice" onSwitch={onSwitchMode} />}
-      <PointsToast reward={rewardResult} onDone={() => setRewardResult(null)} />
+      <PointsToast reward={rewardResult} />
     </div>
   );
 }

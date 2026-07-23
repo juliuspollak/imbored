@@ -1,15 +1,23 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Star, Flame, Trophy } from "lucide-react";
 
-export default function PointsToast({ reward, onDone }) {
-  useEffect(() => {
-    if (!reward) return;
-    const timer = setTimeout(() => onDone?.(), 3200);
-    return () => clearTimeout(timer);
-  }, [reward, onDone]);
+export default function PointsToast({ reward }) {
+  const [visible, setVisible] = useState(false);
 
-  if (!reward || reward.points_awarded == null) return null;
+  useEffect(() => {
+    if (!reward || reward.points_awarded == null) {
+      setVisible(false);
+      return undefined;
+    }
+
+    setVisible(true);
+    const timer = setTimeout(() => setVisible(false), 3200);
+    return () => clearTimeout(timer);
+  }, [reward]);
+
+  if (!visible || !reward || reward.points_awarded == null) return null;
   const noPoints = reward.points_awarded === 0;
+
   return (
     <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 100, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 72 }}>
       <div className="rounded-2xl px-5 py-4 shadow-xl" style={{ background: "rgba(255,255,255,0.96)", border: "1px solid rgba(16,24,40,0.1)", minWidth: 230, textAlign: "center", animation: "pointsPop .3s cubic-bezier(.34,1.56,.64,1)" }}>

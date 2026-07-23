@@ -148,7 +148,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           rewardResult={rewardResult}
         />
         {onSwitchMode && <ModePill mode="challenge" onSwitch={onSwitchMode} />}
-        <PointsToast reward={rewardResult} onDone={() => setRewardResult(null)} />
+        <PointsToast reward={rewardResult} />
       </div>
     );
   }
