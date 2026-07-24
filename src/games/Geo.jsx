@@ -8,6 +8,7 @@ import { MAP_REGIONS, CONTINENT_SHAPES, MAP_VIEWBOX, REGION_HIT_AREAS } from "./
 import { shuffle, generateQuiz } from "./geo/geoGenerator.js";
 import { getQuestionHistory, rememberQuestions } from "./geo/geoHistory.js";
 import FlagImage from "./geo/FlagImage.jsx";
+import { useI18n } from "../lib/i18n.jsx";
 
 /* ---------------- continents & map ---------------- */
 
@@ -30,6 +31,7 @@ function fmtTime(s) {
 /* ---------------- component ---------------- */
 
 export default function GeoGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId } = {}) {
+  const { t } = useI18n();
   const todayIdx = (() => {
     const d = new Date().getDay();
     return d === 0 ? 6 : d - 1;
@@ -112,7 +114,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
   if (!questions) {
     return (
       <div style={{ background: BG, minHeight: "100vh" }} className="flex items-center justify-center">
-        <span style={{ color: INK, opacity: 0.6 }} className="text-sm">Building today's quiz…</span>
+        <span style={{ color: INK, opacity: 0.6 }} className="text-sm">{t("common.buildingQuiz")}</span>
       </div>
     );
   }
@@ -197,7 +199,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
         {isChallenge ? (
           <div className="flex justify-center mb-4">
             <div className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: `${ACCENT}18`, color: ACCENT }}>
-              <span className="text-xs font-semibold">Today's Challenge</span>
+              <span className="text-xs font-semibold">{t("common.todaysChallenge")}</span>
             </div>
           </div>
         ) : (
@@ -228,11 +230,11 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
 
         <div className="flex items-center justify-center gap-2 mb-4">
           {[
-            { Icon: Eraser, label: "Restart", onClick: handleReset, disabled: solved },
+            { Icon: Eraser, label: t("common.restart"), onClick: handleReset, disabled: solved },
             { Icon: Sparkles, label: "New", onClick: () => newQuiz(dayIdx), disabled: isChallenge },
             {
               Icon: hintCooldown.locked ? Lock : WandSparkles,
-              label: hintCooldown.locked ? `${hintCooldown.remaining}s` : "Hint",
+              label: hintCooldown.locked ? `${hintCooldown.remaining}s` : t("common.hint"),
               onClick: handleHint,
               disabled: solved || answered || hintCooldown.locked || (q.mode === "choice" ? q.options : MAP_REGIONS).every((option) => option === q.answer || eliminated.includes(option)),
             },
@@ -402,7 +404,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
 
             {answered && (
               <button onClick={next} className="geo-next-btn w-full rounded-lg py-2.5 text-sm font-semibold transition-all" style={{ background: ACCENT, color: "#FFFFFF" }}>
-                {isLast ? "See results" : "Next question"}
+                {isLast ? t("common.seeResults") : t("common.nextQuestion")}
               </button>
             )}
           </>
