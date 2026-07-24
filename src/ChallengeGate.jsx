@@ -125,7 +125,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
       setPlayingIdx(null);
     } else if (res?.data) {
       setSavedStatId(res.data.id);
-      if (res.reward) setRewardResult(res.reward);
+      setRewardResult({ ...(res.reward || {}), completed:true, eventId:Date.now() });
     }
     refresh();
   }
