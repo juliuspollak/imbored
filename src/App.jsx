@@ -185,6 +185,7 @@ function AppShell() {
           currentProfile={profile}
           onBack={() => setActive(null)}
           onOpenChat={(player) => { setChatReturn("chats"); setChatPlayer(player); }}
+          onOpenAdminPlayers={() => setActive("adminplayers")}
         />
       </Suspense>
     );
