@@ -334,9 +334,13 @@ function AppShell() {
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
         <PracticePlay
           Current={Current}
+          gameId={active}
+          gameLabel={label}
           userId={user?.id}
           onExit={() => setActive(null)}
           onSwitchMode={supabaseReady ? () => setPlayMode("challenge") : undefined}
+          challengeScope={challengeScope}
+          onChallengeScopeChange={setChallengeScope}
           hintCooldownConfig={cfg}
         />
       </Suspense>
@@ -344,17 +348,42 @@ function AppShell() {
   );
 }
 
-function PracticePlay({ Current, userId, onExit, onSwitchMode, hintCooldownConfig }) {
+function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode, challengeScope, onChallengeScopeChange, hintCooldownConfig }) {
   const [savedStatId, setSavedStatId] = useState(null);
   const [rewardResult, setRewardResult] = useState(null);
+  const [showChallengeChoice, setShowChallengeChoice] = useState(false);
 
   async function handleSolved(stats) {
     setSavedStatId(null);
     const res = await saveStats(stats);
     if (res?.data) {
       setSavedStatId(res.data.id);
-      if (res.reward) setRewardResult(res.reward);
+      setRewardResult({ ...(res.reward || {}), completed:true, eventId:Date.now() });
+    } else {
+      setRewardResult({ completed:true, eventId:Date.now() });
     }
+  }
+
+  function switchToChallenge() {
+    const teamDoesNotIncludeGame = challengeScope?.type === "team"
+      && !(challengeScope.gameIds || []).includes(gameId);
+    if (teamDoesNotIncludeGame) {
+      setShowChallengeChoice(true);
+      return;
+    }
+    onSwitchMode?.();
+  }
+
+  function playPersonalChallenge() {
+    onChallengeScopeChange?.({ type:"personal", teamId:null, teamName:null, gameIds:null });
+    setShowChallengeChoice(false);
+    onSwitchMode?.();
+  }
+
+  function chooseChallenge() {
+    setShowChallengeChoice(false);
+    onSwitchMode?.();
+    onExit?.();
   }
 
   return (
@@ -392,8 +421,22 @@ function PracticePlay({ Current, userId, onExit, onSwitchMode, hintCooldownConfi
         savedStatId={savedStatId}
         rewardResult={rewardResult}
       />
-      {onSwitchMode && <ModePill mode="practice" onSwitch={onSwitchMode} />}
+      {onSwitchMode && <ModePill mode="practice" onSwitch={switchToChallenge} />}
       <PointsToast reward={rewardResult} />
+      {showChallengeChoice && (
+        <div className="fixed inset-0 z-[140] flex items-end sm:items-center justify-center p-4" style={{ background:"rgba(16,24,40,.48)" }}>
+          <div className="w-full max-w-sm rounded-3xl p-5" style={{ background:"#fff", boxShadow:"0 24px 70px rgba(16,24,40,.24)" }}>
+            <div className="text-3xl mb-2">👑</div>
+            <h2 className="text-lg font-bold">{gameLabel} isn’t in this team challenge</h2>
+            <p className="text-sm mt-1 mb-4" style={{ color:"rgba(27,33,41,.58)" }}>
+              {challengeScope?.teamName || "Your team"} didn’t include this game this week. You can play your personal challenge or choose another team challenge.
+            </p>
+            <button type="button" onClick={playPersonalChallenge} className="w-full rounded-full py-3 text-sm font-semibold text-white" style={{ background:"#2F6FED" }}>Play my challenge</button>
+            <button type="button" onClick={chooseChallenge} className="w-full rounded-full py-3 mt-2 text-sm font-semibold" style={{ background:"rgba(16,24,40,.06)" }}>Choose another challenge</button>
+            <button type="button" onClick={() => setShowChallengeChoice(false)} className="w-full py-2.5 mt-1 text-xs" style={{ color:"rgba(27,33,41,.48)" }}>Stay in practice</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
