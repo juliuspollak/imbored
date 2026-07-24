@@ -1,0 +1,7 @@
+project_id = "imbored"
+
+# This function performs its own user-token and admin-profile verification.
+# Gateway JWT verification must remain disabled because the project uses the
+# newer asymmetric ES256 signing-key system.
+[functions.admin-user-action]
+verify_jwt = false
