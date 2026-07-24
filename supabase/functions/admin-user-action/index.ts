@@ -86,21 +86,32 @@ Deno.serve(async (req) => {
     }
 
     if (action === "delete") {
-      // Validate before changing either system. The old order marked the
-      // profile deleted first; if Auth deletion then failed, the target was
-      // left with a live login attached to a disabled historical profile.
-      const { error: validationError } = await caller.rpc("validate_account_deletion", {
-        target_user_id: targetUserId,
-      });
-      if (validationError) throw validationError;
+      // Validate directly so deletion does not depend on a recently added
+      // database function being deployed before this Edge Function.
+      const { data: target, error: targetError } = await caller
+        .from("profiles")
+        .select("is_admin,account_deleted_at")
+        .eq("id", targetUserId)
+        .maybeSingle();
+      if (targetError) throw targetError;
+      if (!target) throw new Error("Player profile not found.");
+      if (target.is_admin) throw new Error("Another admin cannot be deleted here.");
+
+      // A previous failed attempt may already have prepared the historical
+      // profile. Skip repeated cleanup in that case and retry Auth deletion,
+      // which releases linked Google identities.
+      if (!target.account_deleted_at) {
+        const { error: prepError } = await caller.rpc("prepare_account_deletion", {
+          target_user_id: targetUserId,
+        });
+        if (prepError) throw prepError;
+      }
 
       const { error: deleteError } = await admin.auth.admin.deleteUser(targetUserId, false);
-      if (deleteError) throw deleteError;
-
-      const { error: prepError } = await caller.rpc("prepare_account_deletion", {
-        target_user_id: targetUserId,
-      });
-      if (prepError) throw prepError;
+      // Treat an already-removed Auth user as a successful idempotent retry.
+      if (deleteError && !/user.*not found/i.test(deleteError.message || "")) {
+        throw deleteError;
+      }
     } else {
       const blocked = action === "block";
       const { error: authError } = await admin.auth.admin.updateUserById(targetUserId, {

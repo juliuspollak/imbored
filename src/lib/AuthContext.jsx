@@ -214,7 +214,16 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase.functions.invoke("admin-user-action", {
       body: { action, targetUserId, reason },
     });
-    return { data, error };
+    if (!error) return { data, error: null };
+
+    // FunctionsHttpError otherwise exposes only "non-2xx status code".
+    // Read the Edge Function's JSON response so admins see the actual cause.
+    try {
+      const payload = await error.context?.json();
+      return { data, error: new Error(payload?.error || error.message) };
+    } catch {
+      return { data, error };
+    }
   }
 
   async function signOut() {
