@@ -34,8 +34,7 @@ export default function Feedback({ onBack }) {
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [closingId, setClosingId] = useState(null);
-  const [closeComment, setCloseComment] = useState("");
+  const [completingId, setCompletingId] = useState(null);
   const [filter, setFilter] = useState("open"); // open | closed | all | deleted
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
@@ -171,16 +170,16 @@ export default function Feedback({ onBack }) {
 
   async function handleClose(feedbackId) {
     setMessage(null);
+    setCompletingId(feedbackId);
     const { error } = await supabase
       .from("feedback")
-      .update({ status: "closed", admin_comment: closeComment.trim() || null, closed_at: new Date().toISOString() })
+      .update({ status: "closed", admin_comment: null, closed_at: new Date().toISOString() })
       .eq("id", feedbackId);
+    setCompletingId(null);
     if (error) {
       setMessage({ type: "error", text: `Couldn't close that: ${error.message}` });
       return;
     }
-    setClosingId(null);
-    setCloseComment("");
     refresh();
   }
 
@@ -390,33 +389,14 @@ export default function Feedback({ onBack }) {
                                 <RotateCcw size={12} /> Restore
                               </button>
                             ) : it.status === "open" ? (
-                              closingId === it.id ? (
-                                <div className="flex flex-col gap-1.5">
-                                  <input
-                                    value={closeComment}
-                                    onChange={(e) => setCloseComment(e.target.value)}
-                                    placeholder="Optional comment"
-                                    className="w-full rounded-lg px-2 py-1.5 text-xs outline-none"
-                                    style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
-                                  />
-                                  <div className="flex gap-2">
-                                    <button onClick={() => handleClose(it.id)} className="text-xs font-medium" style={{ color: GREEN }}>
-                                      Confirm close
-                                    </button>
-                                    <button onClick={() => setClosingId(null)} style={{ color: INK, opacity: 0.4 }} className="text-xs">
-                                      Cancel
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() => setClosingId(it.id)}
-                                  className="flex items-center gap-1 text-xs font-medium"
-                                  style={{ color: GREEN }}
-                                >
-                                  <Check size={12} /> Mark done
-                                </button>
-                              )
+                              <button
+                                disabled={completingId === it.id}
+                                onClick={() => handleClose(it.id)}
+                                className="flex items-center gap-1 text-xs font-medium disabled:opacity-45"
+                                style={{ color: GREEN }}
+                              >
+                                <Check size={12} /> {completingId === it.id ? "Marking…" : "Mark done"}
+                              </button>
                             ) : (
                               <button onClick={() => handleReopen(it.id)} className="flex items-center gap-1 text-xs font-medium" style={{ color: INK, opacity: 0.5 }}>
                                 <X size={12} /> Reopen
