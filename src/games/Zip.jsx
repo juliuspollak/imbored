@@ -780,33 +780,56 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
                       aria-hidden="true"
                     >
                       <defs>
-                        <radialGradient id={`bhMist-${r}-${c}`} cx="50%" cy="50%" r="52%">
-                          <stop offset="0%" stopColor="#050505" stopOpacity="1" />
-                          <stop offset="38%" stopColor="#090909" stopOpacity="0.98" />
-                          <stop offset="66%" stopColor="#252525" stopOpacity="0.72" />
-                          <stop offset="100%" stopColor="#777777" stopOpacity="0" />
+                        <radialGradient id={`bhDepth-${r}-${c}`} cx="45%" cy="42%" r="60%">
+                          <stop offset="0%" stopColor="#000000" />
+                          <stop offset="72%" stopColor="#030303" />
+                          <stop offset="100%" stopColor="#171717" />
                         </radialGradient>
-                        <filter id={`bhBlur-${r}-${c}`} x="-30%" y="-30%" width="160%" height="160%">
-                          <feGaussianBlur stdDeviation="3.2" />
-                        </filter>
-                        <filter id={`bhBlurWide-${r}-${c}`} x="-40%" y="-40%" width="180%" height="180%">
-                          <feGaussianBlur stdDeviation="5.4" />
+                        <filter id={`bhShadow-${r}-${c}`} x="-35%" y="-35%" width="170%" height="170%">
+                          <feGaussianBlur stdDeviation="3.5" />
                         </filter>
                       </defs>
 
-                      <g filter={`url(#bhBlurWide-${r}-${c})`} opacity="0.42">
-                        <path d="M9 52 C22 24, 56 13, 82 31 C96 41, 96 63, 79 77 C58 95, 24 87, 11 67" fill="none" stroke="#4A4A4A" strokeWidth="9" strokeLinecap="round" />
-                        <path d="M18 34 C39 10, 75 19, 87 46 C97 69, 76 89, 49 90" fill="none" stroke="#6A6A6A" strokeWidth="8" strokeLinecap="round" />
+                      <g fill="none" stroke="#181818" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M27 27 L19 16 L12 18 L8 8" strokeWidth="2.3" />
+                        <path d="M24 35 L12 31 L7 35 L1 29" strokeWidth="1.8" />
+                        <path d="M22 45 L10 44 L5 50 L0 48" strokeWidth="2.1" />
+                        <path d="M24 57 L13 63 L8 60 L2 69" strokeWidth="2.2" />
+                        <path d="M29 69 L20 78 L13 77 L10 88" strokeWidth="1.8" />
+                        <path d="M39 76 L35 90 L29 94" strokeWidth="2.1" />
+                        <path d="M55 78 L59 90 L67 96" strokeWidth="1.9" />
+                        <path d="M68 72 L79 83 L88 82 L94 91" strokeWidth="2.2" />
+                        <path d="M76 61 L89 67 L94 63 L100 69" strokeWidth="1.9" />
+                        <path d="M78 48 L91 45 L96 49 L100 44" strokeWidth="2.2" />
+                        <path d="M75 36 L86 28 L93 31 L99 23" strokeWidth="1.9" />
+                        <path d="M68 27 L76 14 L84 14 L88 5" strokeWidth="2.2" />
+                        <path d="M54 22 L57 9 L52 3" strokeWidth="1.8" />
+                        <path d="M39 23 L34 13 L26 10 L25 3" strokeWidth="2" />
                       </g>
 
-                      <g filter={`url(#bhBlur-${r}-${c})`} opacity="0.78">
-                        <path d="M13 58 C23 29, 54 18, 76 32 C92 42, 93 62, 77 74 C60 87, 34 82, 25 66 C18 54, 23 41, 35 34" fill="none" stroke="#2B2B2B" strokeWidth="7" strokeLinecap="round" />
-                        <path d="M22 73 C12 54, 21 30, 43 23 C66 15, 85 28, 87 47 C89 65, 75 78, 58 79 C45 80, 34 73, 32 62" fill="none" stroke="#3A3A3A" strokeWidth="6" strokeLinecap="round" />
-                        <path d="M29 31 C45 19, 68 22, 79 38 C89 53, 82 70, 67 77 C52 84, 34 77, 28 63 C23 51, 28 40, 39 35" fill="none" stroke="#171717" strokeWidth="5.5" strokeLinecap="round" />
+                      <g fill="none" stroke="#4A4A4A" strokeLinecap="round" opacity="0.72">
+                        <path d="M27 27 L20 23 L15 24" strokeWidth="1.1" />
+                        <path d="M24 35 L18 39 L12 38" strokeWidth="1" />
+                        <path d="M24 57 L18 54 L12 57" strokeWidth="1.1" />
+                        <path d="M29 69 L27 79 L21 83" strokeWidth="1" />
+                        <path d="M68 72 L72 82 L78 88" strokeWidth="1.1" />
+                        <path d="M76 61 L85 58 L91 60" strokeWidth="1" />
+                        <path d="M75 36 L84 38 L90 35" strokeWidth="1.1" />
+                        <path d="M68 27 L65 17 L69 10" strokeWidth="1" />
                       </g>
 
-                      <circle cx="50" cy="50" r="36" fill={`url(#bhMist-${r}-${c})`} />
-                      <ellipse cx="51" cy="50" rx="22" ry="18" fill="#020202" opacity="0.98" />
+                      <ellipse cx="50" cy="51" rx="31" ry="30" fill="#000000" opacity="0.34" filter={`url(#bhShadow-${r}-${c})`} />
+                      <path
+                        d="M29 29 C37 21, 48 19, 59 22 C70 25, 78 35, 79 47 C81 59, 74 70, 64 77 C52 83, 39 79, 30 70 C22 62, 19 50, 23 40 C24 35, 26 32, 29 29 Z"
+                        fill={`url(#bhDepth-${r}-${c})`}
+                      />
+                      <path
+                        d="M29 29 C37 21, 48 19, 59 22 C70 25, 78 35, 79 47 C81 59, 74 70, 64 77 C52 83, 39 79, 30 70 C22 62, 19 50, 23 40 C24 35, 26 32, 29 29 Z"
+                        fill="none"
+                        stroke="#111111"
+                        strokeWidth="3"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                   </div>
                 );
