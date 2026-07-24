@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase, supabaseReady } from "./supabase.js";
+import { attachRealtimeRefresh } from "./realtimeRefresh.js";
 
 // Anyone whose last heartbeat (see usePresence) was within this window
 // counts as "currently online" — a little more than the 20s heartbeat
@@ -32,10 +33,15 @@ export function useOnlinePlayers({ includeHidden = false } = {}) {
     }
 
     poll();
-    const interval = setInterval(poll, 15000);
+    const detach = attachRealtimeRefresh({
+      channelName: `online-players-${includeHidden ? "admin" : "public"}`,
+      tables: [],
+      refresh: poll,
+      fallbackMs: 60000,
+    });
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      detach();
     };
   }, [includeHidden]);
 

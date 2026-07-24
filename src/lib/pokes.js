@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase, supabaseReady } from "./supabase.js";
+import { attachRealtimeRefresh } from "./realtimeRefresh.js";
 
 export const POKE_MESSAGES = [
   (name) => `👻 ${name} just poked you!`,
@@ -22,7 +23,7 @@ export async function sendPoke(fromUserId, toUserId, fromName) {
   return { error };
 }
 
-// Polls for unseen pokes directed at the current user. Returns the most
+// Listens for unseen pokes directed at the current user. Returns the most
 // recent one (or null) and a dismiss function that marks it seen.
 export function usePokes(userId) {
   const [poke, setPoke] = useState(null);
@@ -31,7 +32,7 @@ export function usePokes(userId) {
     if (!supabaseReady || !userId) return;
     let cancelled = false;
 
-    async function poll() {
+    async function refresh() {
       const { data } = await supabase
         .from("pokes")
         .select("id, message, from_user")
@@ -44,11 +45,15 @@ export function usePokes(userId) {
       }
     }
 
-    poll();
-    const interval = setInterval(poll, 8000);
+    refresh();
+    const detach = attachRealtimeRefresh({
+      channelName: `pokes-${userId}`,
+      tables: [{ name: "pokes", filter: `to_user=eq.${userId}` }],
+      refresh,
+    });
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      detach();
     };
   }, [userId]);
 

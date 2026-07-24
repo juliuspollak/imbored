@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase, supabaseReady } from "./supabase.js";
+import { attachRealtimeRefresh } from "./realtimeRefresh.js";
 
 export function useUnreadMessages(userId) {
   const [state, setState] = useState({ total: 0, bySender: {} });
@@ -34,10 +35,14 @@ export function useUnreadMessages(userId) {
     }
 
     refresh();
-    const interval = setInterval(refresh, 5000);
+    const detach = attachRealtimeRefresh({
+      channelName: `unread-messages-${userId}`,
+      tables: [{ name: "direct_messages" }],
+      refresh,
+    });
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      detach();
     };
   }, [userId]);
 

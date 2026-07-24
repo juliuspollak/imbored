@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase, supabaseReady } from "./supabase.js";
+import { attachRealtimeRefresh } from "./realtimeRefresh.js";
 
 // Admin feedback notifications are "new since I last opened Feedback", not the
 // total size of the open queue. The last-viewed timestamp is stored in
@@ -15,7 +16,7 @@ export function useOpenFeedbackCount(userId) {
 
     let cancelled = false;
 
-    async function poll() {
+    async function refresh() {
       const { data: view, error: viewError } = await supabase
         .from("user_section_views")
         .select("viewed_at")
@@ -54,14 +55,18 @@ export function useOpenFeedbackCount(userId) {
       setCount(unseenCount || 0);
     }
 
-    poll();
-    const interval = window.setInterval(poll, 20000);
-    window.addEventListener("feedback-section-seen", poll);
+    refresh();
+    const detach = attachRealtimeRefresh({
+      channelName: `open-feedback-${userId}`,
+      tables: [{ name: "feedback" }],
+      refresh,
+    });
+    window.addEventListener("feedback-section-seen", refresh);
 
     return () => {
       cancelled = true;
-      window.clearInterval(interval);
-      window.removeEventListener("feedback-section-seen", poll);
+      detach();
+      window.removeEventListener("feedback-section-seen", refresh);
     };
   }, [userId]);
 

@@ -112,6 +112,17 @@ Deno.serve(async (req) => {
       if (deleteError && !/user.*not found/i.test(deleteError.message || "")) {
         throw deleteError;
       }
+
+      const { error: markDeletedError } = await admin
+        .from("profiles")
+        .update({ auth_deleted_at: new Date().toISOString() })
+        .eq("id", targetUserId);
+      // Auth deletion has already succeeded. Older databases may not have the
+      // tracking column until v99 is applied, so do not turn that success into
+      // a misleading deletion failure.
+      if (markDeletedError && markDeletedError.code !== "42703") {
+        console.error("Unable to record completed Auth deletion", markDeletedError);
+      }
     } else {
       const blocked = action === "block";
       const { error: authError } = await admin.auth.admin.updateUserById(targetUserId, {

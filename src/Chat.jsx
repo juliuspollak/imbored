@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Send, Sparkles } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { sendPoke } from "./lib/pokes.js";
+import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
 
 const QUICK_REACTIONS = ["😂", "❤️", "🔥", "👏", "🎮", "👀"];
 
@@ -81,8 +82,12 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
 
   useEffect(() => {
     loadMessages();
-    const interval = setInterval(() => loadMessages({ quiet: true }), 3000);
-    return () => clearInterval(interval);
+    return attachRealtimeRefresh({
+      channelName: `chat-${currentUser?.id}-${peerId}`,
+      tables: [{ name: "direct_messages" }],
+      refresh: () => loadMessages({ quiet: true }),
+      fallbackMs: 60000,
+    });
   }, [currentUser?.id, peerId]);
 
   useEffect(() => {

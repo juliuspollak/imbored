@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase, supabaseReady } from "./supabase.js";
+import { attachRealtimeRefresh } from "./realtimeRefresh.js";
 
 const storageKey = (userId) => `queens-seen-closed-feedback-${userId}`;
 
@@ -38,7 +39,7 @@ export function useCompletedFeedbackCount(userId) {
 
     let cancelled = false;
 
-    async function poll() {
+    async function refresh() {
       const { data, error } = await supabase
         .from("feedback")
         .select("id")
@@ -56,14 +57,18 @@ export function useCompletedFeedbackCount(userId) {
       setCount((data || []).filter((item) => !seen.has(item.id)).length);
     }
 
-    poll();
-    const interval = window.setInterval(poll, 15000);
-    window.addEventListener("closed-feedback-seen", poll);
+    refresh();
+    const detach = attachRealtimeRefresh({
+      channelName: `completed-feedback-${userId}`,
+      tables: [{ name: "feedback", filter: `user_id=eq.${userId}` }],
+      refresh,
+    });
+    window.addEventListener("closed-feedback-seen", refresh);
 
     return () => {
       cancelled = true;
-      window.clearInterval(interval);
-      window.removeEventListener("closed-feedback-seen", poll);
+      detach();
+      window.removeEventListener("closed-feedback-seen", refresh);
     };
   }, [userId]);
 

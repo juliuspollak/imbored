@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, MessageCircle, Search, Sparkles } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
+import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
 
 function formatWhen(value) {
   if (!value) return "";
@@ -39,8 +40,12 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat 
 
   useEffect(() => {
     load();
-    const timer = setInterval(load, 5000);
-    return () => clearInterval(timer);
+    return attachRealtimeRefresh({
+      channelName: `chats-${currentUser?.id}`,
+      tables: [{ name: "direct_messages" }],
+      refresh: load,
+      fallbackMs: 60000,
+    });
   }, [currentUser?.id]);
 
   const profileMap = useMemo(() => Object.fromEntries(profiles.map((p) => [p.id, p])), [profiles]);

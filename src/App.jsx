@@ -108,8 +108,8 @@ function AppShell() {
   const players = useOnlinePlayers({ includeHidden: !!profile?.is_admin });
   const { config: gameConfig, refetch: refetchGameConfig } = useGameConfig();
   usePresence(["queens", "tango", "zip", "minisudoku", "geo"].includes(active) ? active : null, playMode);
-  const openFeedbackCount = useOpenFeedbackCount(user?.id);
-  const completedFeedbackCount = useCompletedFeedbackCount(user?.id);
+  const openFeedbackCount = useOpenFeedbackCount(profile?.is_admin ? user?.id : undefined);
+  const completedFeedbackCount = useCompletedFeedbackCount(profile?.is_admin ? undefined : user?.id);
   const newTransfersCount = useNewTransfersCount(user?.id);
   const unreadMessages = useUnreadMessages(user?.id);
   const [sectionSignals, setSectionSignals] = useState({ whatsnew: false, teams: false });
@@ -271,6 +271,7 @@ function AppShell() {
           players={players}
           userId={user?.id}
           onOpenProgress={() => setActive("progress")}
+          onOpenTeams={() => openSection("teams")}
           challengeScope={challengeScope}
           onChallengeScopeChange={setChallengeScope}
         />
