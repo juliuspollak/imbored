@@ -13,10 +13,11 @@ export function useOpenFeedbackCount() {
     let cancelled = false;
 
     async function poll() {
-      const { data, error } = await supabase
+      const { count: openCount, error } = await supabase
         .from("feedback")
-        .select("id")
-        .eq("status", "open");
+        .select("id", { count: "exact", head: true })
+        .eq("status", "open")
+        .is("deleted_at", null);
 
       if (cancelled) return;
 
@@ -26,7 +27,7 @@ export function useOpenFeedbackCount() {
         return;
       }
 
-      setCount(data?.length || 0);
+      setCount(openCount || 0);
     }
 
     poll();

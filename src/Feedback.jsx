@@ -31,20 +31,52 @@ export default function Feedback({ onBack }) {
   const refresh = useCallback(async () => {
     if (!supabaseReady) return;
     setLoading(true);
-    const [{ data: feedbackData }, { data: votesData }, { data: profilesData }] = await Promise.all([
-      supabase.from("feedback").select("*").order("created_at", { ascending: false }),
-      supabase.from("feedback_votes").select("feedback_id, user_id"),
-      supabase.from("profiles").select("id, name, icon"),
-    ]);
-    setItems(feedbackData || []);
-    setVotes(votesData || []);
-    setProfiles(Object.fromEntries((profilesData || []).map((p) => [p.id, p])));
-    const unseenClosed = (feedbackData || []).filter((it) => it.user_id === user?.id && it.status === "closed" && !it.user_seen_at);
-    if (unseenClosed.length > 0 && !isAdmin) setFilter("closed");
-    setLoading(false);
-    const closedIds = unseenClosed.map((it) => it.id);
-    if (closedIds.length) setTimeout(() => markClosedFeedbackSeen(user?.id, closedIds), 500);
-  }, []);
+    setMessage(null);
+
+    try {
+      const [feedbackResult, votesResult, profilesResult] = await Promise.all([
+        supabase
+          .from("feedback")
+          .select("id, user_id, title, description, status, admin_comment, created_at, closed_at, deleted_at, user_seen_at")
+          .order("created_at", { ascending: false }),
+        supabase.from("feedback_votes").select("feedback_id, user_id"),
+        supabase.from("profiles").select("id, name, icon"),
+      ]);
+
+      const firstError = feedbackResult.error || votesResult.error || profilesResult.error;
+      if (firstError) {
+        console.error("Unable to load feedback page:", firstError);
+        setItems([]);
+        setVotes([]);
+        setProfiles({});
+        setMessage({ type: "error", text: `Couldn't load feedback: ${firstError.message || "Unknown database error"}` });
+        return;
+      }
+
+      const feedbackData = feedbackResult.data || [];
+      setItems(feedbackData);
+      setVotes(votesResult.data || []);
+      setProfiles(Object.fromEntries((profilesResult.data || []).map((p) => [p.id, p])));
+
+      const unseenClosed = feedbackData.filter(
+        (it) => it.user_id === user?.id && it.status === "closed" && !it.user_seen_at
+      );
+      if (unseenClosed.length > 0 && !isAdmin) setFilter("closed");
+
+      const closedIds = unseenClosed.map((it) => it.id);
+      if (closedIds.length) {
+        window.setTimeout(() => markClosedFeedbackSeen(user?.id, closedIds), 500);
+      }
+    } catch (error) {
+      console.error("Unexpected feedback loading error:", error);
+      setItems([]);
+      setVotes([]);
+      setProfiles({});
+      setMessage({ type: "error", text: `Couldn't load feedback: ${error?.message || "Unexpected error"}` });
+    } finally {
+      setLoading(false);
+    }
+  }, [isAdmin, user?.id]);
 
   useEffect(() => {
     refresh();
