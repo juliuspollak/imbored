@@ -3,7 +3,7 @@ import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating from "../DifficultyRating.jsx";
-import { Globe2, RotateCcw, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
+import { Globe2, Eraser, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
 import { MAP_REGIONS, CONTINENT_SHAPES, MAP_VIEWBOX, REGION_HIT_AREAS } from "./geo/geoRegions.js";
 import { shuffle, generateQuiz } from "./geo/geoGenerator.js";
 import { getQuestionHistory, rememberQuestions } from "./geo/geoHistory.js";
@@ -226,10 +226,10 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
 
         <div className="flex items-center justify-center gap-2 mb-4">
           {[
-            { Icon: RotateCcw, label: "Restart", onClick: handleReset, disabled: solved },
-            { Icon: Shuffle, label: "New", onClick: () => newQuiz(dayIdx), disabled: isChallenge },
+            { Icon: Eraser, label: "Restart", onClick: handleReset, disabled: solved },
+            { Icon: Sparkles, label: "New", onClick: () => newQuiz(dayIdx), disabled: isChallenge },
             {
-              Icon: hintCooldown.locked ? Lock : Lightbulb,
+              Icon: hintCooldown.locked ? Lock : WandSparkles,
               label: hintCooldown.locked ? `${hintCooldown.remaining}s` : "Hint",
               onClick: handleHint,
               disabled: solved || answered || hintCooldown.locked || (q.mode === "choice" ? q.options : MAP_REGIONS).every((option) => option === q.answer || eliminated.includes(option)),

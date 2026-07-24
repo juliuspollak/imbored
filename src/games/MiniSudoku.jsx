@@ -3,7 +3,7 @@ import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx";
-import { Grid3x3, RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, Delete, Lock } from "lucide-react";
+import { Grid3x3, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Delete, Lock } from "lucide-react";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -549,10 +549,10 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         {/* toolbar */}
         <div className="flex items-center justify-center gap-2 mb-4">
           {[
-            { Icon: RotateCcw, label: "Reset", onClick: handleReset, disabled: solved },
-            { Icon: Shuffle, label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
+            { Icon: Eraser, label: "Reset", onClick: handleReset, disabled: solved },
+            { Icon: Sparkles, label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
             {
-              Icon: hintCooldown.locked ? Lock : Lightbulb,
+              Icon: hintCooldown.locked ? Lock : WandSparkles,
               label: hintCooldown.locked ? `${hintCooldown.remaining}s` : "Hint",
               onClick: handleHint,
               disabled: solved || hintCooldown.locked,
@@ -708,7 +708,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
             </NumBtn>
           ))}
           <NumBtn onClick={handleUndo} disabled={solved || history.length === 0} aria-label="Undo">
-            <Undo2 size={18} />
+            <CornerUpLeft size={18} />
           </NumBtn>
         </div>
 

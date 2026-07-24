@@ -3,7 +3,7 @@ import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx";
-import { Crown, RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
+import { Crown, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -1204,11 +1204,11 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
         {/* toolbar */}
         <div className="flex items-center justify-center gap-2 mb-4">
           {[
-            { Icon: Undo2, label: "Undo", onClick: handleUndo, disabled: solved || history.length === 0 },
-            { Icon: RotateCcw, label: "Reset", onClick: handleReset, disabled: solved },
-            { Icon: Shuffle, label: "New", onClick: () => newPuzzle(n), disabled: isChallenge },
+            { Icon: CornerUpLeft, label: "Undo", onClick: handleUndo, disabled: solved || history.length === 0 },
+            { Icon: Eraser, label: "Reset", onClick: handleReset, disabled: solved },
+            { Icon: Sparkles, label: "New", onClick: () => newPuzzle(n), disabled: isChallenge },
             {
-              Icon: hintCooldown.locked ? Lock : Lightbulb,
+              Icon: hintCooldown.locked ? Lock : WandSparkles,
               label: hintCooldown.locked ? `${hintCooldown.remaining}s` : "Hint",
               onClick: handleHint,
               disabled: solved || hintCooldown.locked,

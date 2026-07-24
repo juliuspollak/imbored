@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, ChevronUp, ChevronDown, Eye, EyeOff, Lock, Unlock, Timer, RotateCcw } from "lucide-react";
+import { ArrowLeft, ChevronUp, ChevronDown, Eye, EyeOff, Lock, Unlock, Wrench, Eraser } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { GAME_META } from "./Home.jsx";
@@ -135,7 +135,7 @@ export default function AdminGames({ onBack }) {
           </h1>
         </div>
         <p style={{ color: INK, opacity: 0.45 }} className="text-xs mb-4 ml-9">
-          visibility, playability, order, hint cooldown, and daily resets
+          visibility, playability, order, maintenance settings, and daily resets
         </p>
         {message && (
           <div className="text-xs rounded-lg p-3 mb-4" style={{ background: message.startsWith("Reset failed") || message.startsWith("Couldn't") ? "rgba(217,105,92,0.1)" : "rgba(22,163,74,0.1)", color: message.startsWith("Reset failed") || message.startsWith("Couldn't") ? "#B5433A" : "#15803D" }}>
@@ -158,7 +158,7 @@ export default function AdminGames({ onBack }) {
               if (!meta) return null;
               const Icon = meta.icon;
               const isExpanded = expanded === r.game_id;
-              const hasCooldown = (r.hint_cooldown_base || 0) > 0 || (r.hint_cooldown_per_day || 0) > 0;
+              const hasMaintenance = (r.hint_cooldown_base || 0) > 0 || (r.hint_cooldown_per_day || 0) > 0 || (r.game_id === "zip" && (r.zip_path_style || "solid") !== "solid");
               return (
                 <div key={r.game_id} className="rounded-xl" style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)", opacity: r.visible ? 1 : 0.5 }}>
                   <div className="p-3 flex items-center gap-3">
@@ -187,15 +187,15 @@ export default function AdminGames({ onBack }) {
                       style={{ background: "rgba(234,88,12,0.1)", color: "#C2410C", opacity: !r.available ? 0.35 : 1 }}
                       title="Reset today's challenge results"
                     >
-                      <RotateCcw size={12} className={resetting === r.game_id ? "animate-spin" : ""} />
+                      <Eraser size={12} className={resetting === r.game_id ? "animate-spin" : ""} />
                     </button>
                     <button
                       onClick={() => setExpanded(isExpanded ? null : r.game_id)}
                       className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
-                      style={{ background: hasCooldown ? "rgba(47,111,237,0.1)" : "rgba(16,24,40,0.05)", color: hasCooldown ? ACCENT : INK }}
-                      title="Hint cooldown"
+                      style={{ background: hasMaintenance ? "rgba(47,111,237,0.1)" : "rgba(16,24,40,0.05)", color: hasMaintenance ? ACCENT : INK }}
+                      title="Maintenance & settings"
                     >
-                      <Timer size={12} />
+                      <Wrench size={12} />
                     </button>
                     <button
                       onClick={() => updateRow(r, { visible: !r.visible })}
@@ -272,7 +272,7 @@ export default function AdminGames({ onBack }) {
         )}
 
         <p style={{ color: INK, opacity: 0.35 }} className="text-[11px] text-center mt-6">
-          Eye = shown on home at all. Lock = playable vs "coming soon". Timer = seconds Hint locks for after each use — base + (per-day × day index, 0=Mon..6=Sun), so it can ramp up through the week.
+          Eye = shown on home at all. Lock = playable vs "coming soon". Maintenance = per-game settings such as hint cooldowns and ZIP snake appearance.
         </p>
       </div>
     </div>

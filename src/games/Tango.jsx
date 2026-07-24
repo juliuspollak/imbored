@@ -3,7 +3,7 @@ import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx";
-import { Moon, RotateCcw, Undo2, Shuffle, Lightbulb, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
+import { Moon, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
 
 
 function SunBurstIcon({ size = 24, className = "", style, ...props }) {
@@ -564,11 +564,11 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
         {/* toolbar */}
         <div className="flex items-center justify-center gap-2 mb-4">
           {[
-            { Icon: Undo2, label: "Undo", onClick: handleUndo, disabled: solved || history.length === 0 },
-            { Icon: RotateCcw, label: "Reset", onClick: handleReset, disabled: solved },
-            { Icon: Shuffle, label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
+            { Icon: CornerUpLeft, label: "Undo", onClick: handleUndo, disabled: solved || history.length === 0 },
+            { Icon: Eraser, label: "Reset", onClick: handleReset, disabled: solved },
+            { Icon: Sparkles, label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
             {
-              Icon: hintCooldown.locked ? Lock : Lightbulb,
+              Icon: hintCooldown.locked ? Lock : WandSparkles,
               label: hintCooldown.locked ? `${hintCooldown.remaining}s` : "Hint",
               onClick: handleHint,
               disabled: solved || hintCooldown.locked,
