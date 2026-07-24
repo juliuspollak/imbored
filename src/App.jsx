@@ -97,7 +97,7 @@ function AppShell() {
   const players = useOnlinePlayers({ includeHidden: !!profile?.is_admin });
   const { config: gameConfig, refetch: refetchGameConfig } = useGameConfig();
   usePresence(["queens", "tango", "zip", "minisudoku", "geo"].includes(active) ? active : null, playMode);
-  const openFeedbackCount = useOpenFeedbackCount();
+  const openFeedbackCount = useOpenFeedbackCount(user?.id);
   const completedFeedbackCount = useCompletedFeedbackCount(user?.id);
   const newTransfersCount = useNewTransfersCount(user?.id);
   const unreadMessages = useUnreadMessages(user?.id);

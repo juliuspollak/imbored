@@ -67,7 +67,14 @@ export default function Feedback({ onBack }) {
       );
       if (unseenClosed.length > 0 && !isAdmin) setFilter("closed");
 
-      await supabase.from("user_section_views").upsert({ user_id:user.id, section:"feedback", viewed_at:new Date().toISOString() });
+      const { error: seenError } = await supabase
+        .from("user_section_views")
+        .upsert({ user_id: user.id, section: "feedback", viewed_at: new Date().toISOString() });
+      if (seenError) {
+        console.error("Unable to mark Feedback as viewed:", seenError);
+      } else {
+        window.dispatchEvent(new CustomEvent("feedback-section-seen"));
+      }
       const closedIds = unseenClosed.map((it) => it.id);
       if (closedIds.length) {
         window.setTimeout(() => markClosedFeedbackSeen(user?.id, closedIds), 500);
