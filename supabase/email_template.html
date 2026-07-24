@@ -1,9 +1,4 @@
-{{ if eq .RedirectTo (printf "%s/?approved=1" .SiteURL) }}
-<h2>You’re approved 🎉</h2>
-<p>Your I’mBoredToday account is ready. Use this code to sign in:</p>
-{{ else }}
 <h2>Your sign-in code</h2>
 <p>Enter this code in the app to continue:</p>
-{{ end }}
 <p style="font-size: 32px; font-weight: 700; letter-spacing: 8px; margin: 24px 0;">{{ .Token }}</p>
 <p style="color: #666; font-size: 13px;">This code expires shortly. If you didn't request this, you can ignore this email.</p>
