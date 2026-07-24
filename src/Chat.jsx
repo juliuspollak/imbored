@@ -28,6 +28,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [pokeState, setPokeState] = useState("");
+  const [peerAvailable, setPeerAvailable] = useState(true);
   const messagesRef = useRef(null);
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
@@ -43,6 +44,19 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
     if (!quiet) setLoading(true);
 
     try {
+      const { data: livePeer, error: peerError } = await supabase
+        .from("profiles")
+        .select("id,is_admin,is_approved,is_blocked,account_deleted_at")
+        .eq("id", peerId)
+        .maybeSingle();
+      if (!peerError && livePeer) {
+        setPeerAvailable(
+          !livePeer.account_deleted_at
+          && !livePeer.is_blocked
+          && (livePeer.is_admin || livePeer.is_approved !== false)
+        );
+      }
+
       const { data, error: loadError } = await supabase
         .from("direct_messages")
         .select("id, sender_id, recipient_id, body, created_at, read_at, system_generated, activity_type")
@@ -84,7 +98,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
     loadMessages();
     return attachRealtimeRefresh({
       channelName: `chat-${currentUser?.id}-${peerId}`,
-      tables: [{ name: "direct_messages" }],
+      tables: [{ name: "direct_messages" }, { name: "profiles" }],
       refresh: () => loadMessages({ quiet: true }),
       fallbackMs: 60000,
     });
@@ -119,7 +133,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
   async function submitMessage(event) {
     event?.preventDefault();
     const body = draft.trim();
-    if (!body || sending || !peerId) return;
+    if (!body || sending || !peerId || !peerAvailable) return;
 
     setSending(true);
     setError("");
@@ -161,7 +175,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
   }
 
   async function handlePoke() {
-    if (pokeState === "sending" || !currentUser?.id || !peerId) return;
+    if (pokeState === "sending" || !currentUser?.id || !peerId || !peerAvailable) return;
     setPokeState("sending");
     try {
       const { error: pokeError } = await sendPoke(currentUser.id, peerId, currentProfile?.name);
@@ -234,7 +248,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
             <div style={{ fontWeight:800, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{peerProfile?.name || "Player"}</div>
             <div style={{ fontSize:11, color:"rgba(27,33,41,.5)" }}>private chat · {peer?.is_online ? "online now" : "offline"}</div>
           </div>
-          <button type="button" onClick={handlePoke} className="chat-poke">
+          <button type="button" disabled={!peerAvailable} onClick={handlePoke} className="chat-poke" style={{ opacity:peerAvailable ? 1 : .4 }}>
             {pokeState === "sending" ? "Poking…" : pokeState === "sent" ? "Poked! 👋" : pokeState === "error" ? "Try again" : "👋 Poke"}
           </button>
         </header>
@@ -267,7 +281,13 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
           <div ref={bottomRef} />
         </main>
 
-        <div className="chat-composer-wrap">
+        {!peerAvailable ? (
+          <div className="chat-composer-wrap">
+            <div style={{ padding:"12px 14px", borderRadius:18, background:"#fff", color:"rgba(27,33,41,.62)", fontSize:13, textAlign:"center", border:"1px solid rgba(27,33,41,.08)" }}>
+              This account is no longer available for messages.
+            </div>
+          </div>
+        ) : <div className="chat-composer-wrap">
           <div className="chat-reactions" aria-label="Quick emoji reactions">
             {QUICK_REACTIONS.map((emoji) => <button type="button" className="chat-reaction" onClick={() => addReaction(emoji)} key={emoji}>{emoji}</button>)}
           </div>
@@ -292,7 +312,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
               <Send size={18} />
             </button>
           </form>
-        </div>
+        </div>}
       </div>
     </div>
   );
