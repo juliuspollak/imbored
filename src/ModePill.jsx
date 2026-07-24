@@ -1,4 +1,5 @@
 import { Swords, Coffee } from "lucide-react";
+import { useI18n } from "./lib/i18n.jsx";
 
 const PANEL = "#FFFFFF";
 const INK = "#1B2129";
@@ -6,6 +7,7 @@ const INK = "#1B2129";
 // Floating switch shown while playing. The label describes the destination
 // so a Practice screen offers “Challenge”, and vice versa.
 export default function ModePill({ mode, onSwitch }) {
+  const { t } = useI18n();
   const targetIsChallenge = mode !== "challenge";
   return (
     <button
@@ -25,7 +27,7 @@ export default function ModePill({ mode, onSwitch }) {
       }}
     >
       {targetIsChallenge ? <Swords size={13} style={{ color: "#D9AE58" }} /> : <Coffee size={13} style={{ color: "#12946A" }} />}
-      <span className="text-xs font-semibold">{targetIsChallenge ? "Challenge" : "Practice"}</span>
+      <span className="text-xs font-semibold">{targetIsChallenge ? t("common.challenge") : t("common.practice")}</span>
     </button>
   );
 }
