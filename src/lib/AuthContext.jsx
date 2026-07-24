@@ -8,30 +8,58 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
 
-  const loadProfile = useCallback(async (userId) => {
+  const loadProfile = useCallback(async (userId, { showLoading = true } = {}) => {
     if (!supabaseReady || !userId) return;
-    setProfileLoading(true);
+    if (showLoading) setProfileLoading(true);
     const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
     if (error) {
       console.error("Unable to load signed-in profile:", error);
-      setProfile(null);
-      setProfileLoading(false);
+      // A silent background refresh must not replace a usable screen with a
+      // loading/error state because of a temporary network interruption.
+      if (showLoading) {
+        setProfile(null);
+        setProfileLoading(false);
+      }
       return null;
     }
     setProfile(data || null);
-    setProfileLoading(false);
+    if (showLoading) setProfileLoading(false);
     return data || null;
   }, []);
 
   const refreshProfile = useCallback(async () => {
-    if (session?.user?.id) await loadProfile(session.user.id);
+    if (session?.user?.id) await loadProfile(session.user.id, { showLoading: false });
   }, [session?.user?.id, loadProfile]);
 
   useEffect(() => {
-    if (!session?.user?.id || profile?.is_approved !== false) return;
-    const timer = window.setInterval(() => loadProfile(session.user.id), 10000);
-    return () => window.clearInterval(timer);
-  }, [session?.user?.id, profile?.is_approved, loadProfile]);
+    if (!supabaseReady || !session?.user?.id) return undefined;
+    const userId = session.user.id;
+
+    // Approval and account-state changes are events, not polling jobs. Using
+    // the profile row's realtime update removes the visible loading flash that
+    // previously occurred every ten seconds on the pending screen.
+    const channel = supabase
+      .channel(`signed-in-profile-${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${userId}` },
+        (payload) => {
+          if (payload.new?.id === userId) setProfile(payload.new);
+        }
+      )
+      .subscribe();
+
+    function refreshWhenVisible() {
+      if (document.visibilityState === "visible") {
+        void loadProfile(userId, { showLoading: false });
+      }
+    }
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+      void supabase.removeChannel(channel);
+    };
+  }, [session?.user?.id, loadProfile]);
 
   useEffect(() => {
     if (!supabaseReady) {
@@ -92,7 +120,7 @@ export function AuthProvider({ children }) {
       // Deferring avoids contention with Supabase's session lock during token
       // refresh and OAuth completion.
       window.setTimeout(() => {
-        if (!cancelled) loadProfile(newSession.user.id);
+        if (!cancelled) loadProfile(newSession.user.id, { showLoading: false });
       }, 0);
     });
 
