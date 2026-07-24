@@ -1,29 +1,49 @@
 import { useEffect, useState } from "react";
 import { Star, Flame, Trophy } from "lucide-react";
 
+const CONFETTI = ["⭐","✨","🎉","💫","🏆","🎊"];
+
 export default function PointsToast({ reward }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!reward || reward.points_awarded == null) {
+    if (!reward || (reward.points_awarded == null && !reward.completed)) {
       setVisible(false);
       return undefined;
     }
 
     setVisible(true);
-    const timer = setTimeout(() => setVisible(false), 3200);
+    const timer = setTimeout(() => setVisible(false), 3600);
     return () => clearTimeout(timer);
   }, [reward]);
 
-  if (!visible || !reward || reward.points_awarded == null) return null;
+  if (!visible || !reward || (reward.points_awarded == null && !reward.completed)) return null;
+  const hasPoints = Number.isFinite(Number(reward.points_awarded));
   const noPoints = reward.points_awarded === 0;
 
   return (
-    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 100, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 72 }}>
-      <div className="rounded-2xl px-5 py-4 shadow-xl" style={{ background: "rgba(255,255,255,0.96)", border: "1px solid rgba(16,24,40,0.1)", minWidth: 230, textAlign: "center", animation: "pointsPop .3s cubic-bezier(.34,1.56,.64,1)" }}>
-        <style>{`@keyframes pointsPop{from{opacity:0;transform:translateY(-12px) scale(.85)}to{opacity:1;transform:none}}`}</style>
-        {noPoints ? (
-          <div style={{ color: "#1B2129" }} className="text-sm font-semibold">Daily practice points limit reached</div>
+    <div style={{ position: "fixed", inset: 0, overflow:"hidden", pointerEvents: "none", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding:16 }}>
+      <style>{`
+        @keyframes pointsPop{0%{opacity:0;transform:scale(.72)}65%{transform:scale(1.06)}100%{opacity:1;transform:none}}
+        @keyframes celebrationFall{0%{opacity:0;transform:translate3d(0,-12vh,0) rotate(0)}12%{opacity:1}100%{opacity:0;transform:translate3d(var(--drift),105vh,0) rotate(560deg)}}
+      `}</style>
+      {Array.from({ length:24 }, (_, index) => (
+        <span key={index} aria-hidden="true" style={{
+          position:"absolute",
+          top:"-8vh",
+          left:`${3 + ((index * 41) % 94)}%`,
+          fontSize:`${17 + (index % 4) * 5}px`,
+          "--drift":`${(index % 2 ? 1 : -1) * (18 + (index % 5) * 8)}px`,
+          animation:`celebrationFall ${1.8 + (index % 6) * .22}s linear ${(index % 8) * .08}s both`,
+        }}>{CONFETTI[index % CONFETTI.length]}</span>
+      ))}
+      <div className="rounded-3xl px-6 py-5 shadow-xl" style={{ background: "rgba(255,255,255,0.97)", border: "1px solid rgba(16,24,40,0.1)", minWidth: 250, textAlign: "center", animation: "pointsPop .42s cubic-bezier(.34,1.56,.64,1)" }}>
+        <div className="text-3xl mb-1">🎉</div>
+        <div className="text-sm font-bold mb-2" style={{ color:"#1B2129" }}>Puzzle complete!</div>
+        {!hasPoints ? (
+          <div style={{ color: "#1B2129", opacity:.62 }} className="text-xs font-medium">Nice solve — keep it going!</div>
+        ) : noPoints ? (
+          <div style={{ color: "#1B2129", opacity:.62 }} className="text-xs font-medium">Daily practice points limit reached</div>
         ) : (
           <>
             <div className="flex items-center justify-center gap-2" style={{ color: "#D9AE58" }}><Star size={22} fill="currentColor"/><span className="text-2xl font-bold">+{reward.points_awarded} Points</span></div>
