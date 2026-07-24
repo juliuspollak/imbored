@@ -13,7 +13,7 @@ function formatWhen(value) {
   return new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" }).format(date);
 }
 
-export default function Chats({ currentUser, currentProfile, onBack, onOpenChat }) {
+export default function Chats({ currentUser, currentProfile, onBack, onOpenChat, onOpenAdminPlayers }) {
   const [messages, setMessages] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [presence, setPresence] = useState(new Set());
@@ -32,12 +32,16 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat 
     if (messageResult.error) setError(messageResult.error.message || "Couldn’t load chats.");
     else setMessages(messageResult.data || []);
     if (!profileResult.error) {
-      setProfiles((profileResult.data || []).filter((p) => (
-        !p.account_deleted_at
-        && !p.is_blocked
-        && (p.is_admin || p.is_approved !== false)
-        && (currentProfile?.is_admin || (!p.hidden_from_others && !p.is_private))
-      )));
+      setProfiles((profileResult.data || []).filter((p) => {
+        const active = !p.account_deleted_at && !p.is_blocked && (p.is_admin || p.is_approved !== false);
+        const pendingForAdmin = !!currentProfile?.is_admin
+          && !p.account_deleted_at
+          && !p.is_blocked
+          && !p.is_admin
+          && p.is_approved === false;
+        return (active || pendingForAdmin)
+          && (currentProfile?.is_admin || (!p.hidden_from_others && !p.is_private));
+      }));
     }
     setPresence(new Set((presenceResult.data || []).map((p) => p.user_id)));
     setLoading(false);
@@ -68,9 +72,20 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat 
 
   const filteredProfiles = profiles.filter((p) => `${p.name || ""} ${p.mood || ""}`.toLowerCase().includes(query.trim().toLowerCase()));
   const conversationIds = new Set(conversations.map((c) => c.peerId));
-  const newPeople = filteredProfiles.filter((p) => !conversationIds.has(p.id));
+  const newPeople = filteredProfiles.filter((p) => (
+    !conversationIds.has(p.id) && (p.is_admin || p.is_approved !== false)
+  ));
 
-  function open(profile) {
+  async function open(profile, latest = null) {
+    if (currentProfile?.is_admin && latest?.activity_type === "user_approval_required") {
+      await supabase
+        .from("direct_messages")
+        .update({ read_at:new Date().toISOString() })
+        .eq("id", latest.id)
+        .eq("recipient_id", currentUser.id);
+      onOpenAdminPlayers?.();
+      return;
+    }
     onOpenChat({ ...profile, user_id: profile.id, profiles: profile, is_online: presence.has(profile.id) });
   }
 
@@ -104,10 +119,12 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat 
         {loading && <div style={{padding:24,textAlign:"center",opacity:.55}}>Loading chats…</div>}
         {!loading && conversations.length===0 && <div style={{padding:26,textAlign:"center",background:"rgba(255,255,255,.65)",borderRadius:22}}><div style={{fontSize:38}}>💬✨</div><strong>No chats yet</strong><div style={{fontSize:13,opacity:.55,marginTop:5}}>Choose someone below and say hello.</div></div>}
         {conversations.filter(c => (c.profile.name||"").toLowerCase().includes(query.toLowerCase())).map(({peerId,profile,latest,unread}) => (
-          <button type="button" className="conversation" key={peerId} onClick={()=>open(profile)}>
+          <button type="button" className="conversation" key={peerId} onClick={()=>open(profile,latest)}>
             <div className="conversation-avatar">{profile.icon||"🙂"}{presence.has(peerId)&&<span className="online-dot"/>}</div>
-            <div style={{flex:1,minWidth:0}}><div style={{display:"flex",justifyContent:"space-between",gap:8}}><strong style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile.name||"Player"}</strong><span style={{fontSize:10,opacity:.45}}>{formatWhen(latest.created_at)}</span></div><div style={{fontSize:12,opacity:unread?.85:.5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:unread?700:400}}>{latest.system_generated ? "Team update · " : latest.sender_id===currentUser.id?"You: ":""}{latest.body}</div></div>
-            {unread>0&&<span className="unread-pill">{unread}</span>}
+            <div style={{flex:1,minWidth:0}}><div style={{display:"flex",justifyContent:"space-between",gap:8}}><strong style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile.name||"Player"}</strong><span style={{fontSize:10,opacity:.45}}>{formatWhen(latest.created_at)}</span></div><div style={{fontSize:12,opacity:unread?.85:.5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:unread?700:400}}>{latest.activity_type==="user_approval_required" ? "" : latest.system_generated ? "Team update · " : latest.sender_id===currentUser.id?"You: ":""}{latest.body}</div></div>
+            {latest.activity_type==="user_approval_required"
+              ? <span className="rounded-full px-2.5 py-1 text-[10px] font-bold" style={{background:"#FFF0C2",color:"#8A5C00"}}>Review</span>
+              : unread>0&&<span className="unread-pill">{unread}</span>}
           </button>
         ))}
         <div className="chat-section-title"><Sparkles size={14}/>Start a new chat</div>
