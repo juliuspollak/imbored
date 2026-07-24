@@ -96,12 +96,22 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
         )}
 
         <div className="text-center mb-6">
-          <div
-            className="mx-auto mb-2 flex items-center justify-center rounded-full"
-            style={{ width: 56, height: 56, background: "rgba(47,111,237,0.1)", fontSize: 28 }}
+          <button
+            type="button"
+            onClick={() => setShowIconPicker((value) => !value)}
+            className="mx-auto mb-2 flex items-center justify-center rounded-full transition-transform active:scale-95"
+            style={{
+              width: 56,
+              height: 56,
+              background: showIconPicker ? "rgba(47,111,237,0.16)" : "rgba(47,111,237,0.1)",
+              border: showIconPicker ? "2px solid rgba(47,111,237,0.45)" : "2px solid transparent",
+              fontSize: 28,
+            }}
+            aria-label={showIconPicker ? "Close avatar picker" : "Change avatar"}
+            aria-expanded={showIconPicker}
           >
             {icon}
-          </div>
+          </button>
           <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl">
             {isFirstTime ? "Welcome" : "My Profile"}
           </h1>
@@ -123,22 +133,6 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
             style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
           />
 
-          <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
-            Avatar
-          </label>
-          <button
-            type="button"
-            onClick={() => setShowIconPicker((value) => !value)}
-            className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 mb-2 text-left"
-            style={{ border: "1px solid rgba(16,24,40,0.12)", background: "rgba(16,24,40,0.025)" }}
-          >
-            <span className="flex items-center justify-center rounded-full" style={{ width: 38, height: 38, fontSize: 21, background: "#FFFFFF", boxShadow: "0 2px 8px rgba(16,24,40,0.08)" }}>{icon}</span>
-            <span className="flex-1">
-              <span className="block text-xs font-semibold" style={{ color: INK }}>Choose avatar</span>
-              <span className="block text-[11px] mt-0.5" style={{ color: INK, opacity: 0.45 }}>Tap to change your profile icon</span>
-            </span>
-            <span className="text-xs font-semibold" style={{ color: ACCENT }}>{showIconPicker ? "Close" : "Change"}</span>
-          </button>
           {showIconPicker && (
             <div className="grid grid-cols-6 gap-2 rounded-xl p-3 mb-4" style={{ background: "rgba(16,24,40,0.04)", border: "1px solid rgba(16,24,40,0.08)" }}>
               {PROFILE_ICONS.map((ic) => (
@@ -146,7 +140,8 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
                   type="button"
                   key={ic}
                   onClick={() => { setIcon(ic); setShowIconPicker(false); }}
-                  className="flex items-center justify-center rounded-full"
+                  className="flex items-center justify-center rounded-full transition-transform active:scale-95"
+                  aria-label={`Use ${ic} as avatar`}
                   style={{
                     width: 38, height: 38, fontSize: 20,
                     background: icon === ic ? "rgba(47,111,237,0.14)" : "#FFFFFF",
