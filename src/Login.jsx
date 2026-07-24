@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Mail, ArrowRight, Fingerprint } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { supabaseReady } from "./lib/supabase.js";
+import { useI18n } from "./lib/i18n.jsx";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -60,6 +61,7 @@ function GoogleIcon() {
 }
 
 export default function Login() {
+  const { t } = useI18n();
   const { signInWithEmail, verifyCode, signInWithGoogle, signInWithPasskey } = useAuth();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -128,14 +130,14 @@ export default function Login() {
     const cleanCode = code.replace(/\D/g, "");
     if (verifying) return;
     if (cleanCode.length !== EMAIL_OTP_LENGTH) {
-      setError(`Enter the ${EMAIL_OTP_LENGTH}-digit code from your email.`);
+      setError(t("auth.invalidCodeLength"));
       return;
     }
     setVerifying(true);
     setError(null);
     const { error } = await verifyCode(email, cleanCode);
     setVerifying(false);
-    if (error) setError("That code didn't work — check it and try again, or resend below.");
+    if (error) setError(t("auth.invalidCode"));
   }
 
   return (
@@ -149,7 +151,7 @@ export default function Login() {
             I'mBoredToday
           </h1>
           <p style={{ color: INK, opacity: 0.5 }} className="text-xs mt-1">
-            sign in to track your stats and play with friends
+            {t("auth.tagline")}
           </p>
         </div>
 
@@ -170,10 +172,10 @@ export default function Login() {
                   style={{ background: ACCENT, color: "#FFFFFF", opacity: passkeyBusy ? 0.7 : 1 }}
                 >
                   <Fingerprint size={16} />
-                  {passkeyBusy ? "Waiting…" : "Sign in with a passkey"}
+                  {passkeyBusy ? t("auth.waiting") : t("auth.passkey")}
                 </button>
                 <p style={{ color: INK, opacity: 0.4 }} className="text-[11px] text-center mb-4">
-                  Only works if you've registered one on this device before — otherwise use an option below.
+                  {t("auth.passkeyHint")}
                 </p>
               </>
             )}
@@ -184,16 +186,16 @@ export default function Login() {
               style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK, background: "#FFFFFF" }}
             >
               <GoogleIcon />
-              Continue with Google
+              {t("auth.google")}
             </button>
             <div className="flex items-center gap-3 mb-4">
               <div style={{ height: 1, background: "rgba(16,24,40,0.12)" }} className="flex-1" />
-              <span style={{ color: INK, opacity: 0.4 }} className="text-[11px]">or</span>
+              <span style={{ color: INK, opacity: 0.4 }} className="text-[11px]">{t("auth.or")}</span>
               <div style={{ height: 1, background: "rgba(16,24,40,0.12)" }} className="flex-1" />
             </div>
             <form onSubmit={handleSendCode}>
             <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
-              Email address
+              {t("auth.email")}
             </label>
             <input
               type="email"
@@ -212,11 +214,11 @@ export default function Login() {
               className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold"
               style={{ background: ACCENT, color: "#FFFFFF", opacity: sending ? 0.7 : 1 }}
             >
-              {sending ? "Sending…" : "Send sign-in code"}
+              {sending ? t("auth.sending") : t("auth.sendCode")}
               {!sending && <ArrowRight size={15} />}
             </button>
             <p style={{ color: INK, opacity: 0.4 }} className="text-[11px] text-center mt-3">
-              No password — we'll email you a one-time code instead.
+              {t("auth.noPassword")}
             </p>
             </form>
           </>
@@ -225,7 +227,7 @@ export default function Login() {
             <div className="text-center mb-4">
               <Mail size={24} style={{ color: ACCENT, margin: "0 auto 8px" }} />
               <p style={{ color: INK }} className="text-xs">
-                Enter the code sent to <strong>{email}</strong>
+                {t("auth.codeSent", { email })}
               </p>
             </div>
             <input
@@ -234,7 +236,7 @@ export default function Login() {
               inputMode="numeric"
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, "").slice(0, EMAIL_OTP_LENGTH))}
-              placeholder={`${EMAIL_OTP_LENGTH}-digit code`}
+              placeholder={t("auth.codeLabel")}
               autoComplete="one-time-code"
               maxLength={EMAIL_OTP_LENGTH}
               className="w-full rounded-lg px-3 py-2.5 text-center text-lg tracking-[0.2em] mb-3 outline-none"
@@ -247,11 +249,11 @@ export default function Login() {
               className="w-full rounded-lg py-2.5 text-sm font-semibold"
               style={{ background: ACCENT, color: "#FFFFFF", opacity: verifying ? 0.7 : 1 }}
             >
-              {verifying ? "Checking…" : "Verify and sign in"}
+              {verifying ? t("auth.checking") : t("auth.verify")}
             </button>
             <div className="flex justify-between mt-3">
               <button type="button" onClick={() => { setSent(false); setCode(""); setError(null); }} style={{ color: INK, opacity: 0.5 }} className="text-xs">
-                Use a different email
+                {t("auth.changeEmail")}
               </button>
               <button
                 type="button"
@@ -260,7 +262,7 @@ export default function Login() {
                 style={{ color: cooldown > 0 ? "rgba(27,33,41,0.35)" : ACCENT }}
                 className="text-xs font-medium"
               >
-                {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}
+                {cooldown > 0 ? t("auth.resendIn", { seconds:cooldown }) : t("auth.resend")}
               </button>
             </div>
           </form>
