@@ -45,17 +45,19 @@ export default function Teams({ onBack }) {
   const [leavingTeamId, setLeavingTeamId] = useState(null);
   const [expandedChallengeId, setExpandedChallengeId] = useState(null);
   const [challengeEdits, setChallengeEdits] = useState({});
+  const [socialUnlocked, setSocialUnlocked] = useState(!!profile?.is_admin);
 
   const refresh = useCallback(async () => {
     if (!supabaseReady) return;
     setLoading(true);
-    const [{data:t},{data:p},{data:m},{data:r},{data:c},rosterResult] = await Promise.all([
+    const [{data:t},{data:p},{data:m},{data:r},{data:c},rosterResult,progressResult] = await Promise.all([
       supabase.from("teams").select("*").order("created_at"),
       supabase.from("profiles").select("id,name,icon,mood,is_private,hidden_from_others,is_approved,account_deleted_at").order("name"),
       supabase.from("team_members").select("team_id,user_id"),
       supabase.from("team_join_requests").select("*").order("requested_at",{ascending:false}),
       supabase.rpc("get_my_active_team_challenges"),
       supabase.rpc("get_my_team_rosters"),
+      supabase.from("player_progress").select("lifetime_points,current_level").eq("player_id",user.id).maybeSingle(),
     ]);
     setTeams(t || []);
     setProfiles(p || []);
@@ -65,6 +67,7 @@ export default function Teams({ onBack }) {
       { id:item.user_id,name:item.member_name,icon:item.member_icon,mood:item.member_mood,is_owner:item.is_owner },
     ])));
     setRequests(r || []);
+    setSocialUnlocked(!!profile?.is_admin || Number(progressResult.data?.current_level || 1) >= 2 || Number(progressResult.data?.lifetime_points || 0) >= 500);
     setChallengeEdits((previous) => {
       const next = { ...previous };
       (c || []).forEach((item) => {
@@ -82,7 +85,7 @@ export default function Teams({ onBack }) {
     });
     setLoading(false);
     await supabase.rpc("mark_my_team_request_updates_seen");
-  }, []);
+  }, [profile?.is_admin, user?.id]);
 
   useEffect(() => {
     refresh();
@@ -113,6 +116,10 @@ export default function Teams({ onBack }) {
 
   async function create(event) {
     event.preventDefault();
+    if (!socialUnlocked) {
+      setMsg("Team creation unlocks at Level 2.");
+      return;
+    }
     if (!name.trim()) return;
     const { error } = await createTeam(name.trim(), emoji);
     setMsg(error?.message || "Team created");
@@ -208,13 +215,14 @@ export default function Teams({ onBack }) {
         <header className="flex items-center gap-3 mb-5">
           <button onClick={onBack} className="grid place-items-center rounded-full" style={{ width:36,height:36,background:"rgba(16,24,40,.05)" }} aria-label="Back"><ArrowLeft size={17}/></button>
           <div className="flex-1"><h1 className="text-2xl font-bold" style={{ fontFamily:"'Fredoka',sans-serif" }}>Teams</h1><p className="text-xs opacity-45">Play together, your way</p></div>
-          {!profile?.hidden_from_others && <button onClick={() => setComposerOpen((open) => !open)} className="rounded-full px-3 py-2 text-xs font-semibold text-white flex items-center gap-1" style={{ background:ACCENT }}><Plus size={14}/>New team</button>}
+          {!profile?.hidden_from_others && <button disabled={!socialUnlocked} onClick={() => setComposerOpen((open) => !open)} className="rounded-full px-3 py-2 text-xs font-semibold flex items-center gap-1 disabled:opacity-55" style={{ background:socialUnlocked ? ACCENT : "rgba(16,24,40,.08)", color:socialUnlocked ? "#fff" : INK }}><Plus size={14}/>{socialUnlocked ? "New team" : "Level 2"}</button>}
         </header>
 
         {msg && <div className="rounded-xl p-3 mb-3 text-xs" style={{ background:"rgba(47,111,237,.08)" }}>{msg}</div>}
         {profile?.hidden_from_others && <div className="rounded-xl p-3 mb-3 text-xs" style={{ background:"rgba(181,67,58,.1)",color:"#B5433A" }}>Your account is hidden, so team changes are disabled.</div>}
 
-        {composerOpen && <form onSubmit={create} className="rounded-3xl p-4 mb-5" style={{ background:PANEL,border:"1px solid rgba(47,111,237,.16)",boxShadow:"0 16px 38px rgba(47,111,237,.10)" }}>
+        {!socialUnlocked && !profile?.hidden_from_others && <div className="rounded-2xl px-3 py-2.5 mb-4 text-xs flex items-center gap-2" style={{ background:"rgba(217,174,88,.10)", color:"#775B1D" }}><Lock size={13}/>Reach Level 2 to create teams. Playing, joining teams, chat, and feedback stay available.</div>}
+        {composerOpen && socialUnlocked && <form onSubmit={create} className="rounded-3xl p-4 mb-5" style={{ background:PANEL,border:"1px solid rgba(47,111,237,.16)",boxShadow:"0 16px 38px rgba(47,111,237,.10)" }}>
           <div className="text-sm font-bold">Create a team</div>
           <div className="text-[11px] opacity-45 mt-0.5 mb-3">Give it a name. We’ll suggest an icon.</div>
           <div className="flex gap-2">
