@@ -10,6 +10,43 @@ const ACCENT = "#2F6FED";
 
 const passkeySupported = typeof window !== "undefined" && !!window.PublicKeyCredential;
 
+function getAuthErrorMessage(error) {
+  if (!error) return "Unable to send the sign-in code.";
+  if (typeof error === "string") return error;
+
+  const directMessage =
+    error.message ||
+    error.error_description ||
+    error.description ||
+    error.msg;
+
+  // AuthRetryableFetchError sometimes arrives with message "{}" even though
+  // the useful information is its name/status. Do not show that raw object.
+  if (directMessage && directMessage !== "{}" && directMessage !== "[object Object]") {
+    return directMessage;
+  }
+
+  const status = error.status || error.statusCode || error.context?.status;
+  const name = error.name || error.constructor?.name;
+
+  if (name === "AuthRetryableFetchError" || Number(status) >= 500) {
+    return "The sign-in service could not send the email (server error). Please try again shortly. If it continues, check the Supabase Auth log and SMTP settings.";
+  }
+
+  if (name === "AuthApiError" && status) {
+    return `The sign-in request failed (${status}). Please check the Supabase Auth configuration.`;
+  }
+
+  try {
+    const serialised = JSON.stringify(error);
+    if (serialised && serialised !== "{}") return serialised;
+  } catch {
+    // Fall through to the safe default below.
+  }
+
+  return "Unable to send the sign-in code. Please try again.";
+}
+
 function GoogleIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 48 48">
@@ -57,41 +94,26 @@ export default function Login() {
 
   async function handleSendCode(e) {
     e.preventDefault();
-  
     if (!email || sending || cooldown > 0) return;
-  
+
     setSending(true);
     setError(null);
-  
+
     try {
       const result = await signInWithEmail(email);
       const authError = result?.error;
-  
+
       if (authError) {
         console.error("Sign-in email error:", authError);
-  
-        const message =
-          typeof authError === "string"
-            ? authError
-            : authError.message ||
-              authError.error_description ||
-              authError.msg ||
-              JSON.stringify(authError);
-  
-        setError(message || "Unable to send the sign-in code.");
+        setError(getAuthErrorMessage(authError));
         return;
       }
-  
+
       setSent(true);
-      setCooldown(30);
-    } catch (err) {
-      console.error("Sign-in email exception:", err);
-  
-      setError(
-        err?.message ||
-        err?.error_description ||
-        "Unable to send the sign-in code."
-      );
+      setCooldown(30); // a shared inbox rate limit means one person spamming "resend" can lock everyone out
+    } catch (error) {
+      console.error("Sign-in email exception:", error);
+      setError(getAuthErrorMessage(error));
     } finally {
       setSending(false);
     }

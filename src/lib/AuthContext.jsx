@@ -34,21 +34,17 @@ export function AuthProvider({ children }) {
   }, [loadProfile]);
 
   async function signInWithEmail(email) {
-    if (!supabaseReady) {
-      return {
-        error: new Error("Supabase isn't configured yet"),
-      };
-    }
-  
+    if (!supabaseReady) return { error: new Error("Supabase isn't configured yet") };
+
     try {
       return await supabase.auth.signInWithOtp({
         email: email.trim().toLowerCase(),
-        options: {
-          emailRedirectTo: window.location.origin,
-          shouldCreateUser: true,
-        },
+        options: { emailRedirectTo: window.location.origin, shouldCreateUser: true },
       });
     } catch (error) {
+      // Network and 5xx Auth failures can be thrown by supabase-js rather
+      // than returned in the normal { error } result. Preserve the object so
+      // the login screen can turn it into a useful message.
       console.error("Supabase signInWithOtp failed:", error);
       return { error };
     }
