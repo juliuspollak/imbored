@@ -7,6 +7,7 @@ const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
 const INK = "#1B2129";
 const ACCENT = "#2F6FED";
+const EMAIL_OTP_LENGTH = 8;
 
 const passkeySupported = typeof window !== "undefined" && !!window.PublicKeyCredential;
 
@@ -121,10 +122,15 @@ export default function Login() {
 
   async function handleVerify(e) {
     e.preventDefault();
-    if (!code || verifying) return;
+    const cleanCode = code.replace(/\D/g, "");
+    if (verifying) return;
+    if (cleanCode.length !== EMAIL_OTP_LENGTH) {
+      setError(`Enter the ${EMAIL_OTP_LENGTH}-digit code from your email.`);
+      return;
+    }
     setVerifying(true);
     setError(null);
-    const { error } = await verifyCode(email, code.trim());
+    const { error } = await verifyCode(email, cleanCode);
     setVerifying(false);
     if (error) setError("That code didn't work — check it and try again, or resend below.");
   }
@@ -224,10 +230,10 @@ export default function Login() {
               autoFocus
               inputMode="numeric"
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ""))}
-              placeholder="6-digit code"
+              onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, "").slice(0, EMAIL_OTP_LENGTH))}
+              placeholder={`${EMAIL_OTP_LENGTH}-digit code`}
               autoComplete="one-time-code"
-              maxLength={6}
+              maxLength={EMAIL_OTP_LENGTH}
               className="w-full rounded-lg px-3 py-2.5 text-center text-lg tracking-[0.2em] mb-3 outline-none"
               style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
             />
