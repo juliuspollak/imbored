@@ -34,11 +34,24 @@ export function AuthProvider({ children }) {
   }, [loadProfile]);
 
   async function signInWithEmail(email) {
-    if (!supabaseReady) return { error: new Error("Supabase isn't configured yet") };
-    return supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin, shouldCreateUser: true },
-    });
+    if (!supabaseReady) {
+      return {
+        error: new Error("Supabase isn't configured yet"),
+      };
+    }
+  
+    try {
+      return await supabase.auth.signInWithOtp({
+        email: email.trim().toLowerCase(),
+        options: {
+          emailRedirectTo: window.location.origin,
+          shouldCreateUser: true,
+        },
+      });
+    } catch (error) {
+      console.error("Supabase signInWithOtp failed:", error);
+      return { error };
+    }
   }
 
   async function verifyCode(email, token) {

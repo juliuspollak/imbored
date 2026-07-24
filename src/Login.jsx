@@ -57,16 +57,43 @@ export default function Login() {
 
   async function handleSendCode(e) {
     e.preventDefault();
+  
     if (!email || sending || cooldown > 0) return;
+  
     setSending(true);
     setError(null);
-    const { error } = await signInWithEmail(email);
-    setSending(false);
-    if (error) {
-      setError(error.message);
-    } else {
+  
+    try {
+      const result = await signInWithEmail(email);
+      const authError = result?.error;
+  
+      if (authError) {
+        console.error("Sign-in email error:", authError);
+  
+        const message =
+          typeof authError === "string"
+            ? authError
+            : authError.message ||
+              authError.error_description ||
+              authError.msg ||
+              JSON.stringify(authError);
+  
+        setError(message || "Unable to send the sign-in code.");
+        return;
+      }
+  
       setSent(true);
-      setCooldown(30); // a shared inbox rate limit means one person spamming "resend" can lock everyone out
+      setCooldown(30);
+    } catch (err) {
+      console.error("Sign-in email exception:", err);
+  
+      setError(
+        err?.message ||
+        err?.error_description ||
+        "Unable to send the sign-in code."
+      );
+    } finally {
+      setSending(false);
     }
   }
 
