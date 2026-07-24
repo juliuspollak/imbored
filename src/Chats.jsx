@@ -26,13 +26,18 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat 
     const cutoff = new Date(Date.now() - 45000).toISOString();
     const [messageResult, profileResult, presenceResult] = await Promise.all([
       supabase.from("direct_messages").select("id,sender_id,recipient_id,body,created_at,read_at,system_generated,activity_type").or(`sender_id.eq.${currentUser.id},recipient_id.eq.${currentUser.id}`).order("created_at", { ascending: false }).limit(500),
-      supabase.from("profiles").select("id,name,icon,mood,is_private,hidden_from_others,is_admin").neq("id", currentUser.id).order("name"),
+      supabase.from("profiles").select("id,name,icon,mood,is_private,hidden_from_others,is_admin,is_approved,is_blocked,account_deleted_at").neq("id", currentUser.id).order("name"),
       supabase.from("presence").select("user_id").gte("last_seen", cutoff),
     ]);
     if (messageResult.error) setError(messageResult.error.message || "Couldn’t load chats.");
     else setMessages(messageResult.data || []);
     if (!profileResult.error) {
-      setProfiles((profileResult.data || []).filter((p) => currentProfile?.is_admin || (!p.hidden_from_others && !p.is_private)));
+      setProfiles((profileResult.data || []).filter((p) => (
+        !p.account_deleted_at
+        && !p.is_blocked
+        && (p.is_admin || p.is_approved !== false)
+        && (currentProfile?.is_admin || (!p.hidden_from_others && !p.is_private))
+      )));
     }
     setPresence(new Set((presenceResult.data || []).map((p) => p.user_id)));
     setLoading(false);
@@ -42,7 +47,7 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat 
     load();
     return attachRealtimeRefresh({
       channelName: `chats-${currentUser?.id}`,
-      tables: [{ name: "direct_messages" }],
+      tables: [{ name: "direct_messages" }, { name: "profiles" }],
       refresh: load,
       fallbackMs: 60000,
     });
@@ -56,7 +61,9 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat 
       if (!grouped.has(peerId)) grouped.set(peerId, { peerId, latest: message, unread: 0 });
       if (message.recipient_id === currentUser.id && !message.read_at) grouped.get(peerId).unread += 1;
     }
-    return [...grouped.values()].map((item) => ({ ...item, profile: profileMap[item.peerId] || { id: item.peerId, name: "Player", icon: "🙂" } }));
+    return [...grouped.values()]
+      .filter((item) => profileMap[item.peerId])
+      .map((item) => ({ ...item, profile: profileMap[item.peerId] }));
   }, [messages, profileMap, currentUser.id]);
 
   const filteredProfiles = profiles.filter((p) => `${p.name || ""} ${p.mood || ""}`.toLowerCase().includes(query.trim().toLowerCase()));
