@@ -3,6 +3,7 @@ import { Crown, Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Ci
 import { useGameConfig } from "./lib/useGameConfig.js";
 import { useTodayCompletions } from "./lib/useTodayCompletions.js";
 import { supabase, supabaseReady } from "./lib/supabase.js";
+import { useI18n } from "./lib/i18n.jsx";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -21,6 +22,7 @@ export const GAME_META = [
 ];
 
 export default function Home({ onSelect, playMode, onPlayModeChange, players = [], userId, onOpenProgress, onOpenTeams, challengeScope, onChallengeScopeChange }) {
+  const { t, language } = useI18n();
   const { config: gameConfig, loading: gameConfigLoading } = useGameConfig();
   const todayCompletions = useTodayCompletions(playMode === "challenge" ? userId : undefined, challengeScope);
   const [progress, setProgress] = useState(null);
@@ -134,7 +136,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
             I'mBoredToday
           </h1>
           <p style={{ color: CREAM, opacity: 0.45 }} className="text-sm mt-2">
-            new puzzles every day &mdash; Monday easiest, Sunday hardest
+            {t("home.tagline")}
           </p>
         </div>
 
@@ -152,12 +154,12 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
           >
             <span className="flex items-center gap-1.5 text-sm font-semibold">
               <Star size={17} fill="currentColor" style={{ color: "#D9AE58" }} />
-              {(progress.available_points || 0).toLocaleString()} Points
+              {(progress.available_points || 0).toLocaleString(language === "sk" ? "sk-SK" : "en")} {t("home.points")}
             </span>
             <span className="h-5 w-px" style={{ background: "rgba(16,24,40,0.10)" }} />
             <span className="flex items-center gap-1.5 text-sm font-semibold">
               <Flame size={17} style={{ color: "#E05A47" }} />
-              {progress.current_streak || 0} day{progress.current_streak === 1 ? "" : "s"}
+              {progress.current_streak || 0} {progress.current_streak === 1 ? t("home.day") : t("home.days")}
             </span>
             <ChevronRight size={16} style={{ opacity: 0.35 }} />
           </button>
@@ -177,7 +179,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                     boxShadow: playMode === m ? "0 2px 8px rgba(16,24,40,0.10)" : "none",
                   }}
                 >
-                  {m}
+                  {t(`common.${m}`)}
                 </button>
               ))}
             </div>
@@ -185,16 +187,16 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         )}
         <p style={{ color: CREAM, opacity: 0.4 }} className="text-[11px] text-center -mt-4 mb-6">
           {playMode === "challenge"
-            ? "one attempt a day, same puzzle for everyone — today only"
-            : "any day, unlimited puzzles — nothing saved to your stats"}
+            ? t("home.challengeHint")
+            : t("home.practiceHint")}
         </p>
         {playMode === "challenge" && onChallengeScopeChange && (
           <div className="mb-6">
-            <div className="text-xs font-semibold mb-2" style={{ color:CREAM }}>Today’s challenge</div>
+            <div className="text-xs font-semibold mb-2" style={{ color:CREAM }}>{t("home.todaysChallenge")}</div>
             <div className="rounded-3xl p-3 flex items-center gap-3" style={{ background:PANEL,border:"1px solid rgba(16,24,40,.09)",boxShadow:"0 10px 28px rgba(16,24,40,.07)" }}>
               <button onClick={() => setScopePickerOpen(true)} className="flex-1 min-w-0 flex items-center gap-3 text-left">
                 <div className="grid place-items-center rounded-2xl text-2xl" style={{ width:46,height:46,background:selectedTeam ? "rgba(18,148,106,.10)" : "rgba(47,111,237,.10)" }}>{selectedTeam?.team_emoji || "🎯"}</div>
-                <div className="flex-1 min-w-0"><div className="text-sm font-bold truncate">{selectedTeam?.team_name || "My Challenge"}</div><div className="text-[11px] opacity-45">{selectedTeam ? `${selectedTeam.game_ids?.length || 0} games · ${selectedTeam.reward_points || 0} pts` : "All daily games"}</div>{selectedTeam && <div className="flex items-center mt-1"><div className="flex">{selectedRoster.slice(0,4).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-[10px]" style={{ width:21,height:21,background:"#F1F3F7",border:"2px solid white",marginLeft:index ? -5 : 0 }}>{member.icon || "🙂"}</span>)}</div><span className="text-[9px] opacity-40 ml-1.5">{selectedRoster.length} playing</span></div>}</div>
+                <div className="flex-1 min-w-0"><div className="text-sm font-bold truncate">{selectedTeam?.team_name || t("home.myChallenge")}</div><div className="text-[11px] opacity-45">{selectedTeam ? t("home.gamesCount", { count:selectedTeam.game_ids?.length || 0, points:selectedTeam.reward_points || 0 }) : t("home.allDailyGames")}</div>{selectedTeam && <div className="flex items-center mt-1"><div className="flex">{selectedRoster.slice(0,4).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-[10px]" style={{ width:21,height:21,background:"#F1F3F7",border:"2px solid white",marginLeft:index ? -5 : 0 }}>{member.icon || "🙂"}</span>)}</div><span className="text-[9px] opacity-40 ml-1.5">{t("home.playing", { count:selectedRoster.length })}</span></div>}</div>
                 <ChevronDown size={16} style={{ opacity:.35 }}/>
               </button>
               {selectedTeam && onOpenTeams && <><span className="h-9 w-px" style={{ background:"rgba(16,24,40,.08)" }}/><button onClick={onOpenTeams} className="grid place-items-center rounded-full" style={{ width:38,height:38,background:"rgba(18,148,106,.09)",color:"#0B7C58" }} aria-label="Open team details"><Users size={16}/></button></>}
@@ -203,7 +205,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         )}
 
         {gameConfigLoading ? (
-          <p style={{ color: CREAM, opacity: 0.3 }} className="text-xs text-center py-8">Loading…</p>
+          <p style={{ color: CREAM, opacity: 0.3 }} className="text-xs text-center py-8">{t("common.loading")}</p>
         ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {visibleGames.map((g) => {
@@ -227,7 +229,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                   <span
                     className="absolute top-3 left-3 flex items-center justify-center rounded-full"
                     style={{ width: 18, height: 18, background: "rgba(47,111,237,0.12)" }}
-                    title="Already played today"
+                    title={t("home.alreadyPlayed")}
                   >
                     <Check size={11} style={{ color: "#2F6FED" }} strokeWidth={3} />
                   </span>
@@ -249,11 +251,11 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                 </div>
                 <div>
                   <div style={{ color: CREAM, fontWeight: 600 }} className="text-sm">{g.label}</div>
-                  <div style={{ color: CREAM, opacity: 0.5 }} className="text-xs mt-0.5 leading-snug">{g.desc}</div>
+                  <div style={{ color: CREAM, opacity: 0.5 }} className="text-xs mt-0.5 leading-snug">{t(`game.${g.id}.desc`)}</div>
                 </div>
                 {!g.available && (
                   <span style={{ color: CREAM, opacity: 0.35 }} className="text-[10px] font-semibold uppercase tracking-wide">
-                    Coming soon
+                    {t("home.comingSoon")}
                   </span>
                 )}
               </button>
@@ -262,7 +264,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         </div>
         )}
       </div>
-      {scopePickerOpen && <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background:"rgba(16,24,40,.42)" }}><div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-4" style={{ background:"#fff",maxHeight:"82vh",overflow:"auto" }}><div className="flex items-center gap-3 mb-3"><div className="flex-1"><div className="font-bold">Choose a challenge</div><div className="text-[11px] opacity-45">Personal or one of your teams</div></div><button onClick={() => setScopePickerOpen(false)} className="grid place-items-center rounded-full" style={{ width:32,height:32,background:"rgba(16,24,40,.05)" }}><X size={15}/></button></div><button onClick={choosePersonalChallenge} className="w-full flex items-center gap-3 rounded-2xl p-3 text-left mb-2" style={{ background:challengeScope?.type !== "team" ? "rgba(47,111,237,.10)" : "#F7F8FB",border:challengeScope?.type !== "team" ? "1px solid rgba(47,111,237,.25)" : "1px solid transparent" }}><span className="grid place-items-center rounded-xl text-xl" style={{ width:42,height:42,background:"#fff" }}>🎯</span><div className="flex-1"><div className="text-sm font-semibold">My Challenge</div><div className="text-[10px] opacity-45">All daily games</div></div>{challengeScope?.type !== "team" && <Check size={15} style={{ color:"#2F6FED" }}/>}</button>{teamChallenges.map((teamChallenge) => { const roster=teamRosters[teamChallenge.team_id] || [];const selected=challengeScope?.id === teamChallenge.challenge_id;return <button key={teamChallenge.challenge_id} disabled={!teamChallenge.active_today} onClick={() => chooseTeamChallenge(teamChallenge)} className="w-full flex items-center gap-3 rounded-2xl p-3 text-left mb-2 disabled:opacity-45" style={{ background:selected ? "rgba(18,148,106,.10)" : "#F7F8FB",border:selected ? "1px solid rgba(18,148,106,.25)" : "1px solid transparent" }}><span className="grid place-items-center rounded-xl text-xl" style={{ width:42,height:42,background:"#fff" }}>{teamChallenge.team_emoji || "⭐"}</span><div className="flex-1 min-w-0"><div className="text-sm font-semibold truncate">{teamChallenge.team_name}</div><div className="text-[10px] opacity-45">{teamChallenge.game_ids?.length || 0} games · {teamChallenge.reward_points || 0} pts{!teamChallenge.active_today ? " · Not today" : ""}</div><div className="flex items-center mt-1"><div className="flex">{roster.slice(0,4).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-[9px]" style={{ width:19,height:19,background:"#fff",border:"1.5px solid #F7F8FB",marginLeft:index ? -4 : 0 }}>{member.icon || "🙂"}</span>)}</div><span className="text-[9px] opacity-40 ml-1.5">{roster.length} member{roster.length === 1 ? "" : "s"}</span></div></div>{selected && <Check size={15} style={{ color:"#0B7C58" }}/>}</button>; })}{onOpenTeams && <button onClick={() => { setScopePickerOpen(false);onOpenTeams(); }} className="w-full rounded-full py-2.5 mt-2 text-xs font-semibold flex items-center justify-center gap-1.5" style={{ background:"rgba(16,24,40,.05)" }}><Users size={14}/>Manage teams</button>}</div></div>}
+      {scopePickerOpen && <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background:"rgba(16,24,40,.42)" }}><div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-4" style={{ background:"#fff",maxHeight:"82vh",overflow:"auto" }}><div className="flex items-center gap-3 mb-3"><div className="flex-1"><div className="font-bold">{t("home.chooseChallenge")}</div><div className="text-[11px] opacity-45">{t("home.personalOrTeams")}</div></div><button onClick={() => setScopePickerOpen(false)} className="grid place-items-center rounded-full" style={{ width:32,height:32,background:"rgba(16,24,40,.05)" }}><X size={15}/></button></div><button onClick={choosePersonalChallenge} className="w-full flex items-center gap-3 rounded-2xl p-3 text-left mb-2" style={{ background:challengeScope?.type !== "team" ? "rgba(47,111,237,.10)" : "#F7F8FB",border:challengeScope?.type !== "team" ? "1px solid rgba(47,111,237,.25)" : "1px solid transparent" }}><span className="grid place-items-center rounded-xl text-xl" style={{ width:42,height:42,background:"#fff" }}>🎯</span><div className="flex-1"><div className="text-sm font-semibold">{t("home.myChallenge")}</div><div className="text-[10px] opacity-45">{t("home.allDailyGames")}</div></div>{challengeScope?.type !== "team" && <Check size={15} style={{ color:"#2F6FED" }}/>}</button>{teamChallenges.map((teamChallenge) => { const roster=teamRosters[teamChallenge.team_id] || [];const selected=challengeScope?.id === teamChallenge.challenge_id;return <button key={teamChallenge.challenge_id} disabled={!teamChallenge.active_today} onClick={() => chooseTeamChallenge(teamChallenge)} className="w-full flex items-center gap-3 rounded-2xl p-3 text-left mb-2 disabled:opacity-45" style={{ background:selected ? "rgba(18,148,106,.10)" : "#F7F8FB",border:selected ? "1px solid rgba(18,148,106,.25)" : "1px solid transparent" }}><span className="grid place-items-center rounded-xl text-xl" style={{ width:42,height:42,background:"#fff" }}>{teamChallenge.team_emoji || "⭐"}</span><div className="flex-1 min-w-0"><div className="text-sm font-semibold truncate">{teamChallenge.team_name}</div><div className="text-[10px] opacity-45">{t("home.gamesCount", { count:teamChallenge.game_ids?.length || 0, points:teamChallenge.reward_points || 0 })}{!teamChallenge.active_today ? ` · ${t("home.notToday")}` : ""}</div><div className="flex items-center mt-1"><div className="flex">{roster.slice(0,4).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-[9px]" style={{ width:19,height:19,background:"#fff",border:"1.5px solid #F7F8FB",marginLeft:index ? -4 : 0 }}>{member.icon || "🙂"}</span>)}</div><span className="text-[9px] opacity-40 ml-1.5">{roster.length === 1 ? t("home.member") : t("home.members", { count:roster.length })}</span></div></div>{selected && <Check size={15} style={{ color:"#0B7C58" }}/>}</button>; })}{onOpenTeams && <button onClick={() => { setScopePickerOpen(false);onOpenTeams(); }} className="w-full rounded-full py-2.5 mt-2 text-xs font-semibold flex items-center justify-center gap-1.5" style={{ background:"rgba(16,24,40,.05)" }}><Users size={14}/>{t("home.manageTeams")}</button>}</div></div>}
     </div>
   );
 }
