@@ -4,6 +4,7 @@ import { useHintCooldown } from "../lib/useHintCooldown.js";
 import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import { Grid3x3, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Delete, Lock } from "lucide-react";
+import { useI18n } from "../lib/i18n.jsx";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -221,6 +222,7 @@ function NumBtn({ onClick, disabled, children, ...rest }) {
 }
 
 export default function MiniSudokuGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId, rewardResult } = {}) {
+  const { t } = useI18n();
   const todayIdx = (() => {
     const d = new Date().getDay();
     return d === 0 ? 6 : d - 1;
@@ -333,7 +335,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   if (!board || !puzzle) {
     return (
       <div style={{ background: BG, minHeight: "100vh" }} className="flex items-center justify-center">
-        <span style={{ color: CREAM, opacity: 0.6 }} className="text-sm">Building today's puzzle…</span>
+        <span style={{ color: CREAM, opacity: 0.6 }} className="text-sm">{t("common.buildingPuzzle")}</span>
       </div>
     );
   }
@@ -502,7 +504,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         {isChallenge ? (
           <div className="flex justify-center mb-4">
             <div className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: `${GOLD}18`, color: GOLD }}>
-              <span className="text-xs font-semibold">Today's Challenge</span>
+              <span className="text-xs font-semibold">{t("common.todaysChallenge")}</span>
               <span className="text-[10px] opacity-80">{GIVEN_TARGETS[dayIdx]} givens</span>
             </div>
           </div>
@@ -549,11 +551,11 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         {/* toolbar */}
         <div className="flex items-center justify-center gap-2 mb-4">
           {[
-            { Icon: Eraser, label: "Reset", onClick: handleReset, disabled: solved },
+            { Icon: Eraser, label: t("common.reset"), onClick: handleReset, disabled: solved },
             { Icon: Sparkles, label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
             {
               Icon: hintCooldown.locked ? Lock : WandSparkles,
-              label: hintCooldown.locked ? `${hintCooldown.remaining}s` : "Hint",
+              label: hintCooldown.locked ? `${hintCooldown.remaining}s` : t("common.hint"),
               onClick: handleHint,
               disabled: solved || hintCooldown.locked,
             },
@@ -671,7 +673,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
                 >
                   {rewardResult.points_awarded > 0
                     ? `★ +${rewardResult.points_awarded} Points`
-                    : "No Points awarded"}
+                    : t("common.noPoints")}
                 </div>
               )}
               {savedStatId ? (
@@ -707,7 +709,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
               {d}
             </NumBtn>
           ))}
-          <NumBtn onClick={handleErase} disabled={solved || !selected} aria-label="Erase">
+          <NumBtn onClick={handleErase} disabled={solved || !selected} aria-label={t("common.erase")}>
             <Delete size={18} />
           </NumBtn>
           {[4, 5, 6].map((d) => (
@@ -715,7 +717,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
               {d}
             </NumBtn>
           ))}
-          <NumBtn onClick={handleUndo} disabled={solved || history.length === 0} aria-label="Undo">
+          <NumBtn onClick={handleUndo} disabled={solved || history.length === 0} aria-label={t("common.undo")}>
             <CornerUpLeft size={18} />
           </NumBtn>
         </div>
