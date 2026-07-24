@@ -39,9 +39,11 @@ export default function Feedback({ onBack }) {
     setItems(feedbackData || []);
     setVotes(votesData || []);
     setProfiles(Object.fromEntries((profilesData || []).map((p) => [p.id, p])));
+    const unseenClosed = (feedbackData || []).filter((it) => it.user_id === user?.id && it.status === "closed" && !it.user_seen_at);
+    if (unseenClosed.length > 0 && !isAdmin) setFilter("closed");
     setLoading(false);
-    const closedIds = (feedbackData || []).filter((it) => it.user_id === user?.id && it.status === "closed").map((it) => it.id);
-    markClosedFeedbackSeen(user?.id, closedIds);
+    const closedIds = unseenClosed.map((it) => it.id);
+    if (closedIds.length) setTimeout(() => markClosedFeedbackSeen(user?.id, closedIds), 500);
   }, []);
 
   useEffect(() => {
@@ -270,11 +272,12 @@ export default function Feedback({ onBack }) {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           {editingId === it.id ? (
-                            <div className="flex-1">
-                              <textarea value={editTitle} onChange={(e) => setEditTitle(e.target.value)} rows={2} maxLength={300} className="w-full rounded-lg px-2 py-1.5 text-sm outline-none resize-none" style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }} />
-                              <div className="flex gap-2 mt-1">
-                                <button onClick={() => handleUpdate(it.id)} className="text-xs font-semibold" style={{ color: ACCENT }}>Save</button>
-                                <button onClick={() => { setEditingId(null); setEditTitle(""); }} className="text-xs" style={{ color: INK, opacity: 0.5 }}>Cancel</button>
+                            <div className="flex-1 rounded-2xl p-3" style={{background:"rgba(47,111,237,.05)",border:"1px solid rgba(47,111,237,.16)"}}>
+                              <div className="text-[10px] font-semibold uppercase tracking-wide mb-2" style={{color:ACCENT}}>Update your feedback</div>
+                              <textarea autoFocus value={editTitle} onChange={(e) => setEditTitle(e.target.value)} rows={3} maxLength={300} className="w-full rounded-xl px-3 py-2 text-sm outline-none resize-none" style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK, background:PANEL }} />
+                              <div className="flex justify-end gap-2 mt-2">
+                                <button onClick={() => { setEditingId(null); setEditTitle(""); }} className="rounded-lg px-3 py-1.5 text-xs" style={{ color: INK, background:"rgba(16,24,40,.06)" }}>Cancel</button>
+                                <button onClick={() => handleUpdate(it.id)} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white" style={{ background: ACCENT }}>Save changes</button>
                               </div>
                             </div>
                           ) : (
@@ -308,8 +311,8 @@ export default function Feedback({ onBack }) {
                         )}
 
                         {it.user_id === user?.id && it.status === "open" && !it.deleted_at && editingId !== it.id && (
-                          <button onClick={() => { setEditingId(it.id); setEditTitle(it.title); }} className="mt-2 flex items-center gap-1 text-xs font-medium" style={{ color: ACCENT }}>
-                            <Pencil size={12} /> Edit feedback
+                          <button onClick={() => { setEditingId(it.id); setEditTitle(it.title); }} className="mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold" style={{ color: ACCENT, background:"rgba(47,111,237,.09)", border:"1px solid rgba(47,111,237,.16)" }}>
+                            <Pencil size={12} /> Make changes
                           </button>
                         )}
                         {it.user_id === user?.id && it.status === "closed" && (

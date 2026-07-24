@@ -139,8 +139,7 @@ export function AuthProvider({ children }) {
 
   async function joinTeam(teamId) {
     if (!supabaseReady || !session) return { error: new Error("Not logged in") };
-    const { error } = await supabase.from("team_members").insert({ team_id: teamId, user_id: session.user.id });
-    return { error };
+    return supabase.rpc("request_team_join", { target_team_id: teamId });
   }
 
   async function leaveTeam(teamId) {

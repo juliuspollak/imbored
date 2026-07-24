@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Star, Flame, Trophy, Gift, Send, Plus, ShieldCheck, ExternalLink, PartyPopper, X } from "lucide-react";
 import { supabase } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
-import { getLastSeenTransferId, markTransfersSeen } from "./lib/useNewTransfers.js";
+import { markTransfersSeen } from "./lib/useNewTransfers.js";
 
 const BG="#F1F3F7", PANEL="#fff", INK="#1B2129", ACCENT="#2F6FED";
 const card={background:PANEL,border:"1px solid rgba(16,24,40,.09)",borderRadius:16};
@@ -14,28 +14,28 @@ export default function Progress({ onBack }) {
   const [tab,setTab]=useState("rewards"), [message,setMessage]=useState(""), [loading,setLoading]=useState(true);
   const [wish,setWish]=useState({name:"",product_url:"",note:""});
   const [transfer,setTransfer]=useState({player:"",amount:""});
-  const [newTransfers,setNewTransfers]=useState([]); // points received since this player last opened My Progress
+  const [newTransfers,setNewTransfers]=useState([]);
+  const [transferLog,setTransferLog]=useState([]);
 
   const refresh=useCallback(async()=>{
     setLoading(true);
     await supabase.rpc("ensure_player_progress",{uid:user.id});
-    // Captured before this load marks anything seen, so we know exactly
-    // which received transfers are new to show in the banner below.
-    const lastSeenBefore = getLastSeenTransferId(user.id);
+
     const [{data:p},{data:r},{data:rw},{data:w},{data:ps},{data:tx}] = await Promise.all([
       supabase.from("player_progress").select("*").eq("player_id",user.id).single(),
       supabase.from("reward_rules").select("*").eq("is_active",true).maybeSingle(),
       supabase.from("rewards").select("*").eq("is_active",true).order("points_cost"),
       supabase.from("reward_wishes").select("*").eq("player_id",user.id).order("created_at",{ascending:false}),
       supabase.from("profiles").select("id,name,icon").neq("id",user.id).order("name"),
-      supabase.from("points_transactions").select("id,points,related_player_id,created_at")
-        .eq("player_id",user.id).eq("reason_code","TRANSFER_RECEIVED").order("id",{ascending:false}).limit(20),
+      supabase.from("points_transactions").select("id,points,reason_code,related_player_id,created_at,seen_at")
+        .eq("player_id",user.id).in("reason_code",["TRANSFER_RECEIVED","TRANSFER_SENT"]).order("id",{ascending:false}).limit(50),
     ]);
     setProgress(p); setRules(r); setRewards(rw||[]); setWishes(w||[]); setPlayers(ps||[]); setLoading(false);
 
-    const senderById = Object.fromEntries((ps||[]).map(pl=>[pl.id,pl]));
-    setNewTransfers((tx||[]).filter(t=>t.id>lastSeenBefore).map(t=>({id:t.id,points:t.points,sender:senderById[t.related_player_id]||null})));
-    if ((tx||[]).length>0) markTransfersSeen(user.id, Math.max(...tx.map(t=>t.id)));
+    const playerById = Object.fromEntries((ps||[]).map(pl=>[pl.id,pl]));
+    setNewTransfers((tx||[]).filter(t=>t.reason_code==="TRANSFER_RECEIVED"&&!t.seen_at).map(t=>({id:t.id,points:t.points,sender:playerById[t.related_player_id]||null})));
+    setTransferLog((tx||[]).map(t=>({...t,other:playerById[t.related_player_id]||null})));
+    if ((tx||[]).some(t=>t.reason_code==="TRANSFER_RECEIVED"&&!t.seen_at)) await markTransfersSeen();
   },[user.id]);
   useEffect(()=>{refresh()},[refresh]);
 
@@ -62,10 +62,10 @@ export default function Progress({ onBack }) {
       <div className="p-3 mb-3" style={card}><div className="flex justify-between text-[11px] mb-2" style={{color:INK,opacity:.55}}><span>Level {progress.current_level}</span><span>{progress.lifetime_points.toLocaleString()} lifetime Points</span></div><div className="h-2 rounded-full" style={{background:"rgba(47,111,237,.12)"}}><div className="h-2 rounded-full" style={{width:`${pct}%`,background:ACCENT}}/></div></div>
       {canProtect&&<button onClick={protect} className="w-full p-3 mb-3 flex items-center justify-between" style={{...card,color:INK}}><span className="flex items-center gap-2"><ShieldCheck size={18} style={{color:ACCENT}}/><span className="text-sm font-semibold">Protect your streak</span></span><span className="text-xs">{rules?.streak_protection_cost||250} Points</span></button>}
       {message&&<div className="rounded-xl p-3 mb-3 text-xs" style={{background:"rgba(47,111,237,.08)",color:INK}}>{message}</div>}
-      <div className="flex gap-1 mb-3 p-1 rounded-xl" style={{background:"rgba(16,24,40,.05)"}}>{[["rewards","Rewards",Gift],["wish","Wish",Plus],["transfer","Transfer",Send]].map(([id,label,Icon])=><button key={id} onClick={()=>setTab(id)} className="flex-1 rounded-lg py-2 text-xs font-semibold flex gap-1 justify-center items-center" style={{background:tab===id?PANEL:"transparent",color:INK}}><Icon size={14}/>{label}</button>)}</div>
+      <div className="flex gap-1 mb-3 p-1 rounded-xl" style={{background:"rgba(16,24,40,.05)"}}>{[["rewards","Rewards",Gift],["wish","Wish ✨",Plus],["transfer","Transfer",Send]].map(([id,label,Icon])=><button key={id} onClick={()=>setTab(id)} className="flex-1 rounded-lg py-2 text-xs font-semibold flex gap-1 justify-center items-center" style={{background:tab===id?PANEL:"transparent",color:INK}}><Icon size={14}/>{label}</button>)}</div>
       {tab==="rewards"&&<div className="grid grid-cols-2 gap-2">{rewards.length===0?<p className="col-span-2 text-sm text-center opacity-40 py-8">No rewards yet.</p>:rewards.map(r=><div key={r.id} className="overflow-hidden" style={card}>{r.image_url?<img src={r.image_url} alt="" className="w-full h-24 object-cover"/>:<div className="h-24 flex items-center justify-center" style={{background:"rgba(217,174,88,.12)"}}><Gift size={30} style={{color:"#D9AE58"}}/></div>}<div className="p-3"><div className="font-semibold text-sm truncate" style={{color:INK}}>{r.name}</div><div className="text-xs mt-1" style={{color:INK,opacity:.55}}>{r.points_cost.toLocaleString()} Points</div><button disabled={progress.available_points<r.points_cost} onClick={()=>redeem(r.id)} className="w-full mt-2 rounded-lg py-1.5 text-xs font-semibold" style={{background:progress.available_points>=r.points_cost?ACCENT:"rgba(16,24,40,.08)",color:progress.available_points>=r.points_cost?"white":INK}}>Redeem</button></div></div>)}</div>}
-      {tab==="wish"&&<><form onSubmit={submitWish} className="p-4" style={card}><input value={wish.name} onChange={e=>setWish({...wish,name:e.target.value})} placeholder="What would you like?" className="w-full rounded-lg border px-3 py-2 text-sm mb-2"/><input value={wish.product_url} onChange={e=>setWish({...wish,product_url:e.target.value})} placeholder="Optional product link" className="w-full rounded-lg border px-3 py-2 text-sm mb-2"/><textarea value={wish.note} onChange={e=>setWish({...wish,note:e.target.value})} placeholder="Optional note" className="w-full rounded-lg border px-3 py-2 text-sm mb-2"/><button className="w-full rounded-lg py-2 text-sm font-semibold text-white" style={{background:ACCENT}}>Send wish</button></form>{wishes.map(w=><div key={w.id} className="p-3 mt-2 flex items-center" style={card}><div className="flex-1"><div className="text-sm font-semibold">{w.name}</div><div className="text-[11px] opacity-45 capitalize">{w.status}{w.points_cost?` · ${w.points_cost.toLocaleString()} Points`:""}</div></div>{w.product_url&&<a href={w.product_url} target="_blank" rel="noreferrer"><ExternalLink size={15}/></a>}</div>)}</>}
-      {tab==="transfer"&&<form onSubmit={sendPoints} className="p-4" style={card}><select value={transfer.player} onChange={e=>setTransfer({...transfer,player:e.target.value})} className="w-full rounded-lg border px-3 py-2 text-sm mb-2" required><option value="">Choose player</option>{players.map(p=><option key={p.id} value={p.id}>{p.icon||"🙂"} {p.name}</option>)}</select><input type="number" min="10" value={transfer.amount} onChange={e=>setTransfer({...transfer,amount:e.target.value})} placeholder="Points" className="w-full rounded-lg border px-3 py-2 text-sm mb-2" required/><button className="w-full rounded-lg py-2 text-sm font-semibold text-white" style={{background:ACCENT}}>Send Points</button></form>}
+      {tab==="wish"&&<><form onSubmit={submitWish} className="p-4" style={card}><input value={wish.name} onChange={e=>setWish({...wish,name:e.target.value})} placeholder="🎁 What would make your day?" className="w-full rounded-lg border px-3 py-2 text-sm mb-2"/><input value={wish.product_url} onChange={e=>setWish({...wish,product_url:e.target.value})} placeholder="🔗 Optional product link" className="w-full rounded-lg border px-3 py-2 text-sm mb-2"/><textarea value={wish.note} onChange={e=>setWish({...wish,note:e.target.value})} placeholder="💭 Add a note, size, colour or idea" className="w-full rounded-lg border px-3 py-2 text-sm mb-2"/><button className="w-full rounded-lg py-2 text-sm font-semibold text-white" style={{background:ACCENT}}>Send wish</button></form>{wishes.map(w=><div key={w.id} className="p-3 mt-2 flex items-center" style={card}><div className="flex-1"><div className="text-sm font-semibold">{w.name}</div><div className="text-[11px] opacity-45 capitalize">{w.status}{w.points_cost?` · ${w.points_cost.toLocaleString()} Points`:""}</div></div>{w.product_url&&<a href={w.product_url} target="_blank" rel="noreferrer"><ExternalLink size={15}/></a>}</div>)}</>}
+      {tab==="transfer"&&<><form onSubmit={sendPoints} className="p-4" style={card}><select value={transfer.player} onChange={e=>setTransfer({...transfer,player:e.target.value})} className="w-full rounded-lg border px-3 py-2 text-sm mb-2" required><option value="">Choose player</option>{players.map(p=><option key={p.id} value={p.id}>{p.icon||"🙂"} {p.name}</option>)}</select><input type="number" min="10" value={transfer.amount} onChange={e=>setTransfer({...transfer,amount:e.target.value})} placeholder="Points" className="w-full rounded-lg border px-3 py-2 text-sm mb-2" required/><button className="w-full rounded-lg py-2 text-sm font-semibold text-white" style={{background:ACCENT}}>Send Points</button></form><div className="mt-3"><div className="text-xs font-semibold mb-2 opacity-60">Transfer history</div>{transferLog.length===0?<div className="text-xs opacity-40 text-center py-4">No transfers yet.</div>:transferLog.map(t=><div key={t.id} className="flex items-center gap-3 p-3 mb-2" style={card}><div className="text-xl">{t.reason_code==="TRANSFER_RECEIVED"?"🎉":"💸"}</div><div className="flex-1"><div className="text-xs font-semibold">{t.reason_code==="TRANSFER_RECEIVED"?`Received from ${t.other?.icon||"🙂"} ${t.other?.name||"Someone"}`:`Sent to ${t.other?.icon||"🙂"} ${t.other?.name||"Someone"}`}</div><div className="text-[10px] opacity-40">{new Date(t.created_at).toLocaleString()}</div></div><div className="font-bold text-sm" style={{color:t.points>0?"#15803D":"#B5433A"}}>{t.points>0?"+":""}{t.points.toLocaleString()}</div></div>)}</div></>}
     </>}
   </div></div>;
 }
