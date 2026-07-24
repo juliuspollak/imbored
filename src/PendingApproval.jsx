@@ -14,7 +14,7 @@ export default function PendingApproval() {
         <p className="text-sm leading-6 mb-5" style={{ color: "rgba(27,33,41,.62)" }}>An admin needs to approve your account before you can play, join teams, chat or view other players.</p>
         <div className="rounded-2xl p-3 mb-5 flex items-start gap-3 text-left" style={{ background: "rgba(47,111,237,.06)" }}>
           <ShieldCheck size={18} style={{ color: "#2F6FED", marginTop: 1, flexShrink: 0 }} />
-          <div className="text-xs leading-5" style={{ color: "rgba(27,33,41,.68)" }}>This screen will unlock automatically after approval. You can also check again now.</div>
+          <div className="text-xs leading-5" style={{ color: "rgba(27,33,41,.68)" }}>This screen will unlock automatically as soon as an admin approves you—no refreshing or repeated checks in the background.</div>
         </div>
         <button onClick={refreshProfile} className="w-full rounded-xl py-3 text-sm font-semibold text-white mb-2" style={{ background: "#2F6FED" }}>Check approval</button>
         <button onClick={signOut} className="w-full rounded-xl py-3 text-sm font-medium flex items-center justify-center gap-2" style={{ background: "rgba(16,24,40,.05)", color: "#1B2129" }}><LogOut size={15}/>Sign out</button>
