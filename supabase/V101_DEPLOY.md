@@ -19,8 +19,18 @@ Example:
 
 ```sh
 supabase secrets set APP_URL=https://your-production-origin.example
-supabase functions deploy admin-user-action
+supabase functions deploy admin-user-action --no-verify-jwt
 ```
+
+The project uses Supabase's asymmetric ES256 JWT signing keys. Gateway-level
+JWT verification is therefore disabled for this function in `config.toml`.
+`admin-user-action` is not public in practice: its handler independently
+validates the bearer token with Supabase Auth and then requires an active admin
+profile before any action can run.
+
+If the function reports `Invalid JWT`, redeploy it with the command above. A
+deployment without `--no-verify-jwt` can reject the ES256 token before the
+function's own authentication code executes.
 
 If the Players screen reports `Invalid action` while approving someone, the
 Supabase project is still running the pre-v101 function. Deploying the function
