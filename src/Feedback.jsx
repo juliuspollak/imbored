@@ -27,6 +27,7 @@ export default function Feedback({ onBack }) {
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
   const [message, setMessage] = useState(null);
+  const [lastViewedAt, setLastViewedAt] = useState(0);
 
   const refresh = useCallback(async () => {
     if (!supabaseReady) return;
@@ -34,16 +35,17 @@ export default function Feedback({ onBack }) {
     setMessage(null);
 
     try {
-      const [feedbackResult, votesResult, profilesResult] = await Promise.all([
+      const [feedbackResult, votesResult, profilesResult, viewResult] = await Promise.all([
         supabase
           .from("feedback")
           .select("id, user_id, title, description, status, admin_comment, created_at, closed_at, deleted_at, user_seen_at")
           .order("created_at", { ascending: false }),
         supabase.from("feedback_votes").select("feedback_id, user_id"),
         supabase.from("profiles").select("id, name, icon"),
+        supabase.from("user_section_views").select("viewed_at").eq("user_id", user.id).eq("section", "feedback").maybeSingle(),
       ]);
 
-      const firstError = feedbackResult.error || votesResult.error || profilesResult.error;
+      const firstError = feedbackResult.error || votesResult.error || profilesResult.error || viewResult.error;
       if (firstError) {
         console.error("Unable to load feedback page:", firstError);
         setItems([]);
@@ -54,6 +56,8 @@ export default function Feedback({ onBack }) {
       }
 
       const feedbackData = feedbackResult.data || [];
+      const previousView = viewResult.data?.viewed_at ? new Date(viewResult.data.viewed_at).getTime() : 0;
+      setLastViewedAt(previousView);
       setItems(feedbackData);
       setVotes(votesResult.data || []);
       setProfiles(Object.fromEntries((profilesResult.data || []).map((p) => [p.id, p])));
@@ -63,6 +67,7 @@ export default function Feedback({ onBack }) {
       );
       if (unseenClosed.length > 0 && !isAdmin) setFilter("closed");
 
+      await supabase.from("user_section_views").upsert({ user_id:user.id, section:"feedback", viewed_at:new Date().toISOString() });
       const closedIds = unseenClosed.map((it) => it.id);
       if (closedIds.length) {
         window.setTimeout(() => markClosedFeedbackSeen(user?.id, closedIds), 500);
@@ -313,7 +318,7 @@ export default function Feedback({ onBack }) {
                               </div>
                             </div>
                           ) : (
-                            <span style={{ color: INK, fontWeight: 600 }} className="text-sm">{it.title}</span>
+                            <span style={{ color: INK, fontWeight: 600 }} className="text-sm">{it.title}{new Date(it.created_at).getTime() > lastViewedAt && <span className="ml-1 rounded-full px-2 py-0.5 text-[9px]" style={{background:"rgba(47,111,237,.12)",color:ACCENT}}>NEW</span>}</span>
                           )}
                           {it.status === "closed" && !it.deleted_at && (
                             <span className="flex items-center gap-0.5 rounded-full px-1.5 py-0.5" style={{ background: "rgba(22,163,74,0.12)", color: GREEN }}>

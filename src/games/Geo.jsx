@@ -51,8 +51,27 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
   const [hintsUsed, setHintsUsed] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
   const timerRef = useRef(null);
+  const stateKey = `imbored:geo:${mode}:${userId || "guest"}:${challengeDate || dayIdx}:${seed || "practice"}`;
 
-  const newQuiz = useCallback((dIdx) => {
+  const newQuiz = useCallback((dIdx, forceFresh = false) => {
+    if (!forceFresh) {
+      try {
+        const saved = JSON.parse(sessionStorage.getItem(stateKey) || "null");
+        if (saved?.questions?.length && !saved.solved) {
+          setQuestions(saved.questions);
+          setQIdx(saved.qIdx || 0);
+          setSelected(saved.selected ?? null);
+          setAnswered(!!saved.answered);
+          setEliminated(saved.eliminated || []);
+          setSeconds(saved.seconds || 0);
+          setRunning(true);
+          setSolved(false);
+          setMistakes(saved.mistakes || 0);
+          setHintsUsed(saved.hintsUsed || 0);
+          return;
+        }
+      } catch {}
+    }
     const history = isChallenge ? [] : getQuestionHistory(userId);
     const gen = () => generateQuiz(dIdx, history);
     const qs = isChallenge && seed ? withSeededRandom(seed, gen) : gen();
@@ -69,7 +88,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
     setHintsUsed(0);
     hintCooldown.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isChallenge, seed, userId]);
+  }, [isChallenge, seed, userId, stateKey]);
 
   useEffect(() => {
     newQuiz(dayIdx);
@@ -82,6 +101,11 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
     }
     return () => clearInterval(timerRef.current);
   }, [running, solved]);
+
+  useEffect(() => {
+    if (!questions || solved) return;
+    sessionStorage.setItem(stateKey, JSON.stringify({ questions, qIdx, selected, answered, eliminated, seconds, mistakes, hintsUsed, solved }));
+  }, [stateKey, questions, qIdx, selected, answered, eliminated, seconds, mistakes, hintsUsed, solved]);
 
   if (!questions) {
     return (
@@ -105,6 +129,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
     if (isLast) {
       setSolved(true);
       setRunning(false);
+      sessionStorage.removeItem(stateKey);
       onSolved && onSolved({ userId, game: "geo", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed, mode, challengeDate: isChallenge ? challengeDate : undefined });
       return;
     }
@@ -127,7 +152,8 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
 
   function handleReset() {
     if (solved) return;
-    newQuiz(dayIdx);
+    sessionStorage.removeItem(stateKey);
+    newQuiz(dayIdx, true);
   }
 
   return (

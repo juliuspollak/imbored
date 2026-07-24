@@ -9,7 +9,7 @@ const INK = "#1B2129";
 const ACCENT = "#2F6FED";
 const GREEN = "#16A34A";
 const RED = "#B5433A";
-const APP_VERSION = "v66";
+const APP_VERSION = "v86";
 
 function fmtDate(iso) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
@@ -23,6 +23,8 @@ function fmtDate(iso) {
 // a silent downvote nobody follows up on.
 export default function ReleaseNotes({ onBack }) {
   const { user, profile } = useAuth();
+
+  useEffect(() => { if (user?.id && supabaseReady) supabase.from("user_section_views").upsert({ user_id:user.id, section:"whatsnew", viewed_at:new Date().toISOString() }); }, [user?.id]);
   const [notes, setNotes] = useState([]);
   const [reactions, setReactions] = useState([]); // all rows: release_note_id, user_id, reaction
   const [loading, setLoading] = useState(true);

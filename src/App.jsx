@@ -100,6 +100,24 @@ function AppShell() {
   const completedFeedbackCount = useCompletedFeedbackCount(user?.id);
   const newTransfersCount = useNewTransfersCount(user?.id);
   const unreadMessages = useUnreadMessages(user?.id);
+  const [sectionSignals, setSectionSignals] = useState({ whatsnew: false, teams: false });
+  useEffect(() => {
+    if (!user?.id || !supabaseReady) return;
+    let cancelled = false;
+    (async () => {
+      const [{ data: views }, { data: notes }, { data: requests }] = await Promise.all([
+        supabase.from("user_section_views").select("section,viewed_at").eq("user_id", user.id),
+        supabase.from("release_notes").select("created_at").eq("is_hidden", false).is("deleted_at", null).order("created_at", { ascending:false }).limit(1),
+        supabase.from("team_join_requests").select("created_at,status,requester_id,team_id").or(`requester_id.eq.${user.id}`)
+      ]);
+      if (cancelled) return;
+      const vm = Object.fromEntries((views || []).map(v => [v.section, new Date(v.viewed_at).getTime()]));
+      const latestNote = notes?.[0]?.created_at ? new Date(notes[0].created_at).getTime() : 0;
+      const latestTeam = Math.max(0, ...(requests || []).map(r => new Date(r.created_at).getTime()));
+      setSectionSignals({ whatsnew: latestNote > (vm.whatsnew || 0), teams: latestTeam > (vm.teams || 0) });
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, active]);
 
   if (supabaseReady) {
     if (loading) return <FullScreenMessage text="Loading…" />;
@@ -241,6 +259,7 @@ function AppShell() {
             completedFeedbackCount={completedFeedbackCount}
             newTransfersCount={newTransfersCount}
             unreadMessages={unreadMessages}
+            sectionSignals={sectionSignals}
             onOpenChat={(player) => { setChatReturn(null); setChatPlayer(player); }}
           />
         )}
@@ -343,7 +362,7 @@ function PracticePlay({ Current, userId, onExit, onSwitchMode, hintCooldownConfi
   );
 }
 
-function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, unreadMessages = { total: 0, bySender: {} }, onOpenChat }) {
+function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenTeams, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, unreadMessages = { total: 0, bySender: {} }, onOpenChat }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const isAdmin = !!profile.is_admin;
@@ -352,17 +371,17 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenCh
   // both here and on the bubble badge below (previously the bubble always
   // showed the admin count even for regular players).
   const feedbackBadgeCount = isAdmin ? openFeedbackCount : completedFeedbackCount;
-  const totalNotifications = feedbackBadgeCount + newTransfersCount + unreadMessages.total;
+  const totalNotifications = feedbackBadgeCount + newTransfersCount + unreadMessages.total + (sectionSignals.whatsnew ? 1 : 0) + (sectionSignals.teams ? 1 : 0);
   const hasNotifications = totalNotifications > 0;
 
   const items = [
     { id: "profile", onClick: onOpenProfile, icon: User, label: "My profile", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
-    { id: "whatsnew", onClick: onOpenWhatsNew, icon: Sparkles, label: "What's new", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
+    { id: "whatsnew", onClick: onOpenWhatsNew, icon: Sparkles, label: sectionSignals.whatsnew ? "What's new · new" : "What's new", badge: sectionSignals.whatsnew ? 1 : 0, glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
     { id: "chats", onClick: onOpenChats, icon: MessagesSquare, label: unreadMessages.total > 0 ? "Chats · new" : "Chats", glow: "rgba(79,70,229,0.35)", border: "rgba(79,70,229,0.4)", badge: unreadMessages.total },
     { id: "feedback", onClick: onOpenFeedback, icon: MessageSquare, label: completedFeedbackCount > 0 ? "Feedback · update" : "Feedback", glow: "rgba(139,92,246,0.35)", border: "rgba(139,92,246,0.4)", badge: feedbackBadgeCount },
     { id: "stats", onClick: onOpenStats, icon: BarChart3, label: "Stats", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
     { id: "progress", onClick: onOpenProgress, icon: Star, label: newTransfersCount > 0 ? "My progress · new" : "My progress", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)", badge: newTransfersCount },
-    { id: "teams", onClick: onOpenTeams, icon: Users, label: "Teams", glow: "rgba(18,148,106,0.35)", border: "rgba(18,148,106,0.4)" },
+    { id: "teams", onClick: onOpenTeams, icon: Users, label: sectionSignals.teams ? "Teams · new" : "Teams", badge: sectionSignals.teams ? 1 : 0, glow: "rgba(18,148,106,0.35)", border: "rgba(18,148,106,0.4)" },
     { id: "signout", onClick: onSignOut, icon: LogOut, label: "Sign out", glow: "rgba(229,72,77,0.35)", border: "rgba(229,72,77,0.4)" },
   ];
 
@@ -436,7 +455,7 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenCh
             className="dot-pulse flex items-center justify-center rounded-full"
             title={newTransfersCount > 0 ? "You have new points and updates" : "You have updates"}
             style={{
-              position: "absolute", top: -4, right: -4, minWidth: 15, height: 15, padding: "0 3px",
+              position: "absolute", top: -3, right: -3, width: 11, height: 11,
               background: "#8B5CF6", color: "#FFFFFF", fontSize: 9, fontWeight: 700, border: "1.5px solid #F1F3F7",
             }}
           >
@@ -470,9 +489,8 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenCh
               {item.badge > 0 && (
                 <span
                   className="flex items-center justify-center rounded-full"
-                  style={{ minWidth: 16, height: 16, padding: "0 4px", background: "#8B5CF6", color: "#FFFFFF", fontSize: 9, fontWeight: 700 }}
+                  style={{ width: 9, height: 9, background: "#8B5CF6" }}
                 >
-                  {item.badge}
                 </span>
               )}
               <span

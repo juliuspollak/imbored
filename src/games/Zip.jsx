@@ -35,9 +35,13 @@ function chooseTunnels(n, pairCount, blockedSet) {
   }
   const shuffled = shuffle(available);
   const pairs = [];
+  const used = new Set();
   for (let i = 0; i < pairCount; i++) {
-    const a = shuffled[i * 2], b = shuffled[i * 2 + 1];
-    if (!a || !b) break;
+    const a = shuffled.find((cell) => !used.has(`${cell[0]},${cell[1]}`));
+    if (!a) break;
+    const b = shuffled.find((cell) => !used.has(`${cell[0]},${cell[1]}`) && (Math.abs(cell[0] - a[0]) + Math.abs(cell[1] - a[1]) >= 3));
+    if (!b) break;
+    used.add(`${a[0]},${a[1]}`); used.add(`${b[0]},${b[1]}`);
     pairs.push({ a, b, label: String.fromCharCode(65 + i) });
   }
   return pairs;
@@ -243,7 +247,7 @@ const GOLD = "#2F6FED";
 const RED = "#E5484D";
 const ZIP_GREEN = "#12946A";
 const WALL_COLOR = "#E5484D";
-const TUNNEL_COLORS = ["#8B5CF6", "#0EA5E9", "#F59E0B", "#EC4899"];
+const TUNNEL_COLORS = ["#6D5BD0", "#2878B5", "#B7791F", "#B24C7C"];
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const CHECKPOINT_COUNTS = [7, 6, 5, 5, 4, 4, 3];
 const WALL_COUNTS = [0, 1, 2, 3, 4, 5, 6];
@@ -564,6 +568,8 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
         @keyframes hintPulseError { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(217,105,92,1); } 50% { box-shadow: inset 0 0 0 3px rgba(217,105,92,0.25); } }
         @keyframes hintPulseNext { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(217,174,88,1); } 50% { box-shadow: inset 0 0 0 3px rgba(217,174,88,0.25); } }
         .zp-dot { animation: popIn 0.18s ease-out; }
+        @keyframes tunnelWarp { 0% { opacity: 0; transform: scale(.45); } 35% { opacity: 1; transform: scale(1.25); } 100% { opacity: 0; transform: scale(1.8); } }
+        .zp-warp { animation: tunnelWarp .55s ease-out both; transform-origin: center; }
         .zp-card { animation: fadeUp 0.4s ease-out; }
         .zp-hint-error { animation: hintPulseError 1.1s ease-in-out infinite; }
         .zp-hint-next { animation: hintPulseNext 1.1s ease-in-out infinite; }
