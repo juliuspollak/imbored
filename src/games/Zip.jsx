@@ -767,31 +767,46 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
                 return (
                   <div
                     key={key}
-                    style={{ position: "relative", border: "1px solid rgba(20,20,24,0.30)", overflow: "hidden", background: "radial-gradient(circle at 50% 48%, rgba(18,14,34,0.88) 0 23%, rgba(7,6,14,1) 24% 100%)" }}
+                    style={{
+                      position: "relative",
+                      border: "1px solid rgba(20,20,24,0.30)",
+                      overflow: "hidden",
+                      background: "rgba(255,255,255,0.18)",
+                    }}
                   >
-                    <svg viewBox="0 0 100 100" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+                    <svg
+                      viewBox="0 0 100 100"
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+                      aria-hidden="true"
+                    >
                       <defs>
-                        <radialGradient id={`bhCore-${r}-${c}`} cx="50%" cy="50%" r="52%">
-                          <stop offset="0%" stopColor="#0A0815" />
-                          <stop offset="58%" stopColor="#151126" />
-                          <stop offset="100%" stopColor="#030208" />
+                        <radialGradient id={`bhMist-${r}-${c}`} cx="50%" cy="50%" r="52%">
+                          <stop offset="0%" stopColor="#050505" stopOpacity="1" />
+                          <stop offset="38%" stopColor="#090909" stopOpacity="0.98" />
+                          <stop offset="66%" stopColor="#252525" stopOpacity="0.72" />
+                          <stop offset="100%" stopColor="#777777" stopOpacity="0" />
                         </radialGradient>
-                        <radialGradient id={`bhHalo-${r}-${c}`} cx="50%" cy="50%" r="56%">
-                          <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.0" />
-                          <stop offset="60%" stopColor="#8b5cf6" stopOpacity="0.42" />
-                          <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
-                        </radialGradient>
-                        <filter id={`bhSoft-${r}-${c}`}><feGaussianBlur stdDeviation="2.6" /></filter>
+                        <filter id={`bhBlur-${r}-${c}`} x="-30%" y="-30%" width="160%" height="160%">
+                          <feGaussianBlur stdDeviation="3.2" />
+                        </filter>
+                        <filter id={`bhBlurWide-${r}-${c}`} x="-40%" y="-40%" width="180%" height="180%">
+                          <feGaussianBlur stdDeviation="5.4" />
+                        </filter>
                       </defs>
-                      <circle cx="50" cy="50" r="47" fill={`url(#bhHalo-${r}-${c})`} />
-                      <g filter={`url(#bhSoft-${r}-${c})`} opacity="0.92">
-                        <ellipse cx="50" cy="50" rx="36" ry="13" fill="none" stroke="#f59e0b" strokeWidth="4.4" transform="rotate(-18 50 50)" />
-                        <ellipse cx="50" cy="50" rx="37" ry="12" fill="none" stroke="#ec4899" strokeWidth="3.6" transform="rotate(11 50 50)" />
-                        <ellipse cx="50" cy="50" rx="34" ry="10" fill="none" stroke="#38bdf8" strokeWidth="3.2" transform="rotate(-42 50 50)" />
+
+                      <g filter={`url(#bhBlurWide-${r}-${c})`} opacity="0.42">
+                        <path d="M9 52 C22 24, 56 13, 82 31 C96 41, 96 63, 79 77 C58 95, 24 87, 11 67" fill="none" stroke="#4A4A4A" strokeWidth="9" strokeLinecap="round" />
+                        <path d="M18 34 C39 10, 75 19, 87 46 C97 69, 76 89, 49 90" fill="none" stroke="#6A6A6A" strokeWidth="8" strokeLinecap="round" />
                       </g>
-                      <path d="M56 33c-11 0-19 9-19 18 0 9 8 16 18 16 8 0 15-4 18-10-4 5-10 8-16 8-8 0-14-6-14-13 0-7 6-13 14-13 4 0 7 1 10 3-3-6-7-9-11-9z" fill="rgba(255,255,255,0.10)" />
-                      <path d="M61 38c-7-5-17-3-23 4 7-3 15-2 20 2 5 4 7 11 5 18 6-8 5-18-2-24z" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="2.1" strokeLinecap="round" />
-                      <circle cx="50" cy="50" r="24" fill={`url(#bhCore-${r}-${c})`} />
+
+                      <g filter={`url(#bhBlur-${r}-${c})`} opacity="0.78">
+                        <path d="M13 58 C23 29, 54 18, 76 32 C92 42, 93 62, 77 74 C60 87, 34 82, 25 66 C18 54, 23 41, 35 34" fill="none" stroke="#2B2B2B" strokeWidth="7" strokeLinecap="round" />
+                        <path d="M22 73 C12 54, 21 30, 43 23 C66 15, 85 28, 87 47 C89 65, 75 78, 58 79 C45 80, 34 73, 32 62" fill="none" stroke="#3A3A3A" strokeWidth="6" strokeLinecap="round" />
+                        <path d="M29 31 C45 19, 68 22, 79 38 C89 53, 82 70, 67 77 C52 84, 34 77, 28 63 C23 51, 28 40, 39 35" fill="none" stroke="#171717" strokeWidth="5.5" strokeLinecap="round" />
+                      </g>
+
+                      <circle cx="50" cy="50" r="36" fill={`url(#bhMist-${r}-${c})`} />
+                      <ellipse cx="51" cy="50" rx="22" ry="18" fill="#020202" opacity="0.98" />
                     </svg>
                   </div>
                 );
