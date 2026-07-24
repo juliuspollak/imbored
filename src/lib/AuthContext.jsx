@@ -114,17 +114,12 @@ export function AuthProvider({ children }) {
     return { data, error };
   }
 
-  async function createTeam(name) {
+  async function createTeam(name, emoji = "⭐") {
     if (!supabaseReady || !session) return { error: new Error("Not logged in") };
-    const { data, error } = await supabase
-      .from("teams")
-      .insert({ name, created_by: session.user.id })
-      .select()
-      .single();
-    if (!error) {
-      // creator joins their own team automatically
-      await supabase.from("team_members").insert({ team_id: data.id, user_id: session.user.id });
-    }
+    const { data, error } = await supabase.rpc("create_team", {
+      team_name: name,
+      team_emoji: emoji,
+    });
     return { data, error };
   }
 
@@ -144,8 +139,7 @@ export function AuthProvider({ children }) {
 
   async function leaveTeam(teamId) {
     if (!supabaseReady || !session) return { error: new Error("Not logged in") };
-    const { error } = await supabase.from("team_members").delete().eq("team_id", teamId).eq("user_id", session.user.id);
-    return { error };
+    return supabase.rpc("leave_team", { target_team_id: teamId });
   }
 
   // Admin-only: hides a player from everyone but themselves and other
