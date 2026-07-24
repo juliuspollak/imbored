@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Lock, Unlock, Users, ArrowLeft, Fingerprint, Trash2, Plus, Link2, Unlink, Mail } from "lucide-react";
+import { Lock, Unlock, Users, ArrowLeft, Fingerprint, Trash2, Plus, Link2, Unlink, Mail, Languages } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { PROFILE_ICONS } from "./lib/icons.js";
+import { useI18n } from "./lib/i18n.jsx";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -14,6 +15,7 @@ const passkeySupported = typeof window !== "undefined" && !!window.PublicKeyCred
 // passed — nothing to go back to yet) and later as an editable "my
 // profile" screen reached from the home page.
 export default function ProfileSetup({ onDone, onOpenTeams }) {
+  const { t, language, setLanguage } = useI18n();
   const { profile, user, saveProfile, leaveTeam, registerPasskey, listPasskeys, deletePasskey, listIdentities, linkGoogleIdentity, unlinkIdentity } = useAuth();
   const isFirstTime = !profile;
 
@@ -168,22 +170,22 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
             {icon}
           </button>
           <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl">
-            {isFirstTime ? "Welcome" : "My Profile"}
+            {isFirstTime ? t("profile.welcome") : t("profile.title")}
           </h1>
           <p style={{ color: INK, opacity: 0.5 }} className="text-xs mt-1">
-            {isFirstTime ? `${user?.email} — just need a name to get started` : user?.email}
+            {isFirstTime ? t("profile.firstHint", { email:user?.email || "" }) : user?.email}
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
           <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
-            Your name
+            {t("profile.name")}
           </label>
           <input
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Jamie"
+            placeholder={t("profile.namePlaceholder")}
             className="w-full rounded-lg px-3 py-2.5 text-sm mb-4 outline-none"
             style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
           />
@@ -209,19 +211,19 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
           )}
 
           <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
-            Mood <span style={{ opacity: 0.5 }}>(visible to everyone)</span>
+            {t("profile.mood")}
           </label>
           <input
             value={mood}
             onChange={(e) => setMood(e.target.value)}
-            placeholder="e.g. 😴 tired but ready"
+            placeholder={t("profile.moodPlaceholder")}
             maxLength={40}
             className="w-full rounded-lg px-3 py-2.5 text-sm mb-4 outline-none"
             style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
           />
 
           <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
-            Default mode after login
+            {t("profile.defaultMode")}
           </label>
           <div className="flex rounded-lg p-1 mb-4" style={{ background: "rgba(16,24,40,0.05)" }}>
             {["challenge", "practice"].map((m) => (
@@ -236,17 +238,17 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
                   boxShadow: defaultMode === m ? "0 2px 6px rgba(16,24,40,0.10)" : "none",
                 }}
               >
-                {m}
+                {t(`common.${m}`)}
               </button>
             ))}
           </div>
 
 
           <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
-            Week starts on
+            {t("profile.weekStarts")}
           </label>
           <div className="flex rounded-lg p-1 mb-4" style={{ background: "rgba(16,24,40,0.05)" }}>
-            {[{ value: 1, label: "Monday" }, { value: 0, label: "Sunday" }].map((option) => (
+            {[{ value: 1, label: t("profile.monday") }, { value: 0, label: t("profile.sunday") }].map((option) => (
               <button
                 key={option.value}
                 type="button"
@@ -271,9 +273,9 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
           >
             {showStatsToOthers ? <Unlock size={15} style={{ color: INK, opacity: 0.4 }} /> : <Lock size={15} style={{ color: INK }} />}
             <div className="flex-1">
-              <div style={{ color: INK }} className="text-xs font-medium">Show my stats to others</div>
+              <div style={{ color: INK }} className="text-xs font-medium">{t("profile.showStats")}</div>
               <div style={{ color: INK, opacity: 0.5 }} className="text-[11px]">
-                {showStatsToOthers ? "Other players can see your totals and daily results" : "Only you and administrators can see your stats"}
+                {showStatsToOthers ? t("profile.statsPublic") : t("profile.statsPrivate")}
               </div>
             </div>
             <div
@@ -295,9 +297,9 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
           >
             {isPrivate ? <Lock size={15} style={{ color: INK }} /> : <Unlock size={15} style={{ color: INK, opacity: 0.4 }} />}
             <div className="flex-1">
-              <div style={{ color: INK }} className="text-xs font-medium">Private profile</div>
+              <div style={{ color: INK }} className="text-xs font-medium">{t("profile.private")}</div>
               <div style={{ color: INK, opacity: 0.5 }} className="text-[11px]">
-                {isPrivate ? "Hidden from team invites — nobody can add you" : "Visible — anyone can add you to their team"}
+                {isPrivate ? t("profile.privateOn") : t("profile.privateOff")}
               </div>
             </div>
             <div
@@ -310,6 +312,32 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
               />
             </div>
           </button>
+
+          <div className="rounded-xl p-3 mb-4" style={{ border:"1px solid rgba(16,24,40,.14)", background:"rgba(47,111,237,.025)" }}>
+            <div className="flex items-center gap-2 mb-2">
+              <Languages size={15} style={{ color:ACCENT }}/>
+              <div className="text-xs font-semibold" style={{ color:INK }}>{t("language.label")}</div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {[["en","🇬🇧",t("language.english")],["sk","🇸🇰",t("language.slovak")]].map(([code,flag,label]) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => setLanguage(code)}
+                  className="rounded-xl px-3 py-2.5 text-left transition-colors"
+                  style={{
+                    background: language === code ? "#fff" : "rgba(16,24,40,.035)",
+                    border: language === code ? "1px solid rgba(47,111,237,.35)" : "1px solid transparent",
+                    boxShadow: language === code ? "0 4px 12px rgba(47,111,237,.08)" : "none",
+                  }}
+                >
+                  <span className="mr-2">{flag}</span>
+                  <span className="text-xs font-semibold">{label}</span>
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] mt-2 leading-4" style={{ color:"rgba(27,33,41,.45)" }}>{t("language.autoHint")}</p>
+          </div>
 
           {!isFirstTime && (
             <div className="rounded-xl px-3 py-3 mb-3" style={{ border: "1px solid rgba(16,24,40,0.14)" }}>
@@ -372,7 +400,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
               style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
             >
               <Users size={15} />
-              Teams
+              {t("profile.teams")}
             </button>
           )}
 
@@ -384,7 +412,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
             className="w-full rounded-lg py-2.5 text-sm font-semibold"
             style={{ background: ACCENT, color: "#FFFFFF", opacity: saving ? 0.7 : 1 }}
           >
-            {saving ? "Saving…" : isFirstTime ? "Start playing" : "Save changes"}
+            {saving ? t("profile.saving") : isFirstTime ? t("profile.start") : t("profile.save")}
           </button>
         </form>
       </div>
