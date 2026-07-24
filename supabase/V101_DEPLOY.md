@@ -21,3 +21,9 @@ Example:
 supabase secrets set APP_URL=https://your-production-origin.example
 supabase functions deploy admin-user-action
 ```
+
+If the Players screen reports `Invalid action` while approving someone, the
+Supabase project is still running the pre-v101 function. Deploying the function
+above activates the `approve` action and its Supabase-template email. The
+frontend can fall back to database approval so the player is not blocked, but
+that compatibility path cannot send an Auth email.
