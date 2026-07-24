@@ -33,7 +33,17 @@ export default function Teams({onBack}){
  function patchChallenge(teamId,patch){setChallengeEdits(prev=>({...prev,[teamId]:{...defaultChallenge(),...(prev[teamId]||{}),...patch}}));}
  async function saveTeamChallenge(team){
   const edit=challengeFor(team.id);
-  const{error}=await supabase.rpc("set_team_weekly_challenge",{target_team_id:team.id,selected_games:edit.games,selected_days:edit.days,reward_points_in:Number(edit.reward)||0,reward_type_in:edit.rewardType||"points",reward_label_in:edit.rewardLabel||null});
+  setMsg("");
+  const payload={
+   target_team_id:Number(team.id),
+   selected_games:edit.games,
+   selected_days:edit.days.map(Number),
+   reward_points_in:edit.rewardType==="points"?(Number(edit.reward)||0):0,
+   reward_type_in:edit.rewardType||"points",
+   reward_label_in:edit.rewardType==="prize"?(edit.rewardLabel?.trim()||null):null
+  };
+  if(!Number.isInteger(payload.target_team_id)){setMsg("This team has an invalid ID. Refresh and try again.");return;}
+  const{error}=await supabase.rpc("set_team_weekly_challenge",payload);
   setMsg(error?.message||"Weekly team challenge saved");if(!error)refresh();
  }
  function toggleChallengeGame(teamId,game){const edit=challengeFor(teamId);if(edit.locked)return;patchChallenge(teamId,{games:edit.games.includes(game)?edit.games.filter(x=>x!==game):[...edit.games,game]});}

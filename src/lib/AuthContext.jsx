@@ -31,16 +31,84 @@ export function AuthProvider({ children }) {
       setSession(null);
       return;
     }
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      if (data.session) loadProfile(data.session.user.id);
-    });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+
+    let cancelled = false;
+
+    async function clearInvalidLocalSession(reason) {
+      console.warn("Clearing an invalid local Supabase session:", reason);
+      try {
+        await supabase.auth.signOut({ scope: "local" });
+      } catch (signOutError) {
+        console.warn("Local session cleanup failed:", signOutError);
+      }
+      if (!cancelled) {
+        setSession(null);
+        setProfile(null);
+        setProfileLoading(false);
+      }
+    }
+
+    async function initialiseSession() {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          await clearInvalidLocalSession(error.message || error);
+          return;
+        }
+        if (cancelled) return;
+        setSession(data.session);
+        if (data.session) await loadProfile(data.session.user.id);
+        else setProfile(null);
+      } catch (error) {
+        await clearInvalidLocalSession(error);
+      }
+    }
+
+    initialiseSession();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (cancelled) return;
+
+      // Supabase emits SIGNED_OUT when a stored refresh token has expired,
+      // been revoked, or already been rotated in another browser tab. Clear
+      // the app state immediately so the client does not keep retrying the
+      // same invalid token while an idle game remains open.
+      if (event === "SIGNED_OUT" || !newSession) {
+        setSession(null);
+        setProfile(null);
+        setProfileLoading(false);
+        return;
+      }
+
       setSession(newSession);
-      if (newSession) loadProfile(newSession.user.id);
-      else setProfile(null);
+      loadProfile(newSession.user.id);
     });
-    return () => listener.subscription.unsubscribe();
+
+    async function checkSessionWhenVisible() {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          await clearInvalidLocalSession(error.message || error);
+          return;
+        }
+        if (!cancelled && !data.session) {
+          setSession(null);
+          setProfile(null);
+          setProfileLoading(false);
+        }
+      } catch (error) {
+        await clearInvalidLocalSession(error);
+      }
+    }
+
+    document.addEventListener("visibilitychange", checkSessionWhenVisible);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", checkSessionWhenVisible);
+      listener.subscription.unsubscribe();
+    };
   }, [loadProfile]);
 
   async function signInWithEmail(email) {

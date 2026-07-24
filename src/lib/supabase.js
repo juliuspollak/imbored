@@ -13,6 +13,11 @@ export const supabase = supabaseReady
       // Passkeys are still experimental in supabase-js — explicit opt-in
       // required. Safe to leave on even if you never enable passkeys in
       // the Supabase dashboard; it just won't do anything until you do.
-      auth: { experimental: { passkey: true } },
+      auth: {
+        experimental: { passkey: true },
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
     })
   : null;
