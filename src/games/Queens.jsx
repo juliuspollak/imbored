@@ -513,15 +513,15 @@ function getConflicts(board, regionGrid, n) {
 // than saturated candy tones — a soft peachy tan, lavender, periwinkle
 // blue, sage green, terracotta, light gray, chartreuse, and taupe.
 const REGION_COLORS = [
-  "#F6C58F", // soft peach
-  "#B19AD9", // lavender
-  "#88A9E6", // cornflower blue
-  "#B6D99A", // sage green
-  "#FF7663", // coral
-  "#D8D8D8", // light grey
-  "#DFF07A", // soft lime
-  "#BEB59C", // warm stone
-  "#E5B4C4", // blush for larger boards
+  "#F4D8C8", // blush peach
+  "#D9CCE9", // soft lilac
+  "#C9DAF3", // powder blue
+  "#CFE6D2", // pastel mint
+  "#F2C9CE", // dusty rose
+  "#E3E1DC", // warm cloud
+  "#F6E4B8", // butter cream
+  "#D6CFBF", // oatmeal stone
+  "#DCCFE3", // mauve mist
 ];
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -1120,7 +1120,8 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
           .qp-icon-btn:hover { opacity: 0.85; }
           .qp-play-again:hover { filter: brightness(1.08); }
           .qp-toolbar-btn:not(:disabled):hover {
-            background: rgba(16,24,40,0.10) !important;
+            transform: translateY(-1px);
+            filter: brightness(1.03);
           }
         }
       `}</style>
@@ -1218,15 +1219,23 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
               key={label}
               onClick={onClick}
               disabled={disabled}
-              className="qp-toolbar-btn flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 transition-colors"
+              title={label}
+              aria-label={label}
+              className="qp-toolbar-btn relative flex items-center justify-center rounded-2xl transition-colors"
               style={{
-                background: "rgba(16,24,40,0.05)",
+                width: 46,
+                height: 46,
+                background: disabled ? "rgba(16,24,40,0.05)" : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,247,255,0.96))",
+                border: `1px solid ${disabled ? "rgba(16,24,40,0.08)" : "rgba(16,24,40,0.10)"}`,
                 color: disabled ? "rgba(27,33,41,0.28)" : CREAM,
                 cursor: disabled ? "default" : "pointer",
+                boxShadow: disabled ? "none" : "0 10px 24px rgba(16,24,40,0.10)",
               }}
             >
-              <Icon size={15} />
-              <span className="text-[9px]">{label}</span>
+              <Icon size={18} />
+              {hintCooldown.locked && label.endsWith("s") && (
+                <span style={{ position: "absolute", right: -4, top: -4, minWidth: 18, height: 18, padding: "0 4px", borderRadius: 999, background: GOLD, color: "#fff", fontSize: 9, fontWeight: 800, display: "grid", placeItems: "center" }}>{label.replace("s", "")}</span>
+              )}
             </button>
           ))}
         </div>

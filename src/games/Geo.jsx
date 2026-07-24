@@ -164,7 +164,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
           .geo-option:not(:disabled):hover { filter: brightness(0.97); transform: translateY(-1px); }
           .geo-day-btn:hover { filter: brightness(1.12); }
           .geo-icon-btn:hover { opacity: 0.85; }
-          .geo-toolbar-btn:not(:disabled):hover { background: rgba(16,24,40,0.10) !important; }
+          .geo-toolbar-btn:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.03); }
           .geo-next-btn:hover { filter: brightness(1.08); }
           .geo-continent:not([aria-disabled="true"]):hover { filter: brightness(1.08); }
         }
@@ -239,11 +239,15 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
               key={label}
               onClick={onClick}
               disabled={disabled}
-              className="geo-toolbar-btn flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 transition-colors"
-              style={{ background: "rgba(16,24,40,0.05)", color: disabled ? "rgba(27,33,41,0.28)" : INK, cursor: disabled ? "default" : "pointer" }}
+              title={label}
+              aria-label={label}
+              className="geo-toolbar-btn relative flex items-center justify-center rounded-2xl transition-colors"
+              style={{ width: 46, height: 46, background: disabled ? "rgba(16,24,40,0.05)" : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,247,255,0.96))", border: `1px solid ${disabled ? "rgba(16,24,40,0.08)" : "rgba(16,24,40,0.10)"}`, color: disabled ? "rgba(27,33,41,0.28)" : INK, cursor: disabled ? "default" : "pointer", boxShadow: disabled ? "none" : "0 10px 24px rgba(16,24,40,0.10)" }}
             >
-              <Icon size={15} />
-              <span className="text-[9px]">{label}</span>
+              <Icon size={18} />
+              {hintCooldown.locked && label.endsWith("s") && (
+                <span style={{ position: "absolute", right: -4, top: -4, minWidth: 18, height: 18, padding: "0 4px", borderRadius: 999, background: ACCENT, color: "#fff", fontSize: 9, fontWeight: 800, display: "grid", placeItems: "center" }}>{label.replace("s", "")}</span>
+              )}
             </button>
           ))}
         </div>

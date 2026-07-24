@@ -31,42 +31,51 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
 
-  const peerId = peer?.user_id || peer?.id;
-  const peerProfile = peer?.profiles || peer;
+  const peerId = peer?.user_id || peer?.id || null;
+  const peerProfile = peer?.profiles || peer || null;
 
   async function loadMessages({ quiet = false } = {}) {
-    if (!supabaseReady || !currentUser?.id || !peerId) return;
-    if (!quiet) setLoading(true);
-
-    const { data, error: loadError } = await supabase
-      .from("direct_messages")
-      .select("id, sender_id, recipient_id, body, created_at, read_at, system_generated, activity_type")
-      .or(
-        `and(sender_id.eq.${currentUser.id},recipient_id.eq.${peerId}),and(sender_id.eq.${peerId},recipient_id.eq.${currentUser.id})`
-      )
-      .order("created_at", { ascending: true })
-      .limit(250);
-
-    if (loadError) {
-      setError(loadError.message || "Couldn’t load this chat.");
-      setLoading(false);
+    if (!supabaseReady || !currentUser?.id || !peerId) {
+      if (!quiet) setLoading(false);
       return;
     }
+    if (!quiet) setLoading(true);
 
-    setMessages(data || []);
-    setError("");
-    setLoading(false);
-
-    const unreadIds = (data || [])
-      .filter((m) => m.recipient_id === currentUser.id && !m.read_at)
-      .map((m) => m.id);
-
-    if (unreadIds.length > 0) {
-      await supabase
+    try {
+      const { data, error: loadError } = await supabase
         .from("direct_messages")
-        .update({ read_at: new Date().toISOString() })
-        .in("id", unreadIds)
-        .eq("recipient_id", currentUser.id);
+        .select("id, sender_id, recipient_id, body, created_at, read_at, system_generated, activity_type")
+        .or(
+          `and(sender_id.eq.${currentUser.id},recipient_id.eq.${peerId}),and(sender_id.eq.${peerId},recipient_id.eq.${currentUser.id})`
+        )
+        .order("created_at", { ascending: true })
+        .limit(250);
+
+      if (loadError) {
+        setError(loadError.message || "Couldn’t load this chat.");
+        setLoading(false);
+        return;
+      }
+
+      setMessages(data || []);
+      setError("");
+      setLoading(false);
+
+      const unreadIds = (data || [])
+        .filter((m) => m.recipient_id === currentUser.id && !m.read_at)
+        .map((m) => m.id);
+
+      if (unreadIds.length > 0) {
+        await supabase
+          .from("direct_messages")
+          .update({ read_at: new Date().toISOString() })
+          .in("id", unreadIds)
+          .eq("recipient_id", currentUser.id);
+      }
+    } catch (err) {
+      console.error("Chat load failed:", err);
+      setError("Couldn’t open this chat just now. Pull back and try again.");
+      setLoading(false);
     }
   }
 
@@ -147,11 +156,29 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
   }
 
   async function handlePoke() {
-    if (pokeState === "sending") return;
+    if (pokeState === "sending" || !currentUser?.id || !peerId) return;
     setPokeState("sending");
-    const { error: pokeError } = await sendPoke(currentUser.id, peerId, currentProfile?.name);
-    setPokeState(pokeError ? "error" : "sent");
+    try {
+      const { error: pokeError } = await sendPoke(currentUser.id, peerId, currentProfile?.name);
+      setPokeState(pokeError ? "error" : "sent");
+    } catch (err) {
+      console.error("Poke failed:", err);
+      setPokeState("error");
+    }
     setTimeout(() => setPokeState(""), 1600);
+  }
+
+  if (!currentUser?.id || !peerId) {
+    return (
+      <div className="chat-screen" style={{ minHeight: "100dvh", display: "grid", placeItems: "center" }}>
+        <div style={{ textAlign: "center", padding: 24, maxWidth: 320 }}>
+          <div style={{ fontSize: 32, marginBottom: 10 }}>💬</div>
+          <div style={{ fontWeight: 800, color: "#1b2129", marginBottom: 6 }}>Opening chat…</div>
+          <div style={{ color: "rgba(27,33,41,.6)", fontSize: 13, marginBottom: 16 }}>The chat is still getting ready. If it takes too long, go back and open it again.</div>
+          <button type="button" onClick={onBack} className="nav-btn" style={{ padding: "10px 16px", borderRadius: 999, background: "#fff", border: "1px solid rgba(27,33,41,.08)" }}>Back</button>
+        </div>
+      </div>
+    );
   }
 
   return (

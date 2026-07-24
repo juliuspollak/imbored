@@ -260,6 +260,25 @@ function fmtTime(s) {
   return `${m}:${ss.toString().padStart(2, "0")}`;
 }
 
+function rgba(hex, alpha) {
+  const value = hex.replace("#", "");
+  const size = value.length === 3 ? 1 : 2;
+  const expand = (part) => size === 1 ? part + part : part;
+  const r = parseInt(expand(value.slice(0, size)), 16);
+  const g = parseInt(expand(value.slice(size, size * 2)), 16);
+  const b = parseInt(expand(value.slice(size * 2, size * 3)), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function rainbowStepColor(index, total) {
+  const stops = ["#FF6B6B", "#F6C85F", "#62C370", "#4D96FF", "#9B5DE5"];
+  if (total <= 1) return stops[2];
+  const scaled = (index / Math.max(total - 1, 1)) * (stops.length - 1);
+  const lower = Math.floor(scaled);
+  const upper = Math.min(stops.length - 1, lower + 1);
+  return stops[scaled - lower < 0.5 ? lower : upper];
+}
+
 /* ---------------- component ---------------- */
 
 export default function ZipGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId, rewardResult } = {}) {
@@ -402,7 +421,23 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
   const totalVisitable = boardSize * boardSize - puzzle.blocked.length;
   const orderConflict = hasOrderConflict(path, puzzle.numberGrid);
   const visited = new Set(path.map(([r, c]) => `${r}-${c}`));
+  const visitedIndex = new Map(path.map(([r, c], idx) => [`${r}-${c}`, idx]));
   const [curR, curC] = path[path.length - 1];
+
+  function visitedCellBg(key) {
+    if (!visited.has(key)) return "transparent";
+    if (orderConflict) return "rgba(229,72,77,0.14)";
+    if (zipPathStyle === "rainbow") {
+      return rgba(rainbowStepColor(visitedIndex.get(key) || 0, path.length), 0.20);
+    }
+    return rgba(ZIP_GREEN, 0.20);
+  }
+
+  function visitedDotBg(key) {
+    if (orderConflict) return RED;
+    if (zipPathStyle === "rainbow") return rainbowStepColor(visitedIndex.get(key) || 0, path.length);
+    return ZIP_GREEN;
+  }
 
   const tunnelInfo = new Map();
   puzzle.tunnels.forEach((t, i) => {
@@ -593,7 +628,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
           .zp-day-btn:hover { filter: brightness(1.12); }
           .zp-icon-btn:hover { opacity: 0.85; }
           .zp-play-again:hover { filter: brightness(1.08); }
-          .zp-toolbar-btn:not(:disabled):hover { background: rgba(16,24,40,0.10) !important; }
+          .zp-toolbar-btn:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.03); }
         }
       `}</style>
 
@@ -625,9 +660,6 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
           <div className="flex justify-center mb-4">
             <div className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: `${GOLD}18`, color: GOLD }}>
               <span className="text-xs font-semibold">Today's Challenge</span>
-              <span className="text-[10px] opacity-80">
-                {WALL_COUNTS[dayIdx] + BLACKHOLE_COUNTS[dayIdx] + TUNNEL_PAIR_COUNTS[dayIdx]} hazards
-              </span>
             </div>
           </div>
         ) : (
@@ -644,9 +676,6 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
                 }}
               >
                 <span className="text-xs font-semibold">{d}</span>
-                <span className="text-[10px] opacity-70">
-                  {WALL_COUNTS[i] + BLACKHOLE_COUNTS[i] + TUNNEL_PAIR_COUNTS[i]} hazards
-                </span>
               </button>
             ))}
           </div>
@@ -681,15 +710,23 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
               key={label}
               onClick={onClick}
               disabled={disabled}
-              className="zp-toolbar-btn flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 transition-colors"
+              title={label}
+              aria-label={label}
+              className="zp-toolbar-btn relative flex items-center justify-center rounded-2xl transition-colors"
               style={{
-                background: "rgba(16,24,40,0.05)",
+                width: 46,
+                height: 46,
+                background: disabled ? "rgba(16,24,40,0.05)" : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(240,246,244,0.96))",
+                border: `1px solid ${disabled ? "rgba(16,24,40,0.08)" : "rgba(16,24,40,0.10)"}`,
                 color: disabled ? "rgba(27,33,41,0.28)" : CREAM,
                 cursor: disabled ? "default" : "pointer",
+                boxShadow: disabled ? "none" : "0 10px 24px rgba(16,24,40,0.10)",
               }}
             >
-              <Icon size={15} />
-              <span className="text-[9px]">{label}</span>
+              <Icon size={18} />
+              {hintCooldown.locked && label.endsWith("s") && (
+                <span style={{ position: "absolute", right: -4, top: -4, minWidth: 18, height: 18, padding: "0 4px", borderRadius: 999, background: GOLD, color: "#fff", fontSize: 9, fontWeight: 800, display: "grid", placeItems: "center" }}>{label.replace("s", "")}</span>
+              )}
             </button>
           ))}
         </div>
@@ -730,35 +767,31 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
                 return (
                   <div
                     key={key}
-                    style={{ position: "relative", border: "1px solid rgba(20,20,24,0.30)" }}
+                    style={{ position: "relative", border: "1px solid rgba(20,20,24,0.30)", overflow: "hidden", background: "radial-gradient(circle at 50% 48%, rgba(18,14,34,0.88) 0 23%, rgba(7,6,14,1) 24% 100%)" }}
                   >
                     <svg viewBox="0 0 100 100" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
                       <defs>
-                        <radialGradient id={`bhVoid-${r}-${c}`} cx="42%" cy="40%" r="65%">
-                          <stop offset="0%" stopColor="#382C5C" />
-                          <stop offset="55%" stopColor="#150F24" />
-                          <stop offset="100%" stopColor="#040308" />
+                        <radialGradient id={`bhCore-${r}-${c}`} cx="50%" cy="50%" r="52%">
+                          <stop offset="0%" stopColor="#0A0815" />
+                          <stop offset="58%" stopColor="#151126" />
+                          <stop offset="100%" stopColor="#030208" />
                         </radialGradient>
-                        <radialGradient id={`bhGlow-${r}-${c}`} cx="50%" cy="50%" r="50%">
-                          <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.35" />
-                          <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0" />
+                        <radialGradient id={`bhHalo-${r}-${c}`} cx="50%" cy="50%" r="56%">
+                          <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.0" />
+                          <stop offset="60%" stopColor="#8b5cf6" stopOpacity="0.42" />
+                          <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
                         </radialGradient>
-                        <filter id={`bhBlur-${r}-${c}`}>
-                          <feGaussianBlur stdDeviation="2.4" />
-                        </filter>
+                        <filter id={`bhSoft-${r}-${c}`}><feGaussianBlur stdDeviation="2.6" /></filter>
                       </defs>
-                      <circle cx="50" cy="50" r="44" fill={`url(#bhGlow-${r}-${c})`} />
-                      <circle cx="20" cy="22" r="1.1" fill="#fff" opacity="0.8" />
-                      <circle cx="82" cy="74" r="1" fill="#fff" opacity="0.5" />
-                      <circle cx="85" cy="26" r="0.8" fill="#fff" opacity="0.45" />
-                      <circle cx="16" cy="80" r="0.8" fill="#fff" opacity="0.4" />
-                      <g filter={`url(#bhBlur-${r}-${c})`}>
-                        <ellipse cx="50" cy="50" rx="33" ry="11" fill="none" stroke="#8B5CF6" strokeWidth="5" opacity="0.6" transform="rotate(-18 50 50)" />
-                        <ellipse cx="50" cy="50" rx="33" ry="11" fill="none" stroke="#F59E0B" strokeWidth="4" opacity="0.5" transform="rotate(18 50 50)" />
-                        <ellipse cx="50" cy="50" rx="33" ry="11" fill="none" stroke="#EC4899" strokeWidth="3.5" opacity="0.5" transform="rotate(0 50 50)" />
-                        <ellipse cx="50" cy="50" rx="33" ry="11" fill="none" stroke="#0EA5E9" strokeWidth="3" opacity="0.45" transform="rotate(-40 50 50)" />
+                      <circle cx="50" cy="50" r="47" fill={`url(#bhHalo-${r}-${c})`} />
+                      <g filter={`url(#bhSoft-${r}-${c})`} opacity="0.92">
+                        <ellipse cx="50" cy="50" rx="36" ry="13" fill="none" stroke="#f59e0b" strokeWidth="4.4" transform="rotate(-18 50 50)" />
+                        <ellipse cx="50" cy="50" rx="37" ry="12" fill="none" stroke="#ec4899" strokeWidth="3.6" transform="rotate(11 50 50)" />
+                        <ellipse cx="50" cy="50" rx="34" ry="10" fill="none" stroke="#38bdf8" strokeWidth="3.2" transform="rotate(-42 50 50)" />
                       </g>
-                      <circle cx="50" cy="50" r="23" fill={`url(#bhVoid-${r}-${c})`} />
+                      <path d="M56 33c-11 0-19 9-19 18 0 9 8 16 18 16 8 0 15-4 18-10-4 5-10 8-16 8-8 0-14-6-14-13 0-7 6-13 14-13 4 0 7 1 10 3-3-6-7-9-11-9z" fill="rgba(255,255,255,0.10)" />
+                      <path d="M61 38c-7-5-17-3-23 4 7-3 15-2 20 2 5 4 7 11 5 18 6-8 5-18-2-24z" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="2.1" strokeLinecap="round" />
+                      <circle cx="50" cy="50" r="24" fill={`url(#bhCore-${r}-${c})`} />
                     </svg>
                   </div>
                 );
@@ -784,7 +817,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
                   }}
                   className={`zp-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`}
                   style={{
-                    background: isVisited ? "rgba(18,148,106,0.14)" : "transparent",
+                    background: visitedCellBg(key),
                     border: "1px solid rgba(20,20,24,0.30)",
                     cursor: solved ? "default" : "pointer",
                     WebkitTouchCallout: "none",
@@ -796,12 +829,12 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
                     <span
                       className="zp-dot flex items-center justify-center rounded-full"
                       style={{
-                        width: "62%",
-                        height: "62%",
-                        background: isVisited ? ZIP_GREEN : "rgba(16,24,40,0.08)",
+                        width: "72%",
+                        height: "72%",
+                        background: isVisited ? visitedDotBg(key) : "rgba(16,24,40,0.08)",
                         color: isVisited ? "#FFFFFF" : CREAM,
-                        fontWeight: 700,
-                        fontSize: Math.max(11, 18 - boardSize),
+                        fontWeight: 800,
+                        fontSize: Math.max(14, 22 - boardSize),
                         border: orderConflict && isVisited ? `2px solid ${RED}` : "none",
                         position: "relative",
                         zIndex: 5,
@@ -884,7 +917,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
                     points={points}
                     fill="none"
                     stroke={orderConflict ? "rgba(217,105,92,0.28)" : "rgba(255,255,255,0.90)"}
-                    strokeWidth="5.7"
+                    strokeWidth="7.8"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
@@ -892,7 +925,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
                     points={points}
                     fill="none"
                     stroke={mainStroke}
-                    strokeWidth="3.8"
+                    strokeWidth="5.2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     opacity="0.98"
@@ -1015,9 +1048,6 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
           </div>
         )}
 
-        <p style={{ color: CREAM, opacity: 0.35 }} className="text-center text-[11px] mt-3">
-          {path.length}/{totalVisitable} cells filled
-        </p>
       </div>
     </div>
   );
