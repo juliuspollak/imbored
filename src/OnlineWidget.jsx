@@ -8,7 +8,7 @@ const CREAM = "#1B2129";
 const GREEN = "#22C55E";
 const ACCENT = "#2F6FED";
 
-export default function OnlineWidget({ players, userId, myName }) {
+export default function OnlineWidget({ players, userId, myName, onOpenChat, unreadBySender = {}, unreadTotal = 0 }) {
   const [open, setOpen] = useState(false);
   const [poked, setPoked] = useState(null); // id of the player just poked, for a quick confirm flash
 
@@ -70,7 +70,7 @@ export default function OnlineWidget({ players, userId, myName }) {
           className="absolute flex items-center justify-center rounded-full"
           style={{ top: -3, right: -3, minWidth: 15, height: 15, padding: "0 3px", background: GREEN, color: "#FFFFFF", fontSize: 9, fontWeight: 700, border: "1.5px solid #F1F3F7" }}
         >
-          {players.length}
+          {unreadTotal > 0 ? unreadTotal : players.length}
         </div>
       </button>
 
@@ -82,29 +82,49 @@ export default function OnlineWidget({ players, userId, myName }) {
           {others.map((p, i) => {
               const meta = GAME_META.find((g) => g.id === p.game);
               const isPoked = poked === p.user_id;
+              const unread = unreadBySender[p.user_id] || 0;
               return (
-                <button
-                  key={i}
-                  onClick={() => handlePoke(p)}
-                  className="balloon flex items-center gap-2 rounded-full pl-1.5 pr-3 py-1.5"
+                <div
+                  key={p.user_id || i}
+                  className="balloon flex items-center rounded-full p-1"
                   style={{
                     animationDelay: `${i * 0.05}s`,
-                    background: isPoked ? "rgba(47,111,237,0.15)" : PANEL,
+                    background: unread > 0 ? "#F1EDFF" : PANEL,
                     boxShadow: "0 6px 16px rgba(16,24,40,0.14)",
-                    border: isPoked ? `1.5px solid ${ACCENT}` : "1px solid rgba(16,24,40,0.06)",
+                    border: unread > 0 ? "1px solid rgba(118,87,255,.28)" : "1px solid rgba(16,24,40,0.06)",
                     whiteSpace: "nowrap",
                   }}
                 >
-                  <span style={{ fontSize: 16 }}>{p.profiles?.icon || "🙂"}</span>
-                  <div className="text-left">
-                    <div style={{ color: CREAM, fontWeight: 600 }} className="text-xs leading-tight">
-                      {isPoked ? "Poked! 👋" : p.profiles?.name || "Someone"}
+                  <button
+                    type="button"
+                    onClick={() => { setOpen(false); onOpenChat?.(p); }}
+                    className="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 text-left"
+                    style={{ border: 0, background: "transparent" }}
+                    aria-label={`Chat with ${p.profiles?.name || "player"}`}
+                  >
+                    <span style={{ position: "relative", fontSize: 18 }}>
+                      {p.profiles?.icon || "🙂"}
+                      {unread > 0 && <span style={{ position:"absolute", top:-7, right:-9, minWidth:15, height:15, padding:"0 3px", borderRadius:999, display:"grid", placeItems:"center", background:"#7657FF", color:"white", fontSize:9, fontWeight:800 }}>{unread}</span>}
+                    </span>
+                    <div>
+                      <div style={{ color: CREAM, fontWeight: 700 }} className="text-xs leading-tight">
+                        {p.profiles?.name || "Someone"}
+                      </div>
+                      <div style={{ color: meta ? meta.accent : CREAM, opacity: meta ? 1 : 0.48 }} className="text-[10px] leading-tight">
+                        {unread > 0 ? `${unread} new message${unread === 1 ? "" : "s"}` : meta ? `playing ${meta.label}` : "tap to chat"}
+                      </div>
                     </div>
-                    <div style={{ color: meta ? meta.accent : CREAM, opacity: meta ? 1 : 0.4 }} className="text-[10px] leading-tight">
-                      {meta ? `playing ${meta.label}` : "browsing"}
-                    </div>
-                  </div>
-                </button>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handlePoke(p)}
+                    title={`Poke ${p.profiles?.name || "player"}`}
+                    aria-label={`Poke ${p.profiles?.name || "player"}`}
+                    style={{ width:30, height:30, borderRadius:999, border:0, background:isPoked ? "rgba(47,111,237,.15)" : "rgba(27,33,41,.05)", fontSize:15 }}
+                  >
+                    {isPoked ? "✓" : "👋"}
+                  </button>
+                </div>
               );
             })}
         </div>

@@ -27,6 +27,7 @@ const ReleaseNotes = lazy(() => import("./ReleaseNotes.jsx"));
 const AdminPlayers = lazy(() => import("./AdminPlayers.jsx"));
 const AdminGames = lazy(() => import("./AdminGames.jsx"));
 const Progress = lazy(() => import("./Progress.jsx"));
+const Chat = lazy(() => import("./Chat.jsx"));
 const AdminRewards = lazy(() => import("./AdminRewards.jsx"));
 import { saveStats } from "./lib/saveStats.js";
 import { supabaseReady } from "./lib/supabase.js";
@@ -37,6 +38,7 @@ import { useOpenFeedbackCount } from "./lib/useOpenFeedbackCount.js";
 import { useCompletedFeedbackCount } from "./lib/useCompletedFeedbackCount.js";
 import { useNewTransfersCount } from "./lib/useNewTransfers.js";
 import { usePokes } from "./lib/pokes.js";
+import { useUnreadMessages } from "./lib/useUnreadMessages.js";
 
 const GAME_COMPONENTS = {
   queens: { Component: QueensGame, label: "Queens" },
@@ -47,7 +49,8 @@ const GAME_COMPONENTS = {
 };
 
 function AppShell() {
-  const [active, setActive] = useState(null); // null | 'profile' | 'teams' | 'stats' | a game id
+  const [active, setActive] = useState(null); // null | profile screens | a game id
+  const [chatPlayer, setChatPlayer] = useState(null);
   // Challenge mode needs an account to mean anything (once-per-day + history
   // are tied to a user) — default to it when logged in, otherwise practice
   // is the only real option.
@@ -92,12 +95,27 @@ function AppShell() {
   const openFeedbackCount = useOpenFeedbackCount();
   const completedFeedbackCount = useCompletedFeedbackCount(user?.id);
   const newTransfersCount = useNewTransfersCount(user?.id);
+  const unreadMessages = useUnreadMessages(user?.id);
 
   if (supabaseReady) {
     if (loading) return <FullScreenMessage text="Loading…" />;
     if (!user) return <Login />;
     if (profileLoading) return <FullScreenMessage text="Loading your profile…" />;
     if (!profile) return <ProfileSetup />; // mandatory first-time setup, no onDone — nothing to go back to yet
+  }
+
+
+  if (chatPlayer) {
+    return (
+      <Suspense fallback={<FullScreenMessage text="Opening chat…" />}>
+        <Chat
+          currentUser={user}
+          currentProfile={profile}
+          peer={chatPlayer}
+          onBack={() => setChatPlayer(null)}
+        />
+      </Suspense>
+    );
   }
 
   if (active === "profile") {
@@ -200,6 +218,8 @@ function AppShell() {
             openFeedbackCount={openFeedbackCount}
             completedFeedbackCount={completedFeedbackCount}
             newTransfersCount={newTransfersCount}
+            unreadMessages={unreadMessages}
+            onOpenChat={setChatPlayer}
           />
         )}
       </>
@@ -300,7 +320,7 @@ function PracticePlay({ Current, userId, onExit, onSwitchMode, hintCooldownConfi
   );
 }
 
-function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0 }) {
+function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, unreadMessages = { total: 0, bySender: {} }, onOpenChat }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const isAdmin = !!profile.is_admin;
@@ -309,7 +329,7 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenSt
   // both here and on the bubble badge below (previously the bubble always
   // showed the admin count even for regular players).
   const feedbackBadgeCount = isAdmin ? openFeedbackCount : completedFeedbackCount;
-  const totalNotifications = feedbackBadgeCount + newTransfersCount;
+  const totalNotifications = feedbackBadgeCount + newTransfersCount + unreadMessages.total;
   const hasNotifications = totalNotifications > 0;
 
   const items = [
@@ -494,7 +514,7 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenSt
         </div>
       )}
 
-      <OnlineWidget players={players} userId={userId} myName={profile.name} />
+      <OnlineWidget players={players} userId={userId} myName={profile.name} onOpenChat={onOpenChat} unreadBySender={unreadMessages.bySender} unreadTotal={unreadMessages.total} />
     </div>
   );
 }
