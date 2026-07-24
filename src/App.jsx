@@ -42,6 +42,7 @@ import { useCompletedFeedbackCount } from "./lib/useCompletedFeedbackCount.js";
 import { useNewTransfersCount } from "./lib/useNewTransfers.js";
 import { usePokes } from "./lib/pokes.js";
 import { useUnreadMessages } from "./lib/useUnreadMessages.js";
+import { useI18n } from "./lib/i18n.jsx";
 
 const GAME_COMPONENTS = {
   queens: { Component: QueensGame, label: "Queens" },
@@ -52,6 +53,7 @@ const GAME_COMPONENTS = {
 };
 
 function AppShell() {
+  const { t } = useI18n();
   const [active, setActive] = useState(() => {
     if (typeof window === "undefined") return null;
     const query = new URLSearchParams(window.location.search);
@@ -63,7 +65,7 @@ function AppShell() {
   // are tied to a user) — default to it when logged in, otherwise practice
   // is the only real option.
   const [playMode, setPlayMode] = useState("challenge");
-  const [challengeScope, setChallengeScope] = useState({ type: "personal", id: null, name: "My Challenge", gameIds: null });
+  const [challengeScope, setChallengeScope] = useState({ type: "personal", id: null, name: t("home.myChallenge"), gameIds: null });
   const { loading, user, profile, profileLoading, signOut } = useAuth();
   useEffect(() => {
     if (!profile?.account_deleted_at) return;
@@ -153,9 +155,9 @@ function AppShell() {
   }, [user?.id]);
 
   if (supabaseReady) {
-    if (loading) return <FullScreenMessage text="Loading…" />;
+    if (loading) return <FullScreenMessage text={t("common.loading")} />;
     if (!user) return <Login />;
-    if (profileLoading) return <FullScreenMessage text="Loading your profile…" />;
+    if (profileLoading) return <FullScreenMessage text={t("common.loading")} />;
     if (!profile) return <ProfileSetup />; // mandatory first-time setup, no onDone — nothing to go back to yet
     if (profile.account_deleted_at) return <FullScreenMessage text="Signing out deleted account…" />;
     if (profile.is_blocked) return <BlockedAccount />;
@@ -350,6 +352,7 @@ function AppShell() {
 }
 
 function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode, challengeScope, onChallengeScopeChange, hintCooldownConfig }) {
+  const { t } = useI18n();
   const [savedStatId, setSavedStatId] = useState(null);
   const [rewardResult, setRewardResult] = useState(null);
   const [showChallengeChoice, setShowChallengeChoice] = useState(false);
@@ -410,7 +413,7 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
           justifyContent: "center",
           color: "#1B2129",
         }}
-        aria-label="Back to all games"
+        aria-label={t("common.backHome")}
       >
         <ArrowLeft size={18} />
       </button>
@@ -428,13 +431,13 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
         <div className="fixed inset-0 z-[140] flex items-end sm:items-center justify-center p-4" style={{ background:"rgba(16,24,40,.48)" }}>
           <div className="w-full max-w-sm rounded-3xl p-5" style={{ background:"#fff", boxShadow:"0 24px 70px rgba(16,24,40,.24)" }}>
             <div className="text-3xl mb-2">👑</div>
-            <h2 className="text-lg font-bold">{gameLabel} isn’t in this team challenge</h2>
+            <h2 className="text-lg font-bold">{t("challenge.notIncluded", { game:gameLabel })}</h2>
             <p className="text-sm mt-1 mb-4" style={{ color:"rgba(27,33,41,.58)" }}>
-              {challengeScope?.teamName || "Your team"} didn’t include this game this week. You can play your personal challenge or choose another team challenge.
+              {t("challenge.notIncludedBody", { team:challengeScope?.teamName || t("account.teams") })}
             </p>
-            <button type="button" onClick={playPersonalChallenge} className="w-full rounded-full py-3 text-sm font-semibold text-white" style={{ background:"#2F6FED" }}>Play my challenge</button>
-            <button type="button" onClick={chooseChallenge} className="w-full rounded-full py-3 mt-2 text-sm font-semibold" style={{ background:"rgba(16,24,40,.06)" }}>Choose another challenge</button>
-            <button type="button" onClick={() => setShowChallengeChoice(false)} className="w-full py-2.5 mt-1 text-xs" style={{ color:"rgba(27,33,41,.48)" }}>Stay in practice</button>
+            <button type="button" onClick={playPersonalChallenge} className="w-full rounded-full py-3 text-sm font-semibold text-white" style={{ background:"#2F6FED" }}>{t("challenge.playMine")}</button>
+            <button type="button" onClick={chooseChallenge} className="w-full rounded-full py-3 mt-2 text-sm font-semibold" style={{ background:"rgba(16,24,40,.06)" }}>{t("challenge.chooseAnother")}</button>
+            <button type="button" onClick={() => setShowChallengeChoice(false)} className="w-full py-2.5 mt-1 text-xs" style={{ color:"rgba(27,33,41,.48)" }}>{t("challenge.stayPractice")}</button>
           </div>
         </div>
       )}
@@ -443,200 +446,161 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
 }
 
 function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenTeams, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, unreadMessages = { total: 0, bySender: {} }, onOpenChat }) {
+  const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [adminOpen, setAdminOpen] = useState(false);
+  const menuRef = useRef(null);
   const isAdmin = !!profile.is_admin;
-  // Admins care about the queue of open tickets; everyone else only cares
-  // about their own feedback getting a reply — each role sees its own count,
-  // both here and on the bubble badge below (previously the bubble always
-  // showed the admin count even for regular players).
   const feedbackBadgeCount = isAdmin ? openFeedbackCount : completedFeedbackCount;
-  const totalNotifications = feedbackBadgeCount + newTransfersCount + unreadMessages.total + (sectionSignals.whatsnew ? 1 : 0) + (sectionSignals.teams ? 1 : 0);
-  const hasNotifications = totalNotifications > 0;
+  const totalNotifications = feedbackBadgeCount + newTransfersCount + unreadMessages.total
+    + (sectionSignals.whatsnew ? 1 : 0) + (sectionSignals.teams ? 1 : 0);
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    function closeFromOutside(event) {
+      if (!menuRef.current?.contains(event.target)) setMenuOpen(false);
+    }
+    function closeFromKeyboard(event) {
+      if (event.key === "Escape") setMenuOpen(false);
+    }
+    document.addEventListener("pointerdown", closeFromOutside);
+    document.addEventListener("keydown", closeFromKeyboard);
+    return () => {
+      document.removeEventListener("pointerdown", closeFromOutside);
+      document.removeEventListener("keydown", closeFromKeyboard);
+    };
+  }, [menuOpen]);
 
   const items = [
-    { id: "profile", onClick: onOpenProfile, icon: User, label: "My profile", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
-    { id: "whatsnew", onClick: onOpenWhatsNew, icon: Sparkles, label: "What's new", badge: sectionSignals.whatsnew ? 1 : 0, glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
-    { id: "chats", onClick: onOpenChats, icon: MessagesSquare, label: unreadMessages.total > 0 ? "Chats · new" : "Chats", glow: "rgba(79,70,229,0.35)", border: "rgba(79,70,229,0.4)", badge: unreadMessages.total },
-    { id: "feedback", onClick: onOpenFeedback, icon: MessageSquare, label: completedFeedbackCount > 0 ? "Feedback · update" : "Feedback", glow: "rgba(139,92,246,0.35)", border: "rgba(139,92,246,0.4)", badge: feedbackBadgeCount },
-    { id: "stats", onClick: onOpenStats, icon: BarChart3, label: "Stats", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
-    { id: "progress", onClick: onOpenProgress, icon: Star, label: newTransfersCount > 0 ? "My progress · new" : "My progress", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)", badge: newTransfersCount },
-    { id: "teams", onClick: onOpenTeams, icon: Users, label: "Teams", badge: sectionSignals.teams ? 1 : 0, glow: "rgba(18,148,106,0.35)", border: "rgba(18,148,106,0.4)" },
-    { id: "signout", onClick: onSignOut, icon: LogOut, label: "Sign out", glow: "rgba(229,72,77,0.35)", border: "rgba(229,72,77,0.4)" },
+    { id:"profile", icon:User, label:t("account.myProfile"), onClick:onOpenProfile },
+    { id:"whatsnew", icon:Sparkles, label:t("account.whatsNew"), onClick:onOpenWhatsNew, badge:sectionSignals.whatsnew ? 1 : 0 },
+    { id:"chats", icon:MessagesSquare, label:t("account.chats"), onClick:onOpenChats, badge:unreadMessages.total },
+    { id:"feedback", icon:MessageSquare, label:t("account.feedback"), onClick:onOpenFeedback, badge:feedbackBadgeCount },
+    { id:"stats", icon:BarChart3, label:t("account.stats"), onClick:onOpenStats },
+    { id:"progress", icon:Star, label:t("account.progress"), onClick:onOpenProgress, badge:newTransfersCount },
+    { id:"teams", icon:Users, label:t("account.teams"), onClick:onOpenTeams, badge:sectionSignals.teams ? 1 : 0 },
+  ];
+  const adminItems = [
+    { id:"adminplayers", icon:Shield, label:t("common.players"), onClick:onOpenAdminPlayers },
+    { id:"admingames", icon:Grid3x3, label:t("common.games"), onClick:onOpenAdminGames },
+    { id:"adminrewards", icon:Gift, label:t("common.rewards"), onClick:onOpenAdminRewards },
   ];
 
-  const adminItems = [
-    { id: "adminplayers", onClick: onOpenAdminPlayers, icon: Shield, label: "Players", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
-    { id: "admingames", onClick: onOpenAdminGames, icon: Grid3x3, label: "Games", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
-    { id: "adminrewards", onClick: onOpenAdminRewards, icon: Gift, label: "Rewards", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
-  ];
+  function openItem(item) {
+    setMenuOpen(false);
+    item.onClick?.();
+  }
 
   return (
-    <div style={{ position: "fixed", top: 16, right: 16, zIndex: 50, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
-      <style>{`
-        @keyframes menuBalloonPop {
-          0% { transform: scale(0.3) translateY(-10px); opacity: 0; }
-          60% { transform: scale(1.1); opacity: 1; }
-          100% { transform: scale(1) translateY(0); opacity: 1; }
-        }
-        .menu-balloon { animation: menuBalloonPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
-        @keyframes feedbackWiggle {
-          0%, 85%, 100% { transform: rotate(0deg); }
-          87% { transform: rotate(-10deg); }
-          89% { transform: rotate(10deg); }
-          91% { transform: rotate(-7deg); }
-          93% { transform: rotate(7deg); }
-          95% { transform: rotate(-3deg); }
-          97% { transform: rotate(0deg); }
-        }
-        .feedback-wiggle { animation: feedbackWiggle 4s ease-in-out infinite; }
-        @keyframes dotPulse {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.3); opacity: 0.7; }
-        }
-        .dot-pulse { animation: dotPulse 1.4s ease-in-out infinite; }
-      `}</style>
-
-      <div style={{ position: "relative" }}>
-        <button
-          onClick={() => { setAdminOpen(false); setMenuOpen((o) => !o); }}
-          className={`nav-btn ${hasNotifications ? "feedback-wiggle" : ""}`}
-          title={profile.mood || undefined}
-          style={{
-            "--nav-glow": "rgba(47,111,237,0.3)",
-            "--nav-border": "rgba(47,111,237,0.4)",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            background: "rgba(255,255,255,0.9)",
-            backdropFilter: "blur(6px)",
-            border: "1px solid rgba(16,24,40,0.12)",
-            borderRadius: 999,
-            padding: "6px 12px",
-            fontSize: 12,
-            color: "#1B2129",
-          }}
-        >
-          <span style={{ fontSize: 14 }}>{profile.icon || "🙂"}</span>
-          <span style={{ fontWeight: 600 }}>{profile.name}</span>
-        </button>
-        {profile.is_admin && (
-          <div
-            style={{
-              position: "absolute", top: -5, left: -5, background: "#D9AE58", color: "#FFFFFF",
-              fontSize: 8, fontWeight: 700, borderRadius: 999, padding: "1px 5px", border: "1.5px solid #F1F3F7",
-            }}
-          >
-            ADMIN
-          </div>
-        )}
-        {hasNotifications && (
-          <div
-            className="dot-pulse flex items-center justify-center rounded-full"
-            title={newTransfersCount > 0 ? "You have new points and updates" : "You have updates"}
-            style={{
-              position: "absolute", top: -3, right: -3, width: 11, height: 11,
-              background: "#8B5CF6", color: "#FFFFFF", fontSize: 9, fontWeight: 700, border: "1.5px solid #F1F3F7",
-            }}
-          >
-            {totalNotifications}
-          </div>
-        )}
-      </div>
-
-      {menuOpen && (
-        <div className="flex flex-col items-end gap-1.5">
-          {items.map((item, i) => (
-            <button
-              key={item.id}
-              onClick={() => {
-                setMenuOpen(false);
-                item.onClick();
-              }}
-              className="menu-balloon nav-btn flex items-center gap-2 rounded-full pl-3 pr-1.5 py-1.5"
-              style={{
-                "--nav-glow": item.glow,
-                "--nav-border": item.border,
-                animationDelay: `${i * 0.04}s`,
-                background: item.badge > 0 ? "#F4EEFE" : "#FFFFFF",
-                boxShadow: "0 6px 16px rgba(16,24,40,0.14)",
-                border: item.badge > 0 ? "1px solid rgba(139,92,246,0.3)" : "1px solid rgba(16,24,40,0.08)",
-                color: "#1B2129",
-                whiteSpace: "nowrap",
-              }}
-            >
-              <span className="text-xs font-medium">{item.label}</span>
-              {item.badge > 0 && (
-                <span
-                  className="flex items-center justify-center rounded-full"
-                  style={{ width: 9, height: 9, background: "#8B5CF6" }}
-                >
-                </span>
-              )}
-              <span
-                className="flex items-center justify-center rounded-full"
-                style={{ width: 24, height: 24, background: "rgba(16,24,40,0.05)" }}
-              >
-                <item.icon size={12} />
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
+    <div ref={menuRef} style={{ position:"fixed", top:16, right:16, zIndex:80 }}>
+      <button
+        type="button"
+        onClick={() => setMenuOpen((value) => !value)}
+        className="nav-btn grid place-items-center rounded-full"
+        aria-label={t("account.open")}
+        aria-haspopup="menu"
+        aria-expanded={menuOpen}
+        style={{
+          "--nav-glow":"rgba(47,111,237,.28)",
+          "--nav-border":"rgba(47,111,237,.36)",
+          width:44,
+          height:44,
+          background:"rgba(255,255,255,.94)",
+          backdropFilter:"blur(12px)",
+          border:menuOpen ? "2px solid rgba(47,111,237,.38)" : "1px solid rgba(16,24,40,.12)",
+          boxShadow:"0 8px 24px rgba(16,24,40,.12)",
+          fontSize:22,
+        }}
+      >
+        {profile.icon || "🙂"}
+      </button>
 
       {isAdmin && (
-        <div style={{ position: "relative" }}>
-          <button
-            onClick={() => { setMenuOpen(false); setAdminOpen((o) => !o); }}
-            className="nav-btn relative flex items-center justify-center rounded-full"
-            style={{
-              "--nav-glow": "rgba(217,174,88,0.35)",
-              "--nav-border": "rgba(217,174,88,0.55)",
-              width: 34,
-              height: 34,
-              background: "rgba(255,255,255,0.95)",
-              border: "1px solid rgba(217,174,88,0.45)",
-              color: "#9A6B12",
-              boxShadow: "0 5px 14px rgba(16,24,40,0.10)",
-            }}
-            aria-label="Admin tools"
-            title="Admin tools"
-          >
-            <Shield size={15} />
+        <span
+          className="absolute grid place-items-center rounded-full"
+          title={t("common.admin")}
+          style={{ left:-3, bottom:-2, width:16, height:16, background:"#D9AE58", color:"#fff", border:"2px solid #F1F3F7", fontSize:9 }}
+        >
+          ★
+        </span>
+      )}
+      {totalNotifications > 0 && (
+        <span
+          className="absolute grid place-items-center rounded-full"
+          title={newTransfersCount > 0 ? t("account.newPoints") : t("account.updates")}
+          style={{ top:-5, right:-5, minWidth:19, height:19, padding:"0 4px", background:"#7C3AED", color:"#fff", border:"2px solid #F1F3F7", fontSize:9, fontWeight:800 }}
+        >
+          {totalNotifications > 9 ? "9+" : totalNotifications}
+        </span>
+      )}
+
+      {menuOpen && (
+        <div
+          role="menu"
+          className="absolute right-0 mt-3 overflow-hidden"
+          style={{
+            width:286,
+            maxHeight:"calc(100vh - 80px)",
+            overflowY:"auto",
+            background:"rgba(255,255,255,.98)",
+            border:"1px solid rgba(16,24,40,.10)",
+            borderRadius:22,
+            boxShadow:"0 24px 64px rgba(16,24,40,.20)",
+            backdropFilter:"blur(18px)",
+          }}
+        >
+          <button type="button" onClick={onOpenProfile} className="w-full flex items-center gap-3 p-4 text-left" style={{ background:"linear-gradient(135deg,rgba(47,111,237,.08),rgba(139,92,246,.05))" }}>
+            <span className="grid place-items-center rounded-2xl text-2xl" style={{ width:48, height:48, background:"#fff", boxShadow:"0 5px 16px rgba(16,24,40,.08)" }}>{profile.icon || "🙂"}</span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-bold truncate" style={{ color:"#1B2129" }}>{profile.name}</span>
+              <span className="block text-[11px] mt-0.5 truncate" style={{ color:"rgba(27,33,41,.48)" }}>{profile.mood || t("account.myProfile")}</span>
+            </span>
+            {isAdmin && <span className="rounded-full px-2 py-1 text-[9px] font-bold" style={{ background:"#FFF4CF", color:"#8A6511" }}>{t("common.admin")}</span>}
           </button>
-          {adminOpen && (
-            <div className="absolute top-full right-0 mt-2 flex flex-col items-end gap-1.5" style={{ zIndex: 60 }}>
-              <div className="menu-balloon text-[10px] font-semibold uppercase tracking-wide rounded-full px-2.5 py-1" style={{ background: "#FFF8E7", color: "#9A6B12", border: "1px solid rgba(217,174,88,0.25)" }}>
-                Admin
-              </div>
-              {adminItems.map((item, i) => (
-                <button
-                  key={item.id}
-                  onClick={() => { setAdminOpen(false); item.onClick(); }}
-                  className="menu-balloon nav-btn flex items-center gap-2 rounded-full pl-3 pr-1.5 py-1.5"
-                  style={{
-                    "--nav-glow": item.glow,
-                    "--nav-border": item.border,
-                    animationDelay: `${i * 0.04}s`,
-                    background: "#FFFFFF",
-                    boxShadow: "0 6px 16px rgba(16,24,40,0.14)",
-                    border: "1px solid rgba(217,174,88,0.22)",
-                    color: "#1B2129",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  <span className="text-xs font-medium">{item.label}</span>
-                  <span className="flex items-center justify-center rounded-full" style={{ width: 24, height: 24, background: "rgba(217,174,88,0.14)", color: "#9A6B12" }}>
-                    <item.icon size={12} />
-                  </span>
+
+          <div className="p-2">
+            {items.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="menuitem"
+                onClick={() => openItem(item)}
+                className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left"
+                style={{ color:"#1B2129", background:item.badge ? "rgba(124,58,237,.055)" : "transparent" }}
+              >
+                <span className="grid place-items-center rounded-lg" style={{ width:30, height:30, background:"rgba(16,24,40,.055)", color:"rgba(27,33,41,.72)" }}><item.icon size={15}/></span>
+                <span className="flex-1 text-xs font-semibold">{item.label}</span>
+                {!!item.badge && <span className="grid place-items-center rounded-full text-[9px] font-bold" style={{ minWidth:20, height:20, padding:"0 5px", background:"#7C3AED", color:"#fff" }}>{item.badge > 9 ? "9+" : item.badge}</span>}
+              </button>
+            ))}
+          </div>
+
+          {isAdmin && (
+            <div className="px-2 pb-2">
+              <div className="mx-2 mb-2 border-t" style={{ borderColor:"rgba(16,24,40,.08)" }}/>
+              <div className="px-3 pb-1 text-[9px] font-bold uppercase tracking-[.14em]" style={{ color:"rgba(27,33,41,.35)" }}>{t("account.adminTools")}</div>
+              {adminItems.map((item) => (
+                <button key={item.id} type="button" role="menuitem" onClick={() => openItem(item)} className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left" style={{ color:"#76580E" }}>
+                  <span className="grid place-items-center rounded-lg" style={{ width:30, height:30, background:"rgba(217,174,88,.14)" }}><item.icon size={15}/></span>
+                  <span className="text-xs font-semibold">{item.label}</span>
                 </button>
               ))}
             </div>
           )}
+
+          <div className="p-2 border-t" style={{ borderColor:"rgba(16,24,40,.08)" }}>
+            <button type="button" role="menuitem" onClick={() => openItem({ onClick:onSignOut })} className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left" style={{ color:"#B5433A" }}>
+              <span className="grid place-items-center rounded-lg" style={{ width:30, height:30, background:"rgba(181,67,58,.08)" }}><LogOut size={15}/></span>
+              <span className="text-xs font-semibold">{t("common.signOut")}</span>
+            </button>
+          </div>
         </div>
       )}
 
-      <OnlineWidget players={players} userId={userId} myName={profile.name} onOpenChat={onOpenChat} unreadBySender={unreadMessages.bySender} unreadTotal={unreadMessages.total} />
+      {!menuOpen && (
+        <div style={{ position:"absolute", top:52, right:6 }}>
+          <OnlineWidget players={players} userId={userId} myName={profile.name} onOpenChat={onOpenChat} unreadBySender={unreadMessages.bySender} unreadTotal={unreadMessages.total} />
+        </div>
+      )}
     </div>
   );
 }
