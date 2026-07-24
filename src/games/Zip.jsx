@@ -423,6 +423,11 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
   }
   pathSegments.push(currentSeg);
 
+  const lastMove = path.length > 1 ? [path[path.length - 2], path[path.length - 1]] : null;
+  const lastMoveIsTunnel = lastMove
+    ? !isAdjacent(lastMove[0][0], lastMove[0][1], lastMove[1][0], lastMove[1][1])
+    : false;
+
   function pushHistory() {
     setHistory((h) =>
       [...h, { path: latest.current.path.map((p) => p.slice()), mistakes: latest.current.mistakes, hints: latest.current.hintsUsed }].slice(-100)
@@ -709,49 +714,6 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
             touchAction: "none",
           }}
         >
-          {path.length > 0 && (
-            <svg
-              aria-hidden="true"
-              viewBox={`0 0 ${boardSize} ${boardSize}`}
-              preserveAspectRatio="none"
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 3, pointerEvents: "none", overflow: "visible" }}
-            >
-              <defs>
-                <linearGradient id="zipSnakeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#FF6B6B" />
-                  <stop offset="24%" stopColor="#F6C85F" />
-                  <stop offset="48%" stopColor="#62C370" />
-                  <stop offset="72%" stopColor="#4D96FF" />
-                  <stop offset="100%" stopColor="#9B5DE5" />
-                </linearGradient>
-                <filter id="zipSnakeShadow" x="-30%" y="-30%" width="160%" height="160%">
-                  <feDropShadow dx="0" dy="0.05" stdDeviation="0.06" floodColor="#101828" floodOpacity="0.28" />
-                </filter>
-              </defs>
-              <polyline
-                points={path.map(([row, col]) => `${col + 0.5},${row + 0.5}`).join(" ")}
-                fill="none"
-                stroke="rgba(255,255,255,0.88)"
-                strokeWidth="0.34"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <polyline
-                points={path.map(([row, col]) => `${col + 0.5},${row + 0.5}`).join(" ")}
-                fill="none"
-                stroke="url(#zipSnakeGradient)"
-                strokeWidth="0.23"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                filter="url(#zipSnakeShadow)"
-              />
-              {path.length > 1 && (
-                <circle cx={path[0][1] + 0.5} cy={path[0][0] + 0.5} r="0.13" fill="#FF6B6B" stroke="#FFFFFF" strokeWidth="0.055" />
-              )}
-              <circle cx={path[path.length - 1][1] + 0.5} cy={path[path.length - 1][0] + 0.5} r="0.19" fill="#FFFFFF" stroke="#12946A" strokeWidth="0.09" />
-              <circle cx={path[path.length - 1][1] + 0.5} cy={path[path.length - 1][0] + 0.5} r="0.075" fill="#12946A" />
-            </svg>
-          )}
           {Array.from({ length: boardSize }, (_, r) =>
             Array.from({ length: boardSize }, (_, c) => {
               const key = `${r}-${c}`;
@@ -910,6 +872,43 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
                 vectorEffect="non-scaling-stroke"
               />
             ))}
+            {path.length > 1 && (
+              <circle
+                cx={((path[0][1] + 0.5) / boardSize) * 100}
+                cy={((path[0][0] + 0.5) / boardSize) * 100}
+                r="1.4"
+                fill={ZIP_GREEN}
+                stroke="#FFFFFF"
+                strokeWidth="0.6"
+                vectorEffect="non-scaling-stroke"
+              />
+            )}
+            <circle
+              cx={((path[path.length - 1][1] + 0.5) / boardSize) * 100}
+              cy={((path[path.length - 1][0] + 0.5) / boardSize) * 100}
+              r="1.9"
+              fill="#FFFFFF"
+              stroke={ZIP_GREEN}
+              strokeWidth="1"
+              vectorEffect="non-scaling-stroke"
+            />
+            {lastMoveIsTunnel && lastMove && (
+              <>
+                {[lastMove[0], lastMove[1]].map(([r, c], idx) => (
+                  <circle
+                    key={`warp-${path.length}-${idx}`}
+                    className="zp-warp"
+                    cx={((c + 0.5) / boardSize) * 100}
+                    cy={((r + 0.5) / boardSize) * 100}
+                    r="3.2"
+                    fill="none"
+                    stroke={tunnelInfo.get(`${r},${c}`)?.color || ZIP_GREEN}
+                    strokeWidth="1.2"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                ))}
+              </>
+            )}
           </svg>
 
           {solved && difficultyRating === null && (
