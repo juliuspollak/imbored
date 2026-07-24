@@ -93,7 +93,7 @@ export default function Login() {
   }
 
   async function handleSendCode(e) {
-    e.preventDefault();
+    e?.preventDefault?.();
     if (!email || sending || cooldown > 0) return;
 
     setSending(true);
@@ -225,8 +225,9 @@ export default function Login() {
               inputMode="numeric"
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ""))}
-              placeholder="Enter code"
-              maxLength={10}
+              placeholder="6-digit code"
+              autoComplete="one-time-code"
+              maxLength={6}
               className="w-full rounded-lg px-3 py-2.5 text-center text-lg tracking-[0.2em] mb-3 outline-none"
               style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
             />
@@ -237,7 +238,7 @@ export default function Login() {
               className="w-full rounded-lg py-2.5 text-sm font-semibold"
               style={{ background: ACCENT, color: "#FFFFFF", opacity: verifying ? 0.7 : 1 }}
             >
-              {verifying ? "Checking…" : "Continue"}
+              {verifying ? "Checking…" : "Verify and sign in"}
             </button>
             <div className="flex justify-between mt-3">
               <button type="button" onClick={() => { setSent(false); setCode(""); setError(null); }} style={{ color: INK, opacity: 0.5 }} className="text-xs">

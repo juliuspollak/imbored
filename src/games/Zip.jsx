@@ -573,13 +573,19 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
         @keyframes hintPulseError { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(217,105,92,1); } 50% { box-shadow: inset 0 0 0 3px rgba(217,105,92,0.25); } }
         @keyframes hintPulseNext { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(217,174,88,1); } 50% { box-shadow: inset 0 0 0 3px rgba(217,174,88,0.25); } }
         .zp-dot { animation: popIn 0.18s ease-out; }
-        @keyframes tunnelWarp { 0% { opacity: 0; transform: scale(.45); } 35% { opacity: 1; transform: scale(1.25); } 100% { opacity: 0; transform: scale(1.8); } }
-        .zp-warp { animation: tunnelWarp .55s ease-out both; transform-origin: center; }
+        @keyframes tunnelWarp {
+          0% { opacity: 0; transform: scale(0.22); }
+          18% { opacity: 0.95; transform: scale(0.92); }
+          55% { opacity: 0.72; transform: scale(1.75); }
+          100% { opacity: 0; transform: scale(2.9); }
+        }
+        .zp-warp { animation: tunnelWarp .9s cubic-bezier(.16,.84,.32,1) both; transform-origin: center; }
+        .zp-warp-secondary { animation-delay: .12s; opacity: 0; }
         .zp-card { animation: fadeUp 0.4s ease-out; }
         .zp-hint-error { animation: hintPulseError 1.1s ease-in-out infinite; }
         .zp-hint-next { animation: hintPulseNext 1.1s ease-in-out infinite; }
         @media (prefers-reduced-motion: reduce) {
-          .zp-dot, .zp-card, .zp-hint-error, .zp-hint-next { animation: none !important; }
+          .zp-dot, .zp-card, .zp-hint-error, .zp-hint-next, .zp-warp, .zp-warp-secondary { animation: none !important; }
         }
         @media (hover: hover) and (pointer: fine) {
           .zp-cell:hover { filter: brightness(1.25); }
@@ -859,24 +865,37 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
           })}
 
           <svg className="absolute inset-0 pointer-events-none" style={{ width: "100%", height: "100%" }} viewBox="0 0 100 100" preserveAspectRatio="none">
-            {pathSegments.map((seg, idx) => (
-              <polyline
-                key={idx}
-                points={seg.map(([r, c]) => `${((c + 0.5) / boardSize) * 100},${((r + 0.5) / boardSize) * 100}`).join(" ")}
-                fill="none"
-                stroke={orderConflict ? RED : ZIP_GREEN}
-                strokeWidth="1.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                opacity="0.85"
-                vectorEffect="non-scaling-stroke"
-              />
-            ))}
+            {pathSegments.map((seg, idx) => {
+              const points = seg.map(([r, c]) => `${((c + 0.5) / boardSize) * 100},${((r + 0.5) / boardSize) * 100}`).join(" ");
+              return (
+                <g key={idx}>
+                  <polyline
+                    points={points}
+                    fill="none"
+                    stroke={orderConflict ? "rgba(217,105,92,0.22)" : "rgba(52,168,83,0.20)"}
+                    strokeWidth="4.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                  <polyline
+                    points={points}
+                    fill="none"
+                    stroke={orderConflict ? RED : ZIP_GREEN}
+                    strokeWidth="2.7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity="0.98"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                </g>
+              );
+            })}
             {path.length > 1 && (
               <circle
                 cx={((path[0][1] + 0.5) / boardSize) * 100}
                 cy={((path[0][0] + 0.5) / boardSize) * 100}
-                r="1.4"
+                r="1.75"
                 fill={ZIP_GREEN}
                 stroke="#FFFFFF"
                 strokeWidth="0.6"
@@ -894,19 +913,43 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
             />
             {lastMoveIsTunnel && lastMove && (
               <>
-                {[lastMove[0], lastMove[1]].map(([r, c], idx) => (
-                  <circle
-                    key={`warp-${path.length}-${idx}`}
-                    className="zp-warp"
-                    cx={((c + 0.5) / boardSize) * 100}
-                    cy={((r + 0.5) / boardSize) * 100}
-                    r="3.2"
-                    fill="none"
-                    stroke={tunnelInfo.get(`${r},${c}`)?.color || ZIP_GREEN}
-                    strokeWidth="1.2"
-                    vectorEffect="non-scaling-stroke"
-                  />
-                ))}
+                {[lastMove[0], lastMove[1]].map(([r, c], idx) => {
+                  const warpColor = tunnelInfo.get(`${r},${c}`)?.color || ZIP_GREEN;
+                  const cx = ((c + 0.5) / boardSize) * 100;
+                  const cy = ((r + 0.5) / boardSize) * 100;
+                  return (
+                    <g key={`warp-${path.length}-${idx}`}>
+                      <circle
+                        className="zp-warp"
+                        cx={cx}
+                        cy={cy}
+                        r="3.8"
+                        fill="none"
+                        stroke={warpColor}
+                        strokeWidth="1.6"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                      <circle
+                        className="zp-warp zp-warp-secondary"
+                        cx={cx}
+                        cy={cy}
+                        r="2.6"
+                        fill="none"
+                        stroke={warpColor}
+                        strokeWidth="0.95"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                      <circle
+                        cx={cx}
+                        cy={cy}
+                        r="1.05"
+                        fill={warpColor}
+                        opacity="0.34"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                    </g>
+                  );
+                })}
               </>
             )}
           </svg>
