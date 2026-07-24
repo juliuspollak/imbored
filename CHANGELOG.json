@@ -1,8 +1,15 @@
 [
   {
+    "id": "v81-team-daily-challenge-messages",
+    "title": "Team Daily Challenge notifications",
+    "body": "When a team member finishes a Daily Challenge, every other teammate now receives an unread chat notification encouraging them to play. The update remains available for offline teammates, appears in Chats like any other unread message, and is generated only once per completed challenge result.",
+    "version": "v81",
+    "date": "2026-07-24"
+  },
+  {
     "id": "v69-bugfix-round",
     "title": "Poking, feedback editing, hint clarity, and hidden-player privacy fixes",
-    "body": "Fixed a chain where an admin-hidden player could still show up as \"online\" and pokeable \u2014 poking them was then silently blocked server-side with no feedback to the sender, which looked like poking was broken entirely. Feedback editing (and every other Feedback action) now surfaces a clear message if a save fails instead of quietly doing nothing. Tango's hint now shows which symbol (sun or moon) actually belongs in the highlighted cell. Geo's map no longer shows a stray focus-outline rectangle after tapping a region. Practice/Challenge mode now remembers your last choice across a refresh instead of reverting to your profile default every time. The \"new feedback\" balloon in the account menu is no longer near-transparent and hard to read on small screens. Also hardened the admin Games settings screen (including hint-cooldown values) to surface save failures instead of looking successful either way, and added a missing database policy that could silently block saving cooldown settings for a game.",
+    "body": "Fixed a chain where an admin-hidden player could still show up as \"online\" and pokeable — poking them was then silently blocked server-side with no feedback to the sender, which looked like poking was broken entirely. Feedback editing (and every other Feedback action) now surfaces a clear message if a save fails instead of quietly doing nothing. Tango's hint now shows which symbol (sun or moon) actually belongs in the highlighted cell. Geo's map no longer shows a stray focus-outline rectangle after tapping a region. Practice/Challenge mode now remembers your last choice across a refresh instead of reverting to your profile default every time. The \"new feedback\" balloon in the account menu is no longer near-transparent and hard to read on small screens. Also hardened the admin Games settings screen (including hint-cooldown values) to surface save failures instead of looking successful either way, and added a missing database policy that could silently block saving cooldown settings for a game.",
     "version": "v69",
     "date": "2026-07-24"
   },
@@ -89,7 +96,7 @@
   },
   {
     "id": "v55-release-reaction-rpc",
-    "title": "Reliable What\u2019s New reactions",
+    "title": "Reliable What’s New reactions",
     "body": "Fixed thumbs-up and thumbs-down reactions reverting after selection by saving them through an atomic authenticated database function.",
     "version": "v55",
     "date": "2026-07-23"
@@ -105,7 +112,7 @@
     "id": "2026-07-09-stats",
     "version": "v2",
     "title": "Stats tracking",
-    "body": "Every solved puzzle records your time, mistakes, and hints used \u2014 see it all on the Stats page.",
+    "body": "Every solved puzzle records your time, mistakes, and hints used — see it all on the Stats page.",
     "date": "2026-07-09"
   },
   {
@@ -119,7 +126,7 @@
     "id": "2026-07-12-challenge",
     "version": "v4",
     "title": "Challenge mode",
-    "body": "One attempt per puzzle per day, the exact same puzzle for everyone, locked to real calendar dates. Miss a day? You can still catch it up later \u2014 still just one shot.",
+    "body": "One attempt per puzzle per day, the exact same puzzle for everyone, locked to real calendar dates. Miss a day? You can still catch it up later — still just one shot.",
     "date": "2026-07-12"
   },
   {
@@ -161,7 +168,7 @@
     "id": "2026-07-19-mistakes-fix",
     "version": "v10",
     "title": "Fixed mistake counting in Tango",
-    "body": "Mistakes now only count when Hint actually catches something wrong \u2014 not on every tap. Matches how Queens already worked.",
+    "body": "Mistakes now only count when Hint actually catches something wrong — not on every tap. Matches how Queens already worked.",
     "date": "2026-07-19"
   },
   {
@@ -210,7 +217,7 @@
     "id": "2026-07-22-home-buttons",
     "version": "v17",
     "title": "Fixed missing Home buttons",
-    "body": "Teams, Stats, Feedback, Profile, and the Challenge screen all had a barely-visible back arrow \u2014 replaced with a clear, labeled Home button everywhere.",
+    "body": "Teams, Stats, Feedback, Profile, and the Challenge screen all had a barely-visible back arrow — replaced with a clear, labeled Home button everywhere.",
     "date": "2026-07-22"
   },
   {
@@ -238,7 +245,7 @@
     "id": "2026-07-22-release-notes",
     "version": "v21",
     "title": "This page",
-    "body": "Release notes are now fully automatic, synced from a changelog file on every deploy \u2014 nobody types these in by hand.",
+    "body": "Release notes are now fully automatic, synced from a changelog file on every deploy — nobody types these in by hand.",
     "date": "2026-07-22"
   },
   {
@@ -252,7 +259,7 @@
     "id": "2026-07-22-stats-split",
     "version": "v23",
     "title": "Stats split by Challenge/Practice",
-    "body": "Toggle between the two \u2014 practice is unlimited so its counts aren't really comparable, challenge is the fair one-shot-a-day metric. Each game shown separately, plus a total.",
+    "body": "Toggle between the two — practice is unlimited so its counts aren't really comparable, challenge is the fair one-shot-a-day metric. Each game shown separately, plus a total.",
     "date": "2026-07-22"
   },
   {
@@ -273,14 +280,14 @@
     "id": "2026-07-22-solved-home-button",
     "version": "v26",
     "title": "Fixed missing Home button on the Solved! screen",
-    "body": "The post-puzzle rating screen (challenge and practice mode both) had no way back to Home at all \u2014 only its own continue button. Added a back arrow, top-left.",
+    "body": "The post-puzzle rating screen (challenge and practice mode both) had no way back to Home at all — only its own continue button. Added a back arrow, top-left.",
     "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-mini-sudoku",
     "version": "v27",
     "title": "New game: Mini Sudoku",
-    "body": "6x6 sudoku, verified unique every time, difficulty scales through the week via clue count. Hint uses real solving techniques (naked/hidden singles, contradiction test) \u2014 never a guess. Works in both Challenge and Practice mode, same as the others. Also brought Queens/Tango/Zip's fonts in line with the rest of the app.",
+    "body": "6x6 sudoku, verified unique every time, difficulty scales through the week via clue count. Hint uses real solving techniques (naked/hidden singles, contradiction test) — never a guess. Works in both Challenge and Practice mode, same as the others. Also brought Queens/Tango/Zip's fonts in line with the rest of the app.",
     "date": "2026-07-22"
   },
   {
@@ -350,14 +357,14 @@
     "id": "2026-07-22-admingames-security-fix",
     "version": "v37",
     "title": "Fixed a gap in the new Games admin screen",
-    "body": "It didn't check admin status internally \u2014 the database would've blocked a non-admin from actually saving changes, but the screen would misleadingly let them try. Fixed.",
+    "body": "It didn't check admin status internally — the database would've blocked a non-admin from actually saving changes, but the screen would misleadingly let them try. Fixed.",
     "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-queens-no-guessing-fix",
     "version": "v38",
     "title": "Fixed Queens sometimes requiring a guess",
-    "body": "Found the real cause: some puzzles needed a brute-force deduction technique that's essentially unspottable by eye. Generation now rejects any layout that ever needs it \u2014 every hint step is now something a person could actually reason out, verified across dozens of test puzzles at every size.",
+    "body": "Found the real cause: some puzzles needed a brute-force deduction technique that's essentially unspottable by eye. Generation now rejects any layout that ever needs it — every hint step is now something a person could actually reason out, verified across dozens of test puzzles at every size.",
     "date": "2026-07-22"
   },
   {
@@ -392,14 +399,14 @@
     "id": "2026-07-22-hide-flash-fix",
     "version": "v43",
     "title": "Fixed hidden games flashing visible",
-    "body": "A hidden game would show briefly on every page load before disappearing. The config was loading async and defaulting to \"show everything\" in the meantime \u2014 now waits for the real answer first.",
+    "body": "A hidden game would show briefly on every page load before disappearing. The config was loading async and defaulting to \"show everything\" in the meantime — now waits for the real answer first.",
     "date": "2026-07-22"
   },
   {
     "id": "2026-07-22-rating-inline",
     "version": "v44",
     "title": "Rating moved onto the game screen",
-    "body": "No more jumping to a separate page after solving \u2014 the difficulty rating now appears right on the completed board. Challenge mode hides \"Play again\" since it's one attempt only; your result stays visible on the challenge screen's day list any time.",
+    "body": "No more jumping to a separate page after solving — the difficulty rating now appears right on the completed board. Challenge mode hides \"Play again\" since it's one attempt only; your result stays visible on the challenge screen's day list any time.",
     "date": "2026-07-22"
   },
   {
@@ -413,7 +420,7 @@
     "id": "2026-07-22-release-notes-reactions",
     "version": "v46",
     "title": "Thumbs up/down on What's New",
-    "body": "React to any update \u2014 thumbs up if it's working, thumbs down if it's not. A thumbs-down automatically creates an entry on the Feedback board (with an optional note about what went wrong), so it's actually followed up on, not just a silent downvote.",
+    "body": "React to any update — thumbs up if it's working, thumbs down if it's not. A thumbs-down automatically creates an entry on the Feedback board (with an optional note about what went wrong), so it's actually followed up on, not just a silent downvote.",
     "date": "2026-07-22"
   },
   {
@@ -483,7 +490,7 @@
     "id": "2026-07-catchup-rewards",
     "version": "v57",
     "title": "Points, streaks & levels",
-    "body": "Every solve earns points based on speed, mistakes, and hints \u2014 build a daily streak, level up over time, and spend points in the new Rewards shop (admin-approved redemptions, plus a wishlist and player-to-player transfers).",
+    "body": "Every solve earns points based on speed, mistakes, and hints — build a daily streak, level up over time, and spend points in the new Rewards shop (admin-approved redemptions, plus a wishlist and player-to-player transfers).",
     "date": "2026-07-23"
   },
   {
@@ -511,7 +518,7 @@
     "id": "2026-07-23-new-game-geo",
     "version": "v61",
     "title": "New game: Geo",
-    "body": "Five geography questions a day \u2014 a simplified world map plus capitals, landmarks, and native wildlife by continent. Difficulty ramps through the week from famous/easy to properly obscure. 50/50 hint available, same cooldown system as the other games.",
+    "body": "Five geography questions a day — a simplified world map plus capitals, landmarks, and native wildlife by continent. Difficulty ramps through the week from famous/easy to properly obscure. 50/50 hint available, same cooldown system as the other games.",
     "date": "2026-07-23"
   },
   {
@@ -524,8 +531,8 @@
   {
     "id": "2026-07-23-geo-map-redesign",
     "version": "v63",
-    "title": "Fixed Geo's map \u2014 it was genuinely bad",
-    "body": "The first version was built blind, without ever actually seeing it rendered, and it showed \u2014 unrecognizable blob shapes. Rebuilt with real visual verification this time (actual screenshots checked at each step, not guessed coordinates), so the continents now read clearly and are properly proportioned.",
+    "title": "Fixed Geo's map — it was genuinely bad",
+    "body": "The first version was built blind, without ever actually seeing it rendered, and it showed — unrecognizable blob shapes. Rebuilt with real visual verification this time (actual screenshots checked at each step, not guessed coordinates), so the continents now read clearly and are properly proportioned.",
     "date": "2026-07-23"
   },
   {
@@ -546,7 +553,7 @@
     "id": "2026-07-23-geo-countries-expansion",
     "version": "v66",
     "title": "Geo's question pool nearly tripled",
-    "body": "Added 118 countries (deliberately excluding every transcontinental/contested case \u2014 Russia, Turkey, Kazakhstan, the Caucasus, Cyprus \u2014 so nothing is debatable), bringing the total pool from ~60 facts to 177. Static data, no external API dependency, and this scale should hold up to daily play for a long time before repetition becomes noticeable.",
+    "body": "Added 118 countries (deliberately excluding every transcontinental/contested case — Russia, Turkey, Kazakhstan, the Caucasus, Cyprus — so nothing is debatable), bringing the total pool from ~60 facts to 177. Static data, no external API dependency, and this scale should hold up to daily play for a long time before repetition becomes noticeable.",
     "date": "2026-07-23"
   }
 ]

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, EyeOff, Lock, Crown } from "lucide-react";
+import { ArrowLeft, EyeOff, Lock, Crown, CheckCircle2, Clock3 } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 
@@ -39,7 +39,7 @@ export default function AdminPlayers({ onBack }) {
     }
     setLoading(true);
     const [{ data: profilesData }, { data: presenceData }] = await Promise.all([
-      supabase.from("profiles").select("id, name, icon, mood, is_private, is_admin, hidden_from_others").order("name", { ascending: true }),
+      supabase.from("profiles").select("id, name, icon, mood, is_private, is_admin, hidden_from_others, is_approved, approved_at").order("name", { ascending: true }),
       supabase.from("presence").select("user_id, last_seen"),
     ]);
     setPlayers(profilesData || []);
@@ -51,6 +51,11 @@ export default function AdminPlayers({ onBack }) {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  async function handleApproval(userId, approve) {
+    const { error } = await supabase.rpc("set_user_approval", { target_user_id: userId, approved: approve });
+    if (!error) refresh();
+  }
 
   async function handleToggleHidden(userId, currentlyHidden) {
     await setUserHidden(userId, !currentlyHidden);
@@ -110,22 +115,34 @@ export default function AdminPlayers({ onBack }) {
                       <span style={{ color: isOnlineNow ? GREEN : INK, opacity: isOnlineNow ? 1 : 0.4 }} className="text-[11px]">
                         {fmtLastSeen(seenIso)}
                       </span>
+                      {p.is_approved === false && <span className="text-[10px] font-semibold" style={{color:"#B7791F"}}>· Awaiting approval</span>}
                       {p.mood && <span style={{ color: INK, opacity: 0.35 }} className="text-[11px]">· {p.mood}</span>}
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleToggleHidden(p.id, p.hidden_from_others)}
-                    disabled={p.id === myProfile.id}
-                    className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
-                    style={{
-                      background: p.hidden_from_others ? "rgba(181,67,58,0.1)" : "rgba(16,24,40,0.05)",
-                      color: p.hidden_from_others ? "#B5433A" : INK,
-                      opacity: p.id === myProfile.id ? 0.25 : p.hidden_from_others ? 1 : 0.45,
-                    }}
-                  >
-                    <EyeOff size={12} />
-                    <span className="text-[10px] font-medium">{p.hidden_from_others ? "Hidden" : "Hide"}</span>
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {!p.is_admin && (p.is_approved === false ? (
+                      <button onClick={() => handleApproval(p.id, true)} className="flex items-center gap-1 rounded-full px-2.5 py-1.5" style={{ background: "rgba(22,163,74,.1)", color: "#15803D" }}>
+                        <CheckCircle2 size={12}/><span className="text-[10px] font-semibold">Approve</span>
+                      </button>
+                    ) : (
+                      <button onClick={() => handleApproval(p.id, false)} disabled={p.id === myProfile.id} className="flex items-center gap-1 rounded-full px-2 py-1.5" style={{ background: "rgba(16,24,40,.05)", color: INK, opacity: .45 }}>
+                        <Clock3 size={12}/><span className="text-[10px] font-medium">Approved</span>
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => handleToggleHidden(p.id, p.hidden_from_others)}
+                      disabled={p.id === myProfile.id}
+                      className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
+                      style={{
+                        background: p.hidden_from_others ? "rgba(181,67,58,0.1)" : "rgba(16,24,40,0.05)",
+                        color: p.hidden_from_others ? "#B5433A" : INK,
+                        opacity: p.id === myProfile.id ? 0.25 : p.hidden_from_others ? 1 : 0.45,
+                      }}
+                    >
+                      <EyeOff size={12} />
+                      <span className="text-[10px] font-medium">{p.hidden_from_others ? "Hidden" : "Hide"}</span>
+                    </button>
+                  </div>
                 </div>
               );
             })}

@@ -9,28 +9,28 @@ function todayString() {
   return `${y}-${m}-${day}`;
 }
 
-// Which games (by id) the current user has already completed today's
-// challenge for — used to show a "played" badge on the home screen
-// without needing to open each game to check.
-export function useTodayCompletions(userId) {
+// Completion badges are scoped. A personal completion must never mark the
+// same game complete in Team A or Team B.
+export function useTodayCompletions(userId, challengeScope = { type: "personal" }) {
   const [completed, setCompleted] = useState(new Set());
 
   useEffect(() => {
-    if (!supabaseReady || !userId) return;
+    if (!supabaseReady || !userId) { setCompleted(new Set()); return; }
     let cancelled = false;
-    supabase
+    let query = supabase
       .from("game_stats")
       .select("game")
       .eq("user_id", userId)
       .eq("mode", "challenge")
-      .eq("challenge_date", todayString())
-      .then(({ data }) => {
-        if (!cancelled) setCompleted(new Set((data || []).map((r) => r.game)));
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
+      .eq("challenge_date", todayString());
+    query = challengeScope?.type === "team"
+      ? query.eq("team_challenge_id", challengeScope.id)
+      : query.is("team_challenge_id", null);
+    query.then(({ data }) => {
+      if (!cancelled) setCompleted(new Set((data || []).map((r) => r.game)));
+    });
+    return () => { cancelled = true; };
+  }, [userId, challengeScope?.type, challengeScope?.id]);
 
   return completed;
 }

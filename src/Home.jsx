@@ -20,10 +20,22 @@ export const GAME_META = [
   { id: "geo", label: "Geo", desc: "Capitals, landmarks & wildlife by continent", icon: Globe2, accent: "#DB2777", available: true },
 ];
 
-export default function Home({ onSelect, playMode, onPlayModeChange, players = [], userId, onOpenProgress }) {
+export default function Home({ onSelect, playMode, onPlayModeChange, players = [], userId, onOpenProgress, challengeScope, onChallengeScopeChange }) {
   const { config: gameConfig, loading: gameConfigLoading } = useGameConfig();
-  const todayCompletions = useTodayCompletions(playMode === "challenge" ? userId : undefined);
+  const todayCompletions = useTodayCompletions(playMode === "challenge" ? userId : undefined, challengeScope);
   const [progress, setProgress] = useState(null);
+  const [teamChallenges, setTeamChallenges] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadTeamChallenges() {
+      if (!supabaseReady || !userId || playMode !== "challenge") return;
+      const { data } = await supabase.rpc("get_my_active_team_challenges");
+      if (!cancelled) setTeamChallenges(data || []);
+    }
+    loadTeamChallenges();
+    return () => { cancelled = true; };
+  }, [userId, playMode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -57,7 +69,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
             sortOrder: cfg ? cfg.sort_order : i,
           };
         })
-        .filter((g) => g.visible)
+        .filter((g) => g.visible && (playMode !== "challenge" || challengeScope?.type !== "team" || (challengeScope.gameIds || []).includes(g.id)))
         .sort((a, b) => a.sortOrder - b.sortOrder);
 
   return (
@@ -131,6 +143,39 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
             ? "one attempt a day, same puzzle for everyone — today only"
             : "any day, unlimited puzzles — nothing saved to your stats"}
         </p>
+        {playMode === "challenge" && onChallengeScopeChange && (
+          <div className="mb-6">
+            <div className="text-xs font-semibold mb-2" style={{ color: CREAM }}>Choose your challenge</div>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              <button
+                onClick={() => onChallengeScopeChange({ type: "personal", id: null, name: "My Challenge", gameIds: null })}
+                className="shrink-0 rounded-2xl px-4 py-3 text-left"
+                style={{ background: challengeScope?.type !== "team" ? "rgba(47,111,237,.12)" : PANEL, border: challengeScope?.type !== "team" ? "1px solid rgba(47,111,237,.35)" : "1px solid rgba(16,24,40,.09)" }}
+              >
+                <div className="text-lg">🎯</div><div className="text-xs font-bold mt-1">My Challenge</div><div className="text-[10px] opacity-45">All daily games</div>
+              </button>
+              {teamChallenges.map((tc) => {
+                const dayLabels = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+                const schedule = (tc.active_days || []).map((d) => dayLabels[d - 1]).filter(Boolean).join(" · ");
+                const selected = challengeScope?.id === tc.challenge_id;
+                return (
+                <button
+                  key={tc.challenge_id}
+                  disabled={!tc.active_today}
+                  onClick={() => tc.active_today && onChallengeScopeChange({ type: "team", id: tc.challenge_id, teamId: tc.team_id, name: tc.team_name, emoji: tc.team_emoji, gameIds: tc.game_ids, rewardPoints: tc.reward_points, activeDays: tc.active_days })}
+                  className="shrink-0 rounded-2xl px-4 py-3 text-left disabled:opacity-55"
+                  style={{ background: selected ? "rgba(47,111,237,.12)" : PANEL, border: selected ? "1px solid rgba(47,111,237,.35)" : "1px solid rgba(16,24,40,.09)", minWidth: 150 }}
+                >
+                  <div className="flex items-center justify-between gap-3"><span className="text-lg">{tc.team_emoji || "⭐"}</span>{tc.is_locked && <span className="text-[9px] rounded-full px-1.5 py-0.5" style={{background:"rgba(217,174,88,.15)",color:"#8A681D"}}>In progress</span>}</div>
+                  <div className="text-xs font-bold mt-1">{tc.team_name}</div>
+                  <div className="text-[10px] opacity-50 mt-0.5">{(tc.game_ids || []).length} games · {tc.reward_points || 0} pts</div>
+                  <div className="text-[9px] opacity-40 mt-1">{schedule || "No days selected"}</div>
+                  {!tc.active_today && <div className="text-[9px] font-semibold mt-1" style={{color:"#9F2F2A"}}>Not scheduled today</div>}
+                </button>
+              )})}
+            </div>
+          </div>
+        )}
 
         {gameConfigLoading ? (
           <p style={{ color: CREAM, opacity: 0.3 }} className="text-xs text-center py-8">Loading…</p>

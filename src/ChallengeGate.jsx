@@ -25,7 +25,7 @@ function describeAvg(avg) {
   return "Felt hard";
 }
 
-export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId, onExit, onSwitchMode, hintCooldownConfig, weekStartsOn = 1 }) {
+export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId, onExit, onSwitchMode, hintCooldownConfig, weekStartsOn = 1, challengeScope = { type: "personal" } }) {
   const dates = weekDates(new Date(), weekStartsOn);
   const todayIdx = todayIndex(new Date(), weekStartsOn);
   const dayLabels = weekDayLabels(weekStartsOn);
@@ -38,6 +38,8 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   const [rewardResult, setRewardResult] = useState(null);
   const [communityRatings, setCommunityRatings] = useState({}); // date -> { avg, count }
   const [leaderboards, setLeaderboards] = useState({}); // date -> [{ user_id, seconds, profiles }]
+  const [startError, setStartError] = useState("");
+  const [startingIdx, setStartingIdx] = useState(null);
 
   const refresh = useCallback(async () => {
     if (!supabaseReady || !userId) {
@@ -45,30 +47,17 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
       return;
     }
     setLoading(true);
+    const scopeQuery = (query) => challengeScope?.type === "team"
+      ? query.eq("team_challenge_id", challengeScope.id)
+      : query.is("team_challenge_id", null);
     const [{ data }, { data: allRatings }, { data: allTimes }] = await Promise.all([
-      supabase
-        .from("game_stats")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("game", gameId)
-        .eq("mode", "challenge")
-        .in("challenge_date", dates),
-      // everyone's ratings for this week's puzzles, not just this player's —
-      // this is what makes "how did this land for the group" possible
-      supabase
-        .from("game_stats")
-        .select("challenge_date, difficulty_rating")
-        .eq("game", gameId)
-        .eq("mode", "challenge")
-        .in("challenge_date", dates)
-        .not("difficulty_rating", "is", null),
-      // everyone's times, for the per-day leaderboard
-      supabase
-        .from("game_stats")
-        .select("challenge_date, user_id, seconds, profiles(name, icon)")
-        .eq("game", gameId)
-        .eq("mode", "challenge")
-        .in("challenge_date", dates),
+      scopeQuery(supabase.from("game_stats").select("*")
+        .eq("user_id", userId).eq("game", gameId).eq("mode", "challenge").in("challenge_date", dates)),
+      scopeQuery(supabase.from("game_stats").select("challenge_date, difficulty_rating")
+        .eq("game", gameId).eq("mode", "challenge").in("challenge_date", dates)
+        .not("difficulty_rating", "is", null)),
+      scopeQuery(supabase.from("game_stats").select("challenge_date, user_id, seconds, profiles(name, icon)")
+        .eq("game", gameId).eq("mode", "challenge").in("challenge_date", dates)),
     ]);
     const byDate = {};
     (data || []).forEach((row) => {
@@ -99,15 +88,38 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
 
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameId, userId]);
+  }, [gameId, userId, challengeScope?.id, challengeScope?.type]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
+  async function startChallenge(index) {
+    const date = dates[index];
+    setStartError("");
+    if (challengeScope?.type !== "team") {
+      setSavedStatId(null);
+      setPlayingIdx(index);
+      return;
+    }
+    setStartingIdx(index);
+    const { error } = await supabase.rpc("start_team_challenge_game", {
+      target_challenge_id: challengeScope.id,
+      target_game: gameId,
+      target_challenge_date: date,
+    });
+    setStartingIdx(null);
+    if (error) {
+      setStartError(error.message || "This team challenge cannot be started.");
+      return;
+    }
+    setSavedStatId(null);
+    setPlayingIdx(index);
+  }
+
   async function handleSolved(stats) {
     setSavedStatId(null);
-    const res = await saveStats(stats);
+    const res = await saveStats({ ...stats, teamChallengeId: challengeScope?.type === "team" ? challengeScope.id : null, teamId: challengeScope?.type === "team" ? challengeScope.teamId : null });
     if (res?.alreadyPlayed) {
       setAlreadyPlayedNotice(true);
       setPlayingIdx(null);
@@ -183,10 +195,10 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
             {gameLabel}
           </h1>
           <div className="inline-flex items-center rounded-full px-3 py-1 mt-2 text-xs font-semibold" style={{ background: "rgba(217,174,88,0.16)", color: "#9A6A12" }}>
-            Weekly Challenge
+            {challengeScope?.type === "team" ? `${challengeScope.emoji || "⭐"} ${challengeScope.name}` : "My Weekly Challenge"}
           </div>
           <p style={{ color: INK, opacity: 0.45 }} className="text-xs mt-2">
-            one attempt per day, same puzzle for everyone
+            {challengeScope?.type === "team" ? "one attempt for this team challenge" : "one personal attempt per day"}
           </p>
         </div>
 
@@ -194,6 +206,11 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           <div className="text-xs rounded-lg p-3 mb-4 flex items-center justify-between" style={{ background: "rgba(217,105,92,0.1)", color: "#B5433A" }}>
             <span>You already completed today's challenge — showing your original result.</span>
             <button onClick={() => setAlreadyPlayedNotice(false)}><X size={13} /></button>
+          </div>
+        )}
+        {startError && (
+          <div className="text-xs rounded-lg p-3 mb-4 flex items-center justify-between" style={{ background: "rgba(217,105,92,0.1)", color: "#B5433A" }}>
+            <span>{startError}</span><button onClick={() => setStartError("")}><X size={13} /></button>
           </div>
         )}
 
@@ -211,13 +228,12 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
               return (
                 <div key={date}>
                   <button
-                    disabled={isFuture}
+                    disabled={isFuture || startingIdx !== null}
                     onClick={() => {
                       if (isFuture) return;
                       if (result) setViewingIdx(isExpanded ? null : i);
                       else {
-                        setSavedStatId(null);
-                        setPlayingIdx(i);
+                        startChallenge(i);
                       }
                     }}
                     className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-left"

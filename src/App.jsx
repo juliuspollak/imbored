@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
-import { ArrowLeft, LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3, Star, Gift } from "lucide-react";
+import { ArrowLeft, LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3, Star, Gift, MessagesSquare } from "lucide-react";
 import Home from "./Home.jsx";
 import Login from "./Login.jsx";
 import ProfileSetup from "./ProfileSetup.jsx";
+import PendingApproval from "./PendingApproval.jsx";
 import PointsToast from "./PointsToast.jsx";
 import ModePill from "./ModePill.jsx";
 import ChallengeGate from "./ChallengeGate.jsx";
@@ -28,6 +29,7 @@ const AdminPlayers = lazy(() => import("./AdminPlayers.jsx"));
 const AdminGames = lazy(() => import("./AdminGames.jsx"));
 const Progress = lazy(() => import("./Progress.jsx"));
 const Chat = lazy(() => import("./Chat.jsx"));
+const Chats = lazy(() => import("./Chats.jsx"));
 const AdminRewards = lazy(() => import("./AdminRewards.jsx"));
 import { saveStats } from "./lib/saveStats.js";
 import { supabaseReady } from "./lib/supabase.js";
@@ -51,10 +53,12 @@ const GAME_COMPONENTS = {
 function AppShell() {
   const [active, setActive] = useState(null); // null | profile screens | a game id
   const [chatPlayer, setChatPlayer] = useState(null);
+  const [chatReturn, setChatReturn] = useState(null);
   // Challenge mode needs an account to mean anything (once-per-day + history
   // are tied to a user) — default to it when logged in, otherwise practice
   // is the only real option.
   const [playMode, setPlayMode] = useState("challenge");
+  const [challengeScope, setChallengeScope] = useState({ type: "personal", id: null, name: "My Challenge", gameIds: null });
   const { loading, user, profile, profileLoading, signOut } = useAuth();
   // profile.default_mode is a standing preference set in My Profile; it's
   // only meant to seed the FIRST session on a device. Once the player has
@@ -102,6 +106,7 @@ function AppShell() {
     if (!user) return <Login />;
     if (profileLoading) return <FullScreenMessage text="Loading your profile…" />;
     if (!profile) return <ProfileSetup />; // mandatory first-time setup, no onDone — nothing to go back to yet
+    if (!profile.is_admin && profile.is_approved === false) return <PendingApproval />;
   }
 
 
@@ -112,7 +117,21 @@ function AppShell() {
           currentUser={user}
           currentProfile={profile}
           peer={chatPlayer}
-          onBack={() => setChatPlayer(null)}
+          onBack={() => { setChatPlayer(null); if (chatReturn === "chats") setActive("chats"); setChatReturn(null); }}
+        />
+      </Suspense>
+    );
+  }
+
+
+  if (active === "chats") {
+    return (
+      <Suspense fallback={<FullScreenMessage text="Loading chats…" />}>
+        <Chats
+          currentUser={user}
+          currentProfile={profile}
+          onBack={() => setActive(null)}
+          onOpenChat={(player) => { setChatReturn("chats"); setChatPlayer(player); }}
         />
       </Suspense>
     );
@@ -199,6 +218,8 @@ function AppShell() {
           players={players}
           userId={user?.id}
           onOpenProgress={() => setActive("progress")}
+          challengeScope={challengeScope}
+          onChallengeScopeChange={setChallengeScope}
         />
         {supabaseReady && profile && (
           <AccountBadge
@@ -206,6 +227,7 @@ function AppShell() {
             onSignOut={signOut}
             onOpenProfile={() => setActive("profile")}
             onOpenTeams={() => setActive("teams")}
+            onOpenChats={() => setActive("chats")}
             onOpenStats={() => setActive("stats")}
             onOpenProgress={() => setActive("progress")}
             onOpenFeedback={() => setActive("feedback")}
@@ -219,7 +241,7 @@ function AppShell() {
             completedFeedbackCount={completedFeedbackCount}
             newTransfersCount={newTransfersCount}
             unreadMessages={unreadMessages}
-            onOpenChat={setChatPlayer}
+            onOpenChat={(player) => { setChatReturn(null); setChatPlayer(player); }}
           />
         )}
       </>
@@ -245,6 +267,7 @@ function AppShell() {
             onSwitchMode={() => setPlayMode("practice")}
             hintCooldownConfig={cfg}
             weekStartsOn={profile?.week_starts_on ?? 1}
+            challengeScope={challengeScope}
           />
         </Suspense>
       </ErrorBoundary>
@@ -320,7 +343,7 @@ function PracticePlay({ Current, userId, onExit, onSwitchMode, hintCooldownConfi
   );
 }
 
-function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, unreadMessages = { total: 0, bySender: {} }, onOpenChat }) {
+function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, unreadMessages = { total: 0, bySender: {} }, onOpenChat }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const isAdmin = !!profile.is_admin;
@@ -335,6 +358,7 @@ function AccountBadge({ profile, onSignOut, onOpenProfile, onOpenTeams, onOpenSt
   const items = [
     { id: "profile", onClick: onOpenProfile, icon: User, label: "My profile", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
     { id: "whatsnew", onClick: onOpenWhatsNew, icon: Sparkles, label: "What's new", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
+    { id: "chats", onClick: onOpenChats, icon: MessagesSquare, label: unreadMessages.total > 0 ? "Chats · new" : "Chats", glow: "rgba(79,70,229,0.35)", border: "rgba(79,70,229,0.4)", badge: unreadMessages.total },
     { id: "feedback", onClick: onOpenFeedback, icon: MessageSquare, label: completedFeedbackCount > 0 ? "Feedback · update" : "Feedback", glow: "rgba(139,92,246,0.35)", border: "rgba(139,92,246,0.4)", badge: feedbackBadgeCount },
     { id: "stats", onClick: onOpenStats, icon: BarChart3, label: "Stats", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
     { id: "progress", onClick: onOpenProgress, icon: Star, label: newTransfersCount > 0 ? "My progress · new" : "My progress", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)", badge: newTransfersCount },

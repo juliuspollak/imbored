@@ -16,6 +16,16 @@ export function AuthProvider({ children }) {
     setProfileLoading(false);
   }, []);
 
+  const refreshProfile = useCallback(async () => {
+    if (session?.user?.id) await loadProfile(session.user.id);
+  }, [session?.user?.id, loadProfile]);
+
+  useEffect(() => {
+    if (!session?.user?.id || profile?.is_approved !== false) return;
+    const timer = window.setInterval(() => loadProfile(session.user.id), 10000);
+    return () => window.clearInterval(timer);
+  }, [session?.user?.id, profile?.is_approved, loadProfile]);
+
   useEffect(() => {
     if (!supabaseReady) {
       setSession(null);
@@ -101,17 +111,18 @@ export function AuthProvider({ children }) {
 
   async function saveProfile({ name, icon, is_private, mood, default_mode, show_stats_to_others, week_starts_on }) {
     if (!supabaseReady || !session) return { error: new Error("Not logged in") };
-    const patch = { id: session.user.id };
-    if (name !== undefined) patch.name = name;
-    if (icon !== undefined) patch.icon = icon;
-    if (is_private !== undefined) patch.is_private = is_private;
-    if (mood !== undefined) patch.mood = mood;
-    if (default_mode !== undefined) patch.default_mode = default_mode;
-    if (show_stats_to_others !== undefined) patch.show_stats_to_others = show_stats_to_others;
-    if (week_starts_on !== undefined) patch.week_starts_on = week_starts_on;
-    const { data, error } = await supabase.from("profiles").upsert(patch).select().single();
-    if (!error) setProfile(data);
-    return { data, error };
+    const { data, error } = await supabase.rpc("save_my_profile", {
+      profile_name: name ?? null,
+      profile_icon: icon ?? null,
+      profile_is_private: is_private ?? null,
+      profile_mood: mood ?? null,
+      profile_default_mode: default_mode ?? null,
+      profile_show_stats: show_stats_to_others ?? null,
+      profile_week_starts_on: week_starts_on ?? null,
+    });
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!error && row) setProfile(row);
+    return { data: row, error };
   }
 
   async function createTeam(name, emoji = "⭐") {
@@ -171,6 +182,7 @@ export function AuthProvider({ children }) {
     joinTeam,
     leaveTeam,
     setUserHidden,
+    refreshProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

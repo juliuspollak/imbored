@@ -8,7 +8,7 @@ import { supabase, supabaseReady } from "./supabase.js";
 // afterward) or { alreadyPlayed: true } if this was a challenge-mode save
 // that hit the one-per-day constraint — a real, expected outcome (two tabs
 // open, a stale page finishing late), not an error to swallow silently.
-export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hints, mode = "practice", challengeDate }) {
+export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hints, mode = "practice", challengeDate, teamChallengeId = null, teamId = null }) {
   if (!supabaseReady || !userId) return {};
   try {
     const { data, error } = await supabase
@@ -22,6 +22,8 @@ export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hin
         hints,
         mode,
         challenge_date: mode === "challenge" ? challengeDate : null,
+        team_challenge_id: mode === "challenge" ? teamChallengeId : null,
+        team_id: mode === "challenge" ? teamId : null,
       })
       .select()
       .single();
