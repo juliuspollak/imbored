@@ -86,13 +86,21 @@ Deno.serve(async (req) => {
     }
 
     if (action === "delete") {
+      // Validate before changing either system. The old order marked the
+      // profile deleted first; if Auth deletion then failed, the target was
+      // left with a live login attached to a disabled historical profile.
+      const { error: validationError } = await caller.rpc("validate_account_deletion", {
+        target_user_id: targetUserId,
+      });
+      if (validationError) throw validationError;
+
+      const { error: deleteError } = await admin.auth.admin.deleteUser(targetUserId, false);
+      if (deleteError) throw deleteError;
+
       const { error: prepError } = await caller.rpc("prepare_account_deletion", {
         target_user_id: targetUserId,
       });
       if (prepError) throw prepError;
-
-      const { error: deleteError } = await admin.auth.admin.deleteUser(targetUserId, false);
-      if (deleteError) throw deleteError;
     } else {
       const blocked = action === "block";
       const { error: authError } = await admin.auth.admin.updateUserById(targetUserId, {

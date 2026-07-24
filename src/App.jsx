@@ -61,6 +61,13 @@ function AppShell() {
   const [playMode, setPlayMode] = useState("challenge");
   const [challengeScope, setChallengeScope] = useState({ type: "personal", id: null, name: "My Challenge", gameIds: null });
   const { loading, user, profile, profileLoading, signOut } = useAuth();
+  useEffect(() => {
+    if (!profile?.account_deleted_at) return;
+    // A historical/deleted profile must never render the Login component
+    // while its old Auth session is still active. Clear the local session
+    // first so a fresh email, Google or passkey sign-in can start cleanly.
+    void signOut();
+  }, [profile?.account_deleted_at, signOut]);
   // profile.default_mode is a standing preference set in My Profile; it's
   // only meant to seed the FIRST session on a device. Once the player has
   // actually picked a mode here, that choice should survive a refresh
@@ -125,7 +132,7 @@ function AppShell() {
     if (!user) return <Login />;
     if (profileLoading) return <FullScreenMessage text="Loading your profile…" />;
     if (!profile) return <ProfileSetup />; // mandatory first-time setup, no onDone — nothing to go back to yet
-    if (profile.account_deleted_at) return <Login />;
+    if (profile.account_deleted_at) return <FullScreenMessage text="Signing out deleted account…" />;
     if (profile.is_blocked) return <BlockedAccount />;
     if (!profile.is_admin && profile.is_approved === false) return <PendingApproval />;
   }

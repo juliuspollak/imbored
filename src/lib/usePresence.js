@@ -16,19 +16,36 @@ import { useAuth } from "./AuthContext.jsx";
 export function usePresence(game, mode) {
   const { user, profile } = useAuth();
   const isPrivate = profile?.is_private;
+  const canWritePresence =
+    !!user &&
+    !!profile &&
+    !profile.account_deleted_at &&
+    !profile.is_blocked &&
+    (profile.is_admin || profile.is_approved !== false);
 
   useEffect(() => {
-    if (!supabaseReady || !user) return;
+    if (!supabaseReady || !user || !profile) return;
 
     if (isPrivate) {
       supabase.from("presence").delete().eq("user_id", user.id).then();
       return;
     }
 
+    // Presence writes are protected by the approved-user trigger. Do not
+    // repeatedly send requests for incomplete, blocked or deleted profiles:
+    // those writes are correctly rejected with 403 and can otherwise keep a
+    // stale/deleted Auth session busy while the app is trying to sign it out.
+    if (!canWritePresence) return;
+
     let cancelled = false;
     const beat = () => {
       if (cancelled) return;
-      supabase.from("presence").upsert({ user_id: user.id, game, mode: game ? mode : null, last_seen: new Date().toISOString() }).then();
+      supabase
+        .from("presence")
+        .upsert({ user_id: user.id, game, mode: game ? mode : null, last_seen: new Date().toISOString() })
+        .then(({ error }) => {
+          if (error && error.code !== "42501") console.warn("Unable to update presence:", error.message);
+        });
     };
 
     beat();
@@ -38,5 +55,5 @@ export function usePresence(game, mode) {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [game, mode, user, isPrivate]);
+  }, [game, mode, user, profile, isPrivate, canWritePresence]);
 }

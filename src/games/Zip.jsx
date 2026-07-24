@@ -774,63 +774,20 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
                       background: "rgba(255,255,255,0.18)",
                     }}
                   >
-                    <svg
-                      viewBox="0 0 100 100"
-                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
-                      aria-hidden="true"
-                    >
-                      <defs>
-                        <radialGradient id={`bhDepth-${r}-${c}`} cx="45%" cy="42%" r="60%">
-                          <stop offset="0%" stopColor="#000000" />
-                          <stop offset="72%" stopColor="#030303" />
-                          <stop offset="100%" stopColor="#171717" />
-                        </radialGradient>
-                        <filter id={`bhShadow-${r}-${c}`} x="-35%" y="-35%" width="170%" height="170%">
-                          <feGaussianBlur stdDeviation="3.5" />
-                        </filter>
-                      </defs>
-
-                      <g fill="none" stroke="#181818" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M27 27 L19 16 L12 18 L8 8" strokeWidth="2.3" />
-                        <path d="M24 35 L12 31 L7 35 L1 29" strokeWidth="1.8" />
-                        <path d="M22 45 L10 44 L5 50 L0 48" strokeWidth="2.1" />
-                        <path d="M24 57 L13 63 L8 60 L2 69" strokeWidth="2.2" />
-                        <path d="M29 69 L20 78 L13 77 L10 88" strokeWidth="1.8" />
-                        <path d="M39 76 L35 90 L29 94" strokeWidth="2.1" />
-                        <path d="M55 78 L59 90 L67 96" strokeWidth="1.9" />
-                        <path d="M68 72 L79 83 L88 82 L94 91" strokeWidth="2.2" />
-                        <path d="M76 61 L89 67 L94 63 L100 69" strokeWidth="1.9" />
-                        <path d="M78 48 L91 45 L96 49 L100 44" strokeWidth="2.2" />
-                        <path d="M75 36 L86 28 L93 31 L99 23" strokeWidth="1.9" />
-                        <path d="M68 27 L76 14 L84 14 L88 5" strokeWidth="2.2" />
-                        <path d="M54 22 L57 9 L52 3" strokeWidth="1.8" />
-                        <path d="M39 23 L34 13 L26 10 L25 3" strokeWidth="2" />
-                      </g>
-
-                      <g fill="none" stroke="#4A4A4A" strokeLinecap="round" opacity="0.72">
-                        <path d="M27 27 L20 23 L15 24" strokeWidth="1.1" />
-                        <path d="M24 35 L18 39 L12 38" strokeWidth="1" />
-                        <path d="M24 57 L18 54 L12 57" strokeWidth="1.1" />
-                        <path d="M29 69 L27 79 L21 83" strokeWidth="1" />
-                        <path d="M68 72 L72 82 L78 88" strokeWidth="1.1" />
-                        <path d="M76 61 L85 58 L91 60" strokeWidth="1" />
-                        <path d="M75 36 L84 38 L90 35" strokeWidth="1.1" />
-                        <path d="M68 27 L65 17 L69 10" strokeWidth="1" />
-                      </g>
-
-                      <ellipse cx="50" cy="51" rx="31" ry="30" fill="#000000" opacity="0.34" filter={`url(#bhShadow-${r}-${c})`} />
-                      <path
-                        d="M29 29 C37 21, 48 19, 59 22 C70 25, 78 35, 79 47 C81 59, 74 70, 64 77 C52 83, 39 79, 30 70 C22 62, 19 50, 23 40 C24 35, 26 32, 29 29 Z"
-                        fill={`url(#bhDepth-${r}-${c})`}
-                      />
-                      <path
-                        d="M29 29 C37 21, 48 19, 59 22 C70 25, 78 35, 79 47 C81 59, 74 70, 64 77 C52 83, 39 79, 30 70 C22 62, 19 50, 23 40 C24 35, 26 32, 29 29 Z"
-                        fill="none"
-                        stroke="#111111"
-                        strokeWidth="3"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
+                    <img
+                      src="/assets/zip-black-hole-d1.png"
+                      alt=""
+                      draggable="false"
+                      style={{
+                        position: "absolute",
+                        inset: "9%",
+                        width: "82%",
+                        height: "82%",
+                        objectFit: "contain",
+                        pointerEvents: "none",
+                        userSelect: "none",
+                      }}
+                    />
                   </div>
                 );
               }

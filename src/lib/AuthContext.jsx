@@ -11,9 +11,16 @@ export function AuthProvider({ children }) {
   const loadProfile = useCallback(async (userId) => {
     if (!supabaseReady || !userId) return;
     setProfileLoading(true);
-    const { data } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+    const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+    if (error) {
+      console.error("Unable to load signed-in profile:", error);
+      setProfile(null);
+      setProfileLoading(false);
+      return null;
+    }
     setProfile(data || null);
     setProfileLoading(false);
+    return data || null;
   }, []);
 
   const refreshProfile = useCallback(async () => {
@@ -81,7 +88,12 @@ export function AuthProvider({ children }) {
       }
 
       setSession(newSession);
-      loadProfile(newSession.user.id);
+      // Do not start another Supabase request from inside the auth callback.
+      // Deferring avoids contention with Supabase's session lock during token
+      // refresh and OAuth completion.
+      window.setTimeout(() => {
+        if (!cancelled) loadProfile(newSession.user.id);
+      }, 0);
     });
 
     async function checkSessionWhenVisible() {
@@ -135,10 +147,12 @@ export function AuthProvider({ children }) {
 
   async function signInWithGoogle() {
     if (!supabaseReady) return { error: new Error("Supabase isn't configured yet") };
-    return supabase.auth.signInWithOAuth({
+    const result = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: `${window.location.origin}/`, skipBrowserRedirect: true },
     });
+    if (!result.error && result.data?.url) window.location.assign(result.data.url);
+    return result;
   }
 
   // Discoverable-credential sign-in: no email needed upfront, the
@@ -179,10 +193,12 @@ export function AuthProvider({ children }) {
 
   async function linkGoogleIdentity() {
     if (!supabaseReady || !session) return { error: new Error("Not logged in") };
-    return supabase.auth.linkIdentity({
+    const result = await supabase.auth.linkIdentity({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/` },
+      options: { redirectTo: `${window.location.origin}/`, skipBrowserRedirect: true },
     });
+    if (!result.error && result.data?.url) window.location.assign(result.data.url);
+    return result;
   }
 
   async function unlinkIdentity(identity) {
