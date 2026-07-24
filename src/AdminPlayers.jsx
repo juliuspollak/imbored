@@ -34,6 +34,8 @@ export default function AdminPlayers({ onBack }) {
   const [actionTarget, setActionTarget] = useState(null);
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState(null);
+  const [approvingId, setApprovingId] = useState(null);
+  const [notice, setNotice] = useState("");
 
   const refresh = useCallback(async () => {
     if (!supabaseReady || !isAdmin) {
@@ -61,8 +63,24 @@ export default function AdminPlayers({ onBack }) {
   useEffect(() => { refresh(); }, [refresh]);
 
   async function handleApproval(userId, approved) {
-    const { error } = await supabase.rpc("set_user_approval", { target_user_id: userId, approved });
-    if (!error) refresh();
+    setNotice("");
+    if (!approved) {
+      const { error } = await supabase.rpc("set_user_approval", { target_user_id: userId, approved });
+      setNotice(error?.message || "Approval is now required.");
+      if (!error) refresh();
+      return;
+    }
+    setApprovingId(userId);
+    const { data, error } = await adminAccountAction("approve", userId);
+    setApprovingId(null);
+    if (error) {
+      setNotice(error.message || "Approval failed.");
+      return;
+    }
+    setNotice(data?.emailSent
+      ? "Player approved. Supabase sent the approval sign-in email."
+      : `Player approved, but the email was not sent${data?.emailError ? `: ${data.emailError}` : "."}`);
+    refresh();
   }
 
   async function handleToggleHidden(player) {
@@ -114,8 +132,8 @@ export default function AdminPlayers({ onBack }) {
             </div>
           </div>
           {approval && (
-            <button onClick={() => handleApproval(player.id, true)} className="rounded-full px-3 py-2 text-xs font-semibold flex items-center gap-1" style={{ background: "rgba(22,163,74,.1)", color: "#15803D" }}>
-              <CheckCircle2 size={13}/>Approve
+            <button disabled={approvingId === player.id} onClick={() => handleApproval(player.id, true)} className="rounded-full px-3 py-2 text-xs font-semibold flex items-center gap-1 disabled:opacity-50" style={{ background: "rgba(22,163,74,.1)", color: "#15803D" }}>
+              <CheckCircle2 size={13}/>{approvingId === player.id ? "Approving…" : "Approve"}
             </button>
           )}
           {!player.is_admin && <button onClick={() => setExpandedId(expanded ? null : player.id)} className="grid place-items-center rounded-full" style={{ width: 32, height: 32, background: "rgba(16,24,40,.045)" }} aria-label={`More actions for ${player.name}`}>
@@ -144,6 +162,7 @@ export default function AdminPlayers({ onBack }) {
           <button onClick={onBack} className="grid place-items-center rounded-full" style={{ width: 36, height: 36, background: "rgba(16,24,40,.05)" }} aria-label="Back"><ArrowLeft size={17}/></button>
           <div><h1 className="text-2xl font-bold" style={{ fontFamily: "'Fredoka',sans-serif" }}>Players</h1><p className="text-xs opacity-45">Approvals first, account controls when needed</p></div>
         </header>
+        {notice && <div className="rounded-2xl px-3 py-2.5 mb-4 text-xs" style={{ background:"rgba(47,111,237,.08)", color:INK }}>{notice}</div>}
 
         {!supabaseReady ? <p className="text-sm">Supabase isn’t configured.</p>
           : !isAdmin ? <p className="text-sm text-center opacity-45 py-10">Admin only.</p>
