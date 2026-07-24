@@ -119,13 +119,21 @@ function AppShell() {
     (async () => {
       const [{ data: views }, { data: notes }, { data: requests }] = await Promise.all([
         supabase.from("user_section_views").select("section,viewed_at").eq("user_id", user.id),
-        supabase.from("release_notes").select("created_at").eq("is_hidden", false).is("deleted_at", null).order("created_at", { ascending:false }).limit(1),
-        supabase.from("team_join_requests").select("created_at,status,requester_id,team_id").or(`requester_id.eq.${user.id}`)
+        // Keep this bootstrap query compatible with databases that predate the
+        // optional release-note visibility and soft-delete columns. The full
+        // release-notes screen applies those filters when the columns exist.
+        supabase.from("release_notes").select("created_at").order("created_at", { ascending:false }).limit(1),
+        // RLS already limits this table to the requester and the team owner.
+        // Its schema uses user_id/requested_at (not requester_id/created_at).
+        supabase.from("team_join_requests").select("requested_at,decided_at,status,user_id,team_id")
       ]);
       if (cancelled) return;
       const vm = Object.fromEntries((views || []).map(v => [v.section, new Date(v.viewed_at).getTime()]));
       const latestNote = notes?.[0]?.created_at ? new Date(notes[0].created_at).getTime() : 0;
-      const latestTeam = Math.max(0, ...(requests || []).map(r => new Date(r.created_at).getTime()));
+      const latestTeam = Math.max(
+        0,
+        ...(requests || []).map(r => new Date(r.decided_at || r.requested_at).getTime())
+      );
       setSectionSignals({ whatsnew: latestNote > (vm.whatsnew || 0), teams: latestTeam > (vm.teams || 0) });
     })();
     return () => { cancelled = true; };
