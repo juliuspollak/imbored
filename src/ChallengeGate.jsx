@@ -153,7 +153,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           onSolved={handleSolved}
           mode="challenge"
           forcedDayIdx={playingIdx}
-          seed={`${gameId}-${date}`}
+          seed={`${gameId}-${date}${challengeScope?.type === "team" ? `-team-${challengeScope.id}` : ""}`}
           challengeDate={date}
           hintCooldownConfig={hintCooldownConfig}
           savedStatId={savedStatId}

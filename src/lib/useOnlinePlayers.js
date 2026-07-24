@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import { supabase, supabaseReady } from "./supabase.js";
 import { attachRealtimeRefresh } from "./realtimeRefresh.js";
 
-// Anyone whose last heartbeat (see usePresence) was within this window
-// counts as "currently online" — a little more than the 20s heartbeat
-// interval so a slightly-delayed beat doesn't flicker someone offline.
-const ONLINE_WINDOW_MS = 45000;
+// Allow two heartbeat intervals plus normal network jitter before someone
+// drops out of the online list.
+const ONLINE_WINDOW_MS = 105000;
 
 export function useOnlinePlayers({ includeHidden = false } = {}) {
   const [players, setPlayers] = useState([]);

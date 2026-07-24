@@ -1,5 +1,17 @@
 import { supabase } from "./supabase.js";
 
+let lastPageActivityAt = Date.now();
+let activityListenersReady = false;
+
+function ensureActivityListeners() {
+  if (activityListenersReady || typeof document === "undefined") return;
+  activityListenersReady = true;
+  const noteActivity = () => { lastPageActivityAt = Date.now(); };
+  document.addEventListener("pointerdown", noteActivity, { passive: true });
+  document.addEventListener("keydown", noteActivity);
+  document.addEventListener("touchstart", noteActivity, { passive: true });
+}
+
 // Realtime is the primary update path. A deliberately slow fallback covers
 // temporary websocket interruptions without returning to aggressive polling.
 export function attachRealtimeRefresh({
@@ -7,7 +19,14 @@ export function attachRealtimeRefresh({
   tables,
   refresh,
   fallbackMs = 120000,
+  visibleRefreshAgeMs = 30000,
 }) {
+  ensureActivityListeners();
+  let lastRefreshAt = Date.now();
+  const requestRefresh = () => {
+    lastRefreshAt = Date.now();
+    return refresh();
+  };
   const channel = tables.length > 0 ? supabase.channel(channelName) : null;
   if (channel) {
     for (const table of tables) {
@@ -19,23 +38,33 @@ export function attachRealtimeRefresh({
           table: table.name,
           ...(table.filter ? { filter: table.filter } : {}),
         },
-        refresh,
+        requestRefresh,
       );
     }
     channel.subscribe();
   }
 
-  const refreshWhenVisible = () => {
-    if (document.visibilityState === "visible") refresh();
+  const refreshWhenVisible = (force = false) => {
+    if (
+      document.visibilityState === "visible"
+      && Date.now() - lastRefreshAt >= visibleRefreshAgeMs
+      && (force || Date.now() - lastPageActivityAt <= 120000)
+    ) {
+      requestRefresh();
+    }
   };
-  document.addEventListener("visibilitychange", refreshWhenVisible);
-  window.addEventListener("focus", refreshWhenVisible);
-  const fallback = window.setInterval(refreshWhenVisible, fallbackMs);
+  const onVisibilityChange = () => {
+    if (document.visibilityState === "visible") {
+      lastPageActivityAt = Date.now();
+      refreshWhenVisible(true);
+    }
+  };
+  document.addEventListener("visibilitychange", onVisibilityChange);
+  const fallback = window.setInterval(() => refreshWhenVisible(false), fallbackMs);
 
   return () => {
     window.clearInterval(fallback);
-    document.removeEventListener("visibilitychange", refreshWhenVisible);
-    window.removeEventListener("focus", refreshWhenVisible);
+    document.removeEventListener("visibilitychange", onVisibilityChange);
     if (channel) void supabase.removeChannel(channel);
   };
 }

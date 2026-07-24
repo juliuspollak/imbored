@@ -1,11 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase, supabaseReady } from "./supabase.js";
 import { useAuth } from "./AuthContext.jsx";
 
 // Call with the game id ('queens' | 'tango' | 'zip' | 'minisudoku') while
 // that game's screen is mounted, or null while just browsing elsewhere.
-// Writes a heartbeat every 20s so a "currently playing" query can treat
-// anyone seen in the last ~45s as online.
+// Writes a heartbeat while the player is actually active. A visible tab with
+// no interaction goes quiet after two minutes, so leaving the app open does
+// not create endless database traffic or make someone look online forever.
 //
 // Deliberately does NOT delete the row when a screen unmounts or the tab
 // closes — it just stops updating. That's what makes "last seen" possible:
@@ -15,19 +16,23 @@ import { useAuth } from "./AuthContext.jsx";
 // existing row immediately, since privacy means not being tracked at all.
 export function usePresence(game, mode) {
   const { user, profile } = useAuth();
+  const presenceValueRef = useRef({ game, mode });
+  presenceValueRef.current = { game, mode };
   const isPrivate = profile?.is_private;
+  const userId = user?.id;
+  const hasProfile = !!profile;
   const canWritePresence =
-    !!user &&
+    !!userId &&
     !!profile &&
     !profile.account_deleted_at &&
     !profile.is_blocked &&
     (profile.is_admin || profile.is_approved !== false);
 
   useEffect(() => {
-    if (!supabaseReady || !user || !profile) return;
+    if (!supabaseReady || !userId || !hasProfile) return;
 
     if (isPrivate) {
-      supabase.from("presence").delete().eq("user_id", user.id).then();
+      supabase.from("presence").delete().eq("user_id", userId).then();
       return;
     }
 
@@ -38,22 +43,54 @@ export function usePresence(game, mode) {
     if (!canWritePresence) return;
 
     let cancelled = false;
+    let lastActivityAt = Date.now();
+    let lastBeatAt = 0;
     const beat = () => {
-      if (cancelled) return;
+      if (
+        cancelled
+        || document.visibilityState !== "visible"
+        || Date.now() - lastActivityAt > 120000
+      ) return;
+      lastBeatAt = Date.now();
+      const current = presenceValueRef.current;
       supabase
         .from("presence")
-        .upsert({ user_id: user.id, game, mode: game ? mode : null, last_seen: new Date().toISOString() })
+        .upsert({
+          user_id: userId,
+          game: current.game,
+          mode: current.game ? current.mode : null,
+          last_seen: new Date().toISOString(),
+        })
         .then(({ error }) => {
           if (error && error.code !== "42501") console.warn("Unable to update presence:", error.message);
         });
     };
+    const noteActivity = () => {
+      const wasIdle = Date.now() - lastActivityAt > 120000;
+      lastActivityAt = Date.now();
+      if (wasIdle || Date.now() - lastBeatAt > 45000) beat();
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        lastActivityAt = Date.now();
+        beat();
+      }
+    };
 
     beat();
-    const interval = setInterval(beat, 20000);
+    const interval = setInterval(beat, 45000);
+    document.addEventListener("pointerdown", noteActivity, { passive: true });
+    document.addEventListener("keydown", noteActivity);
+    document.addEventListener("touchstart", noteActivity, { passive: true });
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
       cancelled = true;
       clearInterval(interval);
+      document.removeEventListener("pointerdown", noteActivity);
+      document.removeEventListener("keydown", noteActivity);
+      document.removeEventListener("touchstart", noteActivity);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [game, mode, user, profile, isPrivate, canWritePresence]);
+  }, [userId, isPrivate, canWritePresence, hasProfile]);
 }

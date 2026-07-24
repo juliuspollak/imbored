@@ -284,6 +284,19 @@ function findForcedCell(board, edgeMap) {
   return null;
 }
 
+function getCompletedLines(board, solution) {
+  const lines = [];
+  for (let index = 0; index < SIZE; index++) {
+    if (board[index].every((value, column) => value === solution[index][column])) {
+      lines.push(`row-${index}`);
+    }
+    if (board.every((row, rowIndex) => row[index] === solution[rowIndex][index])) {
+      lines.push(`col-${index}`);
+    }
+  }
+  return lines;
+}
+
 /* ---------------- design tokens ---------------- */
 
 const BG = "#F1F3F7";
@@ -326,7 +339,10 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
   const [hintCell, setHintCell] = useState(null);
   const [history, setHistory] = useState([]);
   const [showHelp, setShowHelp] = useState(false);
+  const [celebratingLines, setCelebratingLines] = useState([]);
   const timerRef = useRef(null);
+  const completedLinesRef = useRef(new Set());
+  const celebrationTimerRef = useRef(null);
 
   const newPuzzle = useCallback((dIdx) => {
     const gen = () => generatePuzzle(GIVEN_TARGETS[dIdx], EDGE_TARGETS[dIdx]);
@@ -341,6 +357,9 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     setDifficultyRating(null);
     setHintCell(null);
     setHistory([]);
+    setCelebratingLines([]);
+    completedLinesRef.current = new Set(getCompletedLines(p.givens, p.solution));
+    window.clearTimeout(celebrationTimerRef.current);
     hintCooldown.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isChallenge, seed]);
@@ -367,6 +386,20 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
       onSolved && onSolved({ userId, game: "tango", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed, mode, challengeDate: isChallenge ? challengeDate : undefined });
     }
   }, [board, puzzle]);
+
+  useEffect(() => {
+    if (!board || !puzzle) return undefined;
+    const completed = getCompletedLines(board, puzzle.solution);
+    const newlyCompleted = completed.filter((line) => !completedLinesRef.current.has(line));
+    completedLinesRef.current = new Set(completed);
+    if (!newlyCompleted.length) return undefined;
+    setCelebratingLines(newlyCompleted);
+    window.clearTimeout(celebrationTimerRef.current);
+    celebrationTimerRef.current = window.setTimeout(() => setCelebratingLines([]), 900);
+    return undefined;
+  }, [board, puzzle]);
+
+  useEffect(() => () => window.clearTimeout(celebrationTimerRef.current), []);
 
   if (!board || !puzzle) {
     return (
@@ -471,13 +504,17 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
         @keyframes hintPulseError { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(217,105,92,1); } 50% { box-shadow: inset 0 0 0 3px rgba(217,105,92,0.25); } }
         @keyframes hintPulseForced { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(95,168,163,1); } 50% { box-shadow: inset 0 0 0 3px rgba(95,168,163,0.25); } }
         @keyframes hintPulseNext { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(217,174,88,1); } 50% { box-shadow: inset 0 0 0 3px rgba(217,174,88,0.25); } }
+        @keyframes lineSweep { 0% { opacity: 0; transform: scale(.92); } 28% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.025); } }
+        @keyframes lineSpark { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.4) rotate(-20deg); } 35% { opacity: 1; transform: translate(-50%,-50%) scale(1.15) rotate(8deg); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(.85) rotate(18deg); } }
         .tg-symbol { animation: popIn 0.22s ease-out; }
         .tg-card { animation: fadeUp 0.4s ease-out; }
         .tg-hint-error { animation: hintPulseError 1.1s ease-in-out infinite; }
         .tg-hint-forced { animation: hintPulseForced 1.1s ease-in-out infinite; }
         .tg-hint-next { animation: hintPulseNext 1.1s ease-in-out infinite; }
+        .tg-line-complete { animation: lineSweep .85s ease-out both; }
+        .tg-line-spark { animation: lineSpark .85s ease-out both; }
         @media (prefers-reduced-motion: reduce) {
-          .tg-symbol, .tg-card, .tg-hint-error, .tg-hint-forced, .tg-hint-next { animation: none !important; }
+          .tg-symbol, .tg-card, .tg-hint-error, .tg-hint-forced, .tg-hint-next, .tg-line-complete, .tg-line-spark { animation: none !important; }
         }
         @media (hover: hover) and (pointer: fine) {
           .tg-cell:not(:disabled):hover { filter: brightness(1.2); }
@@ -713,6 +750,44 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
               >
                 {e.type === "eq" ? "=" : "×"}
               </span>
+            );
+          })}
+
+          {celebratingLines.map((line) => {
+            const [direction, rawIndex] = line.split("-");
+            const index = Number(rawIndex);
+            const isRow = direction === "row";
+            return (
+              <div
+                key={line}
+                className="tg-line-complete absolute pointer-events-none"
+                style={{
+                  left: isRow ? 0 : `${(index / SIZE) * 100}%`,
+                  top: isRow ? `${(index / SIZE) * 100}%` : 0,
+                  width: isRow ? "100%" : `${100 / SIZE}%`,
+                  height: isRow ? `${100 / SIZE}%` : "100%",
+                  zIndex: 4,
+                  border: "2px solid rgba(22,163,74,.78)",
+                  background: isRow
+                    ? "linear-gradient(90deg,rgba(22,163,74,.04),rgba(22,163,74,.22),rgba(255,255,255,.42),rgba(22,163,74,.04))"
+                    : "linear-gradient(180deg,rgba(22,163,74,.04),rgba(22,163,74,.22),rgba(255,255,255,.42),rgba(22,163,74,.04))",
+                  boxShadow: "0 0 22px rgba(22,163,74,.32), inset 0 0 18px rgba(255,255,255,.55)",
+                }}
+              >
+                <span
+                  className="tg-line-spark absolute grid place-items-center rounded-full text-white font-bold"
+                  style={{
+                    left: "50%",
+                    top: "50%",
+                    width: 28,
+                    height: 28,
+                    background: "linear-gradient(145deg,#35C886,#0D9A62)",
+                    boxShadow: "0 5px 16px rgba(13,154,98,.38)",
+                  }}
+                >
+                  ✓
+                </span>
+              </div>
             );
           })}
 

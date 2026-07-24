@@ -10,6 +10,19 @@ const INK = "#1B2129";
 const ACCENT = "#2F6FED";
 const GREEN = "#16A34A";
 
+function formatCreatedAt(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export default function Feedback({ onBack }) {
   const { user, profile } = useAuth();
   const isAdmin = !!profile?.is_admin;
@@ -30,7 +43,10 @@ export default function Feedback({ onBack }) {
   const [lastViewedAt, setLastViewedAt] = useState(0);
 
   const refresh = useCallback(async () => {
-    if (!supabaseReady) return;
+    if (!supabaseReady || !user?.id) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setMessage(null);
 
@@ -302,6 +318,7 @@ export default function Feedback({ onBack }) {
                   const author = profiles[it.user_id];
                   const count = voteCounts[it.id] || 0;
                   const voted = myVotes.has(it.id);
+                  const createdAt = formatCreatedAt(it.created_at);
                   return (
                     <div key={it.id} className="rounded-2xl p-3.5 flex gap-3" style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)" }}>
                       <button
@@ -345,6 +362,7 @@ export default function Feedback({ onBack }) {
                         )}
                         <p style={{ color: INK, opacity: 0.35 }} className="text-[10px] mt-1">
                           {author?.icon || "🙂"} {author?.name || "Someone"}
+                          {createdAt ? ` · ${createdAt}` : ""}
                         </p>
 
                         {it.admin_comment && (

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   ArrowLeft, CalendarDays, Check, ChevronDown, Crown, Gift,
-  Lock, Plus, Search, Sparkles, UserPlus, Users, X,
+  Lock, Plus, Search, Sparkles, UserMinus, UserPlus, Users, X,
 } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
@@ -27,6 +27,7 @@ export default function Teams({ onBack }) {
   const [teams, setTeams] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [members, setMembers] = useState([]);
+  const [memberProfiles, setMemberProfiles] = useState({});
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
@@ -38,6 +39,9 @@ export default function Teams({ onBack }) {
   const [inviteTeam, setInviteTeam] = useState(null);
   const [inviteQuery, setInviteQuery] = useState("");
   const [inviteBusy, setInviteBusy] = useState(null);
+  const [rosterTeam, setRosterTeam] = useState(null);
+  const [rosterQuery, setRosterQuery] = useState("");
+  const [removeBusy, setRemoveBusy] = useState(null);
   const [leavingTeamId, setLeavingTeamId] = useState(null);
   const [expandedChallengeId, setExpandedChallengeId] = useState(null);
   const [challengeEdits, setChallengeEdits] = useState({});
@@ -45,16 +49,21 @@ export default function Teams({ onBack }) {
   const refresh = useCallback(async () => {
     if (!supabaseReady) return;
     setLoading(true);
-    const [{data:t},{data:p},{data:m},{data:r},{data:c}] = await Promise.all([
+    const [{data:t},{data:p},{data:m},{data:r},{data:c},rosterResult] = await Promise.all([
       supabase.from("teams").select("*").order("created_at"),
       supabase.from("profiles").select("id,name,icon,mood,is_private,hidden_from_others,is_approved,account_deleted_at").order("name"),
       supabase.from("team_members").select("team_id,user_id"),
       supabase.from("team_join_requests").select("*").order("requested_at",{ascending:false}),
       supabase.rpc("get_my_active_team_challenges"),
+      supabase.rpc("get_my_team_rosters"),
     ]);
     setTeams(t || []);
     setProfiles(p || []);
     setMembers(m || []);
+    setMemberProfiles(Object.fromEntries((rosterResult.data || []).map((item) => [
+      `${item.team_id}:${item.user_id}`,
+      { id:item.user_id,name:item.member_name,icon:item.member_icon,mood:item.member_mood,is_owner:item.is_owner },
+    ])));
     setRequests(r || []);
     setChallengeEdits((previous) => {
       const next = { ...previous };
@@ -86,6 +95,16 @@ export default function Teams({ onBack }) {
 
   const byId = Object.fromEntries(profiles.map((p) => [p.id, p]));
   const mine = new Set(members.filter((m) => m.user_id === user?.id).map((m) => m.team_id));
+  function rosterFor(teamId) {
+    return members
+      .filter((member) => member.team_id === teamId)
+      .map((member) => memberProfiles[`${teamId}:${member.user_id}`] || byId[member.user_id] || {
+        id:member.user_id,
+        name:"Team member",
+        icon:"🙂",
+        mood:"",
+      });
+  }
 
   function updateName(value) {
     setName(value);
@@ -134,6 +153,18 @@ export default function Teams({ onBack }) {
     setMsg(error?.message || `You left ${team.name}`);
     setLeavingTeamId(null);
     refresh();
+  }
+
+  async function removeMember(team, member) {
+    if (removeBusy || member.id === user?.id) return;
+    setRemoveBusy(member.id);
+    const { error } = await supabase.rpc("remove_player_from_team", {
+      target_team_id:Number(team.id),
+      target_user_id:member.id,
+    });
+    setRemoveBusy(null);
+    setMsg(error?.message || `${member.name} was removed from ${team.name}`);
+    if (!error) await refresh();
   }
 
   function challengeFor(teamId) { return challengeEdits[teamId] || defaultChallenge(); }
@@ -195,7 +226,7 @@ export default function Teams({ onBack }) {
         </form>}
 
         {loading ? <p className="text-center opacity-40 py-8">Loading…</p> : <div className="flex flex-col gap-3">{teams.map((team) => {
-          const roster = members.filter((m) => m.team_id === team.id).map((m) => byId[m.user_id]).filter(Boolean);
+          const roster = rosterFor(team.id);
           const isMine = mine.has(team.id);
           const owner = team.created_by === user?.id;
           const myRequest = requests.find((r) => r.team_id === team.id && r.user_id === user?.id);
@@ -205,7 +236,24 @@ export default function Teams({ onBack }) {
           return <article key={team.id} className="rounded-3xl p-4" style={{ background:PANEL,border:"1px solid rgba(16,24,40,.08)",boxShadow:isMine ? "0 12px 32px rgba(47,111,237,.07)" : "none" }}>
             <div className="flex items-center gap-3">
               <div className="grid place-items-center rounded-2xl text-2xl" style={{ width:48,height:48,background:"linear-gradient(145deg,#f0f4ff,#fff)" }}>{team.emoji || "⭐"}</div>
-              <div className="flex-1 min-w-0"><div className="font-bold text-sm flex items-center gap-1.5"><span className="truncate">{team.name}</span>{owner && <Crown size={12} style={{ color:"#D9AE58" }}/>}</div><div className="flex items-center mt-1"><div className="flex">{roster.slice(0,4).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-xs" style={{ width:24,height:24,background:"#F1F3F7",border:"2px solid white",marginLeft:index ? -6 : 0,zIndex:4-index }}>{member.icon || "🙂"}</span>)}</div><span className="text-[10px] opacity-45 ml-2">{roster.length} member{roster.length === 1 ? "" : "s"}</span></div></div>
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-sm flex items-center gap-1.5"><span className="truncate">{team.name}</span>{owner && <Crown size={12} style={{ color:"#D9AE58" }}/>}</div>
+                <button
+                  type="button"
+                  disabled={!isMine}
+                  onClick={() => { setRosterTeam(team);setRosterQuery(""); }}
+                  className="flex items-center mt-1 max-w-full text-left disabled:cursor-default"
+                  aria-label={isMine ? `View members of ${team.name}` : undefined}
+                >
+                  <div className="flex shrink-0">{roster.slice(0,3).map((member,index) => <span key={member.id} title={member.name} className="grid place-items-center rounded-full text-xs" style={{ width:24,height:24,background:"#F1F3F7",border:"2px solid white",marginLeft:index ? -6 : 0,zIndex:3-index }}>{member.icon || "🙂"}</span>)}</div>
+                  <span className="text-[10px] opacity-50 ml-2 truncate">
+                    {isMine && roster.length
+                      ? `${roster.slice(0,2).map((member) => member.id === user?.id ? "You" : member.name).join(", ")}${roster.length > 2 ? ` +${roster.length - 2}` : ""}`
+                      : `${roster.length} member${roster.length === 1 ? "" : "s"}`}
+                    {isMine ? " · View all" : ""}
+                  </span>
+                </button>
+              </div>
               {owner ? <button onClick={() => { setInviteTeam(team);setInviteQuery(""); }} className="rounded-full px-3 py-2 text-xs font-semibold flex items-center gap-1" style={{ background:"rgba(47,111,237,.09)",color:ACCENT }}><UserPlus size={13}/>Invite</button>
                 : isMine ? <button disabled={leavingTeamId === team.id} onClick={() => leave(team)} className="rounded-full px-3 py-2 text-xs font-medium" style={{ background:"rgba(181,67,58,.07)",color:"#9F2F2A" }}>{leavingTeamId === team.id ? "Leaving…" : "Leave"}</button>
                 : myRequest?.status === "pending" ? <span className="text-[10px] opacity-45">Requested</span>
@@ -227,6 +275,39 @@ export default function Teams({ onBack }) {
             </div>}
           </article>;
         })}</div>}
+
+        {rosterTeam && (() => {
+          const roster = rosterFor(rosterTeam.id)
+            .filter((member) => member.name?.toLowerCase().includes(rosterQuery.toLowerCase()))
+            .sort((a,b) => Number(b.id === rosterTeam.created_by) - Number(a.id === rosterTeam.created_by) || a.name.localeCompare(b.name));
+          const owner = rosterTeam.created_by === user?.id;
+          return <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background:"rgba(16,24,40,.42)" }}>
+            <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-4 flex flex-col" style={{ background:"#fff",maxHeight:"84vh" }}>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="grid place-items-center rounded-2xl text-2xl" style={{ width:44,height:44,background:"linear-gradient(145deg,#eef3ff,#fff)" }}>{rosterTeam.emoji || "⭐"}</div>
+                <div className="flex-1 min-w-0"><div className="font-bold truncate">{rosterTeam.name}</div><div className="text-[11px] opacity-45">{rosterFor(rosterTeam.id).length} members</div></div>
+                <button onClick={() => setRosterTeam(null)} className="grid place-items-center rounded-full" style={{ width:32,height:32,background:"rgba(16,24,40,.05)" }} aria-label="Close members"><X size={15}/></button>
+              </div>
+              {rosterFor(rosterTeam.id).length > 6 && <label className="flex items-center gap-2 rounded-2xl px-3 py-2.5 mb-3" style={{ background:"#F4F6FA" }}><Search size={15} style={{ opacity:.4 }}/><input value={rosterQuery} onChange={(event) => setRosterQuery(event.target.value)} placeholder="Find a member…" className="flex-1 bg-transparent outline-none text-sm"/></label>}
+              <div className="space-y-2 overflow-y-auto overscroll-contain pr-0.5">
+                {roster.map((member) => {
+                  const teamOwner = member.id === rosterTeam.created_by;
+                  const isMe = member.id === user?.id;
+                  return <div key={member.id} className="flex items-center gap-3 rounded-2xl p-3" style={{ background:isMe ? "rgba(47,111,237,.07)" : "#F8F9FC" }}>
+                    <span className="grid place-items-center rounded-xl text-xl" style={{ width:38,height:38,background:"#fff" }}>{member.icon || "🙂"}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5"><span className="text-sm font-semibold truncate">{isMe ? `${member.name} (you)` : member.name}</span>{teamOwner && <Crown size={11} style={{ color:"#D9AE58" }}/>}</div>
+                      <div className="text-[10px] opacity-40 truncate">{teamOwner ? "Team owner" : member.mood || "Team member"}</div>
+                    </div>
+                    {owner && !teamOwner && !isMe && <button disabled={removeBusy === member.id} onClick={() => removeMember(rosterTeam,member)} className="grid place-items-center rounded-full" style={{ width:34,height:34,background:"rgba(181,67,58,.08)",color:"#B5433A" }} aria-label={`Remove ${member.name}`} title={`Remove ${member.name}`}><UserMinus size={14}/></button>}
+                  </div>;
+                })}
+                {roster.length === 0 && <p className="text-center text-xs opacity-45 py-8">No matching members</p>}
+              </div>
+              {owner && <p className="text-[10px] opacity-40 text-center mt-3">As team owner, you can remove members here.</p>}
+            </div>
+          </div>;
+        })()}
 
         {inviteTeam && <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background:"rgba(16,24,40,.42)" }}><div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-4" style={{ background:"#fff",maxHeight:"82vh",overflow:"auto" }}><div className="flex items-center gap-3 mb-3"><div className="text-2xl">{inviteTeam.emoji || "⭐"}</div><div className="flex-1"><div className="font-bold">Invite to {inviteTeam.name}</div><div className="text-[11px] opacity-45">Choose an available player</div></div><button onClick={() => setInviteTeam(null)} className="grid place-items-center rounded-full" style={{ width:32,height:32,background:"rgba(16,24,40,.05)" }}><X size={15}/></button></div><label className="flex items-center gap-2 rounded-2xl px-3 py-2.5 mb-3" style={{ background:"#F4F6FA" }}><Search size={15} style={{ opacity:.4 }}/><input value={inviteQuery} onChange={(e) => setInviteQuery(e.target.value)} placeholder="Find a player…" className="flex-1 bg-transparent outline-none text-sm"/></label>{inviteCandidates.length === 0 ? <div className="text-center py-8"><Users size={24} className="mx-auto opacity-25"/><p className="text-xs opacity-45 mt-2">No available players</p></div> : <div className="space-y-2">{inviteCandidates.map((candidate) => <div key={candidate.id} className="flex items-center gap-3 rounded-2xl p-3" style={{ background:"#F8F9FC" }}><span className="text-xl">{candidate.icon || "🙂"}</span><div className="flex-1 min-w-0"><div className="text-sm font-semibold truncate">{candidate.name}</div><div className="text-[10px] opacity-40">{candidate.mood || "Ready to play"}</div></div><button disabled={inviteBusy === candidate.id} onClick={() => invite(candidate.id)} className="rounded-full px-3 py-1.5 text-xs font-semibold" style={{ background:"rgba(47,111,237,.1)",color:ACCENT }}>{inviteBusy === candidate.id ? "Adding…" : "Invite"}</button></div>)}</div>}</div></div>}
       </div>
