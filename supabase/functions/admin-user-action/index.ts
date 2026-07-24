@@ -16,6 +16,49 @@ function jsonResponse(payload: unknown, status = 200) {
   });
 }
 
+async function sendApprovalEmail(email: string) {
+  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  if (!resendApiKey) {
+    throw new Error("RESEND_API_KEY is not configured.");
+  }
+
+  const appUrl = (Deno.env.get("APP_URL") || "https://imbored.au").replace(/\/+$/, "");
+  const from = Deno.env.get("RESEND_FROM_EMAIL")
+    || "I’mBoredToday <notifications@imbored.au>";
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${resendApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from,
+      to: [email],
+      subject: "Your I’mBoredToday account is approved 🎉",
+      text: `You’re in! Your I’mBoredToday account has been approved.\n\nOpen I’mBoredToday and sign in using your email address:\n${appUrl}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#1b2129;line-height:1.6">
+          <h2 style="margin:0 0 12px">You’re approved 🎉</h2>
+          <p>You’re in! Your I’mBoredToday account has been approved.</p>
+          <p>You can now open the app and sign in using your email address.</p>
+          <p style="margin:24px 0">
+            <a href="${appUrl}" style="display:inline-block;background:#2f6fed;color:#fff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:12px">
+              Open I’mBoredToday
+            </a>
+          </p>
+          <p style="font-size:13px;color:#667085">This is a notification only. No login was requested and no sign-in code was generated.</p>
+        </div>
+      `,
+    }),
+  });
+
+  if (!response.ok) {
+    const details = await response.text();
+    console.error("Resend approval email failed", response.status, details);
+    throw new Error(`Resend returned ${response.status}.`);
+  }
+}
+
 Deno.serve(async (req) => {
   // Browser preflight requests do not contain a user JWT. This must run
   // before any authentication or body parsing.
@@ -110,29 +153,18 @@ Deno.serve(async (req) => {
       });
       if (approvalError) throw approvalError;
 
-      // Supabase does not provide a separate "account approved" template.
-      // Trigger the existing Magic Link / OTP template for this already
-      // registered user and distinguish it with the configured redirect.
-      const appUrl = (Deno.env.get("APP_URL") || req.headers.get("origin") || "").replace(/\/+$/, "");
-      const mailer = createClient(url, anon, {
-        auth: { persistSession: false, autoRefreshToken: false },
-      });
-      const { error: emailError } = await mailer.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: false,
-          ...(appUrl ? { emailRedirectTo: `${appUrl}/?approved=1` } : {}),
-        },
-      });
-
-      // Approval remains successful if Supabase temporarily rate-limits the
-      // notification. Report the delivery state so the admin sees the truth.
-      if (emailError) {
+      // Approval is a product event, not an authentication attempt. Send a
+      // normal transactional message so no unsolicited OTP is generated.
+      try {
+        await sendApprovalEmail(email);
+      } catch (emailError) {
         console.error("Player approved, but approval email was not sent", emailError);
         return jsonResponse({
           ok: true,
           emailSent: false,
-          emailError: emailError.message || "Supabase could not send the approval email.",
+          emailError: emailError instanceof Error
+            ? emailError.message
+            : "Resend could not send the approval email.",
         });
       }
       return jsonResponse({ ok: true, emailSent: true });
