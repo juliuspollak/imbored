@@ -113,9 +113,10 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
     setDraft("");
 
     const { data, error: sendError } = await supabase
-      .from("direct_messages")
-      .insert({ sender_id: currentUser.id, recipient_id: peerId, body })
-      .select("id, sender_id, recipient_id, body, created_at, read_at")
+      .rpc("send_direct_message", {
+        target_recipient_id: peerId,
+        message_body: body,
+      })
       .single();
 
     if (sendError) {
