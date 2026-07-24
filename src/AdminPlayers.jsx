@@ -72,6 +72,24 @@ export default function AdminPlayers({ onBack }) {
     }
     setApprovingId(userId);
     const { data, error } = await adminAccountAction("approve", userId);
+    if (error && /invalid action/i.test(error.message || "")) {
+      // The database approval RPC predates approval-email support and remains
+      // a safe compatibility path if the hosted Edge Function has not yet
+      // been redeployed from main. Do not leave the player blocked because
+      // frontend and function deployments completed at different times.
+      const { error: fallbackError } = await supabase.rpc("set_user_approval", {
+        target_user_id:userId,
+        approved:true,
+      });
+      setApprovingId(null);
+      if (fallbackError) {
+        setNotice(fallbackError.message || "Approval failed.");
+        return;
+      }
+      setNotice("Player approved. The approval email was not sent because Supabase is still running the older admin-user-action function.");
+      refresh();
+      return;
+    }
     setApprovingId(null);
     if (error) {
       setNotice(error.message || "Approval failed.");
