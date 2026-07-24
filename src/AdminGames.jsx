@@ -42,6 +42,7 @@ export default function AdminGames({ onBack }) {
       sort_order: (data?.length || 0) + i,
       hint_cooldown_base: 0,
       hint_cooldown_per_day: 0,
+      zip_path_style: "solid",
     }));
     setRows([...(data || []), ...missing]);
     setLoading(false);
@@ -64,6 +65,7 @@ export default function AdminGames({ onBack }) {
       sort_order: updated.sort_order,
       hint_cooldown_base: updated.hint_cooldown_base ?? 0,
       hint_cooldown_per_day: updated.hint_cooldown_per_day ?? 0,
+      zip_path_style: updated.zip_path_style || "solid",
     });
     if (error) {
       // Roll back the optimistic update so the UI doesn't claim a setting
@@ -105,6 +107,7 @@ export default function AdminGames({ onBack }) {
           sort_order: r.sort_order,
           hint_cooldown_base: r.hint_cooldown_base ?? 0,
           hint_cooldown_per_day: r.hint_cooldown_per_day ?? 0,
+          zip_path_style: r.zip_path_style || "solid",
         })
       )
     );
@@ -212,33 +215,54 @@ export default function AdminGames({ onBack }) {
                   </div>
 
                   {isExpanded && (
-                    <div className="px-3 pb-3 pt-1 flex gap-3" style={{ borderTop: "1px solid rgba(16,24,40,0.06)" }}>
-                      <div className="flex-1">
-                        <label style={{ color: INK, opacity: 0.5 }} className="text-[10px] font-medium block mb-1 mt-2">
-                          Base cooldown (sec)
-                        </label>
-                        <input
-                          type="number"
-                          min={0}
-                          value={r.hint_cooldown_base || 0}
-                          onChange={(e) => updateRow(r, { hint_cooldown_base: Math.max(0, parseInt(e.target.value) || 0) })}
-                          className="w-full rounded-lg px-2 py-1.5 text-xs outline-none"
-                          style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
-                        />
+                    <div className="px-3 pb-3 pt-1" style={{ borderTop: "1px solid rgba(16,24,40,0.06)" }}>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <label style={{ color: INK, opacity: 0.5 }} className="text-[10px] font-medium block mb-1 mt-2">
+                            Base cooldown (sec)
+                          </label>
+                          <input
+                            type="number"
+                            min={0}
+                            value={r.hint_cooldown_base || 0}
+                            onChange={(e) => updateRow(r, { hint_cooldown_base: Math.max(0, parseInt(e.target.value) || 0) })}
+                            className="w-full rounded-lg px-2 py-1.5 text-xs outline-none"
+                            style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label style={{ color: INK, opacity: 0.5 }} className="text-[10px] font-medium block mb-1 mt-2">
+                            + per day (sec)
+                          </label>
+                          <input
+                            type="number"
+                            min={0}
+                            value={r.hint_cooldown_per_day || 0}
+                            onChange={(e) => updateRow(r, { hint_cooldown_per_day: Math.max(0, parseInt(e.target.value) || 0) })}
+                            className="w-full rounded-lg px-2 py-1.5 text-xs outline-none"
+                            style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
+                          />
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <label style={{ color: INK, opacity: 0.5 }} className="text-[10px] font-medium block mb-1 mt-2">
-                          + per day (sec)
-                        </label>
-                        <input
-                          type="number"
-                          min={0}
-                          value={r.hint_cooldown_per_day || 0}
-                          onChange={(e) => updateRow(r, { hint_cooldown_per_day: Math.max(0, parseInt(e.target.value) || 0) })}
-                          className="w-full rounded-lg px-2 py-1.5 text-xs outline-none"
-                          style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
-                        />
-                      </div>
+                      {r.game_id === "zip" && (
+                        <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(16,24,40,0.08)" }}>
+                          <label style={{ color: INK, opacity: 0.6 }} className="text-[10px] font-semibold block mb-1.5">
+                            Snake appearance
+                          </label>
+                          <select
+                            value={r.zip_path_style || "solid"}
+                            onChange={(e) => updateRow(r, { zip_path_style: e.target.value })}
+                            className="w-full rounded-lg px-2 py-2 text-xs outline-none"
+                            style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK, background: "#FFFFFF" }}
+                          >
+                            <option value="solid">Thick solid green</option>
+                            <option value="rainbow">Original rainbow</option>
+                          </select>
+                          <p style={{ color: INK, opacity: 0.35 }} className="text-[10px] mt-1.5">
+                            Both styles keep tunnel jumps visually disconnected.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

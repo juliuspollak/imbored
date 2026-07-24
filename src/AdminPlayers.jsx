@@ -120,21 +120,32 @@ export default function AdminPlayers({ onBack }) {
                     <div className="flex items-center gap-1.5">
                       <span style={{ color: INK, fontWeight: 600 }} className="text-sm truncate">{p.name}</span>
                       {p.is_admin && <Crown size={11} style={{ color: "#D9AE58", flexShrink: 0 }} />}
-                      {p.account_deleted_at && <span className="text-[9px] font-bold rounded-full px-1.5 py-0.5" style={{background:"rgba(16,24,40,.08)"}}>DELETED</span>}
-                      {p.is_blocked && <span className="text-[9px] font-bold rounded-full px-1.5 py-0.5" style={{background:"rgba(181,67,58,.1)",color:"#B5433A"}}>BLOCKED</span>}
-                      {p.is_private && <Lock size={11} style={{ color: INK, opacity: 0.35, flexShrink: 0 }} />}
+                      {p.account_deleted_at ? (
+                        <span className="text-[9px] font-bold rounded-full px-1.5 py-0.5" style={{background:"rgba(16,24,40,.08)"}}>DELETED</span>
+                      ) : (
+                        <>
+                          {p.is_blocked && <span className="text-[9px] font-bold rounded-full px-1.5 py-0.5" style={{background:"rgba(181,67,58,.1)",color:"#B5433A"}}>BLOCKED</span>}
+                          {p.is_private && <Lock size={11} style={{ color: INK, opacity: 0.35, flexShrink: 0 }} />}
+                        </>
+                      )}
                     </div>
                     <div className="flex items-center gap-1">
                       {isOnlineNow && <span style={{ width: 5, height: 5, borderRadius: "50%", background: GREEN, display: "inline-block" }} />}
                       <span style={{ color: isOnlineNow ? GREEN : INK, opacity: isOnlineNow ? 1 : 0.4 }} className="text-[11px]">
                         {fmtLastSeen(seenIso)}
                       </span>
-                      {p.is_approved === false && <span className="text-[10px] font-semibold" style={{color:"#B7791F"}}>· Awaiting approval</span>}
-                      {p.mood && <span style={{ color: INK, opacity: 0.35 }} className="text-[11px]">· {p.mood}</span>}
+                      {p.account_deleted_at ? (
+                        <span className="text-[10px] font-medium" style={{color:INK, opacity:.55}}>· Historical player account</span>
+                      ) : (
+                        <>
+                          {p.is_approved === false && <span className="text-[10px] font-semibold" style={{color:"#B7791F"}}>· Awaiting approval</span>}
+                          {p.mood && <span style={{ color: INK, opacity: 0.35 }} className="text-[11px]">· {p.mood}</span>}
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    {!p.is_admin && (p.is_approved === false ? (
+                    {!p.account_deleted_at && !p.is_admin && (p.is_approved === false ? (
                       <button onClick={() => handleApproval(p.id, true)} className="flex items-center gap-1 rounded-full px-2.5 py-1.5" style={{ background: "rgba(22,163,74,.1)", color: "#15803D" }}>
                         <CheckCircle2 size={12}/><span className="text-[10px] font-semibold">Approve</span>
                       </button>
@@ -156,7 +167,7 @@ export default function AdminPlayers({ onBack }) {
                       style={{background:"rgba(181,67,58,.08)",color:"#B5433A"}}
                       aria-label={`Delete ${p.name}'s account`}
                     ><UserX size={12}/></button>}
-                    <button
+                    {!p.account_deleted_at && <button
                       onClick={() => handleToggleHidden(p.id, p.hidden_from_others)}
                       disabled={p.id === myProfile.id}
                       className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
@@ -168,7 +179,7 @@ export default function AdminPlayers({ onBack }) {
                     >
                       <EyeOff size={12} />
                       <span className="text-[10px] font-medium">{p.hidden_from_others ? "Hidden" : "Hide"}</span>
-                    </button>
+                    </button>}
                   </div>
                 </div>
               );

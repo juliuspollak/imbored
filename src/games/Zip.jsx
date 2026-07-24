@@ -271,6 +271,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
   const [dayIdx, setDayIdx] = useState(isChallenge ? forcedDayIdx ?? todayIdx : todayIdx);
   const hintCooldownSeconds = (hintCooldownConfig?.hint_cooldown_base || 0) + (hintCooldownConfig?.hint_cooldown_per_day || 0) * dayIdx;
   const hintCooldown = useHintCooldown(hintCooldownSeconds);
+  const zipPathStyle = hintCooldownConfig?.zip_path_style === "rainbow" ? "rainbow" : "solid";
   const [puzzle, setPuzzle] = useState(null);
   const [path, setPath] = useState(null);
   const [seconds, setSeconds] = useState(0);
@@ -865,28 +866,36 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
           })}
 
           <svg className="absolute inset-0 pointer-events-none" style={{ width: "100%", height: "100%" }} viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="zipSnakeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FF6B6B" />
+                <stop offset="24%" stopColor="#F6C85F" />
+                <stop offset="48%" stopColor="#62C370" />
+                <stop offset="72%" stopColor="#4D96FF" />
+                <stop offset="100%" stopColor="#9B5DE5" />
+              </linearGradient>
+            </defs>
             {pathSegments.map((seg, idx) => {
               const points = seg.map(([r, c]) => `${((c + 0.5) / boardSize) * 100},${((r + 0.5) / boardSize) * 100}`).join(" ");
+              const mainStroke = orderConflict ? RED : zipPathStyle === "rainbow" ? "url(#zipSnakeGradient)" : ZIP_GREEN;
               return (
                 <g key={idx}>
                   <polyline
                     points={points}
                     fill="none"
-                    stroke={orderConflict ? "rgba(217,105,92,0.22)" : "rgba(52,168,83,0.20)"}
-                    strokeWidth="4.6"
+                    stroke={orderConflict ? "rgba(217,105,92,0.28)" : "rgba(255,255,255,0.90)"}
+                    strokeWidth="5.7"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    vectorEffect="non-scaling-stroke"
                   />
                   <polyline
                     points={points}
                     fill="none"
-                    stroke={orderConflict ? RED : ZIP_GREEN}
-                    strokeWidth="2.7"
+                    stroke={mainStroke}
+                    strokeWidth="3.8"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     opacity="0.98"
-                    vectorEffect="non-scaling-stroke"
                   />
                 </g>
               );
