@@ -96,7 +96,7 @@ export default function AdminPlayers({ onBack }) {
       return;
     }
     setNotice(data?.emailSent
-      ? "Player approved. Supabase sent the approval sign-in email."
+      ? "Player approved. The approval notification was emailed."
       : `Player approved, but the email was not sent${data?.emailError ? `: ${data.emailError}` : "."}`);
     refresh();
   }
