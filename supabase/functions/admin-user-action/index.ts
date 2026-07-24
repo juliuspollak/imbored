@@ -78,14 +78,65 @@ Deno.serve(async (req) => {
     }
 
     const { action, targetUserId, reason } = body;
-    if (!targetUserId || !action || !["block", "unblock", "delete"].includes(action)) {
+    if (!targetUserId || !action || !["approve", "block", "unblock", "delete"].includes(action)) {
       return jsonResponse({ error: "Invalid action" }, 400);
     }
     if (targetUserId === userData.user.id) {
-      return jsonResponse({ error: "You cannot block or delete your own admin account" }, 400);
+      return jsonResponse({ error: "You cannot change your own admin account here" }, 400);
     }
 
-    if (action === "delete") {
+    if (action === "approve") {
+      const { data: target, error: targetError } = await caller
+        .from("profiles")
+        .select("is_admin,is_approved,is_blocked,account_deleted_at")
+        .eq("id", targetUserId)
+        .maybeSingle();
+      if (targetError) throw targetError;
+      if (!target || target.account_deleted_at || target.is_blocked) {
+        throw new Error("This player is not available for approval.");
+      }
+      if (target.is_admin || target.is_approved) {
+        return jsonResponse({ ok: true, emailSent: false, alreadyApproved: true });
+      }
+
+      const { data: authTarget, error: authTargetError } = await admin.auth.admin.getUserById(targetUserId);
+      if (authTargetError) throw authTargetError;
+      const email = authTarget.user?.email;
+      if (!email) throw new Error("This account has no email address.");
+
+      const { error: approvalError } = await caller.rpc("set_user_approval", {
+        target_user_id: targetUserId,
+        approved: true,
+      });
+      if (approvalError) throw approvalError;
+
+      // Supabase does not provide a separate "account approved" template.
+      // Trigger the existing Magic Link / OTP template for this already
+      // registered user and distinguish it with the configured redirect.
+      const appUrl = (Deno.env.get("APP_URL") || req.headers.get("origin") || "").replace(/\/+$/, "");
+      const mailer = createClient(url, anon, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { error: emailError } = await mailer.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: false,
+          ...(appUrl ? { emailRedirectTo: `${appUrl}/?approved=1` } : {}),
+        },
+      });
+
+      // Approval remains successful if Supabase temporarily rate-limits the
+      // notification. Report the delivery state so the admin sees the truth.
+      if (emailError) {
+        console.error("Player approved, but approval email was not sent", emailError);
+        return jsonResponse({
+          ok: true,
+          emailSent: false,
+          emailError: emailError.message || "Supabase could not send the approval email.",
+        });
+      }
+      return jsonResponse({ ok: true, emailSent: true });
+    } else if (action === "delete") {
       // Validate directly so deletion does not depend on a recently added
       // database function being deployed before this Edge Function.
       const { data: target, error: targetError } = await caller
