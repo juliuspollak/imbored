@@ -34,6 +34,29 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
   const [identityBusy, setIdentityBusy] = useState(false);
   const [identityError, setIdentityError] = useState(null);
 
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const callbackError =
+      query.get("error_description") ||
+      hash.get("error_description") ||
+      query.get("error") ||
+      hash.get("error");
+
+    if (callbackError) {
+      setIdentityError(decodeURIComponent(callbackError.replace(/\+/g, " ")));
+    }
+
+    if (query.has("auth_return") || callbackError) {
+      query.delete("auth_return");
+      query.delete("error");
+      query.delete("error_code");
+      query.delete("error_description");
+      const cleanQuery = query.toString();
+      window.history.replaceState({}, "", `${window.location.pathname}${cleanQuery ? `?${cleanQuery}` : ""}`);
+    }
+  }, []);
+
   async function refreshIdentities() {
     const { data, error } = await listIdentities();
     if (!error) setIdentities(data?.identities || []);

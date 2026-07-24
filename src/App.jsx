@@ -33,7 +33,7 @@ const Chat = lazy(() => import("./Chat.jsx"));
 const Chats = lazy(() => import("./Chats.jsx"));
 const AdminRewards = lazy(() => import("./AdminRewards.jsx"));
 import { saveStats } from "./lib/saveStats.js";
-import { supabaseReady } from "./lib/supabase.js";
+import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useOnlinePlayers } from "./lib/useOnlinePlayers.js";
 import { useGameConfig } from "./lib/useGameConfig.js";
 import { usePresence } from "./lib/usePresence.js";
@@ -52,7 +52,11 @@ const GAME_COMPONENTS = {
 };
 
 function AppShell() {
-  const [active, setActive] = useState(null); // null | profile screens | a game id
+  const [active, setActive] = useState(() => {
+    if (typeof window === "undefined") return null;
+    const query = new URLSearchParams(window.location.search);
+    return query.get("auth_return") === "profile" ? "profile" : null;
+  }); // null | profile screens | a game id
   const [chatPlayer, setChatPlayer] = useState(null);
   const [chatReturn, setChatReturn] = useState(null);
   // Challenge mode needs an account to mean anything (once-per-day + history

@@ -167,6 +167,13 @@ export default function AdminPlayers({ onBack }) {
                       style={{background:"rgba(181,67,58,.08)",color:"#B5433A"}}
                       aria-label={`Delete ${p.name}'s account`}
                     ><UserX size={12}/></button>}
+                    {!p.is_admin && p.account_deleted_at && <button
+                      onClick={() => setActionTarget({ type:"delete", player:p, reason:"" })}
+                      disabled={actionBusy}
+                      className="flex items-center gap-1 rounded-full px-2 py-1"
+                      style={{background:"rgba(181,67,58,.10)",color:"#B5433A"}}
+                      aria-label={`Finish deleting ${p.name}'s Auth account`}
+                    ><UserX size={12}/><span className="text-[10px] font-medium">Finish Auth deletion</span></button>}
                     {!p.account_deleted_at && <button
                       onClick={() => handleToggleHidden(p.id, p.hidden_from_others)}
                       disabled={p.id === myProfile.id}
@@ -190,7 +197,7 @@ export default function AdminPlayers({ onBack }) {
 
         {actionTarget && <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:"rgba(16,24,40,.45)"}}>
           <div className="w-full max-w-sm rounded-2xl p-5" style={{background:"#fff",boxShadow:"0 20px 50px rgba(16,24,40,.2)"}}>
-            <div className="flex items-start gap-3"><div className="text-2xl">{actionTarget.player.icon || "🙂"}</div><div className="flex-1"><h2 className="font-bold" style={{color:INK}}>{actionTarget.type === "block" ? `Block ${actionTarget.player.name}?` : `Delete ${actionTarget.player.name}'s account?`}</h2><p className="text-xs mt-1" style={{color:"rgba(27,33,41,.58)"}}>{actionTarget.type === "block" ? "They will be unable to sign in or use the app until restored." : "Their Auth login and linked identities will be deleted. Their historical profile, scores and messages stay visible. Team membership is removed and owned teams are transferred."}</p></div><button onClick={()=>setActionTarget(null)}><X size={16}/></button></div>
+            <div className="flex items-start gap-3"><div className="text-2xl">{actionTarget.player.icon || "🙂"}</div><div className="flex-1"><h2 className="font-bold" style={{color:INK}}>{actionTarget.type === "block" ? `Block ${actionTarget.player.name}?` : actionTarget.player.account_deleted_at ? `Finish deleting ${actionTarget.player.name}'s login?` : `Delete ${actionTarget.player.name}'s account?`}</h2><p className="text-xs mt-1" style={{color:"rgba(27,33,41,.58)"}}>{actionTarget.type === "block" ? "They will be unable to sign in or use the app until restored." : actionTarget.player.account_deleted_at ? "This retries removal of the remaining Supabase Auth user and linked identities. Historical scores and messages remain." : "Their Auth login and linked identities will be deleted. Their historical profile, scores and messages stay visible. Team membership is removed and owned teams are transferred."}</p></div><button onClick={()=>setActionTarget(null)}><X size={16}/></button></div>
             {actionTarget.type === "block" && <textarea value={actionTarget.reason} onChange={e=>setActionTarget({...actionTarget,reason:e.target.value})} placeholder="Reason shown to the player (optional)" className="w-full rounded-xl border px-3 py-2 text-sm mt-4" rows={2}/>} 
             {actionError && <p className="text-xs mt-3" style={{color:"#B5433A"}}>{actionError}</p>}
             <div className="flex gap-2 mt-4"><button onClick={()=>setActionTarget(null)} className="flex-1 rounded-full py-2.5 text-xs font-semibold" style={{background:"rgba(16,24,40,.06)",color:INK}}>Cancel</button><button disabled={actionBusy} onClick={()=>handleAccountAction(actionTarget.type,actionTarget.player)} className="flex-1 rounded-full py-2.5 text-xs font-semibold" style={{background:"#B5433A",color:"#fff"}}>{actionBusy?"Working…":actionTarget.type === "block"?"Block user":"Delete account"}</button></div>

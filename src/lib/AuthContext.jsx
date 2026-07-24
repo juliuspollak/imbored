@@ -195,7 +195,10 @@ export function AuthProvider({ children }) {
     if (!supabaseReady || !session) return { error: new Error("Not logged in") };
     const result = await supabase.auth.linkIdentity({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/`, skipBrowserRedirect: true },
+      options: {
+        redirectTo: `${window.location.origin}/?auth_return=profile`,
+        skipBrowserRedirect: true,
+      },
     });
     if (!result.error && result.data?.url) window.location.assign(result.data.url);
     return result;

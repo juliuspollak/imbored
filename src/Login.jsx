@@ -96,12 +96,15 @@ export default function Login() {
   async function handleSendCode(e) {
     e?.preventDefault?.();
     if (!email || sending || cooldown > 0) return;
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) return;
 
     setSending(true);
     setError(null);
+    setEmail(cleanEmail);
 
     try {
-      const result = await signInWithEmail(email);
+      const result = await signInWithEmail(cleanEmail);
       const authError = result?.error;
 
       if (authError) {
