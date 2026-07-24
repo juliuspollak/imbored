@@ -4,6 +4,7 @@ import Home from "./Home.jsx";
 import Login from "./Login.jsx";
 import ProfileSetup from "./ProfileSetup.jsx";
 import PendingApproval from "./PendingApproval.jsx";
+import BlockedAccount from "./BlockedAccount.jsx";
 import PointsToast from "./PointsToast.jsx";
 import ModePill from "./ModePill.jsx";
 import ChallengeGate from "./ChallengeGate.jsx";
@@ -124,6 +125,8 @@ function AppShell() {
     if (!user) return <Login />;
     if (profileLoading) return <FullScreenMessage text="Loading your profile…" />;
     if (!profile) return <ProfileSetup />; // mandatory first-time setup, no onDone — nothing to go back to yet
+    if (profile.account_deleted_at) return <Login />;
+    if (profile.is_blocked) return <BlockedAccount />;
     if (!profile.is_admin && profile.is_approved === false) return <PendingApproval />;
   }
 

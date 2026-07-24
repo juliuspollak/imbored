@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock, Unlock, Users, ArrowLeft, Fingerprint, Trash2, Plus } from "lucide-react";
+import { Lock, Unlock, Users, ArrowLeft, Fingerprint, Trash2, Plus, Link2, Unlink, Mail } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { PROFILE_ICONS } from "./lib/icons.js";
 
@@ -14,7 +14,7 @@ const passkeySupported = typeof window !== "undefined" && !!window.PublicKeyCred
 // passed — nothing to go back to yet) and later as an editable "my
 // profile" screen reached from the home page.
 export default function ProfileSetup({ onDone, onOpenTeams }) {
-  const { profile, user, saveProfile, leaveTeam, registerPasskey, listPasskeys, deletePasskey } = useAuth();
+  const { profile, user, saveProfile, leaveTeam, registerPasskey, listPasskeys, deletePasskey, listIdentities, linkGoogleIdentity, unlinkIdentity } = useAuth();
   const isFirstTime = !profile;
 
   const [name, setName] = useState(profile?.name || "");
@@ -30,6 +30,29 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
   const [passkeys, setPasskeys] = useState([]);
   const [passkeyBusy, setPasskeyBusy] = useState(false);
   const [passkeyError, setPasskeyError] = useState(null);
+  const [identities, setIdentities] = useState([]);
+  const [identityBusy, setIdentityBusy] = useState(false);
+  const [identityError, setIdentityError] = useState(null);
+
+  async function refreshIdentities() {
+    const { data, error } = await listIdentities();
+    if (!error) setIdentities(data?.identities || []);
+  }
+
+  async function handleLinkGoogle() {
+    setIdentityBusy(true); setIdentityError(null);
+    const { error } = await linkGoogleIdentity();
+    setIdentityBusy(false);
+    if (error) setIdentityError(error.message);
+  }
+
+  async function handleUnlinkIdentity(identity) {
+    if (identities.length <= 1) { setIdentityError("Keep at least one sign-in method connected."); return; }
+    setIdentityBusy(true); setIdentityError(null);
+    const { error } = await unlinkIdentity(identity);
+    setIdentityBusy(false);
+    if (error) setIdentityError(error.message); else refreshIdentities();
+  }
 
   async function refreshPasskeys() {
     const { data } = await listPasskeys();
@@ -37,7 +60,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
   }
 
   useEffect(() => {
-    if (!isFirstTime && passkeySupported) refreshPasskeys();
+    if (!isFirstTime) { refreshIdentities(); if (passkeySupported) refreshPasskeys(); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFirstTime]);
 
@@ -255,6 +278,27 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
               />
             </div>
           </button>
+
+          {!isFirstTime && (
+            <div className="rounded-xl px-3 py-3 mb-3" style={{ border: "1px solid rgba(16,24,40,0.14)" }}>
+              <div className="flex items-center gap-2 mb-2"><Link2 size={15} style={{color:ACCENT}}/><span className="text-xs font-semibold" style={{color:INK}}>Sign-in methods</span></div>
+              <div className="space-y-2">
+                {identities.map((identity) => {
+                  const provider = identity.provider || identity.identity_data?.provider || "email";
+                  const label = provider === "google" ? "Google" : "Email";
+                  const detail = identity.identity_data?.email || user?.email || "Connected";
+                  return <div key={identity.id} className="flex items-center gap-2 rounded-lg px-2.5 py-2" style={{background:"rgba(16,24,40,.04)"}}>
+                    {provider === "email" ? <Mail size={14}/> : <span className="text-sm">G</span>}
+                    <div className="flex-1 min-w-0"><div className="text-xs font-medium" style={{color:INK}}>{label}</div><div className="text-[10px] truncate" style={{color:"rgba(27,33,41,.5)"}}>{detail}</div></div>
+                    {identities.length > 1 && <button type="button" disabled={identityBusy} onClick={() => handleUnlinkIdentity(identity)} className="rounded-full p-1.5" style={{color:"#B5433A",background:"rgba(181,67,58,.08)"}} aria-label={`Unlink ${label}`}><Unlink size={12}/></button>}
+                  </div>;
+                })}
+              </div>
+              {!identities.some((i) => (i.provider || i.identity_data?.provider) === "google") && <button type="button" onClick={handleLinkGoogle} disabled={identityBusy} className="mt-2 w-full rounded-full py-2 text-xs font-semibold" style={{background:"rgba(47,111,237,.1)",color:ACCENT}}>{identityBusy ? "Connecting…" : "Connect Google"}</button>}
+              <p className="text-[10px] mt-2" style={{color:"rgba(27,33,41,.45)"}}>Google can be linked to this player. Supabase does not support multiple separate email-OTP addresses on one account; changing the primary email is a different action.</p>
+              {identityError && <p className="text-[11px] mt-1.5" style={{color:"#B5433A"}}>{identityError}</p>}
+            </div>
+          )}
 
           {!isFirstTime && passkeySupported && (
             <div className="rounded-lg px-3 py-2.5 mb-3" style={{ border: "1px solid rgba(16,24,40,0.14)" }}>

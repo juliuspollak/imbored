@@ -104,6 +104,32 @@ export function AuthProvider({ children }) {
     return supabase.auth.passkey.delete({ passkeyId });
   }
 
+  async function listIdentities() {
+    if (!supabaseReady || !session) return { data: { identities: [] }, error: new Error("Not logged in") };
+    return supabase.auth.getUserIdentities();
+  }
+
+  async function linkGoogleIdentity() {
+    if (!supabaseReady || !session) return { error: new Error("Not logged in") };
+    return supabase.auth.linkIdentity({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/` },
+    });
+  }
+
+  async function unlinkIdentity(identity) {
+    if (!supabaseReady || !session) return { error: new Error("Not logged in") };
+    return supabase.auth.unlinkIdentity(identity);
+  }
+
+  async function adminAccountAction(action, targetUserId, reason = "") {
+    if (!supabaseReady || !session) return { error: new Error("Not logged in") };
+    const { data, error } = await supabase.functions.invoke("admin-user-action", {
+      body: { action, targetUserId, reason },
+    });
+    return { data, error };
+  }
+
   async function signOut() {
     if (!supabaseReady) return;
     await supabase.auth.signOut();
@@ -175,6 +201,10 @@ export function AuthProvider({ children }) {
     listPasskeys,
     renamePasskey,
     deletePasskey,
+    listIdentities,
+    linkGoogleIdentity,
+    unlinkIdentity,
+    adminAccountAction,
     signOut,
     saveProfile,
     createTeam,
