@@ -34,6 +34,15 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
   const [identityBusy, setIdentityBusy] = useState(false);
   const [identityError, setIdentityError] = useState(null);
 
+  function friendlyIdentityError(message) {
+    const text = decodeURIComponent(String(message || "").replace(/\+/g, " "));
+    if (!text.toLowerCase().includes("identity is already linked to another user")) return text;
+    if (profile?.is_admin) {
+      return "This Google sign-in still belongs to the previous player account. Open Admin tools → Players, find the historical account, choose Finish Auth deletion, then try Connect Google again.";
+    }
+    return "This Google sign-in already belongs to another player. Sign in with Google to use that player, or ask an admin to remove the old account before linking it here.";
+  }
+
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
@@ -44,7 +53,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
       hash.get("error");
 
     if (callbackError) {
-      setIdentityError(decodeURIComponent(callbackError.replace(/\+/g, " ")));
+      setIdentityError(friendlyIdentityError(callbackError));
     }
 
     if (query.has("auth_return") || callbackError) {
@@ -66,7 +75,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
     setIdentityBusy(true); setIdentityError(null);
     const { error } = await linkGoogleIdentity();
     setIdentityBusy(false);
-    if (error) setIdentityError(error.message);
+    if (error) setIdentityError(friendlyIdentityError(error.message));
   }
 
   async function handleUnlinkIdentity(identity) {

@@ -113,6 +113,19 @@ function AppShell() {
   const newTransfersCount = useNewTransfersCount(user?.id);
   const unreadMessages = useUnreadMessages(user?.id);
   const [sectionSignals, setSectionSignals] = useState({ whatsnew: false, teams: false });
+
+  function openSection(section) {
+    setSectionSignals((current) => ({ ...current, [section]: false }));
+    setActive(section);
+    if (!user?.id || !supabaseReady) return;
+    void supabase
+      .from("user_section_views")
+      .upsert({ user_id: user.id, section, viewed_at: new Date().toISOString() })
+      .then(({ error }) => {
+        if (error) console.error(`Unable to mark ${section} as viewed:`, error);
+      });
+  }
+
   useEffect(() => {
     if (!user?.id || !supabaseReady) return;
     let cancelled = false;
@@ -137,7 +150,7 @@ function AppShell() {
       setSectionSignals({ whatsnew: latestNote > (vm.whatsnew || 0), teams: latestTeam > (vm.teams || 0) });
     })();
     return () => { cancelled = true; };
-  }, [user?.id, active]);
+  }, [user?.id]);
 
   if (supabaseReady) {
     if (loading) return <FullScreenMessage text="Loading…" />;
@@ -178,7 +191,7 @@ function AppShell() {
   }
 
   if (active === "profile") {
-    return <ProfileSetup onDone={() => setActive(null)} onOpenTeams={() => setActive("teams")} />;
+    return <ProfileSetup onDone={() => setActive(null)} onOpenTeams={() => openSection("teams")} />;
   }
 
   if (active === "teams") {
@@ -266,12 +279,12 @@ function AppShell() {
             profile={profile}
             onSignOut={signOut}
             onOpenProfile={() => setActive("profile")}
-            onOpenTeams={() => setActive("teams")}
+            onOpenTeams={() => openSection("teams")}
             onOpenChats={() => setActive("chats")}
             onOpenStats={() => setActive("stats")}
             onOpenProgress={() => setActive("progress")}
             onOpenFeedback={() => setActive("feedback")}
-            onOpenWhatsNew={() => setActive("whatsnew")}
+            onOpenWhatsNew={() => openSection("whatsnew")}
             onOpenAdminPlayers={() => setActive("adminplayers")}
             onOpenAdminGames={() => setActive("admingames")}
             onOpenAdminRewards={() => setActive("adminrewards")}
@@ -398,12 +411,12 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
 
   const items = [
     { id: "profile", onClick: onOpenProfile, icon: User, label: "My profile", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
-    { id: "whatsnew", onClick: onOpenWhatsNew, icon: Sparkles, label: sectionSignals.whatsnew ? "What's new · new" : "What's new", badge: sectionSignals.whatsnew ? 1 : 0, glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
+    { id: "whatsnew", onClick: onOpenWhatsNew, icon: Sparkles, label: "What's new", badge: sectionSignals.whatsnew ? 1 : 0, glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)" },
     { id: "chats", onClick: onOpenChats, icon: MessagesSquare, label: unreadMessages.total > 0 ? "Chats · new" : "Chats", glow: "rgba(79,70,229,0.35)", border: "rgba(79,70,229,0.4)", badge: unreadMessages.total },
     { id: "feedback", onClick: onOpenFeedback, icon: MessageSquare, label: completedFeedbackCount > 0 ? "Feedback · update" : "Feedback", glow: "rgba(139,92,246,0.35)", border: "rgba(139,92,246,0.4)", badge: feedbackBadgeCount },
     { id: "stats", onClick: onOpenStats, icon: BarChart3, label: "Stats", glow: "rgba(47,111,237,0.35)", border: "rgba(47,111,237,0.4)" },
     { id: "progress", onClick: onOpenProgress, icon: Star, label: newTransfersCount > 0 ? "My progress · new" : "My progress", glow: "rgba(217,174,88,0.35)", border: "rgba(217,174,88,0.4)", badge: newTransfersCount },
-    { id: "teams", onClick: onOpenTeams, icon: Users, label: sectionSignals.teams ? "Teams · new" : "Teams", badge: sectionSignals.teams ? 1 : 0, glow: "rgba(18,148,106,0.35)", border: "rgba(18,148,106,0.4)" },
+    { id: "teams", onClick: onOpenTeams, icon: Users, label: "Teams", badge: sectionSignals.teams ? 1 : 0, glow: "rgba(18,148,106,0.35)", border: "rgba(18,148,106,0.4)" },
     { id: "signout", onClick: onSignOut, icon: LogOut, label: "Sign out", glow: "rgba(229,72,77,0.35)", border: "rgba(229,72,77,0.4)" },
   ];
 
