@@ -4,6 +4,7 @@ import { useHintCooldown } from "../lib/useHintCooldown.js";
 import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import { Crown, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
+import { useI18n } from "../lib/i18n.jsx";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -541,6 +542,7 @@ function fmtTime(s) {
 /* ---------------- component ---------------- */
 
 export default function QueensGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId, rewardResult } = {}) {
+  const { t } = useI18n();
   const todayIdx = (() => {
     const d = new Date().getDay();
     return d === 0 ? 6 : d - 1;
@@ -658,7 +660,7 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
   if (!board || !puzzle) {
     return (
       <div style={{ background: BG, minHeight: "100vh" }} className="flex items-center justify-center">
-        <span style={{ color: CREAM, opacity: 0.6 }} className="text-sm">Building today's puzzle…</span>
+        <span style={{ color: CREAM, opacity: 0.6 }} className="text-sm">{t("common.buildingPuzzle")}</span>
       </div>
     );
   }
@@ -1158,7 +1160,7 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
               className="flex items-center gap-2 rounded-lg px-3 py-1.5"
               style={{ background: `${GOLD}18`, color: GOLD }}
             >
-              <span className="text-xs font-semibold">Today's Challenge</span>
+              <span className="text-xs font-semibold">{t("common.todaysChallenge")}</span>
               <span className="text-[10px] opacity-80">{n}×{n}</span>
             </div>
           </div>
@@ -1205,12 +1207,12 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
         {/* toolbar */}
         <div className="flex items-center justify-center gap-2 mb-4">
           {[
-            { Icon: CornerUpLeft, label: "Undo", onClick: handleUndo, disabled: solved || history.length === 0 },
-            { Icon: Eraser, label: "Reset", onClick: handleReset, disabled: solved },
+            { Icon: CornerUpLeft, label: t("common.undo"), onClick: handleUndo, disabled: solved || history.length === 0 },
+            { Icon: Eraser, label: t("common.reset"), onClick: handleReset, disabled: solved },
             { Icon: Sparkles, label: "New", onClick: () => newPuzzle(n), disabled: isChallenge },
             {
               Icon: hintCooldown.locked ? Lock : WandSparkles,
-              label: hintCooldown.locked ? `${hintCooldown.remaining}s` : "Hint",
+              label: hintCooldown.locked ? `${hintCooldown.remaining}s` : t("common.hint"),
               onClick: handleHint,
               disabled: solved || hintCooldown.locked,
             },
@@ -1331,7 +1333,7 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
                 >
                   {rewardResult.points_awarded > 0
                     ? `★ +${rewardResult.points_awarded} Points`
-                    : "No Points awarded"}
+                    : t("common.noPoints")}
                 </div>
               )}
               {savedStatId ? (
