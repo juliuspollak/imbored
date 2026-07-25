@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Crown, Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle, Check, Star, Flame, ChevronRight, ChevronDown, Globe2, Users, X, ListChecks } from "lucide-react";
 import { useGameConfig } from "./lib/useGameConfig.js";
 import { supabase, supabaseReady } from "./lib/supabase.js";
@@ -39,12 +39,14 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   const [challengeRows, setChallengeRows] = useState([]);
   const [challengeProfiles, setChallengeProfiles] = useState({});
   const [standingsLoading, setStandingsLoading] = useState(false);
+  const [standingsRefreshing, setStandingsRefreshing] = useState(false);
+  const standingsCacheRef = useRef({});
 
   useEffect(() => {
     let cancelled = false;
     async function loadTeamChallenges() {
       if (!supabaseReady || !userId) return;
-      const [{ data }, { data: completionRows }] = await Promise.all([
+      const [{ data }, { data: completionRows }, { data: rosterData }] = await Promise.all([
         supabase.rpc("get_my_active_team_challenges"),
         supabase
           .from("game_stats")
@@ -52,6 +54,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
           .eq("user_id", userId)
           .eq("mode", "challenge")
           .eq("challenge_date", todayString()),
+        supabase.rpc("get_my_team_rosters"),
       ]);
       const challenges = data || [];
       if (cancelled) return;
@@ -59,16 +62,18 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
       setChallengesLoaded(true);
       setChallengeCompletions(groupChallengeCompletions(completionRows));
       if (challenges.length > 0) {
-        const teamIds = challenges.map((item) => item.team_id);
-        const { data: rosterData } = await supabase
-          .from("team_members")
-          .select("team_id,user_id,profiles(name,icon,show_stats_to_others)")
-          .in("team_id", teamIds);
+        const teamIds = new Set(challenges.map((item) => Number(item.team_id)));
         if (!cancelled) {
           const grouped = {};
           (rosterData || []).forEach((member) => {
+            if (!teamIds.has(Number(member.team_id))) return;
             if (!grouped[member.team_id]) grouped[member.team_id] = [];
-            if (member.profiles) grouped[member.team_id].push({ id:member.user_id, ...member.profiles });
+            grouped[member.team_id].push({
+              id:member.user_id,
+              name:member.member_name,
+              icon:member.member_icon,
+              show_stats_to_others:member.show_stats_to_others,
+            });
           });
           setTeamRosters(grouped);
         }
@@ -87,36 +92,61 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         setChallengeRows([]);
         setChallengeProfiles({});
         setStandingsLoading(false);
+        setStandingsRefreshing(false);
         return;
       }
-      setStandingsLoading(true);
-      setChallengeRows([]);
-      setChallengeProfiles({});
+      const cacheKey = challengeScope?.type === "team" ? `team:${challengeScope.id}` : "personal";
+      const cached = standingsCacheRef.current[cacheKey];
+      if (cached) {
+        setChallengeRows(cached.rows);
+        setChallengeProfiles(cached.profiles);
+        setStandingsLoading(false);
+        setStandingsRefreshing(true);
+      } else {
+        setStandingsLoading(true);
+        setStandingsRefreshing(false);
+        setChallengeRows([]);
+        setChallengeProfiles({});
+      }
       let query = supabase
         .from("game_stats")
-        .select("user_id,game,seconds,mistakes,hints,completed_at")
+        .select("user_id,game,seconds,mistakes,hints,completed_at,profiles(name,icon,show_stats_to_others)")
         .eq("mode", "challenge")
         .eq("challenge_date", todayString());
       query = challengeScope?.type === "team"
         ? query.eq("team_challenge_id", challengeScope.id)
         : query.is("team_challenge_id", null);
-      const { data: resultRows } = await query;
+      let { data: resultRows, error } = await query;
       if (cancelled) return;
 
-      const rows = resultRows || [];
-      const playerIds = [...new Set(rows.map((row) => row.user_id))];
-      let profiles = [];
-      if (playerIds.length > 0) {
-        const { data } = await supabase
+      let rows = resultRows || [];
+      let profiles = rows.flatMap((row) => row.profiles ? [{ id:row.user_id, ...row.profiles }] : []);
+      if (error) {
+        let fallback = supabase
+          .from("game_stats")
+          .select("user_id,game,seconds,mistakes,hints,completed_at")
+          .eq("mode", "challenge")
+          .eq("challenge_date", todayString());
+        fallback = challengeScope?.type === "team"
+          ? fallback.eq("team_challenge_id", challengeScope.id)
+          : fallback.is("team_challenge_id", null);
+        const { data } = await fallback;
+        if (cancelled) return;
+        rows = data || [];
+        const playerIds = [...new Set(rows.map((row) => row.user_id))];
+        const profileResult = playerIds.length > 0 ? await supabase
           .from("profiles")
           .select("id,name,icon,show_stats_to_others")
-          .in("id", playerIds);
-        profiles = data || [];
+          .in("id", playerIds) : { data:[] };
+        profiles = profileResult.data || [];
       }
       if (!cancelled) {
+        const profileMap = Object.fromEntries(profiles.map((profile) => [profile.id, profile]));
+        standingsCacheRef.current[cacheKey] = { rows, profiles:profileMap };
         setChallengeRows(rows);
-        setChallengeProfiles(Object.fromEntries(profiles.map((profile) => [profile.id, profile])));
+        setChallengeProfiles(profileMap);
         setStandingsLoading(false);
+        setStandingsRefreshing(false);
       }
     }
     loadChallengeStandings();
@@ -214,7 +244,9 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
       type:"team",
       id:teamChallenge.challenge_id,
       teamId:teamChallenge.team_id,
-      name:teamChallenge.team_name,
+      name:teamChallenge.challenge_title || teamChallenge.team_name,
+      teamName:teamChallenge.team_name,
+      challengeTitle:teamChallenge.challenge_title || "Weekly challenge",
       emoji:teamChallenge.team_emoji,
       gameIds:teamChallenge.game_ids,
       rewardPoints:teamChallenge.reward_points,
@@ -323,10 +355,10 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
             <div className="rounded-3xl p-3 flex items-center gap-3" style={{ background:PANEL,border:"1px solid rgba(16,24,40,.09)",boxShadow:"0 10px 28px rgba(16,24,40,.07)" }}>
               <button onClick={() => setScopePickerOpen(true)} className="flex-1 min-w-0 flex items-center gap-3 text-left">
                 <div className="grid place-items-center rounded-2xl text-2xl" style={{ width:46,height:46,background:selectedTeam ? "rgba(18,148,106,.10)" : "rgba(47,111,237,.10)" }}>{selectedTeam?.team_emoji || "🎯"}</div>
-                <div className="flex-1 min-w-0"><div className="flex items-center gap-2"><div className="text-sm font-bold truncate">{selectedTeam?.team_name || t("home.myChallenge")}</div><span className="rounded-full px-2 py-0.5 text-[9px] font-bold" style={{ background:selectedStatus.done ? "rgba(22,163,74,.11)" : "rgba(47,111,237,.10)",color:selectedStatus.done ? "#137A3A" : "#2F6FED" }}>{selectedStatus.done ? t("home.done") : t("home.gamesLeft", { count:selectedStatus.remaining })}</span></div><div className="mt-1.5 h-1.5 rounded-full overflow-hidden" style={{ background:"rgba(16,24,40,.07)" }}><div className="h-full rounded-full" style={{ width:`${selectedStatus.total ? (selectedStatus.completed / selectedStatus.total) * 100 : 0}%`,background:selectedStatus.done ? "#16A34A" : "#2F6FED" }}/></div><div className="text-[10px] opacity-45 mt-1">{t("home.challengeProgress", { completed:selectedStatus.completed, total:selectedStatus.total })}</div>{selectedTeam && <div className="flex items-center mt-1"><div className="flex">{selectedRoster.slice(0,4).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-[10px]" style={{ width:21,height:21,background:"#F1F3F7",border:"2px solid white",marginLeft:index ? -5 : 0 }}>{member.icon || "🙂"}</span>)}</div><span className="text-[9px] opacity-40 ml-1.5">{t("home.playing", { count:selectedRoster.length })}</span></div>}</div>
+                <div className="flex-1 min-w-0"><div className="flex items-center gap-2"><div className="text-sm font-bold truncate">{selectedTeam?.challenge_title || selectedTeam?.team_name || t("home.myChallenge")}</div><span className="rounded-full px-2 py-0.5 text-[9px] font-bold" style={{ background:selectedStatus.done ? "rgba(22,163,74,.11)" : "rgba(47,111,237,.10)",color:selectedStatus.done ? "#137A3A" : "#2F6FED" }}>{selectedStatus.done ? t("home.done") : t("home.gamesLeft", { count:selectedStatus.remaining })}</span></div>{selectedTeam && <div className="text-[10px] opacity-45 truncate mt-0.5">{selectedTeam.team_name}</div>}<div className="mt-1.5 h-1.5 rounded-full overflow-hidden" style={{ background:"rgba(16,24,40,.07)" }}><div className="h-full rounded-full" style={{ width:`${selectedStatus.total ? (selectedStatus.completed / selectedStatus.total) * 100 : 0}%`,background:selectedStatus.done ? "#16A34A" : "#2F6FED" }}/></div><div className="text-[10px] opacity-45 mt-1">{t("home.challengeProgress", { completed:selectedStatus.completed, total:selectedStatus.total })}</div>{selectedTeam && <div className="flex items-center mt-1"><div className="flex">{selectedRoster.slice(0,4).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-[10px]" style={{ width:21,height:21,background:"#F1F3F7",border:"2px solid white",marginLeft:index ? -5 : 0 }}>{member.icon || "🙂"}</span>)}</div><span className="text-[9px] opacity-40 ml-1.5">{t("home.playing", { count:selectedRoster.length })}</span></div>}</div>
                 <ChevronDown size={16} style={{ opacity:.35 }}/>
               </button>
-              {selectedTeam && onOpenTeams && <><span className="h-9 w-px" style={{ background:"rgba(16,24,40,.08)" }}/><button onClick={onOpenTeams} className="grid place-items-center rounded-full" style={{ width:38,height:38,background:"rgba(18,148,106,.09)",color:"#0B7C58" }} aria-label="Open team details"><Users size={16}/></button></>}
+              {selectedTeam && onOpenTeams && <><span className="h-9 w-px" style={{ background:"rgba(16,24,40,.08)" }}/><button onClick={() => onOpenTeams({ teamId:selectedTeam.team_id,challengeId:selectedTeam.challenge_id })} className="grid place-items-center rounded-full" style={{ width:38,height:38,background:"rgba(18,148,106,.09)",color:"#0B7C58" }} aria-label={`Open ${selectedTeam.team_name} challenge`}><Users size={16}/></button></>}
             </div>
             <ChallengeStandings
               rows={challengeRows}
@@ -335,6 +367,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
               isTeam={challengeScope?.type === "team"}
               userId={userId}
               loading={standingsLoading || (challengeScope?.type === "team" && !selectedTeam)}
+              refreshing={standingsRefreshing}
             />
           </div>
         )}
@@ -423,7 +456,8 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                   >
                     <span className="grid place-items-center rounded-xl text-xl" style={{ width:42,height:42,background:"#fff" }}>{isPersonal ? "🎯" : item.team_emoji || "⭐"}</span>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2"><div className="text-sm font-semibold truncate">{isPersonal ? t("home.myChallenge") : item.team_name}</div><span className="ml-auto shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold" style={{ background:item.status.done ? "rgba(22,163,74,.11)" : item.active_today ? "rgba(229,72,77,.09)" : "rgba(16,24,40,.06)",color:item.status.done ? "#137A3A" : item.active_today ? "#A9363B" : "rgba(27,33,41,.45)" }}>{!item.active_today ? t("home.notToday") : item.status.done ? t("home.done") : t("home.gamesLeft", { count:item.status.remaining })}</span></div>
+                      <div className="flex items-center gap-2"><div className="text-sm font-semibold truncate">{isPersonal ? t("home.myChallenge") : item.challenge_title || item.team_name}</div><span className="ml-auto shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold" style={{ background:item.status.done ? "rgba(22,163,74,.11)" : item.active_today ? "rgba(229,72,77,.09)" : "rgba(16,24,40,.06)",color:item.status.done ? "#137A3A" : item.active_today ? "#A9363B" : "rgba(27,33,41,.45)" }}>{!item.active_today ? t("home.notToday") : item.status.done ? t("home.done") : t("home.gamesLeft", { count:item.status.remaining })}</span></div>
+                      {!isPersonal && <div className="text-[9px] opacity-40 truncate mt-0.5">{item.team_name}</div>}
                       <div className="mt-1.5 h-1.5 rounded-full overflow-hidden" style={{ background:"rgba(16,24,40,.07)" }}><div className="h-full rounded-full" style={{ width:`${item.status.total ? (item.status.completed / item.status.total) * 100 : 0}%`,background:item.status.done ? "#16A34A" : "#2F6FED" }}/></div>
                       <div className="flex items-center mt-1"><span className="text-[9px] opacity-45">{t("home.challengeProgress", { completed:item.status.completed, total:item.status.total })}</span>{!isPersonal && roster.length > 0 && <><span className="mx-1.5 opacity-20">·</span><div className="flex">{roster.slice(0,3).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-[8px]" style={{ width:18,height:18,background:"#fff",border:"1.5px solid #F7F8FB",marginLeft:index ? -4 : 0 }}>{member.icon || "🙂"}</span>)}</div><span className="text-[9px] opacity-40 ml-1">{t("home.members", { count:roster.length })}</span></>}</div>
                     </div>
