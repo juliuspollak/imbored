@@ -615,5 +615,12 @@
     "title": "Unified game toolbars, fixed a misleading icon",
     "body": "Geo had the same broken 'New' button Zoom had (a no-op mid-quiz) — removed, folded into Restart. The Eraser icon on Geo and Zoom's restart button was misleading (nothing is being erased, a fresh quiz is generated) — swapped for a refresh icon. Disabled toolbar buttons (Undo before your first move, Hint on cooldown, etc.) were low-contrast enough to read as missing rather than temporarily unavailable — bumped visibility across every game. Removed a small, unexplained icon that appeared under Zoom's flag prompts.",
     "date": "2026-07-25"
+  },
+  {
+    "id": "2026-07-25-home-layout-redesign",
+    "version": "v111",
+    "title": "Home screen: smaller header, straight to the games",
+    "body": "The giant centered app-name heading is gone, replaced with a compact header row like the games hubs this app is modeled on (NYT Games, LinkedIn Games). Points and streak moved into a small chip instead of a separate big card. Games start noticeably higher on the screen — nothing about what the page does changed, just how much space it took to get there.",
+    "date": "2026-07-25"
   }
 ]
