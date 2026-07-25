@@ -300,16 +300,34 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
 
         {onPlayModeChange && (
           <div className="flex justify-center mb-2">
+            <style>{`
+              .toggle-button-gloss {
+                position: relative;
+                overflow: hidden;
+              }
+              .toggle-button-gloss::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.05) 50%, rgba(16,24,40,0.05) 100%);
+                pointer-events: none;
+              }
+            `}</style>
             <div className="inline-flex rounded-full p-1" style={{ background: "rgba(16,24,40,0.06)" }}>
               {["challenge", "practice"].map((m) => (
                 <button
                   key={m}
                   onClick={() => onPlayModeChange(m)}
-                  className="rounded-full px-4 py-1.5 text-xs font-semibold capitalize"
+                  className="toggle-button-gloss rounded-full px-4 py-1.5 text-xs font-semibold capitalize transition-all"
                   style={{
-                    background: playMode === m ? PANEL : "transparent",
+                    background: playMode === m 
+                      ? "linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(245,250,255,0.96) 100%)"
+                      : "transparent",
                     color: playMode === m ? CREAM : "rgba(27,33,41,0.5)",
-                    boxShadow: playMode === m ? "0 2px 8px rgba(16,24,40,0.10)" : "none",
+                    boxShadow: playMode === m 
+                      ? "0 8px 24px rgba(16,24,40,0.15), inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -1px 0 rgba(16,24,40,0.08)" 
+                      : "none",
+                    border: playMode === m ? "1px solid rgba(16,24,40,0.08)" : "none",
                   }}
                 >
                   {t(`common.${m}`)}
@@ -470,7 +488,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                   cursor: g.available ? "pointer" : "default",
                 }}
               >
-                {todayCompletions.has(g.id) && (
+                {challengesLoaded && todayCompletions.has(g.id) && (
                   <span
                     className="absolute top-3 left-3 flex items-center justify-center rounded-full"
                     style={{ width: 18, height: 18, background: "rgba(47,111,237,0.12)" }}

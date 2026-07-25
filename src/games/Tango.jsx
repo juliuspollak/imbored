@@ -20,15 +20,15 @@ function SunBurstIcon({ size = 24, className = "", style, ...props }) {
       {...props}
     >
       <circle cx="12" cy="12" r="4.15" fill="currentColor" />
-      <g stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-        <path d="M12 2.25v2.1" />
-        <path d="M12 19.65v2.1" />
-        <path d="M2.25 12h2.1" />
-        <path d="M19.65 12h2.1" />
-        <path d="m5.1 5.1 1.48 1.48" />
-        <path d="m17.42 17.42 1.48 1.48" />
-        <path d="m18.9 5.1-1.48 1.48" />
-        <path d="m6.58 17.42-1.48 1.48" />
+      <g fill="currentColor">
+        <rect x="10" y="0.5" width="4" height="3.5" rx="2" />
+        <rect x="10" y="20" width="4" height="3.5" rx="2" />
+        <rect x="0.5" y="10" width="3.5" height="4" rx="2" />
+        <rect x="20" y="10" width="3.5" height="4" rx="2" />
+        <rect x="3" y="3" width="2.8" height="2.8" rx="1" transform="rotate(45 4.4 4.4)" />
+        <rect x="18.2" y="18.2" width="2.8" height="2.8" rx="1" transform="rotate(45 19.6 19.6)" />
+        <rect x="18.2" y="3" width="2.8" height="2.8" rx="1" transform="rotate(-45 19.6 4.4)" />
+        <rect x="3" y="18.2" width="2.8" height="2.8" rx="1" transform="rotate(-45 4.4 19.6)" />
       </g>
     </svg>
   );
@@ -342,9 +342,11 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
   const [history, setHistory] = useState([]);
   const [showHelp, setShowHelp] = useState(false);
   const [celebratingLines, setCelebratingLines] = useState([]);
+  const [displayedConflicts, setDisplayedConflicts] = useState(new Set());
   const timerRef = useRef(null);
   const completedLinesRef = useRef(new Set());
   const celebrationTimerRef = useRef(null);
+  const conflictDebounceRef = useRef(null);
 
   const newPuzzle = useCallback((dIdx) => {
     const gen = () => generatePuzzle(GIVEN_TARGETS[dIdx], EDGE_TARGETS[dIdx]);
@@ -403,6 +405,15 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
 
   useEffect(() => () => window.clearTimeout(celebrationTimerRef.current), []);
 
+  useEffect(() => {
+    if (!board || !puzzle) return;
+    window.clearTimeout(conflictDebounceRef.current);
+    conflictDebounceRef.current = window.setTimeout(() => {
+      setDisplayedConflicts(getConflicts(board, puzzle.edgeMap));
+    }, 2000);
+    return () => window.clearTimeout(conflictDebounceRef.current);
+  }, [board, puzzle]);
+
   if (!board || !puzzle) {
     return (
       <div style={{ background: BG, minHeight: "100vh" }} className="flex items-center justify-center">
@@ -411,7 +422,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     );
   }
 
-  const conflicts = getConflicts(board, puzzle.edgeMap);
+  const actualConflicts = getConflicts(board, puzzle.edgeMap);
   const filledCount = board.flat().filter((v) => v !== 0).length;
 
   function pushHistory() {
@@ -664,7 +675,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           {board.map((row, r) =>
             row.map((val, c) => {
               const isGiven = puzzle.givens[r][c] !== 0;
-              const isConflict = conflicts.has(`${r}-${c}`);
+              const isConflict = displayedConflicts.has(`${r}-${c}`);
               const isHint = hintCell && hintCell.r === r && hintCell.c === c;
               const hintClass = isHint && !isConflict ? `tg-hint-${hintCell.type}` : "";
               return (
@@ -681,10 +692,10 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                   }}
                 >
                   {val === SUN && (
-                    <SunBurstIcon key={`sun-${r}-${c}`} className="tg-symbol" size={Math.max(18, 28 - SIZE)} style={{ color: isConflict ? RED : SUN_COLOR }} />
+                    <SunBurstIcon key={`sun-${r}-${c}`} className="tg-symbol" size={Math.max(22, 32 - SIZE)} style={{ color: isConflict ? RED : SUN_COLOR }} />
                   )}
                   {val === MOON && (
-                    <Moon key={`moon-${r}-${c}`} className="tg-symbol" size={Math.max(16, 26 - SIZE)} style={{ color: isConflict ? RED : MOON_COLOR }} strokeWidth={2.25} />
+                    <Moon key={`moon-${r}-${c}`} className="tg-symbol" size={Math.max(20, 30 - SIZE)} style={{ color: isConflict ? RED : MOON_COLOR }} strokeWidth={2.25} />
                   )}
                   {/* The pulsing border alone doesn't say what belongs here —
                       show a faint preview of the actual symbol. For an empty
@@ -696,9 +707,9 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                     val === EMPTY ? (
                       <span className="tg-hint-ghost" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
                         {hintCell.symbol === SUN ? (
-                          <SunBurstIcon size={Math.max(18, 28 - SIZE)} style={{ color: SUN_COLOR, opacity: 0.4 }} />
+                          <SunBurstIcon size={Math.max(22, 32 - SIZE)} style={{ color: SUN_COLOR, opacity: 0.4 }} />
                         ) : (
-                          <Moon size={Math.max(16, 26 - SIZE)} style={{ color: MOON_COLOR, opacity: 0.4 }} strokeWidth={2.25} />
+                          <Moon size={Math.max(20, 30 - SIZE)} style={{ color: MOON_COLOR, opacity: 0.4 }} strokeWidth={2.25} />
                         )}
                       </span>
                     ) : (
@@ -735,15 +746,15 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                   left: `${cx}%`,
                   top: `${cy}%`,
                   transform: "translate(-50%, -50%)",
-                  width: 18,
-                  height: 18,
+                  width: 26,
+                  height: 26,
                   borderRadius: "50%",
                   background: PANEL,
                   border: `1px solid rgba(16,24,40,0.25)`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: 10,
+                  fontSize: 14,
                   fontWeight: 700,
                   color: CREAM,
                   pointerEvents: "none",
