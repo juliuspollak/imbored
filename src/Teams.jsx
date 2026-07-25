@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   ArrowLeft, Ban, CalendarDays, Check, ChevronDown, Crown, Gift,
   Lock, Mail, Plus, RotateCcw, Search, Trash2,
@@ -21,9 +21,9 @@ function suggestEmoji(value) {
   return rules.find(([pattern]) => pattern.test(value.toLowerCase()))?.[1] || "⭐";
 }
 
-const defaultChallenge = () => ({ games:[...DEFAULT_GAMES], days:[1,2,3,4,5,6,7], reward:100, rewardType:"points", rewardLabel:"", locked:false, challengeId:null });
+const defaultChallenge = () => ({ title:"Weekly challenge",games:[...DEFAULT_GAMES],days:[1,2,3,4,5,6,7],reward:100,rewardType:"points",rewardLabel:"",locked:false,challengeId:null });
 
-export default function Teams({ onBack }) {
+export default function Teams({ onBack, initialTeamId = null, initialChallengeId = null }) {
   const { user, profile, createTeam, addPlayerToTeam, joinTeam, leaveTeam } = useAuth();
   const [teams, setTeams] = useState([]);
   const [profiles, setProfiles] = useState([]);
@@ -32,7 +32,9 @@ export default function Teams({ onBack }) {
   const [requests, setRequests] = useState([]);
   const [invitations, setInvitations] = useState([]);
   const [teamBlocks, setTeamBlocks] = useState([]);
+  const [teamChallenges, setTeamChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [msg, setMsg] = useState("");
   const [composerOpen, setComposerOpen] = useState(false);
   const [emailInviteOpen, setEmailInviteOpen] = useState(false);
@@ -54,57 +56,89 @@ export default function Teams({ onBack }) {
   const [leavingTeamId, setLeavingTeamId] = useState(null);
   const [expandedChallengeId, setExpandedChallengeId] = useState(null);
   const [challengeEdits, setChallengeEdits] = useState({});
+  const hasLoadedRef = useRef(false);
+  const deepLinkAppliedRef = useRef(false);
 
   const refresh = useCallback(async () => {
-    if (!supabaseReady) return;
-    setLoading(true);
-    const [{data:t},{data:p},{data:m},{data:r},{data:c},rosterResult,blocksResult,invitationsResult] = await Promise.all([
-      supabase.from("teams").select("*").order("created_at"),
-      supabase.from("profiles").select("id,name,icon,mood,is_private,hidden_from_others,is_approved,account_deleted_at").order("name"),
-      supabase.from("team_members").select("team_id,user_id"),
-      supabase.from("team_join_requests").select("*").order("requested_at",{ascending:false}),
-      supabase.rpc("get_my_active_team_challenges"),
-      supabase.rpc("get_my_team_rosters"),
-      supabase.rpc("get_my_managed_team_blocks"),
-      supabase.rpc("get_my_pending_team_invitations"),
-    ]);
-    setTeams(t || []);
-    setProfiles(p || []);
-    setMembers(m || []);
-    setMemberProfiles(Object.fromEntries((rosterResult.data || []).map((item) => [
-      `${item.team_id}:${item.user_id}`,
-      { id:item.user_id,name:item.member_name,icon:item.member_icon,mood:item.member_mood,is_owner:item.is_owner },
-    ])));
-    setRequests(r || []);
-    setTeamBlocks(blocksResult.data || []);
-    setInvitations(invitationsResult.data || []);
-    setChallengeEdits((previous) => {
-      const next = { ...previous };
-      (c || []).forEach((item) => {
-        next[item.team_id] = {
-          games:item.game_ids || DEFAULT_GAMES,
-          days:item.active_days || [1,2,3,4,5,6,7],
-          reward:Number(item.reward_points ?? 100),
-          rewardType:item.reward_type || "points",
-          rewardLabel:item.reward_label || "",
-          locked:!!item.is_locked,
-          challengeId:item.challenge_id,
-        };
+    if (!supabaseReady) { setLoading(false); return; }
+    if (!hasLoadedRef.current) setLoading(true);
+    setLoadError("");
+    try {
+      const results = await Promise.all([
+        supabase.from("teams").select("*").order("created_at"),
+        supabase.from("profiles").select("id,name,icon,mood,is_private,hidden_from_others,is_approved,account_deleted_at").order("name"),
+        supabase.from("team_members").select("team_id,user_id"),
+        supabase.from("team_join_requests").select("*").order("requested_at",{ascending:false}),
+        supabase.rpc("get_my_active_team_challenges"),
+        supabase.rpc("get_my_team_rosters"),
+        supabase.rpc("get_my_managed_team_blocks"),
+        supabase.rpc("get_my_pending_team_invitations"),
+      ]);
+      const [teamsResult,profilesResult,membersResult,requestsResult,challengesResult,rosterResult,blocksResult,invitationsResult] = results;
+      const criticalError = teamsResult.error || membersResult.error || challengesResult.error || rosterResult.error;
+      if (criticalError) setLoadError(criticalError.message || "Some team details could not be loaded.");
+      const challenges = challengesResult.data || [];
+      const mergedMembers = new Map();
+      (membersResult.data || []).forEach((item) => mergedMembers.set(`${item.team_id}:${item.user_id}`, item));
+      (rosterResult.data || []).forEach((item) => mergedMembers.set(`${item.team_id}:${item.user_id}`, { team_id:item.team_id,user_id:item.user_id }));
+      setTeams(teamsResult.data || []);
+      setProfiles(profilesResult.data || []);
+      setMembers([...mergedMembers.values()]);
+      setMemberProfiles(Object.fromEntries((rosterResult.data || []).map((item) => [
+        `${item.team_id}:${item.user_id}`,
+        { id:item.user_id,name:item.member_name,icon:item.member_icon,mood:item.member_mood,is_owner:item.is_owner },
+      ])));
+      setRequests(requestsResult.data || []);
+      setTeamBlocks(blocksResult.data || []);
+      setInvitations(invitationsResult.data || []);
+      setTeamChallenges(challenges);
+      setChallengeEdits((previous) => {
+        const next = { ...previous };
+        challenges.forEach((item) => {
+          next[String(item.challenge_id)] = {
+            title:item.challenge_title || "Weekly challenge",
+            games:item.game_ids || DEFAULT_GAMES,
+            days:item.active_days || [1,2,3,4,5,6,7],
+            reward:Number(item.reward_points ?? 100),
+            rewardType:item.reward_type || "points",
+            rewardLabel:item.reward_label || "",
+            locked:!!item.is_locked,
+            challengeId:item.challenge_id,
+          };
+        });
+        return next;
       });
-      return next;
-    });
-    setLoading(false);
-    await supabase.rpc("mark_my_team_request_updates_seen");
+      hasLoadedRef.current = true;
+      void supabase.rpc("mark_my_team_request_updates_seen");
+    } catch (error) {
+      setLoadError(error?.message || "Teams could not be loaded.");
+    } finally {
+      setLoading(false);
+    }
   }, [profile?.is_admin, user?.id]);
 
   useEffect(() => {
     refresh();
     return attachRealtimeRefresh({
       channelName:`teams-${user?.id}`,
-      tables:[{ name:"team_members" },{ name:"team_join_requests" },{ name:"team_invitations" }],
+      tables:[{ name:"team_members" },{ name:"team_join_requests" },{ name:"team_invitations" },{ name:"team_weekly_challenges" }],
       refresh,
     });
   }, [refresh, user?.id]);
+
+  useEffect(() => {
+    if (deepLinkAppliedRef.current || loading || !initialTeamId) return;
+    const targetTeam = teams.find((team) => Number(team.id) === Number(initialTeamId));
+    if (!targetTeam) {
+      setLoadError("That team is no longer available.");
+      deepLinkAppliedRef.current = true;
+      return;
+    }
+    setRosterTeam(targetTeam);
+    setRosterQuery("");
+    setExpandedChallengeId(initialChallengeId ? String(initialChallengeId) : null);
+    deepLinkAppliedRef.current = true;
+  }, [initialChallengeId, initialTeamId, loading, teams]);
 
   const byId = Object.fromEntries(profiles.map((p) => [p.id, p]));
   const mine = new Set(members.filter((m) => m.user_id === user?.id).map((m) => m.team_id));
@@ -240,28 +274,56 @@ export default function Teams({ onBack }) {
     }
   }
 
-  function challengeFor(teamId) { return challengeEdits[teamId] || defaultChallenge(); }
-  function patchChallenge(teamId, patch) { setChallengeEdits((previous) => ({ ...previous, [teamId]:{ ...defaultChallenge(), ...(previous[teamId] || {}), ...patch } })); }
-  function toggleChallengeGame(teamId, game) {
-    const edit = challengeFor(teamId);
-    if (!edit.locked) patchChallenge(teamId, { games:edit.games.includes(game) ? edit.games.filter((item) => item !== game) : [...edit.games,game] });
+  function challengesFor(teamId) {
+    return teamChallenges.filter((challenge) => Number(challenge.team_id) === Number(teamId));
   }
-  function toggleDay(teamId, day) {
-    const edit = challengeFor(teamId);
-    if (!edit.locked) patchChallenge(teamId, { days:edit.days.includes(day) ? edit.days.filter((item) => item !== day) : [...edit.days,day].sort() });
+  function challengeFor(challengeKey) { return challengeEdits[String(challengeKey)] || defaultChallenge(); }
+  function patchChallenge(challengeKey, patch) {
+    setChallengeEdits((previous) => ({
+      ...previous,
+      [String(challengeKey)]:{ ...defaultChallenge(), ...(previous[String(challengeKey)] || {}), ...patch },
+    }));
   }
-  async function saveTeamChallenge(team) {
-    const edit = challengeFor(team.id);
-    const { error } = await supabase.rpc("set_team_weekly_challenge", {
+  function toggleChallengeGame(challengeKey, game) {
+    const edit = challengeFor(challengeKey);
+    if (!edit.locked) patchChallenge(challengeKey, { games:edit.games.includes(game) ? edit.games.filter((item) => item !== game) : [...edit.games,game] });
+  }
+  function toggleDay(challengeKey, day) {
+    const edit = challengeFor(challengeKey);
+    if (!edit.locked) patchChallenge(challengeKey, { days:edit.days.includes(day) ? edit.days.filter((item) => item !== day) : [...edit.days,day].sort() });
+  }
+  function startNewChallenge(teamId) {
+    const key = `new:${teamId}`;
+    patchChallenge(key, defaultChallenge());
+    setExpandedChallengeId(key);
+  }
+  async function saveTeamChallenge(team, challengeKey) {
+    const edit = challengeFor(challengeKey);
+    let { error } = await supabase.rpc("set_team_weekly_challenge", {
       target_team_id:Number(team.id),
       selected_games:edit.games,
       selected_days:edit.days.map(Number),
       reward_points_in:edit.rewardType === "points" ? Number(edit.reward) || 0 : 0,
       reward_type_in:edit.rewardType,
       reward_label_in:edit.rewardType === "prize" ? edit.rewardLabel?.trim() || null : null,
+      target_challenge_id:edit.challengeId ? Number(edit.challengeId) : null,
+      challenge_title_in:edit.title?.trim() || "Weekly challenge",
     });
-    setMsg(error?.message || "Weekly challenge saved");
-    if (!error) refresh();
+    if (error?.code === "PGRST202" && edit.challengeId) {
+      ({ error } = await supabase.rpc("set_team_weekly_challenge", {
+        target_team_id:Number(team.id),
+        selected_games:edit.games,
+        selected_days:edit.days.map(Number),
+        reward_points_in:edit.rewardType === "points" ? Number(edit.reward) || 0 : 0,
+        reward_type_in:edit.rewardType,
+        reward_label_in:edit.rewardType === "prize" ? edit.rewardLabel?.trim() || null : null,
+      }));
+    }
+    setMsg(error?.message || (edit.challengeId ? "Challenge updated" : "Challenge created"));
+    if (!error) {
+      setExpandedChallengeId(null);
+      await refresh();
+    }
   }
 
   const inviteCandidates = inviteTeam ? profiles.filter((candidate) => {
@@ -292,6 +354,7 @@ export default function Teams({ onBack }) {
         </div>}
 
         {msg && <div className="rounded-xl p-3 mb-3 text-xs" style={{ background:"rgba(47,111,237,.08)" }}>{msg}</div>}
+        {loadError && <div className="rounded-2xl p-3 mb-3 text-xs flex items-center gap-3" style={{ background:"rgba(181,67,58,.08)",color:"#9F2F2A" }}><span className="flex-1">{loadError}</span><button type="button" onClick={refresh} className="rounded-full px-3 py-1.5 font-semibold" style={{ background:"#fff" }}>Retry</button></div>}
         {invitations.length > 0 && <div className="rounded-3xl p-4 mb-4" style={{ background:"#FFF8E7",border:"1px solid rgba(217,174,88,.22)" }}>
           <div className="text-xs font-bold mb-2">Team invitations</div>
           {invitations.map((item) => <div key={item.invitation_id} className="flex items-center gap-2 py-2">
@@ -314,7 +377,7 @@ export default function Teams({ onBack }) {
           <div className="flex gap-2 mt-3"><button type="button" onClick={() => setComposerOpen(false)} className="flex-1 rounded-full py-2.5 text-xs font-semibold" style={{ background:"rgba(16,24,40,.05)" }}>Cancel</button><button disabled={!name.trim()} className="flex-1 rounded-full py-2.5 text-xs font-semibold text-white disabled:opacity-35" style={{ background:ACCENT }}>Create team</button></div>
         </form>}
 
-        {loading ? <p className="text-center opacity-40 py-8">Loading…</p> : <div className="flex flex-col gap-3">{teams.map((team) => {
+        {loading ? <div className="space-y-3 py-2" role="status" aria-label="Loading teams">{[0,1,2].map((item) => <div key={item} className="h-[96px] rounded-3xl animate-pulse" style={{ background:"linear-gradient(90deg,#E9ECF2,#F5F6F9,#E9ECF2)" }}/>)}</div> : teams.length === 0 ? <div className="rounded-3xl p-6 text-center" style={{ background:"#fff",border:"1px solid rgba(16,24,40,.07)" }}><Users size={24} className="mx-auto opacity-25"/><div className="text-sm font-semibold mt-2">No teams yet</div><div className="text-[11px] opacity-45 mt-1">Create the first team when you’re ready.</div></div> : <div className="flex flex-col gap-3">{teams.map((team) => {
           const roster = rosterFor(team.id);
           const isMine = mine.has(team.id);
           const owner = team.created_by === user?.id;
@@ -363,26 +426,44 @@ export default function Teams({ onBack }) {
           const manager = canManage(rosterTeam);
           const member = mine.has(rosterTeam.id);
           const owner = rosterTeam.created_by === user?.id;
-          const edit = challengeFor(rosterTeam.id);
-          const challengeOpen = expandedChallengeId === rosterTeam.id;
+          const rosterChallenges = challengesFor(rosterTeam.id);
+          const newChallengeKey = `new:${rosterTeam.id}`;
+          const visibleChallenges = expandedChallengeId === newChallengeKey
+            ? [...rosterChallenges,{ challenge_id:newChallengeKey,challenge_title:"New challenge",isNew:true }]
+            : rosterChallenges;
           return <div className="fixed inset-0 z-50 flex justify-center overflow-y-auto" style={{ background:BG }}>
             <div className="w-full max-w-md p-4 pt-6 flex flex-col" style={{ background:BG,minHeight:"100dvh" }}>
               <div className="flex items-center gap-3 mb-3">
                 <button onClick={() => { setRosterTeam(null);setDeleteTeamTarget(null);setDeleteConfirmation(""); }} className="grid place-items-center rounded-full shrink-0" style={{ width:36,height:36,background:"rgba(16,24,40,.05)" }} aria-label="Back to teams"><ArrowLeft size={17}/></button>
                 <div className="grid place-items-center rounded-2xl text-2xl" style={{ width:44,height:44,background:"linear-gradient(145deg,#eef3ff,#fff)" }}>{rosterTeam.emoji || "⭐"}</div>
-                <div className="flex-1 min-w-0"><div className="font-bold truncate">Manage {rosterTeam.name}</div><div className="text-[11px] opacity-45">Members, invites and challenge</div></div>
+                <div className="flex-1 min-w-0"><div className="font-bold truncate">{owner ? `Manage ${rosterTeam.name}` : rosterTeam.name}</div><div className="text-[11px] opacity-45">Challenges, members and invites</div></div>
               </div>
               {member && <button onClick={() => { setInviteTeam(rosterTeam);setInviteQuery(""); }} className="w-full rounded-2xl px-4 py-3 mb-3 text-sm font-semibold flex items-center justify-center gap-2 text-white" style={{ background:ACCENT }}><UserPlus size={16}/>Invite a player</button>}
 
-              {owner && <div className="rounded-3xl p-4 mb-3" style={{ background:"#fff",border:"1px solid rgba(16,24,40,.07)" }}>
-                <button onClick={() => setExpandedChallengeId(challengeOpen ? null : rosterTeam.id)} className="w-full flex items-center gap-2 text-left"><div className="grid place-items-center rounded-xl" style={{ width:34,height:34,background:"rgba(18,148,106,.09)",color:"#0B7C58" }}><CalendarDays size={15}/></div><div className="flex-1"><div className="text-xs font-semibold">Weekly challenge</div><div className="text-[10px] opacity-45">{edit.games.length} games · {edit.rewardType === "points" ? `${edit.reward} pts` : edit.rewardLabel || "Prize"}</div></div>{edit.locked && <Lock size={12} style={{ color:"#8A681D" }}/>}<ChevronDown size={15} style={{ opacity:.35,transform:challengeOpen ? "rotate(180deg)" : "none" }}/></button>
-                {challengeOpen && <div className="mt-3">
-                  {edit.locked && <div className="rounded-xl p-2.5 text-[11px]" style={{ background:"rgba(217,174,88,.10)",color:"#775B1D" }}>Locked because a member started this week’s challenge.</div>}
-                  <div className="text-[11px] font-semibold mt-3 mb-2">Games</div><div className="flex flex-wrap gap-2">{DEFAULT_GAMES.map((game) => { const chosen=edit.games.includes(game);return <button disabled={edit.locked} type="button" key={game} onClick={() => toggleChallengeGame(rosterTeam.id,game)} className="rounded-full px-3 py-1.5 text-xs capitalize disabled:opacity-55" style={{ background:chosen ? "rgba(47,111,237,.12)" : "rgba(16,24,40,.05)",color:chosen ? ACCENT : INK }}>{game}</button>; })}</div>
-                  <div className="text-[11px] font-semibold mt-4 mb-2">Playing days</div><div className="grid grid-cols-7 gap-1">{DAYS.map((day) => { const chosen=edit.days.includes(day.id);return <button disabled={edit.locked} type="button" key={day.id} onClick={() => toggleDay(rosterTeam.id,day.id)} className="rounded-lg py-2 text-[10px] font-semibold disabled:opacity-55" style={{ background:chosen ? "rgba(18,148,106,.12)" : "rgba(16,24,40,.05)",color:chosen ? "#0B7C58" : INK }}>{day.label}</button>; })}</div>
-                  <div className="mt-4"><span className="text-[11px] font-semibold flex items-center gap-1 mb-2"><Gift size={12}/>Reward</span><div className="flex gap-2 mb-2">{["points","prize"].map((type) => <button key={type} type="button" disabled={edit.locked} onClick={() => patchChallenge(rosterTeam.id,{ rewardType:type })} className="rounded-full px-3 py-1.5 text-xs font-semibold" style={{ background:edit.rewardType === type ? "rgba(47,111,237,.14)" : "rgba(16,24,40,.05)",color:edit.rewardType === type ? ACCENT : INK }}>{type === "points" ? "Points" : "Real prize"}</button>)}</div>{edit.rewardType === "points" ? <div className="flex items-center rounded-xl border px-3"><input disabled={edit.locked} type="number" min="0" max="100000" value={edit.reward} onChange={(e) => patchChallenge(rosterTeam.id,{ reward:e.target.value })} className="w-full py-2 text-base bg-transparent outline-none"/><span className="text-xs opacity-45">points</span></div> : <input disabled={edit.locked} value={edit.rewardLabel} onChange={(e) => patchChallenge(rosterTeam.id,{ rewardLabel:e.target.value })} placeholder="e.g. Movie ticket" className="w-full rounded-xl border px-3 py-2 text-base"/>}</div>
-                  <button disabled={edit.locked || !edit.games.length || !edit.days.length} type="button" onClick={() => saveTeamChallenge(rosterTeam)} className="mt-3 w-full rounded-full py-2.5 text-xs font-semibold text-white disabled:opacity-35" style={{ background:ACCENT }}>Save challenge</button>
-                </div>}
+              {member && <div className="rounded-3xl p-4 mb-3" style={{ background:"#fff",border:"1px solid rgba(16,24,40,.07)" }}>
+                <div className="flex items-center gap-2 mb-3"><div className="grid place-items-center rounded-xl" style={{ width:34,height:34,background:"rgba(18,148,106,.09)",color:"#0B7C58" }}><CalendarDays size={15}/></div><div className="flex-1"><div className="text-sm font-bold">Challenges</div><div className="text-[10px] opacity-45">{rosterChallenges.length} this week</div></div>{owner && <button type="button" onClick={() => startNewChallenge(rosterTeam.id)} className="rounded-full px-3 py-2 text-[11px] font-semibold flex items-center gap-1" style={{ background:"rgba(47,111,237,.09)",color:ACCENT }}><Plus size={12}/>New</button>}</div>
+                {visibleChallenges.length === 0 && <div className="rounded-2xl p-4 text-center" style={{ background:"#F7F8FB" }}><div className="text-xs font-semibold">No challenge yet</div><div className="text-[10px] opacity-45 mt-1">{owner ? "Create one for your team to play this week." : "The owner hasn’t created one this week."}</div></div>}
+                <div className="space-y-2">
+                  {visibleChallenges.map((challenge) => {
+                    const challengeKey=String(challenge.challenge_id);
+                    const edit=challengeFor(challengeKey);
+                    const challengeOpen=String(expandedChallengeId) === challengeKey;
+                    return <div key={challengeKey} className="rounded-2xl overflow-hidden" style={{ background:"#F7F8FB",border:challengeOpen ? "1px solid rgba(47,111,237,.18)" : "1px solid transparent" }}>
+                      <button type="button" onClick={() => setExpandedChallengeId(challengeOpen ? null : challengeKey)} className="w-full flex items-center gap-2 p-3 text-left">
+                        <div className="flex-1 min-w-0"><div className="text-xs font-semibold truncate">{edit.title || challenge.challenge_title || "Weekly challenge"}</div><div className="text-[10px] opacity-45 mt-0.5">{edit.games.length} games · {edit.rewardType === "points" ? `${edit.reward} pts` : edit.rewardLabel || "Prize"}</div></div>
+                        {edit.locked && <Lock size={12} style={{ color:"#8A681D" }}/>}<ChevronDown size={15} style={{ opacity:.35,transform:challengeOpen ? "rotate(180deg)" : "none" }}/>
+                      </button>
+                      {challengeOpen && <div className="px-3 pb-3" style={{ borderTop:"1px solid rgba(16,24,40,.06)" }}>
+                        {edit.locked && <div className="rounded-xl p-2.5 text-[11px] mt-3" style={{ background:"rgba(217,174,88,.10)",color:"#775B1D" }}>Locked because a member started this challenge.</div>}
+                        {owner && <label className="block mt-3"><span className="text-[11px] font-semibold">Challenge name</span><input disabled={edit.locked} value={edit.title} onChange={(event) => patchChallenge(challengeKey,{ title:event.target.value })} placeholder="e.g. Weekend sprint" className="w-full rounded-xl border px-3 py-2 text-base mt-1 bg-white disabled:opacity-55"/></label>}
+                        <div className="text-[11px] font-semibold mt-3 mb-2">Games</div><div className="flex flex-wrap gap-2">{DEFAULT_GAMES.map((game) => { const chosen=edit.games.includes(game);return <button disabled={!owner || edit.locked} type="button" key={game} onClick={() => toggleChallengeGame(challengeKey,game)} className="rounded-full px-3 py-1.5 text-xs capitalize disabled:opacity-70" style={{ background:chosen ? "rgba(47,111,237,.12)" : "rgba(16,24,40,.05)",color:chosen ? ACCENT : INK }}>{game}</button>; })}</div>
+                        <div className="text-[11px] font-semibold mt-4 mb-2">Playing days</div><div className="grid grid-cols-7 gap-1">{DAYS.map((day) => { const chosen=edit.days.includes(day.id);return <button disabled={!owner || edit.locked} type="button" key={day.id} onClick={() => toggleDay(challengeKey,day.id)} className="rounded-lg py-2 text-[10px] font-semibold disabled:opacity-70" style={{ background:chosen ? "rgba(18,148,106,.12)" : "rgba(16,24,40,.05)",color:chosen ? "#0B7C58" : INK }}>{day.label}</button>; })}</div>
+                        <div className="mt-4"><span className="text-[11px] font-semibold flex items-center gap-1 mb-2"><Gift size={12}/>Reward</span>{owner && <div className="flex gap-2 mb-2">{["points","prize"].map((type) => <button key={type} type="button" disabled={edit.locked} onClick={() => patchChallenge(challengeKey,{ rewardType:type })} className="rounded-full px-3 py-1.5 text-xs font-semibold" style={{ background:edit.rewardType === type ? "rgba(47,111,237,.14)" : "rgba(16,24,40,.05)",color:edit.rewardType === type ? ACCENT : INK }}>{type === "points" ? "Points" : "Real prize"}</button>)}</div>}{owner ? edit.rewardType === "points" ? <div className="flex items-center rounded-xl border px-3 bg-white"><input disabled={edit.locked} type="number" min="0" max="100000" value={edit.reward} onChange={(event) => patchChallenge(challengeKey,{ reward:event.target.value })} className="w-full py-2 text-base bg-transparent outline-none"/><span className="text-xs opacity-45">points</span></div> : <input disabled={edit.locked} value={edit.rewardLabel} onChange={(event) => patchChallenge(challengeKey,{ rewardLabel:event.target.value })} placeholder="e.g. Movie ticket" className="w-full rounded-xl border px-3 py-2 text-base bg-white"/> : <div className="text-xs">{edit.rewardType === "points" ? `${edit.reward} points` : edit.rewardLabel || "Prize"}</div>}</div>
+                        {owner && <button disabled={edit.locked || !edit.title.trim() || !edit.games.length || !edit.days.length} type="button" onClick={() => saveTeamChallenge(rosterTeam,challengeKey)} className="mt-3 w-full rounded-full py-2.5 text-xs font-semibold text-white disabled:opacity-35" style={{ background:ACCENT }}>{challenge.isNew ? "Create challenge" : "Save changes"}</button>}
+                      </div>}
+                    </div>;
+                  })}
+                </div>
               </div>}
 
               <div className="rounded-3xl p-3 sm:p-4" style={{ background:"#fff",border:"1px solid rgba(16,24,40,.07)" }}>
