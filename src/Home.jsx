@@ -375,7 +375,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                       .map((id) => configuredGames.find((game) => game.id === id) || GAME_META.find((game) => game.id === id))
                       .filter(Boolean);
                     return (
-                      <div key={item.challenge_id} className="rounded-2xl overflow-hidden" style={{ background:selected ? "rgba(18,148,106,.07)" : "#F7F8FB",border:selected ? "1px solid rgba(18,148,106,.19)" : "1px solid transparent" }}>
+                      <div key={item.challenge_id} className="gloss-button rounded-2xl overflow-hidden" style={{ opacity: selected ? 1 : 0.9 }}>
                         <button
                           type="button"
                           onClick={() => {
@@ -437,6 +437,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                                 refreshing={standingsRefreshing}
                                 defaultOpen={false}
                                 embedded
+                                rewardPoints={challengeScope?.rewardPoints || 0}
                               />
                             )}
                           </div>
@@ -462,11 +463,8 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                 key={g.id}
                 disabled={!g.available}
                 onClick={() => g.available && onSelect(g.id)}
-                className="home-tile relative flex flex-col items-start gap-3 rounded-2xl p-4 text-left"
+                className="gloss-button home-tile relative flex flex-col items-start gap-3 rounded-2xl p-4 text-left"
                 style={{
-                  background: PANEL,
-                  border: "1px solid rgba(16,24,40,0.09)",
-                  boxShadow: "0 6px 20px rgba(16,24,40,0.08)",
                   opacity: g.available ? 1 : 0.45,
                   cursor: g.available ? "pointer" : "default",
                 }}

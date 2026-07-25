@@ -396,8 +396,8 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
             <button
               type="button"
               onClick={onOpenTeams}
-              className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold mb-3"
-              style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
+              className="gloss-button w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold mb-3"
+              style={{ color: INK }}
             >
               <Users size={15} />
               {t("profile.teams")}
@@ -409,8 +409,8 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
           <button
             type="submit"
             disabled={saving}
-            className="w-full rounded-lg py-2.5 text-sm font-semibold"
-            style={{ background: ACCENT, color: "#FFFFFF", opacity: saving ? 0.7 : 1 }}
+            className="gloss-button w-full rounded-lg py-2.5 text-sm font-semibold"
+            style={{ color: saving ? "rgba(27,33,41,0.4)" : CREAM, cursor: saving ? "default" : "pointer", opacity: saving ? 0.5 : 1 }}
           >
             {saving ? t("profile.saving") : isFirstTime ? t("profile.start") : t("profile.save")}
           </button>

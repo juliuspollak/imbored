@@ -230,33 +230,32 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
 
         </div>
 
-        <div className="flex items-center justify-center gap-2 mb-4">
+        {/* toolbar - text labels, spread at top */}
+        <div className="flex items-center justify-between gap-2 mb-3 px-1">
           {[
-            { Icon: RotateCcw, label: t("common.restart"), onClick: handleReset, disabled: solved },
+            { label: t("common.restart"), onClick: handleReset, disabled: solved },
             {
-              Icon: hintCooldown.locked ? Lock : WandSparkles,
               label: hintCooldown.locked ? `${hintCooldown.remaining}s` : t("common.hint"),
               onClick: handleHint,
-              disabled: solved || answered || hintCooldown.locked || (q.mode === "choice" ? q.options : MAP_REGIONS).every((option) => option === q.answer || eliminated.includes(option)),
+              disabled: solved || hintCooldown.locked,
             },
-          ].map(({ Icon, label, onClick, disabled }) => (
+          ].map(({ label, onClick, disabled }) => (
             <button
               key={label}
               onClick={onClick}
               disabled={disabled}
-              title={label}
               aria-label={label}
-              className="geo-toolbar-btn relative flex items-center justify-center rounded-2xl transition-colors"
-              style={{ width: 46, height: 46, background: disabled ? "rgba(16,24,40,0.08)" : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,247,255,0.96))", border: `1px solid ${disabled ? "rgba(16,24,40,0.08)" : "rgba(16,24,40,0.10)"}`, color: disabled ? "rgba(27,33,41,0.4)" : INK, cursor: disabled ? "default" : "pointer", boxShadow: disabled ? "none" : "0 10px 24px rgba(16,24,40,0.10)" }}
+              className="gloss-button flex-1 rounded-lg py-2 text-xs font-semibold transition-all"
+              style={{
+                background: disabled ? "rgba(16,24,40,0.06)" : undefined,
+                color: disabled ? "rgba(27,33,41,0.4)" : CREAM,
+                cursor: disabled ? "default" : "pointer",
+              }}
             >
-              <Icon size={18} />
-              {hintCooldown.locked && label.endsWith("s") && (
-                <span style={{ position: "absolute", right: -4, top: -4, minWidth: 18, height: 18, padding: "0 4px", borderRadius: 999, background: ACCENT, color: "#fff", fontSize: 9, fontWeight: 800, display: "grid", placeItems: "center" }}>{label.replace("s", "")}</span>
-              )}
+              {label}
             </button>
           ))}
         </div>
-
         {showHelp && (
           <div className="text-xs rounded-lg p-2.5 mb-3" style={{ background: "rgba(16,24,40,0.05)", color: INK, opacity: 0.75, lineHeight: 1.4 }}>
             {t("geo.help")}

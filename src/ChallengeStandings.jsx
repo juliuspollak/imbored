@@ -11,7 +11,7 @@ function formatDuration(value) {
   return minutes ? `${minutes}m ${String(remainder).padStart(2, "0")}s` : `${remainder}s`;
 }
 
-export default function ChallengeStandings({ rows = [], roster = [], games = [], isTeam = false, userId, loading = false, refreshing = false, defaultOpen = true, embedded = false }) {
+export default function ChallengeStandings({ rows = [], roster = [], games = [], isTeam = false, userId, loading = false, refreshing = false, defaultOpen = true, embedded = false, rewardPoints = 0 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(defaultOpen);
   const [expandedPlayerId, setExpandedPlayerId] = useState(null);
@@ -73,6 +73,25 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
 
       {open && (
         <div className="px-3 pb-3">
+          {!loading && standings.some((s) => s.completed === games.length) && isTeam && (
+            <div className="gloss-button rounded-2xl p-4 mb-3 text-center" style={{ background: "linear-gradient(135deg, rgba(22,163,74,0.08), rgba(16,185,129,0.06))", border: "1px solid rgba(22,163,74,0.2)" }}>
+              <div style={{ color: "#16A34A", fontSize: "28px", marginBottom: "8px" }}>🏆</div>
+              <div className="text-sm font-bold mb-2" style={{ color: "#137A3A" }}>Challenge Complete!</div>
+              {leader && (
+                <>
+                  <div className="text-xs mb-3" style={{ color: "rgba(27,33,41,.6)" }}>
+                    <span className="text-lg" style={{ marginRight: "4px" }}>{leader.icon || "🙂"}</span>
+                    <span className="font-semibold" style={{ color: "#16A34A" }}>{leader.name} Won</span>
+                  </div>
+                  {isTeam && rewardPoints > 0 && (
+                    <div className="text-sm font-bold" style={{ color: "#9A721F" }}>
+                      +{rewardPoints} Points Earned
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
           {loading ? (
             <div className="space-y-2" role="status" aria-label={t("standings.loading")}>
               {[0,1,2].map((item) => <div key={item} className="h-[58px] rounded-2xl animate-pulse" style={{ background:"linear-gradient(90deg,#F4F5F8,#FAFAFC,#F4F5F8)" }}/>)}
