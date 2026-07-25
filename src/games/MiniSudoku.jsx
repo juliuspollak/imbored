@@ -715,7 +715,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
 
         {/* number palette */}
         <div className="grid grid-cols-4 gap-2 mt-4">
-          {paletteDigits.map((d) => (
+          {(paletteDigits.length > 2 ? paletteDigits.slice(0, 3) : paletteDigits).map((d) => (
             <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={solved || !selected} used={digitFullyUsed(d)} active={selectedValue === d} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
               {d}
             </NumBtn>
@@ -723,6 +723,11 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
           <NumBtn onClick={handleErase} disabled={solved || !selected} aria-label={t("common.erase")}>
             <Delete size={18} />
           </NumBtn>
+          {paletteDigits.length > 2 && paletteDigits.slice(3).map((d) => (
+            <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={solved || !selected} used={digitFullyUsed(d)} active={selectedValue === d} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
+              {d}
+            </NumBtn>
+          ))}
           <NumBtn onClick={handleUndo} disabled={solved || history.length === 0} aria-label={t("common.undo")}>
             <CornerUpLeft size={18} />
           </NumBtn>
