@@ -11,9 +11,9 @@ function formatDuration(value) {
   return minutes ? `${minutes}m ${String(remainder).padStart(2, "0")}s` : `${remainder}s`;
 }
 
-export default function ChallengeStandings({ rows = [], roster = [], games = [], isTeam = false, userId, loading = false, refreshing = false }) {
+export default function ChallengeStandings({ rows = [], roster = [], games = [], isTeam = false, userId, loading = false, refreshing = false, defaultOpen = true, embedded = false }) {
   const { t } = useI18n();
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(defaultOpen);
   const [expandedPlayerId, setExpandedPlayerId] = useState(null);
   const gameIds = useMemo(() => games.map((game) => game.id), [games]);
 
@@ -53,9 +53,9 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
   const leader = standings.find((standing) => standing.rank === 1);
 
   return (
-    <div className="rounded-3xl mt-3 overflow-hidden" style={{ background:"#fff",border:"1px solid rgba(16,24,40,.09)",boxShadow:"0 10px 28px rgba(16,24,40,.06)" }}>
-      <button type="button" onClick={() => setOpen((value) => !value)} className="w-full flex items-center gap-3 p-4 text-left" aria-expanded={open}>
-        <span className="grid place-items-center rounded-2xl shrink-0" style={{ width:42,height:42,background:"rgba(217,174,88,.13)",color:"#9A721F" }}><Trophy size={19}/></span>
+    <div className={`${embedded ? "rounded-2xl" : "rounded-3xl"} mt-3 overflow-hidden`} style={{ background:"#fff",border:"1px solid rgba(16,24,40,.09)",boxShadow:embedded ? "none" : "0 10px 28px rgba(16,24,40,.06)" }}>
+      <button type="button" onClick={() => setOpen((value) => !value)} className={`w-full flex items-center gap-3 text-left ${embedded ? "p-3" : "p-4"}`} aria-expanded={open}>
+        <span className="grid place-items-center rounded-2xl shrink-0" style={{ width:embedded ? 36 : 42,height:embedded ? 36 : 42,background:"rgba(217,174,88,.13)",color:"#9A721F" }}><Trophy size={embedded ? 16 : 19}/></span>
         <span className="flex-1 min-w-0">
           <span className="flex items-center gap-2">
             <span className="text-sm font-bold">{t("standings.title")}</span>
