@@ -45,6 +45,86 @@ const ANIMALS = [
   { name: "Snow leopard", continent: "Asia", difficulty: 3 },
 ];
 
+const NATIVE_FLORA = [
+  { id: "eucalyptus", name: "eucalyptus", continent: "Oceania", difficulty: 1 },
+  { id: "silver-fern", name: "silver fern", continent: "Oceania", difficulty: 1 },
+  { id: "giant-sequoia", name: "giant sequoia", continent: "North America", difficulty: 1 },
+  { id: "sugar-maple", name: "sugar maple", continent: "North America", difficulty: 1 },
+  { id: "saguaro", name: "saguaro cactus", continent: "North America", difficulty: 2 },
+  { id: "dahlia", name: "dahlia", continent: "North America", difficulty: 2 },
+  { id: "brazil-nut-tree", name: "Brazil nut tree", continent: "South America", difficulty: 2 },
+  { id: "rubber-tree", name: "Amazon rubber tree", continent: "South America", difficulty: 2 },
+  { id: "monkey-puzzle", name: "monkey puzzle tree", continent: "South America", difficulty: 2 },
+  { id: "cinchona", name: "cinchona tree", continent: "South America", difficulty: 3 },
+  { id: "baobab", name: "baobab", continent: "Africa", difficulty: 1 },
+  { id: "king-protea", name: "king protea", continent: "Africa", difficulty: 2 },
+  { id: "papyrus", name: "papyrus", continent: "Africa", difficulty: 2 },
+  { id: "welwitschia", name: "Welwitschia", continent: "Africa", difficulty: 3 },
+  { id: "cedar-of-lebanon", name: "cedar of Lebanon", continent: "Asia", difficulty: 2 },
+  { id: "rafflesia", name: "Rafflesia arnoldii", continent: "Asia", difficulty: 2 },
+  { id: "ginkgo", name: "ginkgo", continent: "Asia", difficulty: 2 },
+  { id: "himalayan-blue-poppy", name: "Himalayan blue poppy", continent: "Asia", difficulty: 3 },
+  { id: "edelweiss", name: "edelweiss", continent: "Europe", difficulty: 1 },
+  { id: "scots-pine", name: "Scots pine", continent: "Europe", difficulty: 2 },
+  { id: "european-beech", name: "European beech", continent: "Europe", difficulty: 2 },
+  { id: "antarctic-hair-grass", name: "Antarctic hair grass", continent: "Antarctica", difficulty: 3 },
+];
+
+const NATIVE_FAUNA = [
+  { id: "kiwi", name: "kiwi", continent: "Oceania", difficulty: 1 },
+  { id: "wombat", name: "wombat", continent: "Oceania", difficulty: 1 },
+  { id: "kakapo", name: "kākāpō", continent: "Oceania", difficulty: 2 },
+  { id: "cassowary", name: "cassowary", continent: "Oceania", difficulty: 2 },
+  { id: "american-bison", name: "American bison", continent: "North America", difficulty: 1 },
+  { id: "canadian-beaver", name: "Canadian beaver", continent: "North America", difficulty: 1 },
+  { id: "axolotl", name: "axolotl", continent: "North America", difficulty: 2 },
+  { id: "pronghorn", name: "pronghorn", continent: "North America", difficulty: 3 },
+  { id: "andean-condor", name: "Andean condor", continent: "South America", difficulty: 1 },
+  { id: "galapagos-tortoise", name: "Galápagos giant tortoise", continent: "South America", difficulty: 2 },
+  { id: "vicuña", name: "vicuña", continent: "South America", difficulty: 2 },
+  { id: "pink-river-dolphin", name: "Amazon river dolphin", continent: "South America", difficulty: 3 },
+  { id: "african-elephant", name: "African elephant", continent: "Africa", difficulty: 1 },
+  { id: "ring-tailed-lemur", name: "ring-tailed lemur", continent: "Africa", difficulty: 2 },
+  { id: "okapi", name: "okapi", continent: "Africa", difficulty: 2 },
+  { id: "shoebill", name: "shoebill", continent: "Africa", difficulty: 3 },
+  { id: "red-panda", name: "red panda", continent: "Asia", difficulty: 1 },
+  { id: "proboscis-monkey", name: "proboscis monkey", continent: "Asia", difficulty: 2 },
+  { id: "saiga", name: "saiga antelope", continent: "Asia", difficulty: 3 },
+  { id: "japanese-macaque", name: "Japanese macaque", continent: "Asia", difficulty: 2 },
+  { id: "european-bison", name: "European bison", continent: "Europe", difficulty: 1 },
+  { id: "atlantic-puffin", name: "Atlantic puffin", continent: "Europe", difficulty: 2 },
+  { id: "iberian-lynx-fauna", name: "Iberian lynx", continent: "Europe", difficulty: 3 },
+  { id: "emperor-penguin-fauna", name: "emperor penguin", continent: "Antarctica", difficulty: 1 },
+  { id: "weddell-seal", name: "Weddell seal", continent: "Antarctica", difficulty: 2 },
+];
+
+const MAJOR_RIVERS = [
+  { id: "nile", name: "Nile", continent: "Africa", difficulty: 1 },
+  { id: "congo", name: "Congo River", continent: "Africa", difficulty: 1 },
+  { id: "niger", name: "Niger River", continent: "Africa", difficulty: 2 },
+  { id: "zambezi", name: "Zambezi", continent: "Africa", difficulty: 2 },
+  { id: "amazon", name: "Amazon River", continent: "South America", difficulty: 1 },
+  { id: "parana", name: "Paraná River", continent: "South America", difficulty: 2 },
+  { id: "orinoco", name: "Orinoco", continent: "South America", difficulty: 2 },
+  { id: "sao-francisco", name: "São Francisco River", continent: "South America", difficulty: 3 },
+  { id: "mississippi", name: "Mississippi River", continent: "North America", difficulty: 1 },
+  { id: "missouri", name: "Missouri River", continent: "North America", difficulty: 2 },
+  { id: "colorado", name: "Colorado River", continent: "North America", difficulty: 2 },
+  { id: "mackenzie", name: "Mackenzie River", continent: "North America", difficulty: 3 },
+  { id: "yangtze", name: "Yangtze", continent: "Asia", difficulty: 1 },
+  { id: "ganges", name: "Ganges", continent: "Asia", difficulty: 1 },
+  { id: "yellow-river", name: "Yellow River", continent: "Asia", difficulty: 2 },
+  { id: "mekong", name: "Mekong", continent: "Asia", difficulty: 2 },
+  { id: "danube", name: "Danube", continent: "Europe", difficulty: 1 },
+  { id: "rhine", name: "Rhine", continent: "Europe", difficulty: 1 },
+  { id: "volga", name: "Volga", continent: "Europe", difficulty: 2 },
+  { id: "thames", name: "Thames", continent: "Europe", difficulty: 2 },
+  { id: "murray", name: "Murray River", continent: "Oceania", difficulty: 1 },
+  { id: "darling", name: "Darling River", continent: "Oceania", difficulty: 2 },
+  { id: "waikato", name: "Waikato River", continent: "Oceania", difficulty: 2 },
+  { id: "sepik", name: "Sepik River", continent: "Oceania", difficulty: 3 },
+];
+
 const LANDMARKS = [
   { name: "Eiffel Tower", continent: "Europe", difficulty: 1 },
   { name: "Great Wall of China", continent: "Asia", difficulty: 1 },
@@ -90,4 +170,15 @@ const REGION_FACTS = [
 const COUNTRIES = geoFacts.countries;
 const SPECIAL_REGIONS = geoFacts.specialRegions || [];
 
-export { CITIES, ANIMALS, LANDMARKS, POLAR_FACTS, REGION_FACTS, COUNTRIES, SPECIAL_REGIONS };
+export {
+  CITIES,
+  ANIMALS,
+  NATIVE_FLORA,
+  NATIVE_FAUNA,
+  MAJOR_RIVERS,
+  LANDMARKS,
+  POLAR_FACTS,
+  REGION_FACTS,
+  COUNTRIES,
+  SPECIAL_REGIONS,
+};
