@@ -581,9 +581,9 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
               style={{
                 width: 46,
                 height: 46,
-                background: disabled ? "rgba(16,24,40,0.05)" : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,247,255,0.96))",
+                background: disabled ? "rgba(16,24,40,0.08)" : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,247,255,0.96))",
                 border: `1px solid ${disabled ? "rgba(16,24,40,0.08)" : "rgba(16,24,40,0.10)"}`,
-                color: disabled ? "rgba(27,33,41,0.28)" : CREAM,
+                color: disabled ? "rgba(27,33,41,0.4)" : CREAM,
                 cursor: disabled ? "default" : "pointer",
                 boxShadow: disabled ? "none" : "0 10px 24px rgba(16,24,40,0.10)",
               }}

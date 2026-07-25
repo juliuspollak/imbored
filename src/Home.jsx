@@ -252,7 +252,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   }
 
   return (
-    <div style={{ background: BG, minHeight: "100vh" }} className="flex items-start justify-center p-4 pt-10 sm:pt-16">
+    <div style={{ background: BG, minHeight: "100vh" }} className="flex items-start justify-center p-4 pt-6 sm:pt-8">
       <style>{`
         @media (hover: hover) and (pointer: fine) {
           .home-tile:not(:disabled):hover { transform: translateY(-2px); filter: brightness(1.08); }
@@ -260,45 +260,46 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         .home-tile { transition: transform 0.15s ease, filter 0.15s ease; }
       `}</style>
       <div className="w-full max-w-2xl" style={{ fontFamily: "'Inter', sans-serif" }}>
-        <div className="text-center mb-6">
+        <div className="flex items-center gap-2 mb-2 pr-14">
+          <span className="text-xl leading-none shrink-0" aria-hidden="true">🧩</span>
           <h1
             style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }}
-            className="text-5xl"
+            className="text-lg sm:text-xl truncate"
           >
             I'mBoredToday
           </h1>
-          <p style={{ color: CREAM, opacity: 0.45 }} className="text-sm mt-2">
-            {t("home.tagline")}
-          </p>
         </div>
 
         {progress && onOpenProgress && (
           <button
             onClick={onOpenProgress}
-            className="mx-auto mb-5 flex items-center gap-4 rounded-2xl px-4 py-3"
+            className="flex items-center gap-2 rounded-full pl-3 pr-2 py-1.5 mb-3"
             style={{
               background: PANEL,
               border: "1px solid rgba(16,24,40,0.09)",
-              boxShadow: "0 6px 20px rgba(16,24,40,0.07)",
+              boxShadow: "0 4px 14px rgba(16,24,40,0.06)",
               color: CREAM,
             }}
-            aria-label="Open My Progress"
+            aria-label={`Open My Progress — ${(progress.available_points || 0).toLocaleString(language === "sk" ? "sk-SK" : "en")} ${t("home.points")}, ${progress.current_streak || 0} ${progress.current_streak === 1 ? t("home.day") : t("home.days")}`}
           >
-            <span className="flex items-center gap-1.5 text-sm font-semibold">
-              <Star size={17} fill="currentColor" style={{ color: "#D9AE58" }} />
-              {(progress.available_points || 0).toLocaleString(language === "sk" ? "sk-SK" : "en")} {t("home.points")}
+            <span className="flex items-center gap-1 text-xs font-semibold whitespace-nowrap">
+              <Star size={13} fill="currentColor" style={{ color: "#D9AE58" }} />
+              {(progress.available_points || 0).toLocaleString(language === "sk" ? "sk-SK" : "en")}
             </span>
-            <span className="h-5 w-px" style={{ background: "rgba(16,24,40,0.10)" }} />
-            <span className="flex items-center gap-1.5 text-sm font-semibold">
-              <Flame size={17} style={{ color: "#E05A47" }} />
-              {progress.current_streak || 0} {progress.current_streak === 1 ? t("home.day") : t("home.days")}
+            <span className="h-3.5 w-px" style={{ background: "rgba(16,24,40,0.10)" }} />
+            <span className="flex items-center gap-1 text-xs font-semibold whitespace-nowrap">
+              <Flame size={13} style={{ color: "#E05A47" }} />
+              {progress.current_streak || 0}
             </span>
-            <ChevronRight size={16} style={{ opacity: 0.35 }} />
+            <ChevronRight size={13} style={{ opacity: 0.3 }} />
           </button>
         )}
+        <p style={{ color: CREAM, opacity: 0.4 }} className="text-[11px] mb-4">
+          {t("home.tagline")}
+        </p>
 
         {onPlayModeChange && (
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-2">
             <div className="inline-flex rounded-full p-1" style={{ background: "rgba(16,24,40,0.06)" }}>
               {["challenge", "practice"].map((m) => (
                 <button
@@ -326,7 +327,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
             </div>
           </div>
         )}
-        <p style={{ color: CREAM, opacity: 0.4 }} className="text-[11px] text-center -mt-4 mb-6">
+        <p style={{ color: CREAM, opacity: 0.4 }} className="text-[11px] text-center mb-5">
           {playMode === "challenge"
             ? t("home.challengeHint")
             : t("home.practiceHint")}
