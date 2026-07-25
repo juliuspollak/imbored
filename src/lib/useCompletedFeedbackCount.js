@@ -26,6 +26,11 @@ export function markClosedFeedbackSeen(userId, ids) {
     // Storage full/unavailable — non-fatal, just means it may resurface next time.
   }
   window.dispatchEvent(new CustomEvent("closed-feedback-seen"));
+  if (supabaseReady) {
+    supabase.rpc("mark_my_feedback_seen").then(({ error }) => {
+      if (error) console.error("Unable to mark completed feedback seen:", error.message);
+    });
+  }
 }
 
 export function useCompletedFeedbackCount(userId) {
@@ -42,7 +47,7 @@ export function useCompletedFeedbackCount(userId) {
     async function refresh() {
       const { data, error } = await supabase
         .from("feedback")
-        .select("id")
+        .select("id,user_seen_at")
         .eq("user_id", userId)
         .eq("status", "closed");
 
@@ -53,8 +58,7 @@ export function useCompletedFeedbackCount(userId) {
         return;
       }
 
-      const seen = readSeenIds(userId);
-      setCount((data || []).filter((item) => !seen.has(item.id)).length);
+      setCount((data || []).filter((item) => !item.user_seen_at).length);
     }
 
     refresh();
