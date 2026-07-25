@@ -171,10 +171,9 @@ export default function Feedback({ onBack }) {
   async function handleClose(feedbackId) {
     setMessage(null);
     setCompletingId(feedbackId);
-    const { error } = await supabase
-      .from("feedback")
-      .update({ status: "closed", admin_comment: null, closed_at: new Date().toISOString() })
-      .eq("id", feedbackId);
+    const { error } = await supabase.rpc("complete_feedback", {
+      target_feedback_id: feedbackId,
+    });
     setCompletingId(null);
     if (error) {
       setMessage({ type: "error", text: `Couldn't close that: ${error.message}` });
@@ -185,7 +184,9 @@ export default function Feedback({ onBack }) {
 
   async function handleReopen(feedbackId) {
     setMessage(null);
-    const { error } = await supabase.from("feedback").update({ status: "open", admin_comment: null, closed_at: null }).eq("id", feedbackId);
+    const { error } = await supabase.rpc("reopen_feedback_item", {
+      target_feedback_id: feedbackId,
+    });
     if (error) {
       setMessage({ type: "error", text: `Couldn't reopen that: ${error.message}` });
       return;
