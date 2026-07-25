@@ -1,5 +1,15 @@
 import { CONTINENTS, MAP_REGIONS } from "./geoRegions.js";
-import { CITIES, ANIMALS, LANDMARKS, POLAR_FACTS, REGION_FACTS, COUNTRIES } from "./geoData.js";
+import {
+  CITIES,
+  ANIMALS,
+  NATIVE_FLORA,
+  NATIVE_FAUNA,
+  MAJOR_RIVERS,
+  LANDMARKS,
+  POLAR_FACTS,
+  REGION_FACTS,
+  COUNTRIES,
+} from "./geoData.js";
 import { buildHistoryIndex } from "./geoHistory.js";
 
 function shuffle(arr) {
@@ -28,6 +38,21 @@ const QUESTION_TEMPLATES = {
     ({ name }) => `Which continent is the ${name} native to?`,
     ({ name }) => `On which continent does the ${name} naturally live?`,
     ({ name }) => `Which continent is home to the ${name}?`,
+  ],
+  flora: [
+    ({ name }) => `Which continent is the ${name} native to?`,
+    ({ name }) => `The ${name} is a native plant of which continent?`,
+    ({ name }) => `Where did the ${name} originally grow in the wild?`,
+  ],
+  fauna: [
+    ({ name }) => `Which continent is the ${name} native to?`,
+    ({ name }) => `The ${name} belongs to the native fauna of which continent?`,
+    ({ name }) => `Where would you naturally find the ${name}?`,
+  ],
+  river: [
+    ({ name }) => `Which continent does the ${name} flow through?`,
+    ({ name }) => `On which continent would you find the ${name}?`,
+    ({ name }) => `The ${name} is a major river on which continent?`,
   ],
   landmark: [
     ({ name }) => `Which continent is the ${name} in?`,
@@ -69,7 +94,14 @@ const QUESTION_TEMPLATES = {
 
 function makeQuestion(type, fact) {
   if (type === "region") {
-    return { ...fact, type, options: shuffle([fact.answer, ...MAP_REGIONS.filter((name) => name !== fact.answer)]).slice(0, 4) };
+    return {
+      ...fact,
+      type,
+      options: shuffle([
+        fact.answer,
+        ...shuffle(MAP_REGIONS.filter((name) => name !== fact.answer)).slice(0, 3),
+      ]),
+    };
   }
   const templates = QUESTION_TEMPLATES[type];
   const templateIndex = templates ? Math.floor(Math.random() * templates.length) : 0;
@@ -174,6 +206,9 @@ function generateQuiz(dayIdx, history = []) {
   const structured = countryFactPools(ceiling);
   const pools = {
     city: CITIES.filter((q) => q.difficulty <= ceiling).map((q) => tag("city", q)),
+    flora: NATIVE_FLORA.filter((q) => q.difficulty <= ceiling).map((q) => tag("flora", q)),
+    fauna: NATIVE_FAUNA.filter((q) => q.difficulty <= ceiling).map((q) => tag("fauna", q)),
+    river: MAJOR_RIVERS.filter((q) => q.difficulty <= ceiling).map((q) => tag("river", q)),
     animalLegacy: ANIMALS.filter((q) => q.difficulty <= ceiling).map((q) => tag("animalLegacy", q)),
     landmarkLegacy: LANDMARKS.filter((q) => q.difficulty <= ceiling).map((q) => tag("landmarkLegacy", q)),
     polar: POLAR_FACTS.filter((q) => q.id !== "mcmurdo" && q.difficulty <= ceiling).map((q) => ({
@@ -192,6 +227,14 @@ function generateQuiz(dayIdx, history = []) {
   const questions = [];
   const usedSources = new Set();
 
+  // Keep the expanded geography content visible: every quiz gets one native
+  // plant, native animal or major river question, rotated through history.
+  const featuredType = shuffle(["flora", "fauna", "river"])[0];
+  const featuredFact = chooseFact(pools[featuredType], usedSources, historyIndex);
+  if (featuredFact) {
+    usedSources.add(featuredFact.sourceId);
+    questions.push(makeQuestion(featuredType, featuredFact));
+  }
 
   const categoryOrder = shuffle(["country", "capital", "flag", "city", "animal", "landmark", "food", "naturalFeature", "currency", "language", "region", "polar", "animalLegacy", "landmarkLegacy"]);
   for (const type of categoryOrder) {
