@@ -21,6 +21,7 @@ const INK = "#1B2129";
 const ACCENT = "#2F6FED";
 const RED = "#E5484D";
 const GREEN = "#16A34A";
+const CREAM = "#1B2129";
 function fmtTime(s) {
   const m = Math.floor(s / 60);
   const ss = s % 60;

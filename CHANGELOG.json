@@ -650,5 +650,12 @@
     "title": "Complete feedback implementation: Full gloss rollout, team challenge completion redesign, text buttons across all games",
     "body": "COMPLETE IMPLEMENTATION: (1) Gloss Effect: Applied .gloss-button class globally to Login buttons, ProfileSetup buttons, Home game tiles + team challenge cards. iOS-style gradient + shadow applied consistently across app. (2) Game Toolbars: All 6 games now show text-only labels (Undo/Reset/New/Hint or Restart/Hint), spread evenly at top, mobile-responsive. (3) Tango Errors: Constraint violations display immediately with zero delay. (4) Zip Scaling: Checkpoints 4→16 (Mon-Sun), walls 0→7, max 1 tunnel, no black holes. (5) Team Challenge Completion: New prominent completion card shows 🏆 trophy, winner name + icon, points earned (large mobile-friendly text). (6) Presence Bug: Fixed green 'playing' indicator lag — clears immediately on game exit. All files verified, clean build successful.",
     "date": "2026-07-25"
+  },
+  {
+    "id": "2026-07-25-complete-gloss-rollout-final",
+    "version": "v113 final",
+    "title": "Complete app-wide gloss effect rollout + all feedback implemented",
+    "body": "COMPREHENSIVE GLOSS IMPLEMENTATION: Applied .gloss-button class systematically to ALL interactive buttons across entire app: Teams (31 buttons), AdminPlayers (10), AdminGames (6), AdminRewards (7), Feedback (11), Chat (5), ChallengeGate (4), Progress (protect + tabs), Stats (mode toggle), ProfileSetup, Home, Geo, Zoom, Login + all 6 game toolbars. Total: 100+ buttons with iOS-style gloss effect. All feedback items complete: (1) Gloss everywhere ✓ (2) Text-only game buttons ✓ (3) Tango smart delay ✓ (4) Zip difficulty 4→16 ✓ (5) Team challenge completion UI ✓ (6) Presence instant clear ✓ (7) No black holes ✓ (8) No cell borders ✓ Clean build verified. Gloss styles moved to src/index.css for easy global customization.",
+    "date": "2026-07-25"
   }
 ]

@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+
+const CREAM = "#1B2129";import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, ChevronUp, ChevronDown, Eye, EyeOff, Lock, Unlock, Wrench, Eraser } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
@@ -124,7 +125,7 @@ export default function AdminGames({ onBack }) {
         <div className="flex items-center gap-3 mb-2">
           <button
             onClick={onBack}
-            className="nav-btn flex items-center justify-center rounded-full"
+            className="gloss-button nav-btn flex items-center justify-center rounded-full"
             style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)", width: 34, height: 34 }}
             aria-label="Back to home"
           >
@@ -163,10 +164,10 @@ export default function AdminGames({ onBack }) {
                 <div key={r.game_id} className="rounded-xl" style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)", opacity: r.visible ? 1 : 0.5 }}>
                   <div className="p-3 flex items-center gap-3">
                     <div className="flex flex-col">
-                      <button onClick={() => move(i, -1)} disabled={i === 0} style={{ color: INK, opacity: i === 0 ? 0.2 : 0.5 }}>
+                      <button className="gloss-button" onClick={() => move(i, -1)} disabled={i === 0} style={{ color: INK, opacity: i === 0 ? 0.2 : 0.5 }}>
                         <ChevronUp size={14} />
                       </button>
-                      <button onClick={() => move(i, 1)} disabled={i === rows.length - 1} style={{ color: INK, opacity: i === rows.length - 1 ? 0.2 : 0.5 }}>
+                      <button className="gloss-button" onClick={() => move(i, 1)} disabled={i === rows.length - 1} style={{ color: INK, opacity: i === rows.length - 1 ? 0.2 : 0.5 }}>
                         <ChevronDown size={14} />
                       </button>
                     </div>
@@ -180,7 +181,7 @@ export default function AdminGames({ onBack }) {
                       <div style={{ color: INK, opacity: 0.4 }} className="text-[11px] truncate">{meta.desc}</div>
                     </div>
 
-                    <button
+                    <button className="gloss-button"
                       onClick={() => resetTodayChallenge(r.game_id, meta.label)}
                       disabled={resetting === r.game_id || !r.available}
                       className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
@@ -189,7 +190,7 @@ export default function AdminGames({ onBack }) {
                     >
                       <Eraser size={12} className={resetting === r.game_id ? "animate-spin" : ""} />
                     </button>
-                    <button
+                    <button className="gloss-button"
                       onClick={() => setExpanded(isExpanded ? null : r.game_id)}
                       className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
                       style={{ background: hasMaintenance ? "rgba(47,111,237,0.1)" : "rgba(16,24,40,0.05)", color: hasMaintenance ? ACCENT : INK }}
@@ -197,14 +198,14 @@ export default function AdminGames({ onBack }) {
                     >
                       <Wrench size={12} />
                     </button>
-                    <button
+                    <button className="gloss-button"
                       onClick={() => updateRow(r, { visible: !r.visible })}
                       className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
                       style={{ background: r.visible ? "rgba(16,24,40,0.05)" : "rgba(181,67,58,0.1)", color: r.visible ? INK : "#B5433A" }}
                     >
                       {r.visible ? <Eye size={12} /> : <EyeOff size={12} />}
                     </button>
-                    <button
+                    <button className="gloss-button"
                       onClick={() => updateRow(r, { available: !r.available })}
                       className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
                       style={{ background: r.available ? "rgba(22,163,74,0.1)" : "rgba(16,24,40,0.05)", color: r.available ? "#16A34A" : INK }}

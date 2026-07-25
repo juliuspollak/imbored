@@ -15,6 +15,7 @@ const INK = "#1B2129";
 const ACCENT = "#7C3AED";
 const RED = "#E5484D";
 const GREEN = "#16A34A";
+const CREAM = "#1B2129";
 
 function fmtTime(s) {
   const m = Math.floor(s / 60);
@@ -215,11 +216,6 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
         <div className="flex items-center justify-between gap-2 mb-3 px-1">
           {[
             { label: t("common.restart"), onClick: handleReset, disabled: solved },
-            {
-              label: hintCooldown.locked ? `${hintCooldown.remaining}s` : t("common.hint"),
-              onClick: handleHint,
-              disabled: solved || hintCooldown.locked,
-            },
           ].map(({ label, onClick, disabled }) => (
             <button
               key={label}

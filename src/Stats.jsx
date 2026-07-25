@@ -7,6 +7,7 @@ const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
 const INK = "#1B2129";
 const ACCENT = "#2F6FED";
+const CREAM = "#1B2129";
 
 const GAME_ICONS = { queens: Crown, tango: Moon, zip: Waypoints, minisudoku: Grid3x3, geo: Globe2, zoom: ZoomIn };
 const GAME_LABELS = { queens: "Queens", tango: "Tango", zip: "Zip", minisudoku: "Sudoku", geo: "Geo", zoom: "Zoom" };
@@ -94,7 +95,7 @@ export default function Stats({ onBack }) {
             <div className="flex justify-center mb-6">
               <div className="inline-flex rounded-full p-1" style={{ background: "rgba(16,24,40,0.06)" }}>
                 {["challenge", "practice"].map((m) => (
-                  <button key={m} onClick={() => { setMode(m); setExpandedUserId(null); }} className="rounded-full px-4 py-1.5 text-xs font-semibold capitalize" style={{ background: mode === m ? PANEL : "transparent", color: mode === m ? INK : "rgba(27,33,41,0.5)", boxShadow: mode === m ? "0 2px 8px rgba(16,24,40,0.10)" : "none" }}>{m}</button>
+                  <button key={m} onClick={() => { setMode(m); setExpandedUserId(null); }} className="gloss-button rounded-full px-4 py-1.5 text-xs font-semibold capitalize" style={{ color: mode === m ? CREAM : "rgba(27,33,41,0.5)" }}>{m}</button>
                 ))}
               </div>
             </div>

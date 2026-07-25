@@ -197,7 +197,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
           <div style={{ fontSize: 32, marginBottom: 10 }}>💬</div>
           <div style={{ fontWeight: 800, color: "#1b2129", marginBottom: 6 }}>Opening chat…</div>
           <div style={{ color: "rgba(27,33,41,.6)", fontSize: 13, marginBottom: 16 }}>The chat is still getting ready. If it takes too long, go back and open it again.</div>
-          <button type="button" onClick={onBack} className="nav-btn" style={{ padding: "10px 16px", borderRadius: 999, background: "#fff", border: "1px solid rgba(27,33,41,.08)" }}>Back</button>
+          <button type="button" onClick={onBack} className="gloss-button nav-btn" style={{ padding: "10px 16px", borderRadius: 999, background: "#fff", border: "1px solid rgba(27,33,41,.08)" }}>Back</button>
         </div>
       </div>
     );
@@ -243,7 +243,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
 
       <div className="chat-shell">
         <header className="chat-header">
-          <button type="button" onClick={onBack} className="nav-btn" aria-label="Back" style={{ width:38,height:38,borderRadius:999,display:"grid",placeItems:"center",background:"#fff",border:"1px solid rgba(27,33,41,.08)" }}>
+          <button type="button" onClick={onBack} className="gloss-button nav-btn" aria-label="Back" style={{ width:38,height:38,borderRadius:999,display:"grid",placeItems:"center",background:"#fff",border:"1px solid rgba(27,33,41,.08)" }}>
             <ArrowLeft size={18} />
           </button>
           <div className="chat-avatar">{peerProfile?.icon || "🙂"}</div>
@@ -251,7 +251,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
             <div style={{ fontWeight:800, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{peerProfile?.name || "Player"}</div>
             <div style={{ fontSize:11, color:"rgba(27,33,41,.5)" }}>private chat · {peer?.is_online ? "online now" : "offline"}</div>
           </div>
-          <button type="button" disabled={!peerAvailable} onClick={handlePoke} className="chat-poke" style={{ opacity:peerAvailable ? 1 : .4 }}>
+          <button type="button" disabled={!peerAvailable} onClick={handlePoke} className="gloss-button chat-poke" style={{ opacity:peerAvailable ? 1 : .4 }}>
             {pokeState === "sending" ? "Poking…" : pokeState === "sent" ? "Poked! 👋" : pokeState === "error" ? "Try again" : "👋 Poke"}
           </button>
         </header>
@@ -292,7 +292,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
           </div>
         ) : <div className="chat-composer-wrap">
           <div className="chat-reactions" aria-label="Quick emoji reactions">
-            {QUICK_REACTIONS.map((emoji) => <button type="button" className="chat-reaction" onClick={() => addReaction(emoji)} key={emoji}>{emoji}</button>)}
+            {QUICK_REACTIONS.map((emoji) => <button type="button" className="gloss-button chat-reaction" onClick={() => addReaction(emoji)} key={emoji}>{emoji}</button>)}
           </div>
           <form className="chat-composer" onSubmit={submitMessage}>
             <Sparkles size={18} style={{ margin:"11px 0 11px 4px", color:"#7657ff" }} />
@@ -311,7 +311,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
                 }
               }}
             />
-            <button className="chat-send" type="submit" disabled={!draft.trim() || sending} aria-label="Send message">
+            <button className="gloss-button chat-send" type="submit" disabled={!draft.trim() || sending} aria-label="Send message">
               <Send size={18} />
             </button>
           </form>
