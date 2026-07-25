@@ -132,7 +132,7 @@ function AppShell() {
     if (!user?.id || !supabaseReady) return;
     let cancelled = false;
     (async () => {
-      const [{ data: views }, { data: notes }, { data: requests }] = await Promise.all([
+      const [{ data: views }, { data: notes }, { data: requests }, { data: invitations }] = await Promise.all([
         supabase.from("user_section_views").select("section,viewed_at").eq("user_id", user.id),
         // Keep this bootstrap query compatible with databases that predate the
         // optional release-note visibility and soft-delete columns. The full
@@ -140,14 +140,16 @@ function AppShell() {
         supabase.from("release_notes").select("created_at").order("created_at", { ascending:false }).limit(1),
         // RLS already limits this table to the requester and the team owner.
         // Its schema uses user_id/requested_at (not requester_id/created_at).
-        supabase.from("team_join_requests").select("requested_at,decided_at,status,user_id,team_id")
+        supabase.from("team_join_requests").select("requested_at,decided_at,status,user_id,team_id"),
+        supabase.rpc("get_my_pending_team_invitations")
       ]);
       if (cancelled) return;
       const vm = Object.fromEntries((views || []).map(v => [v.section, new Date(v.viewed_at).getTime()]));
       const latestNote = notes?.[0]?.created_at ? new Date(notes[0].created_at).getTime() : 0;
       const latestTeam = Math.max(
         0,
-        ...(requests || []).map(r => new Date(r.decided_at || r.requested_at).getTime())
+        ...(requests || []).map(r => new Date(r.decided_at || r.requested_at).getTime()),
+        ...(invitations || []).map(i => new Date(i.created_at).getTime())
       );
       setSectionSignals({ whatsnew: latestNote > (vm.whatsnew || 0), teams: latestTeam > (vm.teams || 0) });
     })();
@@ -189,6 +191,7 @@ function AppShell() {
           onOpenChat={(player) => { setChatReturn("chats"); setChatPlayer(player); }}
           onOpenAdminPlayers={() => setActive("adminplayers")}
           onOpenFeedback={() => setActive("feedback")}
+          onOpenTeams={() => openSection("teams")}
         />
       </Suspense>
     );
