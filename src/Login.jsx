@@ -226,8 +226,8 @@ export default function Login() {
             <button
               type="submit"
               disabled={!supabaseReady || sending}
-              className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold"
-              style={{ background: ACCENT, color: "#FFFFFF", opacity: sending ? 0.7 : 1 }}
+              className="gloss-button w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold"
+              style={{ color: sending ? "rgba(27,33,41,0.4)" : CREAM, cursor: sending ? "default" : "pointer", opacity: sending ? 0.5 : 1 }}
             >
               {sending ? t("auth.sending") : t("auth.sendCode")}
               {!sending && <ArrowRight size={15} />}
@@ -269,8 +269,8 @@ export default function Login() {
             <button
               type="submit"
               disabled={verifying}
-              className="w-full rounded-lg py-2.5 text-sm font-semibold"
-              style={{ background: ACCENT, color: "#FFFFFF", opacity: verifying ? 0.7 : 1 }}
+              className="gloss-button w-full rounded-lg py-2.5 text-sm font-semibold"
+              style={{ color: verifying ? "rgba(27,33,41,0.4)" : CREAM, cursor: verifying ? "default" : "pointer", opacity: verifying ? 0.5 : 1 }}
             >
               {verifying ? t("auth.checking") : t("auth.verify")}
             </button>

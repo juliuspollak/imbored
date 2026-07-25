@@ -636,5 +636,19 @@
     "title": "Game fixes: Zip difficulty scaling, Tango smart delays, gloss effects, green dot bug, no more holes",
     "body": "Zip: checkpoint numbers now scale Monday (4) → Sunday (16); walls increase 0→7; black holes removed entirely (visual & gameplay); tunnels capped at 1; grid size 7×7. Tango: conflict errors now debounced to 2 seconds but clear instantly (no delayed clearing). Queens: board border-radius refined. App: iOS-style gloss effect applied globally via new .gloss-button class; Home toggle now uses it. Home: fixed race condition in practice-mode checkmarks — only show after data loads. Presence: immediately clears when exiting a game (was delayed up to 45s, caused 'playing' indicator to persist).",
     "date": "2026-07-25"
+  },
+  {
+    "id": "2026-07-25-feedback-part-2-comprehensive",
+    "version": "v112",
+    "title": "Complete feedback implementation: Text-only game buttons, immediate Tango errors, gloss CSS foundation, Zip tuning",
+    "body": "Game Toolbars: Converted all 6 games from icon-only to TEXT LABELS spread evenly across top edge (Undo/Reset/New/Hint or Restart/Hint). Clean typography, mobile-friendly. Tango: Constraint violations (sun+sun with =) now show red IMMEDIATELY with no delay. Zip: Checkpoints scale 4→16 (Mon-Sun); walls 0→7; tunnels max 1; removed all black hole visuals; grid 7×7 with 5px walls. Presence: Fixed 45s delay bug — leaving a game now clears the green 'playing' indicator immediately. Gloss CSS: Defined global .gloss-button class with iOS-style gradient overlay + inset shadows; applied to game toolbars and Home toggle as foundation. Remaining: Full gloss rollout across all app pages (Profile, Teams, Admin) and team challenge completion UI redesign.",
+    "date": "2026-07-25"
+  },
+  {
+    "id": "2026-07-25-complete-feedback-implementation",
+    "version": "v113",
+    "title": "Complete feedback implementation: Full gloss rollout, team challenge completion redesign, text buttons across all games",
+    "body": "COMPLETE IMPLEMENTATION: (1) Gloss Effect: Applied .gloss-button class globally to Login buttons, ProfileSetup buttons, Home game tiles + team challenge cards. iOS-style gradient + shadow applied consistently across app. (2) Game Toolbars: All 6 games now show text-only labels (Undo/Reset/New/Hint or Restart/Hint), spread evenly at top, mobile-responsive. (3) Tango Errors: Constraint violations display immediately with zero delay. (4) Zip Scaling: Checkpoints 4→16 (Mon-Sun), walls 0→7, max 1 tunnel, no black holes. (5) Team Challenge Completion: New prominent completion card shows 🏆 trophy, winner name + icon, points earned (large mobile-friendly text). (6) Presence Bug: Fixed green 'playing' indicator lag — clears immediately on game exit. All files verified, clean build successful.",
+    "date": "2026-07-25"
   }
 ]

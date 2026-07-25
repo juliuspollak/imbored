@@ -407,16 +407,8 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
 
   useEffect(() => {
     if (!board || !puzzle) return;
-    window.clearTimeout(conflictDebounceRef.current);
     const newConflicts = getConflicts(board, puzzle.edgeMap);
-    // Clear errors immediately, but show new errors with delay
-    if (newConflicts.size === 0) {
-      setDisplayedConflicts(new Set());
-    } else {
-      conflictDebounceRef.current = window.setTimeout(() => {
-        setDisplayedConflicts(newConflicts);
-      }, 2000);
-    }
+    setDisplayedConflicts(newConflicts); // Show immediately
     return () => window.clearTimeout(conflictDebounceRef.current);
   }, [board, puzzle]);
 
@@ -617,40 +609,31 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           </div>
         </div>
 
-        {/* toolbar */}
-        <div className="flex items-center justify-center gap-2 mb-4">
+        {/* toolbar - text labels, spread at top */}
+        <div className="flex items-center justify-between gap-2 mb-3 px-1">
           {[
-            { Icon: CornerUpLeft, label: t("common.undo"), onClick: handleUndo, disabled: solved || history.length === 0 },
-            { Icon: Eraser, label: t("common.reset"), onClick: handleReset, disabled: solved },
-            { Icon: Sparkles, label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
+            { label: t("common.undo"), onClick: handleUndo, disabled: solved || history.length === 0 },
+            { label: t("common.reset"), onClick: handleReset, disabled: solved },
+            { label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
             {
-              Icon: hintCooldown.locked ? Lock : WandSparkles,
               label: hintCooldown.locked ? `${hintCooldown.remaining}s` : t("common.hint"),
               onClick: handleHint,
               disabled: solved || hintCooldown.locked,
             },
-          ].map(({ Icon, label, onClick, disabled }) => (
+          ].map(({ label, onClick, disabled }) => (
             <button
               key={label}
               onClick={onClick}
               disabled={disabled}
-              title={label}
               aria-label={label}
-              className="tg-toolbar-btn relative flex items-center justify-center rounded-2xl transition-colors"
+              className="gloss-button flex-1 rounded-lg py-2 text-xs font-semibold transition-all"
               style={{
-                width: 46,
-                height: 46,
-                background: disabled ? "rgba(16,24,40,0.08)" : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,247,255,0.96))",
-                border: `1px solid ${disabled ? "rgba(16,24,40,0.08)" : "rgba(16,24,40,0.10)"}`,
+                background: disabled ? "rgba(16,24,40,0.06)" : undefined,
                 color: disabled ? "rgba(27,33,41,0.4)" : CREAM,
                 cursor: disabled ? "default" : "pointer",
-                boxShadow: disabled ? "none" : "0 10px 24px rgba(16,24,40,0.10)",
               }}
             >
-              <Icon size={18} />
-              {hintCooldown.locked && label.endsWith("s") && (
-                <span style={{ position: "absolute", right: -4, top: -4, minWidth: 18, height: 18, padding: "0 4px", borderRadius: 999, background: GOLD, color: "#fff", fontSize: 9, fontWeight: 800, display: "grid", placeItems: "center" }}>{label.replace("s", "")}</span>
-              )}
+              {label}
             </button>
           ))}
         </div>
