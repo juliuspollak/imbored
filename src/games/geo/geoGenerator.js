@@ -218,11 +218,17 @@ function generateQuiz(dayIdx, history = []) {
       sourceId: `polar:${q.id}`,
       factId: `polar:${q.id}`,
     })),
-    region: REGION_FACTS.filter((q) => q.difficulty <= ceiling).map((q) => ({
-      ...q,
-      sourceId: `region:${q.id}`,
-      factId: `region:${q.id}`,
-    })),
+    // These rows are alternative clues for the same mapped place, not
+    // separate geography facts. Group them by answer so wording variants
+    // cannot defeat repetition protection.
+    region: REGION_FACTS.filter((q) => q.difficulty <= ceiling).map((q) => {
+      const placeId = q.answer.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      return {
+        ...q,
+        sourceId: `region:${placeId}`,
+        factId: `region:${placeId}`,
+      };
+    }),
     ...structured,
   };
 
