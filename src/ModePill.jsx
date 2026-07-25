@@ -12,7 +12,7 @@ export default function ModePill({ mode, onSwitch }) {
   return (
     <button
       onClick={onSwitch}
-      className="nav-btn flex items-center gap-1.5 rounded-full pl-2.5 pr-3 py-1.5"
+      className="gloss-button nav-btn flex items-center gap-1.5 rounded-full pl-2.5 pr-3 py-1.5"
       style={{
         "--nav-glow": targetIsChallenge ? "rgba(217,174,88,0.35)" : "rgba(18,148,106,0.35)",
         "--nav-border": targetIsChallenge ? "rgba(217,174,88,0.4)" : "rgba(18,148,106,0.4)",

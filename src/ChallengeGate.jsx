@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+
+const CREAM = "#1B2129";import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, Lock, Check, Play, X } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { saveStats } from "./lib/saveStats.js";
@@ -134,7 +135,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
     const date = dates[playingIdx];
     return (
       <div style={{ position: "relative" }}>
-        <button
+        <button className="gloss-button"
           onClick={() => setPlayingIdx(null)}
           className="nav-btn"
           style={{
@@ -169,7 +170,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
     <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-start justify-center p-4 pt-[72px]">
       <button
         onClick={onExit}
-        className="nav-btn"
+        className="gloss-button nav-btn"
         style={{
           "--nav-glow": "rgba(47,111,237,0.35)", "--nav-border": "rgba(47,111,237,0.4)",
           position: "fixed", top: 16, left: "max(16px, calc((100vw - var(--game-nav-width, 512px)) / 2))", zIndex: 50,
@@ -205,12 +206,12 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
         {alreadyPlayedNotice && (
           <div className="text-xs rounded-lg p-3 mb-4 flex items-center justify-between" style={{ background: "rgba(217,105,92,0.1)", color: "#B5433A" }}>
             <span>You already completed today's challenge — showing your original result.</span>
-            <button onClick={() => setAlreadyPlayedNotice(false)}><X size={13} /></button>
+            <button className="gloss-button" onClick={() => setAlreadyPlayedNotice(false)}><X size={13} /></button>
           </div>
         )}
         {startError && (
           <div className="text-xs rounded-lg p-3 mb-4 flex items-center justify-between" style={{ background: "rgba(217,105,92,0.1)", color: "#B5433A" }}>
-            <span>{startError}</span><button onClick={() => setStartError("")}><X size={13} /></button>
+            <span>{startError}</span><button className="gloss-button" onClick={() => setStartError("")}><X size={13} /></button>
           </div>
         )}
 
@@ -227,7 +228,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
 
               return (
                 <div key={date}>
-                  <button
+                  <button className="gloss-button"
                     disabled={isFuture || startingIdx !== null}
                     onClick={() => {
                       if (isFuture) return;

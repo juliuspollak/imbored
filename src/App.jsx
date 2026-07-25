@@ -629,34 +629,6 @@ function FullScreenMessage({ text }) {
   );
 }
 
-const GLOSS_EFFECT_STYLE = `
-  .gloss-button {
-    position: relative;
-    overflow: hidden;
-    background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(245,250,255,0.96) 100%);
-    box-shadow: 0 8px 24px rgba(16,24,40,0.15), inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -1px 0 rgba(16,24,40,0.08);
-    border: 1px solid rgba(16,24,40,0.08);
-    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  .gloss-button::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.05) 50%, rgba(16,24,40,0.05) 100%);
-    pointer-events: none;
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .gloss-button:not(:disabled):hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(16,24,40,0.2), inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -1px 0 rgba(16,24,40,0.1);
-    }
-  }
-  .gloss-button:active {
-    transform: translateY(0);
-    box-shadow: 0 4px 12px rgba(16,24,40,0.1), inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -1px 0 rgba(16,24,40,0.06);
-  }
-`;
-
 const NAV_BTN_STYLE = `
   .nav-btn {
     transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
@@ -684,7 +656,7 @@ function PokeLayer() {
 export default function App() {
   return (
     <AuthProvider>
-      <style>{GLOSS_EFFECT_STYLE + NAV_BTN_STYLE}</style>
+      <style>{NAV_BTN_STYLE}</style>
       <AppShell />
       <PokeLayer />
     </AuthProvider>
