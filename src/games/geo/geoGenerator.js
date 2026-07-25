@@ -124,6 +124,8 @@ function makeQuestion(type, fact) {
     answer,
     options,
     fixedChoice: Boolean(fact.options),
+    name: fact.name,
+    code: fact.code,
     countryName: fact.countryName,
     countryId: fact.countryId,
     flagCode: fact.flagCode,
