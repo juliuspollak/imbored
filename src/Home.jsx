@@ -4,6 +4,7 @@ import { useGameConfig } from "./lib/useGameConfig.js";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useI18n } from "./lib/i18n.jsx";
 import { challengeProgress, groupChallengeCompletions } from "./lib/challengeProgress.js";
+import ChallengeStandings from "./ChallengeStandings.jsx";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -35,6 +36,9 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   const [challengeCompletions, setChallengeCompletions] = useState({ personal: new Set() });
   const [challengesLoaded, setChallengesLoaded] = useState(false);
   const [scopePickerOpen, setScopePickerOpen] = useState(false);
+  const [challengeRows, setChallengeRows] = useState([]);
+  const [challengeProfiles, setChallengeProfiles] = useState({});
+  const [standingsLoading, setStandingsLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,7 +62,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         const teamIds = challenges.map((item) => item.team_id);
         const { data: rosterData } = await supabase
           .from("team_members")
-          .select("team_id,user_id,profiles(name,icon)")
+          .select("team_id,user_id,profiles(name,icon,show_stats_to_others)")
           .in("team_id", teamIds);
         if (!cancelled) {
           const grouped = {};
@@ -75,6 +79,49 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
     loadTeamChallenges();
     return () => { cancelled = true; };
   }, [userId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadChallengeStandings() {
+      if (!supabaseReady || !userId || playMode !== "challenge") {
+        setChallengeRows([]);
+        setChallengeProfiles({});
+        setStandingsLoading(false);
+        return;
+      }
+      setStandingsLoading(true);
+      setChallengeRows([]);
+      setChallengeProfiles({});
+      let query = supabase
+        .from("game_stats")
+        .select("user_id,game,seconds,mistakes,hints,completed_at")
+        .eq("mode", "challenge")
+        .eq("challenge_date", todayString());
+      query = challengeScope?.type === "team"
+        ? query.eq("team_challenge_id", challengeScope.id)
+        : query.is("team_challenge_id", null);
+      const { data: resultRows } = await query;
+      if (cancelled) return;
+
+      const rows = resultRows || [];
+      const playerIds = [...new Set(rows.map((row) => row.user_id))];
+      let profiles = [];
+      if (playerIds.length > 0) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("id,name,icon,show_stats_to_others")
+          .in("id", playerIds);
+        profiles = data || [];
+      }
+      if (!cancelled) {
+        setChallengeRows(rows);
+        setChallengeProfiles(Object.fromEntries(profiles.map((profile) => [profile.id, profile])));
+        setStandingsLoading(false);
+      }
+    }
+    loadChallengeStandings();
+    return () => { cancelled = true; };
+  }, [userId, playMode, challengeScope?.type, challengeScope?.id]);
 
   useEffect(() => {
     if (!challengesLoaded || challengeScope?.type !== "team") return;
@@ -146,6 +193,15 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
     ? challengeCompletions[String(challengeScope.id)] || new Set()
     : personalCompleted;
   const selectedRoster = selectedTeam ? teamRosters[selectedTeam.team_id] || [] : [];
+  const selectedChallengeGameIds = challengeScope?.type === "team"
+    ? selectedTeam?.game_ids || challengeScope.gameIds || []
+    : personalGameIds;
+  const selectedChallengeGames = selectedChallengeGameIds
+    .map((id) => configuredGames.find((game) => game.id === id) || GAME_META.find((game) => game.id === id))
+    .filter(Boolean);
+  const standingsRoster = challengeScope?.type === "team"
+    ? selectedRoster
+    : Object.values(challengeProfiles);
 
   function choosePersonalChallenge() {
     onChallengeScopeChange({ type:"personal",id:null,name:"My Challenge",gameIds:null });
@@ -272,6 +328,14 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
               </button>
               {selectedTeam && onOpenTeams && <><span className="h-9 w-px" style={{ background:"rgba(16,24,40,.08)" }}/><button onClick={onOpenTeams} className="grid place-items-center rounded-full" style={{ width:38,height:38,background:"rgba(18,148,106,.09)",color:"#0B7C58" }} aria-label="Open team details"><Users size={16}/></button></>}
             </div>
+            <ChallengeStandings
+              rows={challengeRows}
+              roster={standingsRoster}
+              games={selectedChallengeGames}
+              isTeam={challengeScope?.type === "team"}
+              userId={userId}
+              loading={standingsLoading || (challengeScope?.type === "team" && !selectedTeam)}
+            />
           </div>
         )}
 
