@@ -601,5 +601,12 @@
     "title": "New game: Zoom",
     "body": "Three rounds, three quick two-option questions each — continent, then region, then country — all following one clue (an animal, a landmark, a flag) all the way down to the answer. Same daily-challenge structure as the other games, same scoring pipeline, no separate points system.",
     "date": "2026-07-25"
+  },
+  {
+    "id": "2026-07-25-zoom-followup",
+    "version": "v111",
+    "title": "Zoom: clearer controls, flora questions, easier recall",
+    "body": "Removed the toolbar's redundant ‘New’ button (Restart already covers it). Answer buttons now sit side by side. The continent/region breadcrumb now reveals what was actually correct at each step you've passed, so reaching the country question doesn't require remembering the continent/region cold. Also added flora questions (24 countries) alongside the existing animal/landmark/food/currency/language/flag clues.",
+    "date": "2026-07-25"
   }
 ]

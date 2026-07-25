@@ -64,7 +64,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ca",
-      "subregion": "Northern America"
+      "subregion": "Northern America",
+      "flora": [
+        "sugar maple"
+      ]
     },
     {
       "id": "us",
@@ -131,7 +134,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "us",
-      "subregion": "Northern America"
+      "subregion": "Northern America",
+      "flora": [
+        "giant sequoia"
+      ]
     },
     {
       "id": "mx",
@@ -194,7 +200,11 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "mx",
-      "subregion": "Central America"
+      "subregion": "Central America",
+      "flora": [
+        "dahlia",
+        "saguaro cactus"
+      ]
     },
     {
       "id": "cu",
@@ -244,7 +254,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "cu",
-      "subregion": "Caribbean"
+      "subregion": "Caribbean",
+      "flora": []
     },
     {
       "id": "jm",
@@ -294,7 +305,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "jm",
-      "subregion": "Caribbean"
+      "subregion": "Caribbean",
+      "flora": []
     },
     {
       "id": "pa",
@@ -344,7 +356,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "pa",
-      "subregion": "Central America"
+      "subregion": "Central America",
+      "flora": []
     },
     {
       "id": "cr",
@@ -394,7 +407,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "cr",
-      "subregion": "Central America"
+      "subregion": "Central America",
+      "flora": []
     },
     {
       "id": "gt",
@@ -444,7 +458,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "gt",
-      "subregion": "Central America"
+      "subregion": "Central America",
+      "flora": []
     },
     {
       "id": "hn",
@@ -494,7 +509,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "hn",
-      "subregion": "Central America"
+      "subregion": "Central America",
+      "flora": []
     },
     {
       "id": "ht",
@@ -544,7 +560,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ht",
-      "subregion": "Caribbean"
+      "subregion": "Caribbean",
+      "flora": []
     },
     {
       "id": "do",
@@ -594,7 +611,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "do",
-      "subregion": "Caribbean"
+      "subregion": "Caribbean",
+      "flora": []
     },
     {
       "id": "bz",
@@ -644,7 +662,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "bz",
-      "subregion": "Central America"
+      "subregion": "Central America",
+      "flora": []
     },
     {
       "id": "ni",
@@ -694,7 +713,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ni",
-      "subregion": "Central America"
+      "subregion": "Central America",
+      "flora": []
     },
     {
       "id": "sv",
@@ -744,7 +764,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "sv",
-      "subregion": "Central America"
+      "subregion": "Central America",
+      "flora": []
     },
     {
       "id": "bs",
@@ -794,7 +815,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "bs",
-      "subregion": "Caribbean"
+      "subregion": "Caribbean",
+      "flora": []
     },
     {
       "id": "tt",
@@ -844,7 +866,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "tt",
-      "subregion": "Caribbean"
+      "subregion": "Caribbean",
+      "flora": []
     },
     {
       "id": "br",
@@ -908,7 +931,11 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "br",
-      "subregion": "Atlantic South America"
+      "subregion": "Atlantic South America",
+      "flora": [
+        "Brazil nut tree",
+        "Amazon rubber tree"
+      ]
     },
     {
       "id": "ar",
@@ -971,7 +998,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ar",
-      "subregion": "Atlantic South America"
+      "subregion": "Atlantic South America",
+      "flora": []
     },
     {
       "id": "cl",
@@ -1032,7 +1060,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "cl",
-      "subregion": "Andean South America"
+      "subregion": "Andean South America",
+      "flora": [
+        "monkey puzzle tree"
+      ]
     },
     {
       "id": "pe",
@@ -1094,7 +1125,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "pe",
-      "subregion": "Andean South America"
+      "subregion": "Andean South America",
+      "flora": [
+        "cinchona tree"
+      ]
     },
     {
       "id": "co",
@@ -1144,7 +1178,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "co",
-      "subregion": "Andean South America"
+      "subregion": "Andean South America",
+      "flora": []
     },
     {
       "id": "ve",
@@ -1194,7 +1229,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ve",
-      "subregion": "Andean South America"
+      "subregion": "Andean South America",
+      "flora": []
     },
     {
       "id": "ec",
@@ -1244,7 +1280,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ec",
-      "subregion": "Andean South America"
+      "subregion": "Andean South America",
+      "flora": []
     },
     {
       "id": "bo",
@@ -1294,7 +1331,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "bo",
-      "subregion": "Andean South America"
+      "subregion": "Andean South America",
+      "flora": []
     },
     {
       "id": "py",
@@ -1344,7 +1382,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "py",
-      "subregion": "Atlantic South America"
+      "subregion": "Atlantic South America",
+      "flora": []
     },
     {
       "id": "uy",
@@ -1394,7 +1433,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "uy",
-      "subregion": "Atlantic South America"
+      "subregion": "Atlantic South America",
+      "flora": []
     },
     {
       "id": "gy",
@@ -1444,7 +1484,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "gy",
-      "subregion": "Atlantic South America"
+      "subregion": "Atlantic South America",
+      "flora": []
     },
     {
       "id": "sr",
@@ -1494,7 +1535,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "sr",
-      "subregion": "Atlantic South America"
+      "subregion": "Atlantic South America",
+      "flora": []
     },
     {
       "id": "fr",
@@ -1557,7 +1599,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "fr",
-      "subregion": "Western Europe"
+      "subregion": "Western Europe",
+      "flora": [
+        "lavender"
+      ]
     },
     {
       "id": "de",
@@ -1619,7 +1664,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "de",
-      "subregion": "Western Europe"
+      "subregion": "Western Europe",
+      "flora": [
+        "European beech"
+      ]
     },
     {
       "id": "it",
@@ -1684,7 +1732,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "it",
-      "subregion": "Southern Europe"
+      "subregion": "Southern Europe",
+      "flora": [
+        "olive tree"
+      ]
     },
     {
       "id": "es",
@@ -1746,7 +1797,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "es",
-      "subregion": "Southern Europe"
+      "subregion": "Southern Europe",
+      "flora": []
     },
     {
       "id": "gb",
@@ -1809,7 +1861,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "gb",
-      "subregion": "Northern Europe"
+      "subregion": "Northern Europe",
+      "flora": [
+        "Scots pine"
+      ]
     },
     {
       "id": "pt",
@@ -1859,7 +1914,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "pt",
-      "subregion": "Southern Europe"
+      "subregion": "Southern Europe",
+      "flora": []
     },
     {
       "id": "nl",
@@ -1909,7 +1965,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "nl",
-      "subregion": "Western Europe"
+      "subregion": "Western Europe",
+      "flora": [
+        "tulip"
+      ]
     },
     {
       "id": "ch",
@@ -1959,7 +2018,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ch",
-      "subregion": "Western Europe"
+      "subregion": "Western Europe",
+      "flora": [
+        "edelweiss"
+      ]
     },
     {
       "id": "se",
@@ -2009,7 +2071,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "se",
-      "subregion": "Northern Europe"
+      "subregion": "Northern Europe",
+      "flora": []
     },
     {
       "id": "no",
@@ -2059,7 +2122,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "no",
-      "subregion": "Northern Europe"
+      "subregion": "Northern Europe",
+      "flora": []
     },
     {
       "id": "pl",
@@ -2109,7 +2173,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "pl",
-      "subregion": "Eastern Europe"
+      "subregion": "Eastern Europe",
+      "flora": []
     },
     {
       "id": "gr",
@@ -2170,7 +2235,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "gr",
-      "subregion": "Southern Europe"
+      "subregion": "Southern Europe",
+      "flora": []
     },
     {
       "id": "at",
@@ -2233,7 +2299,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "at",
-      "subregion": "Western Europe"
+      "subregion": "Western Europe",
+      "flora": []
     },
     {
       "id": "be",
@@ -2283,7 +2350,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "be",
-      "subregion": "Western Europe"
+      "subregion": "Western Europe",
+      "flora": []
     },
     {
       "id": "ie",
@@ -2333,7 +2401,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ie",
-      "subregion": "Northern Europe"
+      "subregion": "Northern Europe",
+      "flora": []
     },
     {
       "id": "fi",
@@ -2383,7 +2452,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "fi",
-      "subregion": "Northern Europe"
+      "subregion": "Northern Europe",
+      "flora": []
     },
     {
       "id": "dk",
@@ -2433,7 +2503,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "dk",
-      "subregion": "Northern Europe"
+      "subregion": "Northern Europe",
+      "flora": []
     },
     {
       "id": "is",
@@ -2483,7 +2554,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "is",
-      "subregion": "Northern Europe"
+      "subregion": "Northern Europe",
+      "flora": []
     },
     {
       "id": "hu",
@@ -2533,7 +2605,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "hu",
-      "subregion": "Eastern Europe"
+      "subregion": "Eastern Europe",
+      "flora": []
     },
     {
       "id": "cz",
@@ -2583,7 +2656,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "cz",
-      "subregion": "Eastern Europe"
+      "subregion": "Eastern Europe",
+      "flora": []
     },
     {
       "id": "ro",
@@ -2633,7 +2707,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ro",
-      "subregion": "Eastern Europe"
+      "subregion": "Eastern Europe",
+      "flora": []
     },
     {
       "id": "hr",
@@ -2683,7 +2758,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "hr",
-      "subregion": "Southern Europe"
+      "subregion": "Southern Europe",
+      "flora": []
     },
     {
       "id": "sk",
@@ -2733,7 +2809,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "sk",
-      "subregion": "Eastern Europe"
+      "subregion": "Eastern Europe",
+      "flora": []
     },
     {
       "id": "si",
@@ -2783,7 +2860,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "si",
-      "subregion": "Southern Europe"
+      "subregion": "Southern Europe",
+      "flora": []
     },
     {
       "id": "lu",
@@ -2833,7 +2911,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "lu",
-      "subregion": "Western Europe"
+      "subregion": "Western Europe",
+      "flora": []
     },
     {
       "id": "mt",
@@ -2883,7 +2962,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "mt",
-      "subregion": "Southern Europe"
+      "subregion": "Southern Europe",
+      "flora": []
     },
     {
       "id": "ee",
@@ -2933,7 +3013,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ee",
-      "subregion": "Northern Europe"
+      "subregion": "Northern Europe",
+      "flora": []
     },
     {
       "id": "lv",
@@ -2983,7 +3064,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "lv",
-      "subregion": "Northern Europe"
+      "subregion": "Northern Europe",
+      "flora": []
     },
     {
       "id": "lt",
@@ -3033,7 +3115,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "lt",
-      "subregion": "Northern Europe"
+      "subregion": "Northern Europe",
+      "flora": []
     },
     {
       "id": "rs",
@@ -3083,7 +3166,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "rs",
-      "subregion": "Eastern Europe"
+      "subregion": "Eastern Europe",
+      "flora": []
     },
     {
       "id": "bg",
@@ -3133,7 +3217,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "bg",
-      "subregion": "Eastern Europe"
+      "subregion": "Eastern Europe",
+      "flora": []
     },
     {
       "id": "eg",
@@ -3195,7 +3280,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "eg",
-      "subregion": "Northern Africa"
+      "subregion": "Northern Africa",
+      "flora": [
+        "papyrus"
+      ]
     },
     {
       "id": "ng",
@@ -3245,7 +3333,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ng",
-      "subregion": "Western Africa"
+      "subregion": "Western Africa",
+      "flora": []
     },
     {
       "id": "ke",
@@ -3307,7 +3396,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ke",
-      "subregion": "Eastern Africa"
+      "subregion": "Eastern Africa",
+      "flora": [
+        "coffee"
+      ]
     },
     {
       "id": "za",
@@ -3370,7 +3462,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "za",
-      "subregion": "Southern Africa"
+      "subregion": "Southern Africa",
+      "flora": [
+        "king protea"
+      ]
     },
     {
       "id": "ma",
@@ -3432,7 +3527,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ma",
-      "subregion": "Northern Africa"
+      "subregion": "Northern Africa",
+      "flora": []
     },
     {
       "id": "gh",
@@ -3482,7 +3578,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "gh",
-      "subregion": "Western Africa"
+      "subregion": "Western Africa",
+      "flora": []
     },
     {
       "id": "et",
@@ -3532,7 +3629,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "et",
-      "subregion": "Eastern Africa"
+      "subregion": "Eastern Africa",
+      "flora": []
     },
     {
       "id": "tz",
@@ -3582,7 +3680,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "tz",
-      "subregion": "Eastern Africa"
+      "subregion": "Eastern Africa",
+      "flora": []
     },
     {
       "id": "ug",
@@ -3632,7 +3731,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ug",
-      "subregion": "Eastern Africa"
+      "subregion": "Eastern Africa",
+      "flora": []
     },
     {
       "id": "sn",
@@ -3682,7 +3782,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "sn",
-      "subregion": "Western Africa"
+      "subregion": "Western Africa",
+      "flora": []
     },
     {
       "id": "zw",
@@ -3732,7 +3833,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "zw",
-      "subregion": "Eastern Africa"
+      "subregion": "Eastern Africa",
+      "flora": []
     },
     {
       "id": "tn",
@@ -3782,7 +3884,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "tn",
-      "subregion": "Northern Africa"
+      "subregion": "Northern Africa",
+      "flora": []
     },
     {
       "id": "dz",
@@ -3832,7 +3935,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "dz",
-      "subregion": "Northern Africa"
+      "subregion": "Northern Africa",
+      "flora": []
     },
     {
       "id": "zm",
@@ -3882,7 +3986,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "zm",
-      "subregion": "Eastern Africa"
+      "subregion": "Eastern Africa",
+      "flora": []
     },
     {
       "id": "na",
@@ -3932,7 +4037,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "na",
-      "subregion": "Southern Africa"
+      "subregion": "Southern Africa",
+      "flora": [
+        "welwitschia"
+      ]
     },
     {
       "id": "bw",
@@ -3982,7 +4090,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "bw",
-      "subregion": "Southern Africa"
+      "subregion": "Southern Africa",
+      "flora": []
     },
     {
       "id": "rw",
@@ -4032,7 +4141,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "rw",
-      "subregion": "Eastern Africa"
+      "subregion": "Eastern Africa",
+      "flora": []
     },
     {
       "id": "mz",
@@ -4082,7 +4192,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "mz",
-      "subregion": "Eastern Africa"
+      "subregion": "Eastern Africa",
+      "flora": []
     },
     {
       "id": "ao",
@@ -4132,7 +4243,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ao",
-      "subregion": "Middle Africa"
+      "subregion": "Middle Africa",
+      "flora": []
     },
     {
       "id": "cm",
@@ -4182,7 +4294,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "cm",
-      "subregion": "Middle Africa"
+      "subregion": "Middle Africa",
+      "flora": []
     },
     {
       "id": "ci",
@@ -4232,7 +4345,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ci",
-      "subregion": "Western Africa"
+      "subregion": "Western Africa",
+      "flora": []
     },
     {
       "id": "ml",
@@ -4282,7 +4396,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ml",
-      "subregion": "Western Africa"
+      "subregion": "Western Africa",
+      "flora": []
     },
     {
       "id": "mg",
@@ -4332,7 +4447,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "mg",
-      "subregion": "Eastern Africa"
+      "subregion": "Eastern Africa",
+      "flora": [
+        "baobab"
+      ]
     },
     {
       "id": "sd",
@@ -4382,7 +4500,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "sd",
-      "subregion": "Northern Africa"
+      "subregion": "Northern Africa",
+      "flora": []
     },
     {
       "id": "jp",
@@ -4445,7 +4564,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "jp",
-      "subregion": "Eastern Asia"
+      "subregion": "Eastern Asia",
+      "flora": [
+        "cherry blossom"
+      ]
     },
     {
       "id": "cn",
@@ -4508,7 +4630,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "cn",
-      "subregion": "Eastern Asia"
+      "subregion": "Eastern Asia",
+      "flora": [
+        "ginkgo"
+      ]
     },
     {
       "id": "in",
@@ -4572,7 +4697,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "in",
-      "subregion": "Southern Asia"
+      "subregion": "Southern Asia",
+      "flora": [
+        "lotus"
+      ]
     },
     {
       "id": "th",
@@ -4633,7 +4761,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "th",
-      "subregion": "South-eastern Asia"
+      "subregion": "South-eastern Asia",
+      "flora": []
     },
     {
       "id": "kr",
@@ -4683,7 +4812,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "kr",
-      "subregion": "Eastern Asia"
+      "subregion": "Eastern Asia",
+      "flora": []
     },
     {
       "id": "vn",
@@ -4733,7 +4863,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "vn",
-      "subregion": "South-eastern Asia"
+      "subregion": "South-eastern Asia",
+      "flora": []
     },
     {
       "id": "id",
@@ -4795,7 +4926,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "id",
-      "subregion": "South-eastern Asia"
+      "subregion": "South-eastern Asia",
+      "flora": [
+        "Rafflesia arnoldii"
+      ]
     },
     {
       "id": "ph",
@@ -4845,7 +4979,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ph",
-      "subregion": "South-eastern Asia"
+      "subregion": "South-eastern Asia",
+      "flora": []
     },
     {
       "id": "my",
@@ -4888,7 +5023,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "my",
-      "subregion": "South-eastern Asia"
+      "subregion": "South-eastern Asia",
+      "flora": []
     },
     {
       "id": "sg",
@@ -4947,7 +5083,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "sg",
-      "subregion": "South-eastern Asia"
+      "subregion": "South-eastern Asia",
+      "flora": []
     },
     {
       "id": "sa",
@@ -4997,7 +5134,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "sa",
-      "subregion": "Western Asia"
+      "subregion": "Western Asia",
+      "flora": []
     },
     {
       "id": "il",
@@ -5047,7 +5185,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "il",
-      "subregion": "Western Asia"
+      "subregion": "Western Asia",
+      "flora": []
     },
     {
       "id": "ae",
@@ -5097,7 +5236,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ae",
-      "subregion": "Western Asia"
+      "subregion": "Western Asia",
+      "flora": []
     },
     {
       "id": "pk",
@@ -5147,7 +5287,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "pk",
-      "subregion": "Southern Asia"
+      "subregion": "Southern Asia",
+      "flora": []
     },
     {
       "id": "lk",
@@ -5197,7 +5338,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "lk",
-      "subregion": "Southern Asia"
+      "subregion": "Southern Asia",
+      "flora": []
     },
     {
       "id": "np",
@@ -5258,7 +5400,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "np",
-      "subregion": "Southern Asia"
+      "subregion": "Southern Asia",
+      "flora": []
     },
     {
       "id": "kh",
@@ -5308,7 +5451,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "kh",
-      "subregion": "South-eastern Asia"
+      "subregion": "South-eastern Asia",
+      "flora": []
     },
     {
       "id": "la",
@@ -5358,7 +5502,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "la",
-      "subregion": "South-eastern Asia"
+      "subregion": "South-eastern Asia",
+      "flora": []
     },
     {
       "id": "mn",
@@ -5408,7 +5553,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "mn",
-      "subregion": "Eastern Asia"
+      "subregion": "Eastern Asia",
+      "flora": []
     },
     {
       "id": "bd",
@@ -5458,7 +5604,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "bd",
-      "subregion": "Southern Asia"
+      "subregion": "Southern Asia",
+      "flora": []
     },
     {
       "id": "mm",
@@ -5508,7 +5655,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "mm",
-      "subregion": "South-eastern Asia"
+      "subregion": "South-eastern Asia",
+      "flora": []
     },
     {
       "id": "bt",
@@ -5558,7 +5706,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "bt",
-      "subregion": "Southern Asia"
+      "subregion": "Southern Asia",
+      "flora": [
+        "Himalayan blue poppy"
+      ]
     },
     {
       "id": "jo",
@@ -5608,7 +5759,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "jo",
-      "subregion": "Western Asia"
+      "subregion": "Western Asia",
+      "flora": []
     },
     {
       "id": "lb",
@@ -5658,7 +5810,10 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "lb",
-      "subregion": "Western Asia"
+      "subregion": "Western Asia",
+      "flora": [
+        "cedar of Lebanon"
+      ]
     },
     {
       "id": "qa",
@@ -5708,7 +5863,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "qa",
-      "subregion": "Western Asia"
+      "subregion": "Western Asia",
+      "flora": []
     },
     {
       "id": "kw",
@@ -5758,7 +5914,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "kw",
-      "subregion": "Western Asia"
+      "subregion": "Western Asia",
+      "flora": []
     },
     {
       "id": "om",
@@ -5808,7 +5965,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "om",
-      "subregion": "Western Asia"
+      "subregion": "Western Asia",
+      "flora": []
     },
     {
       "id": "au",
@@ -5882,7 +6040,11 @@
         "Australia is both a country and the largest landmass in Oceania."
       ],
       "flagCode": "au",
-      "subregion": "Australia"
+      "subregion": "Australia",
+      "flora": [
+        "eucalyptus",
+        "golden wattle"
+      ]
     },
     {
       "id": "fj",
@@ -5932,7 +6094,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "fj",
-      "subregion": "Melanesia"
+      "subregion": "Melanesia",
+      "flora": []
     },
     {
       "id": "pg",
@@ -5982,7 +6145,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "pg",
-      "subregion": "Melanesia"
+      "subregion": "Melanesia",
+      "flora": []
     },
     {
       "id": "ws",
@@ -6032,7 +6196,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "ws",
-      "subregion": "Polynesia"
+      "subregion": "Polynesia",
+      "flora": []
     },
     {
       "id": "to",
@@ -6082,7 +6247,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "to",
-      "subregion": "Polynesia"
+      "subregion": "Polynesia",
+      "flora": []
     },
     {
       "id": "vu",
@@ -6132,7 +6298,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "vu",
-      "subregion": "Melanesia"
+      "subregion": "Melanesia",
+      "flora": []
     },
     {
       "id": "sb",
@@ -6182,7 +6349,8 @@
       "nationalSymbols": [],
       "funFacts": [],
       "flagCode": "sb",
-      "subregion": "Melanesia"
+      "subregion": "Melanesia",
+      "flora": []
     }
   ],
   "specialRegions": [

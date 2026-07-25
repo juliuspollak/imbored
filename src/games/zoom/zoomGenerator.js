@@ -14,6 +14,7 @@ const LEVELS_PER_ROUND = 3; // continent -> subregion -> country
 // fallback — nothing ever comes back empty-handed).
 const CLUE_SOURCES = [
   { type: "animal", field: "animals" },
+  { type: "flora", field: "flora" },
   { type: "landmark", field: "landmarks" },
   { type: "food", field: "foods" },
   { type: "naturalFeature", field: "naturalFeatures" },
@@ -24,6 +25,7 @@ const CLUE_SOURCES = [
 const LEVEL1_TEMPLATES = {
   capital: (name) => `Which continent is the city of ${name} on?`,
   animal: (name) => `Which continent is the ${name} native to?`,
+  flora: (name) => `Which continent is ${name} famously grown on?`,
   landmark: (name) => `Which continent would you find ${name} on?`,
   food: (name) => `Which continent does the dish ${name} come from?`,
   naturalFeature: (name) => `Which continent is ${name} located on?`,
@@ -35,6 +37,7 @@ const LEVEL1_TEMPLATES = {
 const LEVEL2_TEMPLATES = {
   capital: (name, continent) => `Still thinking of ${name} — which part of ${continent} is it in?`,
   animal: (name, continent) => `Still thinking of the ${name} — which part of ${continent} is its home?`,
+  flora: (name, continent) => `Still thinking of ${name} — which part of ${continent} is it grown in?`,
   landmark: (name, continent) => `Still thinking of ${name} — which part of ${continent} is it in?`,
   food: (name, continent) => `Still thinking of ${name} — which part of ${continent} does it come from?`,
   naturalFeature: (name, continent) => `Still thinking of ${name} — which part of ${continent} is it in?`,
@@ -55,7 +58,7 @@ function pickClue(country) {
   if (!usable) {
     return { type: "capital", name: country.capital || country.capitals?.[0] || country.name };
   }
-  const raw = country[usable.field][0];
+  const raw = shuffle(country[usable.field])[0];
   const name = usable.pick ? usable.pick(raw) : raw;
   return { type: usable.type, name, code: usable.type === "currency" || usable.type === "language" ? raw?.code : undefined };
 }

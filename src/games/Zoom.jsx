@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
 import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating from "../DifficultyRating.jsx";
-import { ZoomIn, Eraser, Sparkles, Timer as TimerIcon, HelpCircle, MapPin, Globe2, Flag } from "lucide-react";
+import { ZoomIn, Eraser, Timer as TimerIcon, HelpCircle, MapPin, Globe2, Flag } from "lucide-react";
 import { generateZoomQuiz, ROUNDS_PER_QUIZ, LEVELS_PER_ROUND } from "./zoom/zoomGenerator.js";
 import { getTargetHistory, rememberTargets } from "./zoom/zoomHistory.js";
 import FlagImage from "./geo/FlagImage.jsx";
@@ -218,7 +218,6 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
         <div className="flex items-center justify-center gap-2 mb-4">
           {[
             { Icon: Eraser, label: t("common.restart"), onClick: handleReset, disabled: solved },
-            { Icon: Sparkles, label: t("zoom.new"), onClick: () => newQuiz(dayIdx), disabled: isChallenge },
           ].map(({ Icon, label, onClick, disabled }) => (
             <button
               key={label}
@@ -258,21 +257,31 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
                 />
               ))}
             </div>
-            <div className="flex items-center justify-center gap-2 mb-4">
-              {[t("zoom.stepContinent"), t("zoom.stepRegion"), t("zoom.stepCountry")].map((label, i) => (
-                <React.Fragment key={label}>
-                  {i > 0 && <span style={{ color: INK, opacity: 0.2 }} className="text-xs">→</span>}
-                  <span
-                    className="text-[10px] font-semibold px-2 py-1 rounded-full"
-                    style={{
-                      background: i === step.levelIndex ? `${ACCENT}18` : i < step.levelIndex ? "rgba(22,163,74,0.10)" : "rgba(16,24,40,0.04)",
-                      color: i === step.levelIndex ? ACCENT : i < step.levelIndex ? GREEN : "rgba(27,33,41,0.35)",
-                    }}
-                  >
-                    {label}
-                  </span>
-                </React.Fragment>
-              ))}
+            <div className="flex items-center justify-center gap-1.5 mb-4 flex-wrap">
+              {[t("zoom.stepContinent"), t("zoom.stepRegion"), t("zoom.stepCountry")].map((label, i) => {
+                // Levels already passed this round reveal what the answer
+                // actually was (not necessarily what was picked) — a running
+                // recap so the country step doesn't require remembering the
+                // continent/region cold. steps are laid out contiguously per
+                // round, so the earlier levels of *this* round sit right
+                // before the current one in the flat array.
+                const revealed = i < step.levelIndex ? steps[qIdx - step.levelIndex + i] : null;
+                const shown = revealed ? localizeZoomValue(revealed.answer, language, revealed) : label;
+                return (
+                  <React.Fragment key={label}>
+                    {i > 0 && <span style={{ color: INK, opacity: 0.2 }} className="text-xs">→</span>}
+                    <span
+                      className="text-[10px] font-semibold px-2 py-1 rounded-full"
+                      style={{
+                        background: i === step.levelIndex ? `${ACCENT}18` : i < step.levelIndex ? "rgba(22,163,74,0.10)" : "rgba(16,24,40,0.04)",
+                        color: i === step.levelIndex ? ACCENT : i < step.levelIndex ? GREEN : "rgba(27,33,41,0.35)",
+                      }}
+                    >
+                      {shown}
+                    </span>
+                  </React.Fragment>
+                );
+              })}
             </div>
 
             {step.clueType === "flag" && (
@@ -288,7 +297,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
               {prompt}
             </p>
 
-            <div className="flex flex-col gap-2.5 mb-3">
+            <div className="flex flex-row gap-2.5 mb-3">
               {step.options.map((option) => {
                 const isPicked = selected === option;
                 const isCorrect = answered && option === step.answer;
@@ -303,7 +312,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
                     key={option}
                     onClick={() => pick(option)}
                     disabled={answered}
-                    className="zoom-option rounded-xl px-4 py-4 text-base font-semibold transition-all min-h-[56px]"
+                    className="zoom-option flex-1 rounded-xl px-3 py-4 text-sm sm:text-base font-semibold transition-all min-h-[64px] leading-snug"
                     style={{ background, color, border, cursor: answered ? "default" : "pointer" }}
                   >
                     {localizeZoomValue(option, language, step)}
