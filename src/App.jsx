@@ -61,6 +61,7 @@ function AppShell() {
   }); // null | profile screens | a game id
   const [chatPlayer, setChatPlayer] = useState(null);
   const [chatReturn, setChatReturn] = useState(null);
+  const [teamsTarget, setTeamsTarget] = useState(null);
   // Challenge mode needs an account to mean anything (once-per-day + history
   // are tied to a user) — default to it when logged in, otherwise practice
   // is the only real option.
@@ -126,6 +127,11 @@ function AppShell() {
       .then(({ error }) => {
         if (error) console.error(`Unable to mark ${section} as viewed:`, error);
       });
+  }
+
+  function openTeams(target = null) {
+    setTeamsTarget(target?.teamId ? target : null);
+    openSection("teams");
   }
 
   useEffect(() => {
@@ -204,7 +210,11 @@ function AppShell() {
   if (active === "teams") {
     return (
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
-        <Teams onBack={() => setActive(null)} />
+        <Teams
+          onBack={() => { setTeamsTarget(null);setActive(null); }}
+          initialTeamId={teamsTarget?.teamId}
+          initialChallengeId={teamsTarget?.challengeId}
+        />
       </Suspense>
     );
   }
@@ -278,7 +288,7 @@ function AppShell() {
           players={players}
           userId={user?.id}
           onOpenProgress={() => setActive("progress")}
-          onOpenTeams={() => openSection("teams")}
+          onOpenTeams={openTeams}
           challengeScope={challengeScope}
           onChallengeScopeChange={setChallengeScope}
         />
