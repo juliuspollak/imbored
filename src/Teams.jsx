@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   ArrowLeft, Ban, CalendarDays, Check, ChevronDown, Crown, Gift,
-  Lock, Plus, RotateCcw, Search, Trash2,
+  Lock, Mail, Plus, RotateCcw, Search, Trash2,
   UserMinus, UserPlus, Users, X,
 } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
@@ -35,6 +35,9 @@ export default function Teams({ onBack }) {
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
   const [composerOpen, setComposerOpen] = useState(false);
+  const [emailInviteOpen, setEmailInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [emailInviteBusy, setEmailInviteBusy] = useState(false);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [name, setName] = useState("");
   const [emoji, setEmoji] = useState("⭐");
@@ -150,6 +153,29 @@ export default function Teams({ onBack }) {
     if (!error) refresh();
   }
 
+  async function inviteByEmail(event) {
+    event.preventDefault();
+    if (!inviteEmail.trim() || emailInviteBusy) return;
+    setEmailInviteBusy(true);
+    setMsg("");
+    const { error } = await supabase.functions.invoke("send-app-invite", {
+      body:{ email:inviteEmail.trim() },
+    });
+    setEmailInviteBusy(false);
+    if (error) {
+      let message=error.message || "Invitation failed";
+      try {
+        const details=await error.context?.json();
+        if (details?.error) message=details.error;
+      } catch { /* keep the function error */ }
+      setMsg(message);
+      return;
+    }
+    setMsg(`Invitation sent to ${inviteEmail.trim()}`);
+    setInviteEmail("");
+    setEmailInviteOpen(false);
+  }
+
   async function decideInvitation(invitationId, accept) {
     const { error } = await supabase.rpc("decide_team_invitation", {
       target_invitation_id: invitationId,
@@ -259,6 +285,11 @@ export default function Teams({ onBack }) {
           <div className="flex-1"><h1 className="text-2xl font-bold" style={{ fontFamily:"'Fredoka',sans-serif" }}>Teams</h1><p className="text-xs opacity-45">Play together, your way</p></div>
           {!profile?.hidden_from_others && <button onClick={() => setComposerOpen((open) => !open)} className="rounded-full px-3 py-2 text-xs font-semibold flex items-center gap-1" style={{ background:ACCENT,color:"#fff" }}><Plus size={14}/>New team</button>}
         </header>
+
+        {!profile?.hidden_from_others && <div className="mb-4">
+          {!emailInviteOpen ? <button onClick={() => setEmailInviteOpen(true)} className="w-full rounded-2xl px-4 py-3 flex items-center gap-3 text-left" style={{ background:"#fff",border:"1px solid rgba(16,24,40,.08)" }}><span className="grid place-items-center rounded-xl" style={{ width:34,height:34,background:"rgba(47,111,237,.09)",color:ACCENT }}><Mail size={15}/></span><span className="flex-1"><span className="block text-xs font-semibold">Invite someone new</span><span className="block text-[10px] opacity-45 mt-0.5">Send an email to someone who isn’t here yet</span></span><ChevronDown size={14} style={{ opacity:.3 }}/></button>
+            : <form onSubmit={inviteByEmail} className="rounded-3xl p-4" style={{ background:"#fff",border:"1px solid rgba(47,111,237,.16)" }}><div className="text-sm font-bold">Invite by email</div><div className="text-[11px] opacity-45 mt-0.5 mb-3">They’ll receive a link to create their account.</div><input autoFocus required type="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} placeholder="friend@example.com" className="w-full rounded-2xl border px-3 py-2.5 text-base outline-none"/><div className="grid grid-cols-2 gap-2 mt-3"><button type="button" onClick={() => { setEmailInviteOpen(false);setInviteEmail(""); }} className="rounded-full py-2.5 text-xs font-semibold" style={{ background:"rgba(16,24,40,.05)" }}>Cancel</button><button disabled={emailInviteBusy || !inviteEmail.trim()} className="rounded-full py-2.5 text-xs font-semibold text-white disabled:opacity-40" style={{ background:ACCENT }}>{emailInviteBusy ? "Sending…" : "Send invitation"}</button></div></form>}
+        </div>}
 
         {msg && <div className="rounded-xl p-3 mb-3 text-xs" style={{ background:"rgba(47,111,237,.08)" }}>{msg}</div>}
         {invitations.length > 0 && <div className="rounded-3xl p-4 mb-4" style={{ background:"#FFF8E7",border:"1px solid rgba(217,174,88,.22)" }}>
