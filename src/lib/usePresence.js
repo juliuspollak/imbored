@@ -28,6 +28,23 @@ export function usePresence(game, mode) {
     !profile.is_blocked &&
     (profile.is_admin || profile.is_approved !== false);
 
+  // Immediately update presence when game changes
+  useEffect(() => {
+    if (!supabaseReady || !userId || !canWritePresence || isPrivate) return;
+    const current = presenceValueRef.current;
+    supabase
+      .from("presence")
+      .upsert({
+        user_id: userId,
+        game: current.game,
+        mode: current.game ? current.mode : null,
+        last_seen: new Date().toISOString(),
+      })
+      .then(({ error }) => {
+        if (error && error.code !== "42501") console.warn("Unable to update presence:", error.message);
+      });
+  }, [game, mode, userId, canWritePresence, isPrivate]);
+
   useEffect(() => {
     if (!supabaseReady || !userId || !hasProfile) return;
 
