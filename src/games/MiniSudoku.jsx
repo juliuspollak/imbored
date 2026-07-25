@@ -203,16 +203,18 @@ function fmtTime(s) {
 
 /* ---------------- component ---------------- */
 
-function NumBtn({ onClick, disabled, children, ...rest }) {
+function NumBtn({ onClick, disabled, used = false, active = false, children, ...rest }) {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       className="ms-num-btn flex items-center justify-center rounded-xl py-3.5 text-lg font-semibold transition-all"
       style={{
-        background: "rgba(16,24,40,0.045)",
-        color: disabled ? "rgba(27,33,41,0.3)" : CREAM,
+        background: active ? "rgba(47,111,237,0.14)" : used ? "rgba(16,24,40,0.025)" : "rgba(16,24,40,0.045)",
+        color: disabled ? "rgba(27,33,41,0.3)" : active ? GOLD : used ? "rgba(27,33,41,0.28)" : CREAM,
         cursor: disabled ? "default" : "pointer",
+        opacity: used && !disabled ? 0.62 : 1,
+        boxShadow: active ? `inset 0 0 0 2px ${GOLD}` : "none",
       }}
       {...rest}
     >
@@ -342,6 +344,22 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
 
   const conflicts = getConflicts(board);
   const filledCount = board.flat().filter((v) => v !== 0).length;
+  const selectedValue = selected ? board[selected.r][selected.c] : 0;
+
+  function digitUsedAroundSelected(digit) {
+    if (!selected || selectedValue === digit) return false;
+    const { r, c } = selected;
+    if (board[r].some((value, column) => column !== c && value === digit)) return true;
+    if (board.some((row, rowIndex) => rowIndex !== r && row[c] === digit)) return true;
+    const boxRow = Math.floor(r / BOX_R) * BOX_R;
+    const boxColumn = Math.floor(c / BOX_C) * BOX_C;
+    for (let rr = boxRow; rr < boxRow + BOX_R; rr++) {
+      for (let cc = boxColumn; cc < boxColumn + BOX_C; cc++) {
+        if ((rr !== r || cc !== c) && board[rr][cc] === digit) return true;
+      }
+    }
+    return false;
+  }
 
   function pushHistory() {
     setHistory((h) => [...h, { board: board.map((row) => row.slice()), mistakes, hints: hintsUsed }].slice(-50));
@@ -705,7 +723,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         {/* number palette */}
         <div className="grid grid-cols-4 gap-2 mt-4">
           {[1, 2, 3].map((d) => (
-            <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={solved || !selected}>
+            <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={solved || !selected} used={digitUsedAroundSelected(d)} active={selectedValue === d} aria-label={`${d}${digitUsedAroundSelected(d) ? ", already used nearby" : ""}`}>
               {d}
             </NumBtn>
           ))}
@@ -713,7 +731,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
             <Delete size={18} />
           </NumBtn>
           {[4, 5, 6].map((d) => (
-            <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={solved || !selected}>
+            <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={solved || !selected} used={digitUsedAroundSelected(d)} active={selectedValue === d} aria-label={`${d}${digitUsedAroundSelected(d) ? ", already used nearby" : ""}`}>
               {d}
             </NumBtn>
           ))}
