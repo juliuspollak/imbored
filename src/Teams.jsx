@@ -30,6 +30,7 @@ export default function Teams({ onBack }) {
   const [members, setMembers] = useState([]);
   const [memberProfiles, setMemberProfiles] = useState({});
   const [requests, setRequests] = useState([]);
+  const [invitations, setInvitations] = useState([]);
   const [teamBlocks, setTeamBlocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
@@ -55,7 +56,7 @@ export default function Teams({ onBack }) {
   const refresh = useCallback(async () => {
     if (!supabaseReady) return;
     setLoading(true);
-    const [{data:t},{data:p},{data:m},{data:r},{data:c},rosterResult,blocksResult,progressResult] = await Promise.all([
+    const [{data:t},{data:p},{data:m},{data:r},{data:c},rosterResult,blocksResult,invitationsResult,progressResult] = await Promise.all([
       supabase.from("teams").select("*").order("created_at"),
       supabase.from("profiles").select("id,name,icon,mood,is_private,hidden_from_others,is_approved,account_deleted_at").order("name"),
       supabase.from("team_members").select("team_id,user_id"),
@@ -63,6 +64,7 @@ export default function Teams({ onBack }) {
       supabase.rpc("get_my_active_team_challenges"),
       supabase.rpc("get_my_team_rosters"),
       supabase.rpc("get_my_managed_team_blocks"),
+      supabase.rpc("get_my_pending_team_invitations"),
       supabase.from("player_progress").select("lifetime_points,current_level").eq("player_id",user.id).maybeSingle(),
     ]);
     setTeams(t || []);
@@ -74,6 +76,7 @@ export default function Teams({ onBack }) {
     ])));
     setRequests(r || []);
     setTeamBlocks(blocksResult.data || []);
+    setInvitations(invitationsResult.data || []);
     setSocialUnlocked(!!profile?.is_admin || Number(progressResult.data?.current_level || 1) >= 2 || Number(progressResult.data?.lifetime_points || 0) >= 500);
     setChallengeEdits((previous) => {
       const next = { ...previous };
@@ -98,7 +101,7 @@ export default function Teams({ onBack }) {
     refresh();
     return attachRealtimeRefresh({
       channelName:`teams-${user?.id}`,
-      tables:[{ name:"team_members" },{ name:"team_join_requests" }],
+      tables:[{ name:"team_members" },{ name:"team_join_requests" },{ name:"team_invitations" }],
       refresh,
     });
   }, [refresh, user?.id]);
@@ -150,8 +153,17 @@ export default function Teams({ onBack }) {
     setInviteBusy(playerId);
     const { error } = await addPlayerToTeam(playerId, inviteTeam.id);
     setInviteBusy(null);
-    setMsg(error?.message || `${byId[playerId]?.name || "Player"} joined ${inviteTeam.name}`);
+    setMsg(error?.message || `Invitation sent to ${byId[playerId]?.name || "Player"}`);
     if (!error) refresh();
+  }
+
+  async function decideInvitation(invitationId, accept) {
+    const { error } = await supabase.rpc("decide_team_invitation", {
+      target_invitation_id: invitationId,
+      accept_invitation: accept,
+    });
+    setMsg(error?.message || (accept ? "Team joined" : "Invitation declined"));
+    if (!error) await refresh();
   }
 
   async function request(teamId) {
@@ -172,6 +184,7 @@ export default function Teams({ onBack }) {
     const { error } = await leaveTeam(team.id);
     setMsg(error?.message || `You left ${team.name}`);
     setLeavingTeamId(null);
+    if (!error && rosterTeam?.id === team.id) setRosterTeam(null);
     refresh();
   }
 
@@ -255,6 +268,15 @@ export default function Teams({ onBack }) {
         </header>
 
         {msg && <div className="rounded-xl p-3 mb-3 text-xs" style={{ background:"rgba(47,111,237,.08)" }}>{msg}</div>}
+        {invitations.length > 0 && <div className="rounded-3xl p-4 mb-4" style={{ background:"#FFF8E7",border:"1px solid rgba(217,174,88,.22)" }}>
+          <div className="text-xs font-bold mb-2">Team invitations</div>
+          {invitations.map((item) => <div key={item.invitation_id} className="flex items-center gap-2 py-2">
+            <span className="text-xl">{item.team_emoji || "⭐"}</span>
+            <div className="flex-1 min-w-0"><div className="text-xs font-semibold truncate">{item.team_name}</div><div className="text-[10px] opacity-45">{item.inviter_icon || "🙂"} {item.inviter_name || "A player"} invited you</div></div>
+            <button onClick={() => decideInvitation(item.invitation_id,false)} className="rounded-full px-2.5 py-1.5 text-[10px]" style={{ background:"rgba(16,24,40,.05)" }}>Decline</button>
+            <button onClick={() => decideInvitation(item.invitation_id,true)} className="rounded-full px-2.5 py-1.5 text-[10px] font-semibold text-white" style={{ background:ACCENT }}>Join</button>
+          </div>)}
+        </div>}
         {profile?.hidden_from_others && <div className="rounded-xl p-3 mb-3 text-xs" style={{ background:"rgba(181,67,58,.1)",color:"#B5433A" }}>Your account is hidden, so team changes are disabled.</div>}
 
         {!socialUnlocked && !profile?.hidden_from_others && <div className="rounded-2xl px-3 py-2.5 mb-4 text-xs flex items-center gap-2" style={{ background:"rgba(217,174,88,.10)", color:"#775B1D" }}><Lock size={13}/>Reach Level 2 to create teams. Playing, joining teams, chat, and feedback stay available.</div>}
@@ -298,7 +320,7 @@ export default function Teams({ onBack }) {
                 </button>
               </div>
               {manager ? <button onClick={() => { setRosterTeam(team);setRosterQuery(""); }} className="rounded-full px-3 py-2 text-xs font-semibold flex items-center gap-1" style={{ background:"rgba(47,111,237,.09)",color:ACCENT }}><Users size={13}/>Manage</button>
-                : isMine ? <button disabled={leavingTeamId === team.id} onClick={() => leave(team)} className="rounded-full px-3 py-2 text-xs font-medium" style={{ background:"rgba(181,67,58,.07)",color:"#9F2F2A" }}>{leavingTeamId === team.id ? "Leaving…" : "Leave"}</button>
+                : isMine ? <button onClick={() => { setRosterTeam(team);setRosterQuery(""); }} className="rounded-full px-3 py-2 text-xs font-semibold flex items-center gap-1" style={{ background:"rgba(47,111,237,.09)",color:ACCENT }}><Users size={13}/>Team</button>
                 : myRequest?.status === "pending" ? <span className="text-[10px] opacity-45">Requested</span>
                 : <button disabled={profile?.hidden_from_others} onClick={() => request(team.id)} className="rounded-full px-3 py-2 text-xs font-semibold" style={{ background:"rgba(47,111,237,.09)",color:ACCENT }}>Request to join</button>}
             </div>
@@ -316,6 +338,7 @@ export default function Teams({ onBack }) {
           const blocked = blocksFor(rosterTeam.id)
             .filter((member) => member.member_name?.toLowerCase().includes(rosterQuery.toLowerCase()));
           const manager = canManage(rosterTeam);
+          const member = mine.has(rosterTeam.id);
           const owner = rosterTeam.created_by === user?.id;
           const edit = challengeFor(rosterTeam.id);
           const challengeOpen = expandedChallengeId === rosterTeam.id;
@@ -326,7 +349,7 @@ export default function Teams({ onBack }) {
                 <div className="grid place-items-center rounded-2xl text-2xl" style={{ width:44,height:44,background:"linear-gradient(145deg,#eef3ff,#fff)" }}>{rosterTeam.emoji || "⭐"}</div>
                 <div className="flex-1 min-w-0"><div className="font-bold truncate">Manage {rosterTeam.name}</div><div className="text-[11px] opacity-45">Members, invites and challenge</div></div>
               </div>
-              {manager && <button onClick={() => { setInviteTeam(rosterTeam);setInviteQuery(""); }} className="w-full rounded-2xl px-4 py-3 mb-3 text-sm font-semibold flex items-center justify-center gap-2 text-white" style={{ background:ACCENT }}><UserPlus size={16}/>Invite a player</button>}
+              {member && <button onClick={() => { setInviteTeam(rosterTeam);setInviteQuery(""); }} className="w-full rounded-2xl px-4 py-3 mb-3 text-sm font-semibold flex items-center justify-center gap-2 text-white" style={{ background:ACCENT }}><UserPlus size={16}/>Invite a player</button>}
 
               {owner && <div className="rounded-3xl p-4 mb-3" style={{ background:"#fff",border:"1px solid rgba(16,24,40,.07)" }}>
                 <button onClick={() => setExpandedChallengeId(challengeOpen ? null : rosterTeam.id)} className="w-full flex items-center gap-2 text-left"><div className="grid place-items-center rounded-xl" style={{ width:34,height:34,background:"rgba(18,148,106,.09)",color:"#0B7C58" }}><CalendarDays size={15}/></div><div className="flex-1"><div className="text-xs font-semibold">Weekly challenge</div><div className="text-[10px] opacity-45">{edit.games.length} games · {edit.rewardType === "points" ? `${edit.reward} pts` : edit.rewardLabel || "Prize"}</div></div>{edit.locked && <Lock size={12} style={{ color:"#8A681D" }}/>}<ChevronDown size={15} style={{ opacity:.35,transform:challengeOpen ? "rotate(180deg)" : "none" }}/></button>
@@ -379,6 +402,7 @@ export default function Teams({ onBack }) {
                     <div className="grid grid-cols-2 gap-2 mt-2"><button onClick={() => { setDeleteTeamTarget(null);setDeleteConfirmation(""); }} className="rounded-full py-2 text-[11px] font-semibold" style={{ background:"#fff" }}>Cancel</button><button disabled={deleteBusy || deleteConfirmation !== rosterTeam.name} onClick={deleteTeam} className="rounded-full py-2 text-[11px] font-semibold text-white disabled:opacity-35" style={{ background:"#B5433A" }}>{deleteBusy ? "Deleting…" : "Delete permanently"}</button></div>
                   </div>}
               </div>}
+              {member && !owner && <button disabled={leavingTeamId === rosterTeam.id} onClick={() => leave(rosterTeam)} className="mt-3 w-full rounded-full py-2.5 text-xs font-medium" style={{ background:"rgba(181,67,58,.07)",color:"#9F2F2A" }}>{leavingTeamId === rosterTeam.id ? "Leaving…" : "Leave team"}</button>}
               </div>
             </div>
           </div>;
