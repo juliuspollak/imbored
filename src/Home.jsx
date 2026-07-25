@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Crown, Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle, Check, Star, Flame, ChevronRight, ChevronDown, Globe2, Users, X, ListChecks } from "lucide-react";
+import { Crown, Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle, Check, Star, Flame, ChevronRight, ChevronDown, Globe2, Users } from "lucide-react";
 import { useGameConfig } from "./lib/useGameConfig.js";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useI18n } from "./lib/i18n.jsx";
@@ -35,7 +35,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   const [teamRosters, setTeamRosters] = useState({});
   const [challengeCompletions, setChallengeCompletions] = useState({ personal: new Set() });
   const [challengesLoaded, setChallengesLoaded] = useState(false);
-  const [scopePickerOpen, setScopePickerOpen] = useState(false);
+  const [expandedChallengeId, setExpandedChallengeId] = useState(null);
   const [challengeRows, setChallengeRows] = useState([]);
   const [challengeProfiles, setChallengeProfiles] = useState({});
   const [standingsLoading, setStandingsLoading] = useState(false);
@@ -212,13 +212,9 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
     ...teamChallenges.map((item) => ({ ...item, key:String(item.challenge_id), type:"team", status:challengeStatus(item) })),
   ];
   const pendingChallenges = challengeItems.filter((item) => item.active_today && item.status.remaining > 0);
-  const pendingGames = pendingChallenges.reduce((sum, item) => sum + item.status.remaining, 0);
   const selectedTeam = challengeScope?.type === "team"
     ? teamChallenges.find((item) => item.challenge_id === challengeScope.id)
     : null;
-  const selectedStatus = challengeScope?.type === "team"
-    ? challengeStatus(selectedTeam || { challenge_id:challengeScope.id, game_ids:challengeScope.gameIds || [] })
-    : personalStatus;
   const todayCompletions = challengeScope?.type === "team"
     ? challengeCompletions[String(challengeScope.id)] || new Set()
     : personalCompleted;
@@ -235,7 +231,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
 
   function choosePersonalChallenge() {
     onChallengeScopeChange({ type:"personal",id:null,name:"My Challenge",gameIds:null });
-    setScopePickerOpen(false);
+    setExpandedChallengeId(null);
   }
 
   function chooseTeamChallenge(teamChallenge) {
@@ -252,7 +248,6 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
       rewardPoints:teamChallenge.reward_points,
       activeDays:teamChallenge.active_days,
     });
-    setScopePickerOpen(false);
   }
 
   return (
@@ -336,39 +331,119 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
             : t("home.practiceHint")}
         </p>
         {playMode === "challenge" && onChallengeScopeChange && (
-          <div className="mb-6">
+          <div className="mb-6 rounded-3xl p-3" style={{ background:PANEL,border:"1px solid rgba(16,24,40,.09)",boxShadow:"0 8px 24px rgba(16,24,40,.06)" }}>
             <button
               type="button"
-              onClick={() => setScopePickerOpen(true)}
-              className="w-full flex items-center gap-2 rounded-2xl px-3 py-2.5 mb-3 text-left"
-              style={{ background:pendingChallenges.length ? "rgba(229,72,77,.08)" : "rgba(22,163,74,.08)",color:pendingChallenges.length ? "#A9363B" : "#137A3A" }}
+              onClick={choosePersonalChallenge}
+              className="w-full flex items-center gap-3 rounded-2xl p-3 text-left"
+              style={{
+                background:challengeScope?.type !== "team" ? "rgba(47,111,237,.08)" : "transparent",
+                border:challengeScope?.type !== "team" ? "1px solid rgba(47,111,237,.18)" : "1px solid transparent",
+              }}
             >
-              <ListChecks size={16}/>
-              <span className="flex-1 text-xs font-semibold">
-                {pendingChallenges.length
-                  ? t("home.challengeInbox", { challenges:pendingChallenges.length, games:pendingGames })
-                  : t("home.allChallengesDone")}
+              <span className="grid place-items-center rounded-xl text-xl shrink-0" style={{ width:42,height:42,background:"#F1F5FF" }}>🎯</span>
+              <span className="flex-1 min-w-0">
+                <span className="flex items-center gap-2">
+                  <span className="text-sm font-bold">{t("home.myChallenge")}</span>
+                  {challengeScope?.type !== "team" && <Check size={13} strokeWidth={3} style={{ color:"#2F6FED" }}/>}
+                </span>
+                <span className="block h-1.5 rounded-full mt-2 overflow-hidden" style={{ background:"rgba(16,24,40,.07)" }}>
+                  <span className="block h-full rounded-full" style={{ width:`${personalStatus.total ? (personalStatus.completed / personalStatus.total) * 100 : 0}%`,background:personalStatus.done ? "#16A34A" : "#2F6FED" }}/>
+                </span>
               </span>
-              <ChevronRight size={14}/>
+              <span className="rounded-full px-2.5 py-1 text-[10px] font-bold shrink-0" style={{ background:personalStatus.done ? "rgba(22,163,74,.11)" : "rgba(47,111,237,.10)",color:personalStatus.done ? "#137A3A" : "#2F6FED" }}>
+                {personalStatus.done ? t("home.done") : t("home.gamesLeft", { count:personalStatus.remaining })}
+              </span>
             </button>
-            <div className="text-xs font-semibold mb-2" style={{ color:CREAM }}>{t("home.selectedChallenge")}</div>
-            <div className="rounded-3xl p-3 flex items-center gap-3" style={{ background:PANEL,border:"1px solid rgba(16,24,40,.09)",boxShadow:"0 10px 28px rgba(16,24,40,.07)" }}>
-              <button onClick={() => setScopePickerOpen(true)} className="flex-1 min-w-0 flex items-center gap-3 text-left">
-                <div className="grid place-items-center rounded-2xl text-2xl" style={{ width:46,height:46,background:selectedTeam ? "rgba(18,148,106,.10)" : "rgba(47,111,237,.10)" }}>{selectedTeam?.team_emoji || "🎯"}</div>
-                <div className="flex-1 min-w-0"><div className="flex items-center gap-2"><div className="text-sm font-bold truncate">{selectedTeam?.challenge_title || selectedTeam?.team_name || t("home.myChallenge")}</div><span className="rounded-full px-2 py-0.5 text-[9px] font-bold" style={{ background:selectedStatus.done ? "rgba(22,163,74,.11)" : "rgba(47,111,237,.10)",color:selectedStatus.done ? "#137A3A" : "#2F6FED" }}>{selectedStatus.done ? t("home.done") : t("home.gamesLeft", { count:selectedStatus.remaining })}</span></div>{selectedTeam && <div className="text-[10px] opacity-45 truncate mt-0.5">{selectedTeam.team_name}</div>}<div className="mt-1.5 h-1.5 rounded-full overflow-hidden" style={{ background:"rgba(16,24,40,.07)" }}><div className="h-full rounded-full" style={{ width:`${selectedStatus.total ? (selectedStatus.completed / selectedStatus.total) * 100 : 0}%`,background:selectedStatus.done ? "#16A34A" : "#2F6FED" }}/></div><div className="text-[10px] opacity-45 mt-1">{t("home.challengeProgress", { completed:selectedStatus.completed, total:selectedStatus.total })}</div>{selectedTeam && <div className="flex items-center mt-1"><div className="flex">{selectedRoster.slice(0,4).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-[10px]" style={{ width:21,height:21,background:"#F1F3F7",border:"2px solid white",marginLeft:index ? -5 : 0 }}>{member.icon || "🙂"}</span>)}</div><span className="text-[9px] opacity-40 ml-1.5">{t("home.playing", { count:selectedRoster.length })}</span></div>}</div>
-                <ChevronDown size={16} style={{ opacity:.35 }}/>
-              </button>
-              {selectedTeam && onOpenTeams && <><span className="h-9 w-px" style={{ background:"rgba(16,24,40,.08)" }}/><button onClick={() => onOpenTeams({ teamId:selectedTeam.team_id,challengeId:selectedTeam.challenge_id })} className="grid place-items-center rounded-full" style={{ width:38,height:38,background:"rgba(18,148,106,.09)",color:"#0B7C58" }} aria-label={`Open ${selectedTeam.team_name} challenge`}><Users size={16}/></button></>}
-            </div>
-            <ChallengeStandings
-              rows={challengeRows}
-              roster={standingsRoster}
-              games={selectedChallengeGames}
-              isTeam={challengeScope?.type === "team"}
-              userId={userId}
-              loading={standingsLoading || (challengeScope?.type === "team" && !selectedTeam)}
-              refreshing={standingsRefreshing}
-            />
+
+            {teamChallenges.length > 0 && (
+              <div className="mt-3 pt-3" style={{ borderTop:"1px solid rgba(16,24,40,.07)" }}>
+                <div className="flex items-center px-1 mb-2">
+                  <span className="text-xs font-bold flex-1" style={{ color:CREAM }}>{t("home.teamChallenges")}</span>
+                  <span className="text-[10px] font-semibold rounded-full px-2 py-0.5" style={{ background:"rgba(16,24,40,.05)",color:"rgba(27,33,41,.48)" }}>{teamChallenges.length}</span>
+                </div>
+                <div className="space-y-2">
+                  {teamChallenges.map((item) => {
+                    const status = challengeStatus(item);
+                    const selected = challengeScope?.type === "team" && challengeScope.id === item.challenge_id;
+                    const expanded = expandedChallengeId === item.challenge_id;
+                    const roster = teamRosters[item.team_id] || [];
+                    const games = (item.game_ids || [])
+                      .map((id) => configuredGames.find((game) => game.id === id) || GAME_META.find((game) => game.id === id))
+                      .filter(Boolean);
+                    return (
+                      <div key={item.challenge_id} className="rounded-2xl overflow-hidden" style={{ background:selected ? "rgba(18,148,106,.07)" : "#F7F8FB",border:selected ? "1px solid rgba(18,148,106,.19)" : "1px solid transparent" }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setExpandedChallengeId(expanded ? null : item.challenge_id);
+                            if (item.active_today) chooseTeamChallenge(item);
+                          }}
+                          className="w-full flex items-center gap-3 p-3 text-left"
+                          aria-expanded={expanded}
+                        >
+                          <span className="grid place-items-center rounded-xl text-lg shrink-0" style={{ width:40,height:40,background:"#fff" }}>{item.team_emoji || "⭐"}</span>
+                          <span className="flex-1 min-w-0">
+                            <span className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold truncate">{item.challenge_title || item.team_name}</span>
+                              {selected && <Check size={12} strokeWidth={3} style={{ color:"#12946A" }}/>}
+                            </span>
+                            <span className="block text-[10px] mt-0.5 truncate" style={{ color:"rgba(27,33,41,.45)" }}>{item.team_name}</span>
+                          </span>
+                          <span className="text-[10px] font-bold shrink-0" style={{ color:!item.active_today ? "rgba(27,33,41,.38)" : status.done ? "#137A3A" : "#A9363B" }}>
+                            {!item.active_today ? t("home.notToday") : status.done ? t("home.done") : t("home.gamesLeft", { count:status.remaining })}
+                          </span>
+                          <ChevronDown size={15} style={{ opacity:.35,transform:expanded ? "rotate(180deg)" : "none",transition:"transform .15s ease" }}/>
+                        </button>
+
+                        {expanded && (
+                          <div className="px-3 pb-3">
+                            <div className="rounded-2xl p-3" style={{ background:"#fff" }}>
+                              <div className="flex flex-wrap gap-1.5">
+                                {games.map((game) => {
+                                  const GameIcon = game.icon;
+                                  return <span key={game.id} className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold" style={{ background:`${game.accent}13`,color:game.accent }}><GameIcon size={11}/>{game.label}</span>;
+                                })}
+                              </div>
+                              <div className="flex items-center gap-2 mt-3">
+                                <div className="flex">
+                                  {roster.slice(0,4).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-[9px]" style={{ width:22,height:22,background:"#F1F3F7",border:"2px solid white",marginLeft:index ? -5 : 0 }}>{member.icon || "🙂"}</span>)}
+                                </div>
+                                <span className="text-[10px]" style={{ color:"rgba(27,33,41,.48)" }}>{t("home.members", { count:roster.length })}</span>
+                                <span className="ml-auto text-[10px] font-semibold" style={{ color:"#9A721F" }}>+{item.reward_points || 0} {t("home.points")}</span>
+                                {onOpenTeams && (
+                                  <button
+                                    type="button"
+                                    onClick={() => onOpenTeams({ teamId:item.team_id,challengeId:item.challenge_id })}
+                                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[10px] font-semibold"
+                                    style={{ background:"rgba(18,148,106,.09)",color:"#0B7C58" }}
+                                  >
+                                    <Users size={12}/>{t("home.teamDetails")}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                            {selected && (
+                              <ChallengeStandings
+                                rows={challengeRows}
+                                roster={standingsRoster}
+                                games={selectedChallengeGames}
+                                isTeam
+                                userId={userId}
+                                loading={standingsLoading || !selectedTeam}
+                                refreshing={standingsRefreshing}
+                                defaultOpen={false}
+                                embedded
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -432,43 +507,6 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         </div>
         )}
       </div>
-      {scopePickerOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background:"rgba(16,24,40,.42)" }}>
-          <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-4" style={{ background:"#fff",maxHeight:"82vh",overflow:"auto" }}>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex-1"><div className="font-bold">{t("home.challengeInboxTitle")}</div><div className="text-[11px] opacity-45">{pendingChallenges.length ? t("home.challengeInbox", { challenges:pendingChallenges.length, games:pendingGames }) : t("home.allChallengesDone")}</div></div>
-              <button onClick={() => setScopePickerOpen(false)} className="grid place-items-center rounded-full" style={{ width:32,height:32,background:"rgba(16,24,40,.05)" }}><X size={15}/></button>
-            </div>
-            {challengeItems
-              .slice()
-              .sort((a,b) => Number(b.active_today && b.status.remaining > 0) - Number(a.active_today && a.status.remaining > 0))
-              .map((item) => {
-                const isPersonal = item.type === "personal";
-                const selected = isPersonal ? challengeScope?.type !== "team" : challengeScope?.id === item.challenge_id;
-                const roster = isPersonal ? [] : teamRosters[item.team_id] || [];
-                return (
-                  <button
-                    key={item.key}
-                    disabled={!item.active_today}
-                    onClick={() => isPersonal ? choosePersonalChallenge() : chooseTeamChallenge(item)}
-                    className="w-full flex items-center gap-3 rounded-2xl p-3 text-left mb-2 disabled:opacity-45"
-                    style={{ background:selected ? "rgba(47,111,237,.09)" : "#F7F8FB",border:selected ? "1px solid rgba(47,111,237,.25)" : "1px solid transparent" }}
-                  >
-                    <span className="grid place-items-center rounded-xl text-xl" style={{ width:42,height:42,background:"#fff" }}>{isPersonal ? "🎯" : item.team_emoji || "⭐"}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2"><div className="text-sm font-semibold truncate">{isPersonal ? t("home.myChallenge") : item.challenge_title || item.team_name}</div><span className="ml-auto shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold" style={{ background:item.status.done ? "rgba(22,163,74,.11)" : item.active_today ? "rgba(229,72,77,.09)" : "rgba(16,24,40,.06)",color:item.status.done ? "#137A3A" : item.active_today ? "#A9363B" : "rgba(27,33,41,.45)" }}>{!item.active_today ? t("home.notToday") : item.status.done ? t("home.done") : t("home.gamesLeft", { count:item.status.remaining })}</span></div>
-                      {!isPersonal && <div className="text-[9px] opacity-40 truncate mt-0.5">{item.team_name}</div>}
-                      <div className="mt-1.5 h-1.5 rounded-full overflow-hidden" style={{ background:"rgba(16,24,40,.07)" }}><div className="h-full rounded-full" style={{ width:`${item.status.total ? (item.status.completed / item.status.total) * 100 : 0}%`,background:item.status.done ? "#16A34A" : "#2F6FED" }}/></div>
-                      <div className="flex items-center mt-1"><span className="text-[9px] opacity-45">{t("home.challengeProgress", { completed:item.status.completed, total:item.status.total })}</span>{!isPersonal && roster.length > 0 && <><span className="mx-1.5 opacity-20">·</span><div className="flex">{roster.slice(0,3).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-[8px]" style={{ width:18,height:18,background:"#fff",border:"1.5px solid #F7F8FB",marginLeft:index ? -4 : 0 }}>{member.icon || "🙂"}</span>)}</div><span className="text-[9px] opacity-40 ml-1">{t("home.members", { count:roster.length })}</span></>}</div>
-                    </div>
-                    {selected && <Check size={15} style={{ color:"#2F6FED" }}/>}
-                  </button>
-                );
-              })}
-            {onOpenTeams && <button onClick={() => { setScopePickerOpen(false);onOpenTeams(); }} className="w-full rounded-full py-2.5 mt-2 text-xs font-semibold flex items-center justify-center gap-1.5" style={{ background:"rgba(16,24,40,.05)" }}><Users size={14}/>{t("home.manageTeams")}</button>}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
