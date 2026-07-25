@@ -7,8 +7,8 @@ also be applied in the Supabase project.
 2. Deploy the `admin-user-action` Edge Function from
    `supabase/functions/admin-user-action/index.ts`.
 3. In Authentication → Email Templates → Magic Link, replace the body with
-   `supabase/email_template.html`. A suitable shared subject is
-   `Your I’mBoredToday access code`.
+   `supabase/email_template.html`. Set the subject to
+   `Your I’mBoredToday code: {{ .Token }}`.
 
 Approval notifications are transactional Resend emails, not Supabase Auth
 emails. This prevents approval from generating a login code the player did not
