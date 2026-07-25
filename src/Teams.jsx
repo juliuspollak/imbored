@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   ArrowLeft, Ban, CalendarDays, Check, ChevronDown, Crown, Gift,
-  Lock, MoreHorizontal, Plus, RotateCcw, Search, Trash2,
+  Lock, Plus, RotateCcw, Search, Trash2,
   UserMinus, UserPlus, Users, X,
 } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
@@ -44,7 +44,6 @@ export default function Teams({ onBack }) {
   const [rosterTeam, setRosterTeam] = useState(null);
   const [rosterQuery, setRosterQuery] = useState("");
   const [moderationBusy, setModerationBusy] = useState(null);
-  const [memberMenu, setMemberMenu] = useState(null);
   const [deleteTeamTarget, setDeleteTeamTarget] = useState(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -187,7 +186,6 @@ export default function Teams({ onBack }) {
       moderation_reason:null,
     });
     setModerationBusy(null);
-    setMemberMenu(null);
     const verbs = { remove:"removed from", block:"blocked from", unblock:"unblocked for" };
     setMsg(error?.message || `${member.name} was ${verbs[action]} ${team.name}`);
     if (!error) await refresh();
@@ -288,7 +286,7 @@ export default function Teams({ onBack }) {
                 <button
                   type="button"
                   disabled={!isMine && !profile?.is_admin}
-                  onClick={() => { setRosterTeam(team);setRosterQuery("");setMemberMenu(null); }}
+                  onClick={() => { setRosterTeam(team);setRosterQuery(""); }}
                   className="flex items-center mt-1 max-w-full text-left disabled:cursor-default"
                   aria-label={isMine || profile?.is_admin ? `Manage members of ${team.name}` : undefined}
                 >
@@ -297,7 +295,7 @@ export default function Teams({ onBack }) {
                     {isMine && roster.length
                       ? `${roster.slice(0,2).map((member) => member.id === user?.id ? "You" : member.name).join(", ")}${roster.length > 2 ? ` +${roster.length - 2}` : ""}`
                       : `${roster.length} member${roster.length === 1 ? "" : "s"}`}
-                    {isMine || profile?.is_admin ? ` · ${manager ? "Manage" : "View all"}` : ""}
+                    {isMine || profile?.is_admin ? " · Members" : ""}
                   </span>
                 </button>
               </div>
@@ -342,7 +340,6 @@ export default function Teams({ onBack }) {
                 {roster.map((member) => {
                   const teamOwner = member.id === rosterTeam.created_by;
                   const isMe = member.id === user?.id;
-                  const menuKey = `${rosterTeam.id}:${member.id}`;
                   return <div key={member.id} className="rounded-2xl p-3" style={{ background:isMe ? "rgba(47,111,237,.07)" : "#F8F9FC" }}>
                     <div className="flex items-center gap-3">
                       <span className="grid place-items-center rounded-xl text-xl" style={{ width:38,height:38,background:"#fff" }}>{member.icon || "🙂"}</span>
@@ -350,12 +347,11 @@ export default function Teams({ onBack }) {
                         <div className="flex items-center gap-1.5"><span className="text-sm font-semibold truncate">{isMe ? `${member.name} (you)` : member.name}</span>{teamOwner && <Crown size={11} style={{ color:"#D9AE58" }}/>}</div>
                         <div className="text-[10px] opacity-40 truncate">{teamOwner ? "Team owner" : member.mood || "Team member"}</div>
                       </div>
-                      {manager && !teamOwner && !isMe && <button onClick={() => setMemberMenu(memberMenu === menuKey ? null : menuKey)} className="grid place-items-center rounded-full" style={{ width:34,height:34,background:"rgba(16,24,40,.05)" }} aria-label={`Manage ${member.name}`}><MoreHorizontal size={15}/></button>}
+                      {manager && !teamOwner && !isMe && <div className="flex gap-1">
+                        <button disabled={!!moderationBusy} onClick={() => moderateMember(rosterTeam,member,"remove")} className="grid place-items-center rounded-full" style={{ width:32,height:32,background:"rgba(16,24,40,.05)" }} aria-label={`Remove ${member.name}`} title="Remove"><UserMinus size={13}/></button>
+                        <button disabled={!!moderationBusy} onClick={() => moderateMember(rosterTeam,member,"block")} className="grid place-items-center rounded-full" style={{ width:32,height:32,background:"rgba(181,67,58,.09)",color:"#B5433A" }} aria-label={`Block ${member.name}`} title="Block"><Ban size={13}/></button>
+                      </div>}
                     </div>
-                    {memberMenu === menuKey && <div className="grid grid-cols-2 gap-2 mt-3 pt-3" style={{ borderTop:"1px solid rgba(16,24,40,.07)" }}>
-                      <button disabled={!!moderationBusy} onClick={() => moderateMember(rosterTeam,member,"remove")} className="rounded-xl py-2 text-[11px] font-semibold flex items-center justify-center gap-1.5" style={{ background:"rgba(16,24,40,.05)" }}><UserMinus size={13}/>Remove</button>
-                      <button disabled={!!moderationBusy} onClick={() => moderateMember(rosterTeam,member,"block")} className="rounded-xl py-2 text-[11px] font-semibold flex items-center justify-center gap-1.5" style={{ background:"rgba(181,67,58,.09)",color:"#B5433A" }}><Ban size={13}/>Block</button>
-                    </div>}
                   </div>;
                 })}
                 {manager && blocked.length > 0 && <div className="pt-3">
@@ -368,18 +364,18 @@ export default function Teams({ onBack }) {
                 </div>}
                 {roster.length === 0 && blocked.length === 0 && <p className="text-center text-xs opacity-45 py-8">No matching members</p>}
               </div>
-              {manager && <div className="mt-3 pt-3 flex items-center justify-between gap-3" style={{ borderTop:"1px solid rgba(16,24,40,.08)" }}><p className="text-[10px] opacity-40">Remove allows rejoining. Block prevents it.</p><button onClick={() => { setDeleteTeamTarget(rosterTeam);setDeleteConfirmation(""); }} className="shrink-0 rounded-full px-3 py-2 text-[11px] font-semibold flex items-center gap-1" style={{ background:"rgba(181,67,58,.08)",color:"#B5433A" }}><Trash2 size={12}/>Delete team</button></div>}
+              {manager && <div className="mt-3 pt-3" style={{ borderTop:"1px solid rgba(16,24,40,.08)" }}>
+                {deleteTeamTarget?.id !== rosterTeam.id ? <div className="flex items-center justify-between gap-3"><p className="text-[10px] opacity-40">Remove allows rejoining. Block prevents it.</p><button onClick={() => { setDeleteTeamTarget(rosterTeam);setDeleteConfirmation(""); }} className="shrink-0 rounded-full px-3 py-2 text-[11px] font-semibold flex items-center gap-1" style={{ background:"rgba(181,67,58,.08)",color:"#B5433A" }}><Trash2 size={12}/>Delete team</button></div>
+                  : <div className="rounded-2xl p-3" style={{ background:"rgba(181,67,58,.06)" }}>
+                    <div className="text-xs font-semibold" style={{ color:"#9F2F2A" }}>Delete this team permanently?</div>
+                    <p className="text-[10px] opacity-50 mt-1">Type <strong>{rosterTeam.name}</strong> to confirm.</p>
+                    <input autoFocus value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} placeholder={rosterTeam.name} className="w-full rounded-xl border px-3 py-2 text-xs outline-none mt-2"/>
+                    <div className="grid grid-cols-2 gap-2 mt-2"><button onClick={() => { setDeleteTeamTarget(null);setDeleteConfirmation(""); }} className="rounded-full py-2 text-[11px] font-semibold" style={{ background:"#fff" }}>Cancel</button><button disabled={deleteBusy || deleteConfirmation !== rosterTeam.name} onClick={deleteTeam} className="rounded-full py-2 text-[11px] font-semibold text-white disabled:opacity-35" style={{ background:"#B5433A" }}>{deleteBusy ? "Deleting…" : "Delete permanently"}</button></div>
+                  </div>}
+              </div>}
             </div>
           </div>;
         })()}
-
-        {deleteTeamTarget && <div className="fixed inset-0 z-[60] grid place-items-center p-4" style={{ background:"rgba(16,24,40,.58)" }}><div className="w-full max-w-sm rounded-3xl p-5" style={{ background:"#fff" }}>
-          <div className="grid place-items-center rounded-2xl mb-3" style={{ width:42,height:42,background:"rgba(181,67,58,.09)",color:"#B5433A" }}><Trash2 size={18}/></div>
-          <div className="font-bold">Delete {deleteTeamTarget.name}?</div>
-          <p className="text-xs opacity-55 mt-1.5">This permanently removes its members, requests, challenges and history. Type the exact team name to confirm.</p>
-          <input autoFocus value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} placeholder={deleteTeamTarget.name} className="w-full rounded-2xl border px-3 py-2.5 text-sm outline-none mt-4"/>
-          <div className="grid grid-cols-2 gap-2 mt-3"><button onClick={() => { setDeleteTeamTarget(null);setDeleteConfirmation(""); }} className="rounded-full py-2.5 text-xs font-semibold" style={{ background:"rgba(16,24,40,.05)" }}>Cancel</button><button disabled={deleteBusy || deleteConfirmation !== deleteTeamTarget.name} onClick={deleteTeam} className="rounded-full py-2.5 text-xs font-semibold text-white disabled:opacity-35" style={{ background:"#B5433A" }}>{deleteBusy ? "Deleting…" : "Delete permanently"}</button></div>
-        </div></div>}
 
         {inviteTeam && <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background:"rgba(16,24,40,.42)" }}><div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-4" style={{ background:"#fff",maxHeight:"82vh",overflow:"auto" }}><div className="flex items-center gap-3 mb-3"><div className="text-2xl">{inviteTeam.emoji || "⭐"}</div><div className="flex-1"><div className="font-bold">Invite to {inviteTeam.name}</div><div className="text-[11px] opacity-45">Choose an available player</div></div><button onClick={() => setInviteTeam(null)} className="grid place-items-center rounded-full" style={{ width:32,height:32,background:"rgba(16,24,40,.05)" }}><X size={15}/></button></div><label className="flex items-center gap-2 rounded-2xl px-3 py-2.5 mb-3" style={{ background:"#F4F6FA" }}><Search size={15} style={{ opacity:.4 }}/><input value={inviteQuery} onChange={(e) => setInviteQuery(e.target.value)} placeholder="Find a player…" className="flex-1 bg-transparent outline-none text-sm"/></label>{inviteCandidates.length === 0 ? <div className="text-center py-8"><Users size={24} className="mx-auto opacity-25"/><p className="text-xs opacity-45 mt-2">No available players</p></div> : <div className="space-y-2">{inviteCandidates.map((candidate) => <div key={candidate.id} className="flex items-center gap-3 rounded-2xl p-3" style={{ background:"#F8F9FC" }}><span className="text-xl">{candidate.icon || "🙂"}</span><div className="flex-1 min-w-0"><div className="text-sm font-semibold truncate">{candidate.name}</div><div className="text-[10px] opacity-40">{candidate.mood || "Ready to play"}</div></div><button disabled={inviteBusy === candidate.id} onClick={() => invite(candidate.id)} className="rounded-full px-3 py-1.5 text-xs font-semibold" style={{ background:"rgba(47,111,237,.1)",color:ACCENT }}>{inviteBusy === candidate.id ? "Adding…" : "Invite"}</button></div>)}</div>}</div></div>}
       </div>
