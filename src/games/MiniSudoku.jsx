@@ -346,19 +346,8 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   const filledCount = board.flat().filter((v) => v !== 0).length;
   const selectedValue = selected ? board[selected.r][selected.c] : 0;
 
-  function digitUsedAroundSelected(digit) {
-    if (!selected || selectedValue === digit) return false;
-    const { r, c } = selected;
-    if (board[r].some((value, column) => column !== c && value === digit)) return true;
-    if (board.some((row, rowIndex) => rowIndex !== r && row[c] === digit)) return true;
-    const boxRow = Math.floor(r / BOX_R) * BOX_R;
-    const boxColumn = Math.floor(c / BOX_C) * BOX_C;
-    for (let rr = boxRow; rr < boxRow + BOX_R; rr++) {
-      for (let cc = boxColumn; cc < boxColumn + BOX_C; cc++) {
-        if ((rr !== r || cc !== c) && board[rr][cc] === digit) return true;
-      }
-    }
-    return false;
+  function digitFullyUsed(digit) {
+    return board.flat().filter((value) => value === digit).length >= N;
   }
 
   function pushHistory() {
@@ -723,7 +712,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         {/* number palette */}
         <div className="grid grid-cols-4 gap-2 mt-4">
           {[1, 2, 3].map((d) => (
-            <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={solved || !selected} used={digitUsedAroundSelected(d)} active={selectedValue === d} aria-label={`${d}${digitUsedAroundSelected(d) ? ", already used nearby" : ""}`}>
+            <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={solved || !selected} used={digitFullyUsed(d)} active={selectedValue === d} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
               {d}
             </NumBtn>
           ))}
@@ -731,7 +720,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
             <Delete size={18} />
           </NumBtn>
           {[4, 5, 6].map((d) => (
-            <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={solved || !selected} used={digitUsedAroundSelected(d)} active={selectedValue === d} aria-label={`${d}${digitUsedAroundSelected(d) ? ", already used nearby" : ""}`}>
+            <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={solved || !selected} used={digitFullyUsed(d)} active={selectedValue === d} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
               {d}
             </NumBtn>
           ))}
