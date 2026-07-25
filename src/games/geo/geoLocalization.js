@@ -207,7 +207,7 @@ const SPECIAL_PROMPTS_SK = {
   "greenland-name": "Ťuknite na Grónsko na mape.",
   "greenland-nuuk": "Nuuk je hlavné mesto ktorého územia na mape?",
   "greenland-largest-island": "Ťuknite na najväčší ostrov sveta.",
-  "greenland-arctic": "Ťuknite na veľký arktický ostrov severovýchodne od Kanady.",
+  "greenland-arctic": "Ťuknite na Grónsko, veľký ostrov medzi Severnou Amerikou a Európou.",
   "new-zealand-name": "Ťuknite na Nový Zéland na mape.",
   "new-zealand-wellington": "Wellington je hlavné mesto ktorého miesta na mape?",
   "new-zealand-kiwi": "Ťuknite na domovinu vtáka kivi.",
@@ -215,8 +215,15 @@ const SPECIAL_PROMPTS_SK = {
 };
 
 function localizeGeoQuestion(question, language) {
-  if (language !== "sk") return question.prompt;
   const specialId = question.id?.split(":")[1] || question.id;
+  // Override previously saved sessions too, so the old ambiguous wording
+  // disappears immediately rather than waiting for a fresh quiz.
+  if (language !== "sk") {
+    if (specialId === "greenland-arctic") {
+      return "Tap Greenland, the large island between North America and Europe.";
+    }
+    return question.prompt;
+  }
   if (SPECIAL_PROMPTS_SK[specialId]) return SPECIAL_PROMPTS_SK[specialId];
 
   const name = localizeGeoValue(question.name, language, question);
