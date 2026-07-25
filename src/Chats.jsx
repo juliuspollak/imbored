@@ -30,7 +30,9 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
       supabase.from("presence").select("user_id").gte("last_seen", cutoff),
     ]);
     if (messageResult.error) setError(messageResult.error.message || "Couldn’t load chats.");
-    else setMessages(messageResult.data || []);
+    else setMessages((messageResult.data || []).filter(
+      (message) => !(message.system_generated && message.sender_id === currentUser.id)
+    ));
     if (!profileResult.error) {
       setProfiles((profileResult.data || []).filter((p) => {
         const active = !p.account_deleted_at && !p.is_blocked && (p.is_admin || p.is_approved !== false);
