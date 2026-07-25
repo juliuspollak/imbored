@@ -3,7 +3,7 @@ import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating from "../DifficultyRating.jsx";
-import { Globe2, Eraser, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
+import { Globe2, RotateCcw, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
 import { MAP_REGIONS, CONTINENT_SHAPES, MAP_VIEWBOX, REGION_HIT_AREAS } from "./geo/geoRegions.js";
 import { shuffle, generateQuiz } from "./geo/geoGenerator.js";
 import { getQuestionHistory, rememberQuestions } from "./geo/geoHistory.js";
@@ -232,8 +232,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
 
         <div className="flex items-center justify-center gap-2 mb-4">
           {[
-            { Icon: Eraser, label: t("common.restart"), onClick: handleReset, disabled: solved },
-            { Icon: Sparkles, label: t("geo.new"), onClick: () => newQuiz(dayIdx), disabled: isChallenge },
+            { Icon: RotateCcw, label: t("common.restart"), onClick: handleReset, disabled: solved },
             {
               Icon: hintCooldown.locked ? Lock : WandSparkles,
               label: hintCooldown.locked ? `${hintCooldown.remaining}s` : t("common.hint"),
@@ -248,7 +247,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
               title={label}
               aria-label={label}
               className="geo-toolbar-btn relative flex items-center justify-center rounded-2xl transition-colors"
-              style={{ width: 46, height: 46, background: disabled ? "rgba(16,24,40,0.05)" : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,247,255,0.96))", border: `1px solid ${disabled ? "rgba(16,24,40,0.08)" : "rgba(16,24,40,0.10)"}`, color: disabled ? "rgba(27,33,41,0.28)" : INK, cursor: disabled ? "default" : "pointer", boxShadow: disabled ? "none" : "0 10px 24px rgba(16,24,40,0.10)" }}
+              style={{ width: 46, height: 46, background: disabled ? "rgba(16,24,40,0.08)" : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,247,255,0.96))", border: `1px solid ${disabled ? "rgba(16,24,40,0.08)" : "rgba(16,24,40,0.10)"}`, color: disabled ? "rgba(27,33,41,0.4)" : INK, cursor: disabled ? "default" : "pointer", boxShadow: disabled ? "none" : "0 10px 24px rgba(16,24,40,0.10)" }}
             >
               <Icon size={18} />
               {hintCooldown.locked && label.endsWith("s") && (

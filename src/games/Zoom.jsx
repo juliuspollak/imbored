@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
 import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating from "../DifficultyRating.jsx";
-import { ZoomIn, Eraser, Timer as TimerIcon, HelpCircle, MapPin, Globe2, Flag } from "lucide-react";
+import { ZoomIn, RotateCcw, Timer as TimerIcon, HelpCircle } from "lucide-react";
 import { generateZoomQuiz, ROUNDS_PER_QUIZ, LEVELS_PER_ROUND } from "./zoom/zoomGenerator.js";
 import { getTargetHistory, rememberTargets } from "./zoom/zoomHistory.js";
 import FlagImage from "./geo/FlagImage.jsx";
@@ -21,8 +21,6 @@ function fmtTime(s) {
   const ss = s % 60;
   return `${m}:${ss.toString().padStart(2, "0")}`;
 }
-
-const LEVEL_ICONS = [Globe2, MapPin, Flag];
 
 export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, savedStatId } = {}) {
   const { t, language } = useI18n();
@@ -151,8 +149,6 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
     return correctLog[start] && correctLog[start + 1] && correctLog[start + 2];
   }).filter(Boolean).length;
 
-  const LevelIcon = LEVEL_ICONS[step.levelIndex] || Globe2;
-
   return (
     <div style={{ background: BG, minHeight: "100vh" }} className="flex items-start justify-center p-4 pt-[72px]">
       <style>{`
@@ -217,7 +213,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
 
         <div className="flex items-center justify-center gap-2 mb-4">
           {[
-            { Icon: Eraser, label: t("common.restart"), onClick: handleReset, disabled: solved },
+            { Icon: RotateCcw, label: t("common.restart"), onClick: handleReset, disabled: solved },
           ].map(({ Icon, label, onClick, disabled }) => (
             <button
               key={label}
@@ -226,7 +222,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
               title={label}
               aria-label={label}
               className="zoom-toolbar-btn relative flex items-center justify-center rounded-2xl transition-colors"
-              style={{ width: 46, height: 46, background: disabled ? "rgba(16,24,40,0.05)" : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,247,255,0.96))", border: `1px solid ${disabled ? "rgba(16,24,40,0.08)" : "rgba(16,24,40,0.10)"}`, color: disabled ? "rgba(27,33,41,0.28)" : INK, cursor: disabled ? "default" : "pointer", boxShadow: disabled ? "none" : "0 10px 24px rgba(16,24,40,0.10)" }}
+              style={{ width: 46, height: 46, background: disabled ? "rgba(16,24,40,0.08)" : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,247,255,0.96))", border: `1px solid ${disabled ? "rgba(16,24,40,0.08)" : "rgba(16,24,40,0.10)"}`, color: disabled ? "rgba(27,33,41,0.4)" : INK, cursor: disabled ? "default" : "pointer", boxShadow: disabled ? "none" : "0 10px 24px rgba(16,24,40,0.10)" }}
             >
               <Icon size={18} />
             </button>
@@ -290,9 +286,6 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
               </div>
             )}
 
-            <div className="flex items-center justify-center gap-1.5 mb-2" style={{ color: ACCENT, opacity: 0.75 }}>
-              <LevelIcon size={13} />
-            </div>
             <p style={{ color: INK, fontWeight: 600 }} className="text-base text-center mb-4 min-h-[48px] flex items-center justify-center">
               {prompt}
             </p>
