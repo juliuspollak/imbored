@@ -328,15 +328,16 @@ export default function Teams({ onBack }) {
           const blocked = blocksFor(rosterTeam.id)
             .filter((member) => member.member_name?.toLowerCase().includes(rosterQuery.toLowerCase()));
           const manager = canManage(rosterTeam);
-          return <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background:"rgba(16,24,40,.42)" }}>
-            <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-4 flex flex-col" style={{ background:"#fff",maxHeight:"84vh" }}>
+          return <div className="fixed inset-0 z-50 flex justify-center overflow-y-auto" style={{ background:BG }}>
+            <div className="w-full max-w-md p-4 pt-6 flex flex-col" style={{ background:BG,minHeight:"100dvh" }}>
               <div className="flex items-center gap-3 mb-3">
+                <button onClick={() => { setRosterTeam(null);setDeleteTeamTarget(null);setDeleteConfirmation(""); }} className="grid place-items-center rounded-full shrink-0" style={{ width:36,height:36,background:"rgba(16,24,40,.05)" }} aria-label="Back to teams"><ArrowLeft size={17}/></button>
                 <div className="grid place-items-center rounded-2xl text-2xl" style={{ width:44,height:44,background:"linear-gradient(145deg,#eef3ff,#fff)" }}>{rosterTeam.emoji || "⭐"}</div>
                 <div className="flex-1 min-w-0"><div className="font-bold truncate">{rosterTeam.name}</div><div className="text-[11px] opacity-45">{rosterFor(rosterTeam.id).length} members</div></div>
-                <button onClick={() => setRosterTeam(null)} className="grid place-items-center rounded-full" style={{ width:32,height:32,background:"rgba(16,24,40,.05)" }} aria-label="Close members"><X size={15}/></button>
               </div>
-              {rosterFor(rosterTeam.id).length + blocksFor(rosterTeam.id).length > 6 && <label className="flex items-center gap-2 rounded-2xl px-3 py-2.5 mb-3" style={{ background:"#F4F6FA" }}><Search size={15} style={{ opacity:.4 }}/><input value={rosterQuery} onChange={(event) => setRosterQuery(event.target.value)} placeholder="Find a member…" className="flex-1 bg-transparent outline-none text-sm"/></label>}
-              <div className="space-y-2 overflow-y-auto overscroll-contain pr-0.5">
+              <div className="rounded-3xl p-3 sm:p-4" style={{ background:"#fff",border:"1px solid rgba(16,24,40,.07)" }}>
+              {rosterFor(rosterTeam.id).length + blocksFor(rosterTeam.id).length > 6 && <label className="flex items-center gap-2 rounded-2xl px-3 py-2.5 mb-3" style={{ background:"#F4F6FA" }}><Search size={15} style={{ opacity:.4 }}/><input value={rosterQuery} onChange={(event) => setRosterQuery(event.target.value)} placeholder="Find a member…" className="flex-1 bg-transparent outline-none text-base"/></label>}
+              <div className="space-y-2 pr-0.5">
                 {roster.map((member) => {
                   const teamOwner = member.id === rosterTeam.created_by;
                   const isMe = member.id === user?.id;
@@ -369,10 +370,11 @@ export default function Teams({ onBack }) {
                   : <div className="rounded-2xl p-3" style={{ background:"rgba(181,67,58,.06)" }}>
                     <div className="text-xs font-semibold" style={{ color:"#9F2F2A" }}>Delete this team permanently?</div>
                     <p className="text-[10px] opacity-50 mt-1">Type <strong>{rosterTeam.name}</strong> to confirm.</p>
-                    <input autoFocus value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} placeholder={rosterTeam.name} className="w-full rounded-xl border px-3 py-2 text-xs outline-none mt-2"/>
+                    <input value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} placeholder={rosterTeam.name} className="w-full rounded-xl border px-3 py-2 text-base outline-none mt-2"/>
                     <div className="grid grid-cols-2 gap-2 mt-2"><button onClick={() => { setDeleteTeamTarget(null);setDeleteConfirmation(""); }} className="rounded-full py-2 text-[11px] font-semibold" style={{ background:"#fff" }}>Cancel</button><button disabled={deleteBusy || deleteConfirmation !== rosterTeam.name} onClick={deleteTeam} className="rounded-full py-2 text-[11px] font-semibold text-white disabled:opacity-35" style={{ background:"#B5433A" }}>{deleteBusy ? "Deleting…" : "Delete permanently"}</button></div>
                   </div>}
               </div>}
+              </div>
             </div>
           </div>;
         })()}
