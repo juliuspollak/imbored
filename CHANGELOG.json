@@ -1,14 +1,17 @@
 [
   {
-    "version": "95",
+    "id": "v109-release-notes-and-email-invites",
+    "version": "v109",
+    "date": "2026-07-25",
+    "title": "Invite friends by email and complete What’s New history",
+    "body": "Any approved player can now invite somebody who does not yet use the app by entering their email address. What’s New syncing has also been repaired so newer product updates appear again."
+  },
+  {
+    "id": "v95-ui-zip-chat-polish",
+    "version": "v95",
+    "date": "2026-07-24",
     "title": "UI polish, Zip clarity and chat resilience",
-    "changes": [
-      "Simplified Zip practice/challenge screen by removing hazard clutter and the cells-filled footer.",
-      "Improved Zip readability with larger checkpoint bubbles, thicker path rendering, lighter visited-cell fills and a new black-hole visual.",
-      "Softened the Queens palette with gentler pastel region colours.",
-      "Refreshed game action controls again with cleaner icon-first circular buttons.",
-      "Made chat opening more defensive to reduce transient Something went wrong failures."
-    ]
+    "body": "Simplified Zip, improved checkpoint and path readability, softened the Queens palette, refreshed game controls and made chat opening more resilient."
   },
   {
     "id": "v81-team-daily-challenge-messages",
@@ -32,18 +35,22 @@
     "date": "2026-07-23"
   },
   {
+    "id": "v66-navigation-profiles-release-notes",
     "version": "v66",
     "date": "2026-07-23",
     "title": "Cleaner navigation, profiles and release notes",
     "body": "Fixed completed-feedback notification errors without requiring the user_seen_at column. Practice and Challenge switches now show the destination mode and share aligned navigation. What's New displays the current app version, hides hidden entries by default and removes Delete controls. My Profile now uses a compact modern avatar picker."
   },
   {
+    "id": "v64-geo-zip-admin-polish",
     "version": "v64",
+    "date": "2026-07-23",
     "title": "Smarter Geo hints, unique questions, Zip snake and admin soft delete",
     "body": "Geo hints can be used repeatedly, question repetition protection is stricter, and the repeated McMurdo item was removed. Zip now draws a colourful snake along the route. Tango reset keeps elapsed time. Admins can soft-delete and restore Feedback and What's New items."
   },
   {
-    "version": "61.8",
+    "id": "v61-8-greenland-new-zealand",
+    "version": "v61.8",
     "date": "2026-07-23",
     "title": "Greenland and New Zealand map regions",
     "body": "Geo now renders Greenland and New Zealand as separate tappable map regions and includes dedicated questions for Nuuk, Aotearoa, the kiwi bird and other region-specific facts. They remain geographically associated with North America and Oceania in ordinary continent questions."
