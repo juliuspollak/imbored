@@ -407,8 +407,18 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
 
   useEffect(() => {
     if (!board || !puzzle) return;
+    window.clearTimeout(conflictDebounceRef.current);
     const newConflicts = getConflicts(board, puzzle.edgeMap);
-    setDisplayedConflicts(newConflicts); // Show immediately
+    
+    // If no conflicts, clear immediately
+    if (newConflicts.size === 0) {
+      setDisplayedConflicts(new Set());
+    } else {
+      // If there ARE conflicts, show them after 2 seconds (allows cycling without mid-cycle errors)
+      conflictDebounceRef.current = window.setTimeout(() => {
+        setDisplayedConflicts(newConflicts);
+      }, 2000);
+    }
     return () => window.clearTimeout(conflictDebounceRef.current);
   }, [board, puzzle]);
 
