@@ -160,7 +160,7 @@ const REGION_FACTS = [
   { id: "greenland-name", name: "Greenland", prompt: "Tap Greenland on the map.", answer: "Greenland", difficulty: 1 },
   { id: "greenland-nuuk", name: "Nuuk", prompt: "Nuuk is the capital of which place shown on the map?", answer: "Greenland", difficulty: 2 },
   { id: "greenland-largest-island", name: "Largest island", prompt: "Tap the world's largest island.", answer: "Greenland", difficulty: 2 },
-  { id: "greenland-arctic", name: "Arctic island", prompt: "Tap the large Arctic island northeast of Canada.", answer: "Greenland", difficulty: 2 },
+  { id: "greenland-arctic", name: "Arctic island", prompt: "Tap Greenland, the large island between North America and Europe.", answer: "Greenland", difficulty: 2 },
   { id: "new-zealand-name", name: "New Zealand", prompt: "Tap New Zealand on the map.", answer: "New Zealand", difficulty: 1 },
   { id: "new-zealand-wellington", name: "Wellington", prompt: "Wellington is the capital of which place shown on the map?", answer: "New Zealand", difficulty: 2 },
   { id: "new-zealand-kiwi", name: "Kiwi", prompt: "Tap the home of the kiwi bird.", answer: "New Zealand", difficulty: 1 },
