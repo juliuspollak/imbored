@@ -11,7 +11,7 @@ function formatDuration(value) {
   return minutes ? `${minutes}m ${String(remainder).padStart(2, "0")}s` : `${remainder}s`;
 }
 
-export default function ChallengeStandings({ rows = [], roster = [], games = [], isTeam = false, userId, loading = false }) {
+export default function ChallengeStandings({ rows = [], roster = [], games = [], isTeam = false, userId, loading = false, refreshing = false }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(true);
   const [expandedPlayerId, setExpandedPlayerId] = useState(null);
@@ -59,6 +59,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
         <span className="flex-1 min-w-0">
           <span className="flex items-center gap-2">
             <span className="text-sm font-bold">{t("standings.title")}</span>
+            {(loading || refreshing) && <span className="inline-flex items-center gap-1 text-[10px] font-semibold" style={{ color:"rgba(27,33,41,.42)" }}><span className="inline-block rounded-full animate-pulse" style={{ width:6,height:6,background:"#2F6FED" }}/>{t(refreshing ? "standings.updating" : "standings.loadingShort")}</span>}
             {!loading && leader && <span className="truncate text-[10px] font-semibold rounded-full px-2 py-0.5" style={{ background:"rgba(217,174,88,.13)",color:"#80601D" }}>{leader.icon || "🙂"} {t("standings.leads", { name:leader.name })}</span>}
           </span>
           <span className="block text-[11px] mt-0.5" style={{ color:"rgba(27,33,41,.48)" }}>
@@ -73,7 +74,9 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
       {open && (
         <div className="px-3 pb-3">
           {loading ? (
-            <div className="py-5 text-center text-xs" style={{ color:"rgba(27,33,41,.42)" }}>{t("standings.loading")}</div>
+            <div className="space-y-2" role="status" aria-label={t("standings.loading")}>
+              {[0,1,2].map((item) => <div key={item} className="h-[58px] rounded-2xl animate-pulse" style={{ background:"linear-gradient(90deg,#F4F5F8,#FAFAFC,#F4F5F8)" }}/>)}
+            </div>
           ) : standings.length === 0 ? (
             <div className="rounded-2xl py-5 px-4 text-center" style={{ background:"#F7F8FB" }}>
               <div className="text-sm font-semibold">{t("standings.emptyTitle")}</div>
