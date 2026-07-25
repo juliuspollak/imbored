@@ -188,6 +188,7 @@ function AppShell() {
           onBack={() => setActive(null)}
           onOpenChat={(player) => { setChatReturn("chats"); setChatPlayer(player); }}
           onOpenAdminPlayers={() => setActive("adminplayers")}
+          onOpenFeedback={() => setActive("feedback")}
         />
       </Suspense>
     );
