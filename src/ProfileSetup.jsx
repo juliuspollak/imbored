@@ -8,6 +8,7 @@ const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
 const INK = "#1B2129";
 const ACCENT = "#2F6FED";
+const CREAM = "#1B2129";
 
 const passkeySupported = typeof window !== "undefined" && !!window.PublicKeyCredential;
 
