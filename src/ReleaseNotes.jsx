@@ -9,7 +9,7 @@ const INK = "#1B2129";
 const ACCENT = "#2F6FED";
 const GREEN = "#16A34A";
 const RED = "#B5433A";
-const APP_VERSION = "v109";
+const APP_VERSION = "v111";
 
 function fmtDate(iso) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });

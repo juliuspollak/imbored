@@ -63,7 +63,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ca"
+      "flagCode": "ca",
+      "subregion": "Northern America"
     },
     {
       "id": "us",
@@ -129,7 +130,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "us"
+      "flagCode": "us",
+      "subregion": "Northern America"
     },
     {
       "id": "mx",
@@ -191,7 +193,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "mx"
+      "flagCode": "mx",
+      "subregion": "Central America"
     },
     {
       "id": "cu",
@@ -240,7 +243,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "cu"
+      "flagCode": "cu",
+      "subregion": "Caribbean"
     },
     {
       "id": "jm",
@@ -289,7 +293,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "jm"
+      "flagCode": "jm",
+      "subregion": "Caribbean"
     },
     {
       "id": "pa",
@@ -338,7 +343,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "pa"
+      "flagCode": "pa",
+      "subregion": "Central America"
     },
     {
       "id": "cr",
@@ -387,7 +393,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "cr"
+      "flagCode": "cr",
+      "subregion": "Central America"
     },
     {
       "id": "gt",
@@ -436,7 +443,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "gt"
+      "flagCode": "gt",
+      "subregion": "Central America"
     },
     {
       "id": "hn",
@@ -485,7 +493,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "hn"
+      "flagCode": "hn",
+      "subregion": "Central America"
     },
     {
       "id": "ht",
@@ -534,7 +543,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ht"
+      "flagCode": "ht",
+      "subregion": "Caribbean"
     },
     {
       "id": "do",
@@ -583,7 +593,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "do"
+      "flagCode": "do",
+      "subregion": "Caribbean"
     },
     {
       "id": "bz",
@@ -632,7 +643,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "bz"
+      "flagCode": "bz",
+      "subregion": "Central America"
     },
     {
       "id": "ni",
@@ -681,7 +693,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ni"
+      "flagCode": "ni",
+      "subregion": "Central America"
     },
     {
       "id": "sv",
@@ -730,7 +743,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "sv"
+      "flagCode": "sv",
+      "subregion": "Central America"
     },
     {
       "id": "bs",
@@ -779,7 +793,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "bs"
+      "flagCode": "bs",
+      "subregion": "Caribbean"
     },
     {
       "id": "tt",
@@ -828,7 +843,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "tt"
+      "flagCode": "tt",
+      "subregion": "Caribbean"
     },
     {
       "id": "br",
@@ -891,7 +907,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "br"
+      "flagCode": "br",
+      "subregion": "Atlantic South America"
     },
     {
       "id": "ar",
@@ -953,7 +970,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ar"
+      "flagCode": "ar",
+      "subregion": "Atlantic South America"
     },
     {
       "id": "cl",
@@ -1013,7 +1031,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "cl"
+      "flagCode": "cl",
+      "subregion": "Andean South America"
     },
     {
       "id": "pe",
@@ -1074,7 +1093,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "pe"
+      "flagCode": "pe",
+      "subregion": "Andean South America"
     },
     {
       "id": "co",
@@ -1123,7 +1143,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "co"
+      "flagCode": "co",
+      "subregion": "Andean South America"
     },
     {
       "id": "ve",
@@ -1172,7 +1193,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ve"
+      "flagCode": "ve",
+      "subregion": "Andean South America"
     },
     {
       "id": "ec",
@@ -1221,7 +1243,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ec"
+      "flagCode": "ec",
+      "subregion": "Andean South America"
     },
     {
       "id": "bo",
@@ -1270,7 +1293,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "bo"
+      "flagCode": "bo",
+      "subregion": "Andean South America"
     },
     {
       "id": "py",
@@ -1319,7 +1343,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "py"
+      "flagCode": "py",
+      "subregion": "Atlantic South America"
     },
     {
       "id": "uy",
@@ -1368,7 +1393,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "uy"
+      "flagCode": "uy",
+      "subregion": "Atlantic South America"
     },
     {
       "id": "gy",
@@ -1417,7 +1443,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "gy"
+      "flagCode": "gy",
+      "subregion": "Atlantic South America"
     },
     {
       "id": "sr",
@@ -1466,7 +1493,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "sr"
+      "flagCode": "sr",
+      "subregion": "Atlantic South America"
     },
     {
       "id": "fr",
@@ -1528,7 +1556,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "fr"
+      "flagCode": "fr",
+      "subregion": "Western Europe"
     },
     {
       "id": "de",
@@ -1589,7 +1618,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "de"
+      "flagCode": "de",
+      "subregion": "Western Europe"
     },
     {
       "id": "it",
@@ -1653,7 +1683,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "it"
+      "flagCode": "it",
+      "subregion": "Southern Europe"
     },
     {
       "id": "es",
@@ -1714,7 +1745,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "es"
+      "flagCode": "es",
+      "subregion": "Southern Europe"
     },
     {
       "id": "gb",
@@ -1776,7 +1808,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "gb"
+      "flagCode": "gb",
+      "subregion": "Northern Europe"
     },
     {
       "id": "pt",
@@ -1825,7 +1858,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "pt"
+      "flagCode": "pt",
+      "subregion": "Southern Europe"
     },
     {
       "id": "nl",
@@ -1874,7 +1908,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "nl"
+      "flagCode": "nl",
+      "subregion": "Western Europe"
     },
     {
       "id": "ch",
@@ -1923,7 +1958,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ch"
+      "flagCode": "ch",
+      "subregion": "Western Europe"
     },
     {
       "id": "se",
@@ -1972,7 +2008,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "se"
+      "flagCode": "se",
+      "subregion": "Northern Europe"
     },
     {
       "id": "no",
@@ -2021,7 +2058,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "no"
+      "flagCode": "no",
+      "subregion": "Northern Europe"
     },
     {
       "id": "pl",
@@ -2070,7 +2108,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "pl"
+      "flagCode": "pl",
+      "subregion": "Eastern Europe"
     },
     {
       "id": "gr",
@@ -2130,7 +2169,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "gr"
+      "flagCode": "gr",
+      "subregion": "Southern Europe"
     },
     {
       "id": "at",
@@ -2192,7 +2232,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "at"
+      "flagCode": "at",
+      "subregion": "Western Europe"
     },
     {
       "id": "be",
@@ -2241,7 +2282,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "be"
+      "flagCode": "be",
+      "subregion": "Western Europe"
     },
     {
       "id": "ie",
@@ -2290,7 +2332,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ie"
+      "flagCode": "ie",
+      "subregion": "Northern Europe"
     },
     {
       "id": "fi",
@@ -2339,7 +2382,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "fi"
+      "flagCode": "fi",
+      "subregion": "Northern Europe"
     },
     {
       "id": "dk",
@@ -2388,7 +2432,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "dk"
+      "flagCode": "dk",
+      "subregion": "Northern Europe"
     },
     {
       "id": "is",
@@ -2437,7 +2482,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "is"
+      "flagCode": "is",
+      "subregion": "Northern Europe"
     },
     {
       "id": "hu",
@@ -2486,7 +2532,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "hu"
+      "flagCode": "hu",
+      "subregion": "Eastern Europe"
     },
     {
       "id": "cz",
@@ -2535,7 +2582,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "cz"
+      "flagCode": "cz",
+      "subregion": "Eastern Europe"
     },
     {
       "id": "ro",
@@ -2584,7 +2632,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ro"
+      "flagCode": "ro",
+      "subregion": "Eastern Europe"
     },
     {
       "id": "hr",
@@ -2633,7 +2682,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "hr"
+      "flagCode": "hr",
+      "subregion": "Southern Europe"
     },
     {
       "id": "sk",
@@ -2682,7 +2732,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "sk"
+      "flagCode": "sk",
+      "subregion": "Eastern Europe"
     },
     {
       "id": "si",
@@ -2731,7 +2782,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "si"
+      "flagCode": "si",
+      "subregion": "Southern Europe"
     },
     {
       "id": "lu",
@@ -2780,7 +2832,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "lu"
+      "flagCode": "lu",
+      "subregion": "Western Europe"
     },
     {
       "id": "mt",
@@ -2829,7 +2882,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "mt"
+      "flagCode": "mt",
+      "subregion": "Southern Europe"
     },
     {
       "id": "ee",
@@ -2878,7 +2932,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ee"
+      "flagCode": "ee",
+      "subregion": "Northern Europe"
     },
     {
       "id": "lv",
@@ -2927,7 +2982,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "lv"
+      "flagCode": "lv",
+      "subregion": "Northern Europe"
     },
     {
       "id": "lt",
@@ -2976,7 +3032,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "lt"
+      "flagCode": "lt",
+      "subregion": "Northern Europe"
     },
     {
       "id": "rs",
@@ -3025,7 +3082,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "rs"
+      "flagCode": "rs",
+      "subregion": "Eastern Europe"
     },
     {
       "id": "bg",
@@ -3074,7 +3132,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "bg"
+      "flagCode": "bg",
+      "subregion": "Eastern Europe"
     },
     {
       "id": "eg",
@@ -3135,7 +3194,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "eg"
+      "flagCode": "eg",
+      "subregion": "Northern Africa"
     },
     {
       "id": "ng",
@@ -3184,7 +3244,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ng"
+      "flagCode": "ng",
+      "subregion": "Western Africa"
     },
     {
       "id": "ke",
@@ -3245,7 +3306,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ke"
+      "flagCode": "ke",
+      "subregion": "Eastern Africa"
     },
     {
       "id": "za",
@@ -3307,7 +3369,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "za"
+      "flagCode": "za",
+      "subregion": "Southern Africa"
     },
     {
       "id": "ma",
@@ -3368,7 +3431,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ma"
+      "flagCode": "ma",
+      "subregion": "Northern Africa"
     },
     {
       "id": "gh",
@@ -3417,7 +3481,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "gh"
+      "flagCode": "gh",
+      "subregion": "Western Africa"
     },
     {
       "id": "et",
@@ -3466,7 +3531,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "et"
+      "flagCode": "et",
+      "subregion": "Eastern Africa"
     },
     {
       "id": "tz",
@@ -3515,7 +3581,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "tz"
+      "flagCode": "tz",
+      "subregion": "Eastern Africa"
     },
     {
       "id": "ug",
@@ -3564,7 +3631,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ug"
+      "flagCode": "ug",
+      "subregion": "Eastern Africa"
     },
     {
       "id": "sn",
@@ -3613,7 +3681,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "sn"
+      "flagCode": "sn",
+      "subregion": "Western Africa"
     },
     {
       "id": "zw",
@@ -3662,7 +3731,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "zw"
+      "flagCode": "zw",
+      "subregion": "Eastern Africa"
     },
     {
       "id": "tn",
@@ -3711,7 +3781,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "tn"
+      "flagCode": "tn",
+      "subregion": "Northern Africa"
     },
     {
       "id": "dz",
@@ -3760,7 +3831,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "dz"
+      "flagCode": "dz",
+      "subregion": "Northern Africa"
     },
     {
       "id": "zm",
@@ -3809,7 +3881,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "zm"
+      "flagCode": "zm",
+      "subregion": "Eastern Africa"
     },
     {
       "id": "na",
@@ -3858,7 +3931,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "na"
+      "flagCode": "na",
+      "subregion": "Southern Africa"
     },
     {
       "id": "bw",
@@ -3907,7 +3981,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "bw"
+      "flagCode": "bw",
+      "subregion": "Southern Africa"
     },
     {
       "id": "rw",
@@ -3956,7 +4031,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "rw"
+      "flagCode": "rw",
+      "subregion": "Eastern Africa"
     },
     {
       "id": "mz",
@@ -4005,7 +4081,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "mz"
+      "flagCode": "mz",
+      "subregion": "Eastern Africa"
     },
     {
       "id": "ao",
@@ -4054,7 +4131,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ao"
+      "flagCode": "ao",
+      "subregion": "Middle Africa"
     },
     {
       "id": "cm",
@@ -4103,7 +4181,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "cm"
+      "flagCode": "cm",
+      "subregion": "Middle Africa"
     },
     {
       "id": "ci",
@@ -4152,7 +4231,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ci"
+      "flagCode": "ci",
+      "subregion": "Western Africa"
     },
     {
       "id": "ml",
@@ -4201,7 +4281,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ml"
+      "flagCode": "ml",
+      "subregion": "Western Africa"
     },
     {
       "id": "mg",
@@ -4250,7 +4331,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "mg"
+      "flagCode": "mg",
+      "subregion": "Eastern Africa"
     },
     {
       "id": "sd",
@@ -4299,7 +4381,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "sd"
+      "flagCode": "sd",
+      "subregion": "Northern Africa"
     },
     {
       "id": "jp",
@@ -4361,7 +4444,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "jp"
+      "flagCode": "jp",
+      "subregion": "Eastern Asia"
     },
     {
       "id": "cn",
@@ -4423,7 +4507,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "cn"
+      "flagCode": "cn",
+      "subregion": "Eastern Asia"
     },
     {
       "id": "in",
@@ -4486,7 +4571,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "in"
+      "flagCode": "in",
+      "subregion": "Southern Asia"
     },
     {
       "id": "th",
@@ -4546,7 +4632,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "th"
+      "flagCode": "th",
+      "subregion": "South-eastern Asia"
     },
     {
       "id": "kr",
@@ -4595,7 +4682,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "kr"
+      "flagCode": "kr",
+      "subregion": "Eastern Asia"
     },
     {
       "id": "vn",
@@ -4644,7 +4732,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "vn"
+      "flagCode": "vn",
+      "subregion": "South-eastern Asia"
     },
     {
       "id": "id",
@@ -4705,7 +4794,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "id"
+      "flagCode": "id",
+      "subregion": "South-eastern Asia"
     },
     {
       "id": "ph",
@@ -4754,7 +4844,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ph"
+      "flagCode": "ph",
+      "subregion": "South-eastern Asia"
     },
     {
       "id": "my",
@@ -4796,7 +4887,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "my"
+      "flagCode": "my",
+      "subregion": "South-eastern Asia"
     },
     {
       "id": "sg",
@@ -4854,7 +4946,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "sg"
+      "flagCode": "sg",
+      "subregion": "South-eastern Asia"
     },
     {
       "id": "sa",
@@ -4903,7 +4996,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "sa"
+      "flagCode": "sa",
+      "subregion": "Western Asia"
     },
     {
       "id": "il",
@@ -4952,7 +5046,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "il"
+      "flagCode": "il",
+      "subregion": "Western Asia"
     },
     {
       "id": "ae",
@@ -5001,7 +5096,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ae"
+      "flagCode": "ae",
+      "subregion": "Western Asia"
     },
     {
       "id": "pk",
@@ -5050,7 +5146,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "pk"
+      "flagCode": "pk",
+      "subregion": "Southern Asia"
     },
     {
       "id": "lk",
@@ -5099,7 +5196,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "lk"
+      "flagCode": "lk",
+      "subregion": "Southern Asia"
     },
     {
       "id": "np",
@@ -5159,7 +5257,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "np"
+      "flagCode": "np",
+      "subregion": "Southern Asia"
     },
     {
       "id": "kh",
@@ -5208,7 +5307,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "kh"
+      "flagCode": "kh",
+      "subregion": "South-eastern Asia"
     },
     {
       "id": "la",
@@ -5257,7 +5357,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "la"
+      "flagCode": "la",
+      "subregion": "South-eastern Asia"
     },
     {
       "id": "mn",
@@ -5306,7 +5407,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "mn"
+      "flagCode": "mn",
+      "subregion": "Eastern Asia"
     },
     {
       "id": "bd",
@@ -5355,7 +5457,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "bd"
+      "flagCode": "bd",
+      "subregion": "Southern Asia"
     },
     {
       "id": "mm",
@@ -5404,7 +5507,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "mm"
+      "flagCode": "mm",
+      "subregion": "South-eastern Asia"
     },
     {
       "id": "bt",
@@ -5453,7 +5557,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "bt"
+      "flagCode": "bt",
+      "subregion": "Southern Asia"
     },
     {
       "id": "jo",
@@ -5502,7 +5607,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "jo"
+      "flagCode": "jo",
+      "subregion": "Western Asia"
     },
     {
       "id": "lb",
@@ -5551,7 +5657,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "lb"
+      "flagCode": "lb",
+      "subregion": "Western Asia"
     },
     {
       "id": "qa",
@@ -5600,7 +5707,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "qa"
+      "flagCode": "qa",
+      "subregion": "Western Asia"
     },
     {
       "id": "kw",
@@ -5649,7 +5757,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "kw"
+      "flagCode": "kw",
+      "subregion": "Western Asia"
     },
     {
       "id": "om",
@@ -5698,7 +5807,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "om"
+      "flagCode": "om",
+      "subregion": "Western Asia"
     },
     {
       "id": "au",
@@ -5771,7 +5881,8 @@
       "funFacts": [
         "Australia is both a country and the largest landmass in Oceania."
       ],
-      "flagCode": "au"
+      "flagCode": "au",
+      "subregion": "Australia"
     },
     {
       "id": "fj",
@@ -5820,7 +5931,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "fj"
+      "flagCode": "fj",
+      "subregion": "Melanesia"
     },
     {
       "id": "pg",
@@ -5869,7 +5981,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "pg"
+      "flagCode": "pg",
+      "subregion": "Melanesia"
     },
     {
       "id": "ws",
@@ -5918,7 +6031,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "ws"
+      "flagCode": "ws",
+      "subregion": "Polynesia"
     },
     {
       "id": "to",
@@ -5967,7 +6081,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "to"
+      "flagCode": "to",
+      "subregion": "Polynesia"
     },
     {
       "id": "vu",
@@ -6016,7 +6131,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "vu"
+      "flagCode": "vu",
+      "subregion": "Melanesia"
     },
     {
       "id": "sb",
@@ -6065,7 +6181,8 @@
       "regions": [],
       "nationalSymbols": [],
       "funFacts": [],
-      "flagCode": "sb"
+      "flagCode": "sb",
+      "subregion": "Melanesia"
     }
   ],
   "specialRegions": [
@@ -6122,7 +6239,8 @@
         "Greenland is the world’s largest island.",
         "Greenland is geographically part of North America."
       ],
-      "birds": []
+      "birds": [],
+      "subregion": "Northern America"
     },
     {
       "id": "new-zealand",
@@ -6181,7 +6299,8 @@
         "New Zealand consists mainly of the North Island and South Island.",
         "Aotearoa is the Māori name commonly used for New Zealand."
       ],
-      "birds": []
+      "birds": [],
+      "subregion": "Australia"
     },
     {
       "id": "antarctica",
@@ -6212,7 +6331,8 @@
       "facts": [
         "Antarctica contains the geographic South Pole."
       ],
-      "birds": []
+      "birds": [],
+      "subregion": null
     }
   ]
 }

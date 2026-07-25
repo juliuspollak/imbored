@@ -22,6 +22,7 @@ const TangoGame = lazy(() => import("./games/Tango.jsx"));
 const ZipGame = lazy(() => import("./games/Zip.jsx"));
 const MiniSudokuGame = lazy(() => import("./games/MiniSudoku.jsx"));
 const GeoGame = lazy(() => import("./games/Geo.jsx"));
+const ZoomGame = lazy(() => import("./games/Zoom.jsx"));
 const Teams = lazy(() => import("./Teams.jsx"));
 const Stats = lazy(() => import("./Stats.jsx"));
 const Feedback = lazy(() => import("./Feedback.jsx"));
@@ -50,6 +51,7 @@ const GAME_COMPONENTS = {
   zip: { Component: ZipGame, label: "Zip" },
   minisudoku: { Component: MiniSudokuGame, label: "Mini Sudoku" },
   geo: { Component: GeoGame, label: "Geo" },
+  zoom: { Component: ZoomGame, label: "Zoom" },
 };
 
 function AppShell() {
@@ -110,7 +112,7 @@ function AppShell() {
   }, [playMode, user?.id]);
   const players = useOnlinePlayers({ includeHidden: !!profile?.is_admin });
   const { config: gameConfig, refetch: refetchGameConfig } = useGameConfig();
-  usePresence(["queens", "tango", "zip", "minisudoku", "geo"].includes(active) ? active : null, playMode);
+  usePresence(["queens", "tango", "zip", "minisudoku", "geo", "zoom"].includes(active) ? active : null, playMode);
   const openFeedbackCount = useOpenFeedbackCount(profile?.is_admin ? user?.id : undefined);
   const completedFeedbackCount = useCompletedFeedbackCount(profile?.is_admin ? undefined : user?.id);
   const newTransfersCount = useNewTransfersCount(user?.id);

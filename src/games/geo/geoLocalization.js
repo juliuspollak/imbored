@@ -13,6 +13,29 @@ const REGION_LABELS_SK = {
   "South Pole": "južný pól",
   Equator: "rovník",
   "Prime Meridian": "nultý poludník",
+
+  // Subregions (Zoom game's continent -> subregion -> country chain)
+  "Northern America": "Severná Amerika (sever)",
+  "Central America": "Stredná Amerika",
+  Caribbean: "Karibik",
+  "Andean South America": "Andská Južná Amerika",
+  "Atlantic South America": "Atlantická Južná Amerika",
+  "Northern Europe": "Severná Európa",
+  "Western Europe": "Západná Európa",
+  "Southern Europe": "Južná Európa",
+  "Eastern Europe": "Východná Európa",
+  "Northern Africa": "Severná Afrika",
+  "Western Africa": "Západná Afrika",
+  "Middle Africa": "Stredná Afrika",
+  "Eastern Africa": "Východná Afrika",
+  "Southern Africa": "Južná Afrika",
+  "Eastern Asia": "Východná Ázia",
+  "South-eastern Asia": "Juhovýchodná Ázia",
+  "Southern Asia": "Južná Ázia",
+  "Western Asia": "Západná Ázia",
+  Australia: "Austrália",
+  Melanesia: "Melanézia",
+  Polynesia: "Polynézia",
 };
 
 const TERMS_SK = {
@@ -247,4 +270,4 @@ function localizeGeoQuestion(question, language) {
   }
 }
 
-export { localizeGeoQuestion, localizeGeoValue };
+export { localizeGeoQuestion, localizeGeoValue, displayName };
