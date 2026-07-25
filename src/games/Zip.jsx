@@ -8,7 +8,7 @@ import { useI18n } from "../lib/i18n.jsx";
 
 /* ---------------- puzzle generation ---------------- */
 
-const SIZE = 6; // constant across all days — difficulty comes from checkpoints/walls/hazards, not grid size
+const SIZE = 7; // constant across all days — difficulty comes from checkpoints/walls/hazards, not grid size
 
 function shuffle(arr) {
   const a = arr.slice();
@@ -876,7 +876,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
               ? {
                   left: `${((w.c1 + 1) / boardSize) * 100}%`,
                   top: `${(w.r1 / boardSize) * 100}%`,
-                  width: 3,
+                  width: 5,
                   height: `${(1 / boardSize) * 100}%`,
                   transform: "translateX(-50%)",
                 }
@@ -884,7 +884,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
                   left: `${(w.c1 / boardSize) * 100}%`,
                   top: `${((w.r1 + 1) / boardSize) * 100}%`,
                   width: `${(1 / boardSize) * 100}%`,
-                  height: 3,
+                  height: 5,
                   transform: "translateY(-50%)",
                 };
             return (

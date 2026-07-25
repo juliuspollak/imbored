@@ -1260,7 +1260,7 @@ export default function QueensGame({ userId, onSolved, mode = "practice", forced
         <div
           ref={boardRef}
           onMouseDown={handleMouseDown}
-          className="relative w-full rounded-xl overflow-hidden select-none"
+          className="relative w-full rounded-lg overflow-hidden select-none"
           style={{
             aspectRatio: "1 / 1",
             display: "grid",

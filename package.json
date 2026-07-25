@@ -1,7 +1,7 @@
 {
   "name": "puzzle-games",
   "private": true,
-  "version": "98.1.0",
+  "version": "98.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
