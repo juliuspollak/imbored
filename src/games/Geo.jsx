@@ -9,6 +9,7 @@ import { shuffle, generateQuiz } from "./geo/geoGenerator.js";
 import { getQuestionHistory, rememberQuestions } from "./geo/geoHistory.js";
 import FlagImage from "./geo/FlagImage.jsx";
 import { useI18n } from "../lib/i18n.jsx";
+import { localizeGeoQuestion, localizeGeoValue } from "./geo/geoLocalization.js";
 
 /* ---------------- continents & map ---------------- */
 
@@ -20,8 +21,6 @@ const INK = "#1B2129";
 const ACCENT = "#2F6FED";
 const RED = "#E5484D";
 const GREEN = "#16A34A";
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
 function fmtTime(s) {
   const m = Math.floor(s / 60);
   const ss = s % 60;
@@ -31,7 +30,8 @@ function fmtTime(s) {
 /* ---------------- component ---------------- */
 
 export default function GeoGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId } = {}) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
+  const days = t("geo.days").split(",");
   const todayIdx = (() => {
     const d = new Date().getDay();
     return d === 0 ? 6 : d - 1;
@@ -53,7 +53,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
   const [hintsUsed, setHintsUsed] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
   const timerRef = useRef(null);
-  const stateKey = `imbored:geo:${mode}:${userId || "guest"}:${challengeDate || dayIdx}:${seed || "practice"}`;
+  const stateKey = `imbored:geo:i18n-v1:${mode}:${userId || "guest"}:${challengeDate || dayIdx}:${seed || "practice"}`;
 
   const newQuiz = useCallback((dIdx, forceFresh = false) => {
     if (!forceFresh) {
@@ -120,6 +120,8 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
   }
 
   const q = questions[qIdx];
+  const shownAnswer = localizeGeoValue(q.answer, language, q);
+  const shownSelected = localizeGeoValue(selected, language, q);
   const isLast = qIdx === questions.length - 1;
 
   function pick(option) {
@@ -193,7 +195,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
           <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK, letterSpacing: "-0.01em" }} className="text-4xl lg:text-5xl">
             Geo
           </h1>
-          <p style={{ color: INK, opacity: 0.45 }} className="text-xs mt-1">five quick questions — tap or choose</p>
+          <p style={{ color: INK, opacity: 0.45 }} className="text-xs mt-1">{t("geo.subtitle")}</p>
         </div>
 
         {isChallenge ? (
@@ -204,7 +206,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
           </div>
         ) : (
           <div className="flex flex-wrap justify-center gap-1.5 mb-4">
-            {DAYS.map((d, i) => (
+            {days.map((d, i) => (
               <button
                 key={d}
                 onClick={() => setDayIdx(i)}
@@ -223,7 +225,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
             <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
           </div>
           <div style={{ color: INK, opacity: 0.7 }} className="text-xs">
-            question <span style={{ color: ACCENT, fontWeight: 600 }}>{Math.min(qIdx + 1, questions.length)}</span>/{questions.length}
+            {t("geo.question")} <span style={{ color: ACCENT, fontWeight: 600 }}>{Math.min(qIdx + 1, questions.length)}</span>/{questions.length}
           </div>
 
         </div>
@@ -231,7 +233,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
         <div className="flex items-center justify-center gap-2 mb-4">
           {[
             { Icon: Eraser, label: t("common.restart"), onClick: handleReset, disabled: solved },
-            { Icon: Sparkles, label: "New", onClick: () => newQuiz(dayIdx), disabled: isChallenge },
+            { Icon: Sparkles, label: t("geo.new"), onClick: () => newQuiz(dayIdx), disabled: isChallenge },
             {
               Icon: hintCooldown.locked ? Lock : WandSparkles,
               label: hintCooldown.locked ? `${hintCooldown.remaining}s` : t("common.hint"),
@@ -258,7 +260,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
 
         {showHelp && (
           <div className="text-xs rounded-lg p-2.5 mb-3" style={{ background: "rgba(16,24,40,0.05)", color: INK, opacity: 0.75, lineHeight: 1.4 }}>
-            Five quick geography questions. Some use the map; others use four answers. Each hint removes one more wrong answer or fades one more incorrect continent. You can keep using Hint until only the correct answer remains.
+            {t("geo.help")}
           </div>
         )}
 
@@ -270,7 +272,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
               </div>
             )}
             <p style={{ color: INK, fontWeight: 600 }} className="text-base text-center mb-3 min-h-[48px] flex items-center justify-center">
-              {q.prompt}
+              {localizeGeoQuestion(q, language)}
             </p>
 
             {q.mode === "map" ? (
@@ -280,7 +282,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
                 viewBox={MAP_VIEWBOX}
                 className="w-full block"
                 role="group"
-                aria-label="Tap the correct place on the map"
+                aria-label={t("geo.mapLabel")}
                 style={{ background: "linear-gradient(180deg, #D7ECFA 0%, #EEF7FC 100%)", borderRadius: 16, touchAction: "manipulation" }}
               >
                 <defs>
@@ -350,7 +352,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
                       }}
                       role="button"
                       tabIndex={answered || isEliminated ? -1 : 0}
-                      aria-label={name}
+                      aria-label={localizeGeoValue(name, language, q)}
                       aria-disabled={answered || isEliminated}
                       className="geo-continent"
                       style={{ cursor: answered || isEliminated ? "default" : "pointer", transformOrigin: "center", transition: "fill 180ms ease, opacity 180ms ease, filter 140ms ease" }}
@@ -362,7 +364,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
 
             {!answered && (
               <p className="text-center text-xs mb-3" style={{ color: INK, opacity: 0.52 }}>
-                Tap the correct place
+                {t("geo.tapCorrect")}
               </p>
             )}
 
@@ -387,7 +389,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
                       className="geo-option rounded-xl px-3 py-3 text-sm font-semibold transition-all min-h-[52px]"
                       style={{ background, color, border, opacity: isEliminated ? 0.22 : 1, cursor: answered || isEliminated ? "default" : "pointer" }}
                     >
-                      {option}
+                      {localizeGeoValue(option, language, q)}
                     </button>
                   );
                 })}
@@ -397,7 +399,9 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
             {answered && (
               <div className="mb-3 text-center rounded-xl px-3 py-2.5" style={{ background: selected === q.answer ? "rgba(22,163,74,0.09)" : "rgba(229,72,77,0.08)" }}>
                 <div className="text-sm font-semibold" style={{ color: selected === q.answer ? GREEN : RED }}>
-                  {selected === q.answer ? `Correct — ${q.answer}` : `${selected} — the answer is ${q.answer}`}
+                  {selected === q.answer
+                    ? t("geo.correct", { answer: shownAnswer })
+                    : t("geo.incorrect", { selected: shownSelected, answer: shownAnswer })}
                 </div>
               </div>
             )}
@@ -414,15 +418,15 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
           <div className="flex flex-col items-center gap-2 py-4">
             <Globe2 size={32} style={{ color: ACCENT }} />
             <p style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 600, color: INK }} className="text-2xl">
-              {questions.length - mistakes}/{questions.length} correct
+              {t("geo.result", { correct: questions.length - mistakes, total: questions.length })}
             </p>
             <p style={{ color: INK, opacity: 0.7 }} className="text-xs mb-1">
-              {fmtTime(seconds)} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
+              {fmtTime(seconds)} &middot; {t(hintsUsed === 1 ? "geo.hints.one" : "geo.hints.other", { count: hintsUsed })}
             </p>
             {savedStatId && <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} />}
             {!isChallenge && (
               <button onClick={() => newQuiz(dayIdx)} className="geo-next-btn mt-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors" style={{ background: ACCENT, color: "#FFFFFF" }}>
-                Play again
+                {t("geo.playAgain")}
               </button>
             )}
           </div>
