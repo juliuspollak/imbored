@@ -72,11 +72,14 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
         return;
       }
 
-      setMessages(data || []);
+      const visibleMessages = (data || []).filter(
+        (message) => !(message.system_generated && message.sender_id === currentUser.id)
+      );
+      setMessages(visibleMessages);
       setError("");
       setLoading(false);
 
-      const unreadIds = (data || [])
+      const unreadIds = visibleMessages
         .filter((m) => m.recipient_id === currentUser.id && !m.read_at)
         .map((m) => m.id);
 
