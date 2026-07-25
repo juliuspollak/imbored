@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Crown, Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle, Check, Star, Flame, ChevronRight, ChevronDown, Globe2, Users, X } from "lucide-react";
+import { Crown, Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle, Check, Star, Flame, ChevronRight, ChevronDown, Globe2, Users, X, ListChecks } from "lucide-react";
 import { useGameConfig } from "./lib/useGameConfig.js";
-import { useTodayCompletions } from "./lib/useTodayCompletions.js";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useI18n } from "./lib/i18n.jsx";
+import { challengeProgress, groupChallengeCompletions } from "./lib/challengeProgress.js";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -21,23 +21,39 @@ export const GAME_META = [
   { id: "geo", label: "Geo", desc: "Capitals, landmarks & wildlife by continent", icon: Globe2, accent: "#DB2777", available: true },
 ];
 
+function todayString() {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
 export default function Home({ onSelect, playMode, onPlayModeChange, players = [], userId, onOpenProgress, onOpenTeams, challengeScope, onChallengeScopeChange }) {
   const { t, language } = useI18n();
   const { config: gameConfig, loading: gameConfigLoading } = useGameConfig();
-  const todayCompletions = useTodayCompletions(playMode === "challenge" ? userId : undefined, challengeScope);
   const [progress, setProgress] = useState(null);
   const [teamChallenges, setTeamChallenges] = useState([]);
   const [teamRosters, setTeamRosters] = useState({});
+  const [challengeCompletions, setChallengeCompletions] = useState({ personal: new Set() });
+  const [challengesLoaded, setChallengesLoaded] = useState(false);
   const [scopePickerOpen, setScopePickerOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     async function loadTeamChallenges() {
-      if (!supabaseReady || !userId || playMode !== "challenge") return;
-      const { data } = await supabase.rpc("get_my_active_team_challenges");
+      if (!supabaseReady || !userId) return;
+      const [{ data }, { data: completionRows }] = await Promise.all([
+        supabase.rpc("get_my_active_team_challenges"),
+        supabase
+          .from("game_stats")
+          .select("game,team_challenge_id")
+          .eq("user_id", userId)
+          .eq("mode", "challenge")
+          .eq("challenge_date", todayString()),
+      ]);
       const challenges = data || [];
       if (cancelled) return;
       setTeamChallenges(challenges);
+      setChallengesLoaded(true);
+      setChallengeCompletions(groupChallengeCompletions(completionRows));
       if (challenges.length > 0) {
         const teamIds = challenges.map((item) => item.team_id);
         const { data: rosterData } = await supabase
@@ -58,7 +74,15 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
     }
     loadTeamChallenges();
     return () => { cancelled = true; };
-  }, [userId, playMode]);
+  }, [userId]);
+
+  useEffect(() => {
+    if (!challengesLoaded || challengeScope?.type !== "team") return;
+    const selected = teamChallenges.find((item) => item.challenge_id === challengeScope.id);
+    if (!selected?.active_today) {
+      onChallengeScopeChange?.({ type:"personal",id:null,name:"My Challenge",gameIds:null });
+    }
+  }, [challengeScope?.id, challengeScope?.type, challengesLoaded, onChallengeScopeChange, teamChallenges]);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,7 +104,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   // "nothing is hidden" — that's exactly what caused hidden games to flash
   // visible for a moment on every page load. Show nothing until we
   // actually know.
-  const visibleGames = gameConfigLoading
+  const configuredGames = gameConfigLoading
     ? []
     : GAME_META
         .map((g, i) => {
@@ -92,11 +116,35 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
             sortOrder: cfg ? cfg.sort_order : i,
           };
         })
-        .filter((g) => g.visible && (playMode !== "challenge" || challengeScope?.type !== "team" || (challengeScope.gameIds || []).includes(g.id)))
+        .filter((g) => g.visible)
         .sort((a, b) => a.sortOrder - b.sortOrder);
+  const visibleGames = configuredGames
+    .filter((g) => playMode !== "challenge" || challengeScope?.type !== "team" || (challengeScope.gameIds || []).includes(g.id));
+  const personalGameIds = configuredGames.filter((game) => game.available).map((game) => game.id);
+  const personalCompleted = challengeCompletions.personal || new Set();
+  const challengeStatus = (teamChallenge) => {
+    const gameIds = teamChallenge ? (teamChallenge.game_ids || []) : personalGameIds;
+    const completed = teamChallenge
+      ? challengeCompletions[String(teamChallenge.challenge_id)] || new Set()
+      : personalCompleted;
+    return challengeProgress(gameIds, completed);
+  };
+  const personalStatus = challengeStatus(null);
+  const challengeItems = [
+    { key:"personal", type:"personal", active_today:true, status:personalStatus },
+    ...teamChallenges.map((item) => ({ ...item, key:String(item.challenge_id), type:"team", status:challengeStatus(item) })),
+  ];
+  const pendingChallenges = challengeItems.filter((item) => item.active_today && item.status.remaining > 0);
+  const pendingGames = pendingChallenges.reduce((sum, item) => sum + item.status.remaining, 0);
   const selectedTeam = challengeScope?.type === "team"
     ? teamChallenges.find((item) => item.challenge_id === challengeScope.id)
     : null;
+  const selectedStatus = challengeScope?.type === "team"
+    ? challengeStatus(selectedTeam || { challenge_id:challengeScope.id, game_ids:challengeScope.gameIds || [] })
+    : personalStatus;
+  const todayCompletions = challengeScope?.type === "team"
+    ? challengeCompletions[String(challengeScope.id)] || new Set()
+    : personalCompleted;
   const selectedRoster = selectedTeam ? teamRosters[selectedTeam.team_id] || [] : [];
 
   function choosePersonalChallenge() {
@@ -180,6 +228,15 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                   }}
                 >
                   {t(`common.${m}`)}
+                  {m === "challenge" && pendingChallenges.length > 0 && (
+                    <span
+                      className="ml-1.5 inline-flex items-center justify-center rounded-full text-[9px]"
+                      style={{ minWidth:17,height:17,padding:"0 5px",background:"#E5484D",color:"#fff" }}
+                      aria-label={t("home.pendingChallenges", { count:pendingChallenges.length })}
+                    >
+                      {pendingChallenges.length}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -192,11 +249,25 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         </p>
         {playMode === "challenge" && onChallengeScopeChange && (
           <div className="mb-6">
-            <div className="text-xs font-semibold mb-2" style={{ color:CREAM }}>{t("home.todaysChallenge")}</div>
+            <button
+              type="button"
+              onClick={() => setScopePickerOpen(true)}
+              className="w-full flex items-center gap-2 rounded-2xl px-3 py-2.5 mb-3 text-left"
+              style={{ background:pendingChallenges.length ? "rgba(229,72,77,.08)" : "rgba(22,163,74,.08)",color:pendingChallenges.length ? "#A9363B" : "#137A3A" }}
+            >
+              <ListChecks size={16}/>
+              <span className="flex-1 text-xs font-semibold">
+                {pendingChallenges.length
+                  ? t("home.challengeInbox", { challenges:pendingChallenges.length, games:pendingGames })
+                  : t("home.allChallengesDone")}
+              </span>
+              <ChevronRight size={14}/>
+            </button>
+            <div className="text-xs font-semibold mb-2" style={{ color:CREAM }}>{t("home.selectedChallenge")}</div>
             <div className="rounded-3xl p-3 flex items-center gap-3" style={{ background:PANEL,border:"1px solid rgba(16,24,40,.09)",boxShadow:"0 10px 28px rgba(16,24,40,.07)" }}>
               <button onClick={() => setScopePickerOpen(true)} className="flex-1 min-w-0 flex items-center gap-3 text-left">
                 <div className="grid place-items-center rounded-2xl text-2xl" style={{ width:46,height:46,background:selectedTeam ? "rgba(18,148,106,.10)" : "rgba(47,111,237,.10)" }}>{selectedTeam?.team_emoji || "🎯"}</div>
-                <div className="flex-1 min-w-0"><div className="text-sm font-bold truncate">{selectedTeam?.team_name || t("home.myChallenge")}</div><div className="text-[11px] opacity-45">{selectedTeam ? t("home.gamesCount", { count:selectedTeam.game_ids?.length || 0, points:selectedTeam.reward_points || 0 }) : t("home.allDailyGames")}</div>{selectedTeam && <div className="flex items-center mt-1"><div className="flex">{selectedRoster.slice(0,4).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-[10px]" style={{ width:21,height:21,background:"#F1F3F7",border:"2px solid white",marginLeft:index ? -5 : 0 }}>{member.icon || "🙂"}</span>)}</div><span className="text-[9px] opacity-40 ml-1.5">{t("home.playing", { count:selectedRoster.length })}</span></div>}</div>
+                <div className="flex-1 min-w-0"><div className="flex items-center gap-2"><div className="text-sm font-bold truncate">{selectedTeam?.team_name || t("home.myChallenge")}</div><span className="rounded-full px-2 py-0.5 text-[9px] font-bold" style={{ background:selectedStatus.done ? "rgba(22,163,74,.11)" : "rgba(47,111,237,.10)",color:selectedStatus.done ? "#137A3A" : "#2F6FED" }}>{selectedStatus.done ? t("home.done") : t("home.gamesLeft", { count:selectedStatus.remaining })}</span></div><div className="mt-1.5 h-1.5 rounded-full overflow-hidden" style={{ background:"rgba(16,24,40,.07)" }}><div className="h-full rounded-full" style={{ width:`${selectedStatus.total ? (selectedStatus.completed / selectedStatus.total) * 100 : 0}%`,background:selectedStatus.done ? "#16A34A" : "#2F6FED" }}/></div><div className="text-[10px] opacity-45 mt-1">{t("home.challengeProgress", { completed:selectedStatus.completed, total:selectedStatus.total })}</div>{selectedTeam && <div className="flex items-center mt-1"><div className="flex">{selectedRoster.slice(0,4).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-[10px]" style={{ width:21,height:21,background:"#F1F3F7",border:"2px solid white",marginLeft:index ? -5 : 0 }}>{member.icon || "🙂"}</span>)}</div><span className="text-[9px] opacity-40 ml-1.5">{t("home.playing", { count:selectedRoster.length })}</span></div>}</div>
                 <ChevronDown size={16} style={{ opacity:.35 }}/>
               </button>
               {selectedTeam && onOpenTeams && <><span className="h-9 w-px" style={{ background:"rgba(16,24,40,.08)" }}/><button onClick={onOpenTeams} className="grid place-items-center rounded-full" style={{ width:38,height:38,background:"rgba(18,148,106,.09)",color:"#0B7C58" }} aria-label="Open team details"><Users size={16}/></button></>}
@@ -264,7 +335,42 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         </div>
         )}
       </div>
-      {scopePickerOpen && <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background:"rgba(16,24,40,.42)" }}><div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-4" style={{ background:"#fff",maxHeight:"82vh",overflow:"auto" }}><div className="flex items-center gap-3 mb-3"><div className="flex-1"><div className="font-bold">{t("home.chooseChallenge")}</div><div className="text-[11px] opacity-45">{t("home.personalOrTeams")}</div></div><button onClick={() => setScopePickerOpen(false)} className="grid place-items-center rounded-full" style={{ width:32,height:32,background:"rgba(16,24,40,.05)" }}><X size={15}/></button></div><button onClick={choosePersonalChallenge} className="w-full flex items-center gap-3 rounded-2xl p-3 text-left mb-2" style={{ background:challengeScope?.type !== "team" ? "rgba(47,111,237,.10)" : "#F7F8FB",border:challengeScope?.type !== "team" ? "1px solid rgba(47,111,237,.25)" : "1px solid transparent" }}><span className="grid place-items-center rounded-xl text-xl" style={{ width:42,height:42,background:"#fff" }}>🎯</span><div className="flex-1"><div className="text-sm font-semibold">{t("home.myChallenge")}</div><div className="text-[10px] opacity-45">{t("home.allDailyGames")}</div></div>{challengeScope?.type !== "team" && <Check size={15} style={{ color:"#2F6FED" }}/>}</button>{teamChallenges.map((teamChallenge) => { const roster=teamRosters[teamChallenge.team_id] || [];const selected=challengeScope?.id === teamChallenge.challenge_id;return <button key={teamChallenge.challenge_id} disabled={!teamChallenge.active_today} onClick={() => chooseTeamChallenge(teamChallenge)} className="w-full flex items-center gap-3 rounded-2xl p-3 text-left mb-2 disabled:opacity-45" style={{ background:selected ? "rgba(18,148,106,.10)" : "#F7F8FB",border:selected ? "1px solid rgba(18,148,106,.25)" : "1px solid transparent" }}><span className="grid place-items-center rounded-xl text-xl" style={{ width:42,height:42,background:"#fff" }}>{teamChallenge.team_emoji || "⭐"}</span><div className="flex-1 min-w-0"><div className="text-sm font-semibold truncate">{teamChallenge.team_name}</div><div className="text-[10px] opacity-45">{t("home.gamesCount", { count:teamChallenge.game_ids?.length || 0, points:teamChallenge.reward_points || 0 })}{!teamChallenge.active_today ? ` · ${t("home.notToday")}` : ""}</div><div className="flex items-center mt-1"><div className="flex">{roster.slice(0,4).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-[9px]" style={{ width:19,height:19,background:"#fff",border:"1.5px solid #F7F8FB",marginLeft:index ? -4 : 0 }}>{member.icon || "🙂"}</span>)}</div><span className="text-[9px] opacity-40 ml-1.5">{roster.length === 1 ? t("home.member") : t("home.members", { count:roster.length })}</span></div></div>{selected && <Check size={15} style={{ color:"#0B7C58" }}/>}</button>; })}{onOpenTeams && <button onClick={() => { setScopePickerOpen(false);onOpenTeams(); }} className="w-full rounded-full py-2.5 mt-2 text-xs font-semibold flex items-center justify-center gap-1.5" style={{ background:"rgba(16,24,40,.05)" }}><Users size={14}/>{t("home.manageTeams")}</button>}</div></div>}
+      {scopePickerOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background:"rgba(16,24,40,.42)" }}>
+          <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-4" style={{ background:"#fff",maxHeight:"82vh",overflow:"auto" }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex-1"><div className="font-bold">{t("home.challengeInboxTitle")}</div><div className="text-[11px] opacity-45">{pendingChallenges.length ? t("home.challengeInbox", { challenges:pendingChallenges.length, games:pendingGames }) : t("home.allChallengesDone")}</div></div>
+              <button onClick={() => setScopePickerOpen(false)} className="grid place-items-center rounded-full" style={{ width:32,height:32,background:"rgba(16,24,40,.05)" }}><X size={15}/></button>
+            </div>
+            {challengeItems
+              .slice()
+              .sort((a,b) => Number(b.active_today && b.status.remaining > 0) - Number(a.active_today && a.status.remaining > 0))
+              .map((item) => {
+                const isPersonal = item.type === "personal";
+                const selected = isPersonal ? challengeScope?.type !== "team" : challengeScope?.id === item.challenge_id;
+                const roster = isPersonal ? [] : teamRosters[item.team_id] || [];
+                return (
+                  <button
+                    key={item.key}
+                    disabled={!item.active_today}
+                    onClick={() => isPersonal ? choosePersonalChallenge() : chooseTeamChallenge(item)}
+                    className="w-full flex items-center gap-3 rounded-2xl p-3 text-left mb-2 disabled:opacity-45"
+                    style={{ background:selected ? "rgba(47,111,237,.09)" : "#F7F8FB",border:selected ? "1px solid rgba(47,111,237,.25)" : "1px solid transparent" }}
+                  >
+                    <span className="grid place-items-center rounded-xl text-xl" style={{ width:42,height:42,background:"#fff" }}>{isPersonal ? "🎯" : item.team_emoji || "⭐"}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2"><div className="text-sm font-semibold truncate">{isPersonal ? t("home.myChallenge") : item.team_name}</div><span className="ml-auto shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold" style={{ background:item.status.done ? "rgba(22,163,74,.11)" : item.active_today ? "rgba(229,72,77,.09)" : "rgba(16,24,40,.06)",color:item.status.done ? "#137A3A" : item.active_today ? "#A9363B" : "rgba(27,33,41,.45)" }}>{!item.active_today ? t("home.notToday") : item.status.done ? t("home.done") : t("home.gamesLeft", { count:item.status.remaining })}</span></div>
+                      <div className="mt-1.5 h-1.5 rounded-full overflow-hidden" style={{ background:"rgba(16,24,40,.07)" }}><div className="h-full rounded-full" style={{ width:`${item.status.total ? (item.status.completed / item.status.total) * 100 : 0}%`,background:item.status.done ? "#16A34A" : "#2F6FED" }}/></div>
+                      <div className="flex items-center mt-1"><span className="text-[9px] opacity-45">{t("home.challengeProgress", { completed:item.status.completed, total:item.status.total })}</span>{!isPersonal && roster.length > 0 && <><span className="mx-1.5 opacity-20">·</span><div className="flex">{roster.slice(0,3).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-[8px]" style={{ width:18,height:18,background:"#fff",border:"1.5px solid #F7F8FB",marginLeft:index ? -4 : 0 }}>{member.icon || "🙂"}</span>)}</div><span className="text-[9px] opacity-40 ml-1">{t("home.members", { count:roster.length })}</span></>}</div>
+                    </div>
+                    {selected && <Check size={15} style={{ color:"#2F6FED" }}/>}
+                  </button>
+                );
+              })}
+            {onOpenTeams && <button onClick={() => { setScopePickerOpen(false);onOpenTeams(); }} className="w-full rounded-full py-2.5 mt-2 text-xs font-semibold flex items-center justify-center gap-1.5" style={{ background:"rgba(16,24,40,.05)" }}><Users size={14}/>{t("home.manageTeams")}</button>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
