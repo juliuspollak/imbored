@@ -126,8 +126,12 @@ export default function Login() {
   }
 
   async function handleVerify(e) {
-    e.preventDefault();
-    const cleanCode = code.replace(/\D/g, "");
+    e?.preventDefault?.();
+    await verifyEnteredCode(code);
+  }
+
+  async function verifyEnteredCode(value) {
+    const cleanCode = value.replace(/\D/g, "");
     if (verifying) return;
     if (cleanCode.length !== EMAIL_OTP_LENGTH) {
       setError(t("auth.invalidCodeLength"));
@@ -139,6 +143,17 @@ export default function Login() {
     setVerifying(false);
     if (error) setError(t("auth.invalidCode"));
   }
+
+  useEffect(() => {
+    if (!sent || code.length !== EMAIL_OTP_LENGTH) return;
+    // iOS and Android insert recognised email codes as one value. Submit
+    // immediately so the user does not also need to tap Verify.
+    const timer = window.setTimeout(() => verifyEnteredCode(code), 120);
+    return () => window.clearTimeout(timer);
+    // Only run when a complete new value arrives; including verifying here
+    // would retry an invalid code continuously after the request finishes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, sent]);
 
   return (
     <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-center justify-center p-4">
@@ -233,11 +248,19 @@ export default function Login() {
             <input
               required
               autoFocus
+              type="text"
+              name="one-time-code"
               inputMode="numeric"
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, "").slice(0, EMAIL_OTP_LENGTH))}
+              onChange={(e) => {
+                setError(null);
+                setCode(e.target.value.replace(/[^0-9]/g, "").slice(0, EMAIL_OTP_LENGTH));
+              }}
               placeholder={t("auth.codeLabel")}
               autoComplete="one-time-code"
+              pattern="[0-9]*"
+              enterKeyHint="done"
+              aria-label={t("auth.codeLabel")}
               maxLength={EMAIL_OTP_LENGTH}
               className="w-full rounded-lg px-3 py-2.5 text-center text-lg tracking-[0.2em] mb-3 outline-none"
               style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
