@@ -290,7 +290,7 @@ export function AuthProvider({ children }) {
   // yourself is a plain insert, which RLS already allows directly.
   async function addPlayerToTeam(targetUserId, teamId) {
     if (!supabaseReady) return { error: new Error("Not logged in") };
-    return supabase.rpc("add_player_to_team", { target_user_id: targetUserId, target_team_id: teamId });
+    return supabase.rpc("invite_player_to_team", { target_user_id: targetUserId, target_team_id: teamId });
   }
 
   async function joinTeam(teamId) {
