@@ -1,8 +1,23 @@
-# v66
-
-- Removed the runtime dependency on `feedback.user_seen_at`; completed-feedback notifications now use local seen state.
-- Corrected mode-switch labels so they describe the destination mode.
-- Unified Challenge and Practice top navigation alignment and styling.
-- Added the current app version to What's New.
-- Replaced the always-expanded avatar grid with a compact picker and refreshed icon choices.
-- Removed release-note Delete controls. Hidden updates are excluded by default, with an admin Show hidden filter and clearer hidden styling.
+{
+  "name": "puzzle-games",
+  "private": true,
+  "version": "98.4.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.110.8",
+    "lucide-react": "^0.383.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.0.0",
+    "vite": "^5.4.11"
+  }
+}

@@ -1,654 +1,152 @@
-[
-  {
-    "id": "v109-release-notes-and-email-invites",
-    "version": "v109",
-    "date": "2026-07-25",
-    "title": "Invite friends by email and complete What’s New history",
-    "body": "Any approved player can now invite somebody who does not yet use the app by entering their email address. What’s New syncing has also been repaired so newer product updates appear again."
-  },
-  {
-    "id": "v95-ui-zip-chat-polish",
-    "version": "v95",
-    "date": "2026-07-24",
-    "title": "UI polish, Zip clarity and chat resilience",
-    "body": "Simplified Zip, improved checkpoint and path readability, softened the Queens palette, refreshed game controls and made chat opening more resilient."
-  },
-  {
-    "id": "v81-team-daily-challenge-messages",
-    "title": "Team Daily Challenge notifications",
-    "body": "When a team member finishes a Daily Challenge, every other teammate now receives an unread chat notification encouraging them to play. The update remains available for offline teammates, appears in Chats like any other unread message, and is generated only once per completed challenge result.",
-    "version": "v81",
-    "date": "2026-07-24"
-  },
-  {
-    "id": "v69-bugfix-round",
-    "title": "Poking, feedback editing, hint clarity, and hidden-player privacy fixes",
-    "body": "Fixed a chain where an admin-hidden player could still show up as \"online\" and pokeable — poking them was then silently blocked server-side with no feedback to the sender, which looked like poking was broken entirely. Feedback editing (and every other Feedback action) now surfaces a clear message if a save fails instead of quietly doing nothing. Tango's hint now shows which symbol (sun or moon) actually belongs in the highlighted cell. Geo's map no longer shows a stray focus-outline rectangle after tapping a region. Practice/Challenge mode now remembers your last choice across a refresh instead of reverting to your profile default every time. The \"new feedback\" balloon in the account menu is no longer near-transparent and hard to read on small screens. Also hardened the admin Games settings screen (including hint-cooldown values) to surface save failures instead of looking successful either way, and added a missing database policy that could silently block saving cooldown settings for a game.",
-    "version": "v69",
-    "date": "2026-07-24"
-  },
-  {
-    "id": "v68-challenge-parity-transfer-notifications",
-    "title": "Challenge/Practice visual parity, points-transfer notifications, and stability fixes",
-    "body": "The Challenge weekly-calendar screen now sits inside the same rounded white panel used by the actual game screens, matching Practice mode's look and feel instead of floating loosely on the grey background. Receiving points now surfaces a notification: a badge appears under the account bubble and on the My progress menu item, and My Progress shows who sent you points and how many. Also added: an app-wide error boundary so a crash in one game no longer takes down the whole app, code-splitting so games and admin screens load on demand, a fix for corrupted-data crashes in feedback notifications, and restored pinch-to-zoom for accessibility. Also fixed the real cause of headings looking inconsistent between screens (e.g. Geo's heading on Challenge vs Practice): the Fredoka font was only ever loaded by whichever game/Home/Login screen happened to be mounted, so leaving it removed the font for every other screen (Challenge's weekly calendar, Progress, Teams, Stats, Feedback, admin screens, etc.), silently falling back to the browser default. The font is now loaded once, globally, in index.html.",
-    "version": "v68",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "v66-navigation-profiles-release-notes",
-    "version": "v66",
-    "date": "2026-07-23",
-    "title": "Cleaner navigation, profiles and release notes",
-    "body": "Fixed completed-feedback notification errors without requiring the user_seen_at column. Practice and Challenge switches now show the destination mode and share aligned navigation. What's New displays the current app version, hides hidden entries by default and removes Delete controls. My Profile now uses a compact modern avatar picker."
-  },
-  {
-    "id": "v64-geo-zip-admin-polish",
-    "version": "v64",
-    "date": "2026-07-23",
-    "title": "Smarter Geo hints, unique questions, Zip snake and admin soft delete",
-    "body": "Geo hints can be used repeatedly, question repetition protection is stricter, and the repeated McMurdo item was removed. Zip now draws a colourful snake along the route. Tango reset keeps elapsed time. Admins can soft-delete and restore Feedback and What's New items."
-  },
-  {
-    "id": "v61-8-greenland-new-zealand",
-    "version": "v61.8",
-    "date": "2026-07-23",
-    "title": "Greenland and New Zealand map regions",
-    "body": "Geo now renders Greenland and New Zealand as separate tappable map regions and includes dedicated questions for Nuuk, Aotearoa, the kiwi bird and other region-specific facts. They remain geographically associated with North America and Oceania in ordinary continent questions."
-  },
-  {
-    "id": "v61.3-geo-sudoku-polish",
-    "title": "Geo and Mini Sudoku polish",
-    "body": "Geo now uses fact-based questions only, removes polar and New Zealand-specific content, and has a cleaner compact map with improved land styling and touch feedback. Mini Sudoku Reset now clears only player-entered cells while preserving elapsed time, mistakes, hints and hint cooldown; New still starts a completely fresh puzzle.",
-    "version": "v61.3",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "v60.5-rating-flow",
-    "title": "Improved completed-game flow",
-    "body": "After saving a difficulty rating, the completed-game panel now stays open. Players can choose View board when ready instead of being redirected automatically, while Play again remains available.",
-    "version": "v60.5",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "v60-4-persistent-points-result",
-    "title": "Points remain visible after completion",
-    "body": "The temporary Points popup now hides without clearing the awarded result. Points remain visible on the completed game page beside the final rating, so players can still see what they earned after the popup disappears.",
-    "version": "v60.4",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "v60.3-points-on-result-card",
-    "title": "Points stay visible on solved card",
-    "body": "The Points awarded for a completed puzzle now remain visible inside the solved result card after the temporary celebration disappears.",
-    "version": "v60.3",
-    "date": "2026-07-23"
-  },
-  {
-    "version": "v60",
-    "title": "Rewards & Progression",
-    "date": "2026-07-23",
-    "id": "v60-release",
-    "body": "Earn Points for completed games Daily streaks and levels Simple My Progress and rewards UI Player wishes and Point transfers Streak protection using Points Admin rules, rewards, redemptions and adjustments"
-  },
-  {
-    "version": "v59",
-    "title": "Daily stats and privacy",
-    "id": "v59-release",
-    "date": "2026-07-23",
-    "body": "Player rows on Stats can now be expanded to show results grouped by day, including time, mistakes and hints. Profiles now include a Show my stats to others setting. Stats privacy is enforced by Supabase RLS; private stats remain visible to their owner and administrators."
-  },
-  {
-    "id": "2026-07-23-hidden-player-complete",
-    "date": "2026-07-23",
-    "title": "Hidden players are now fully hidden",
-    "body": "Fixed player hiding so it applies to all user-owned activity, not only the profile card. Hidden players are now excluded from public statistics, leaderboards, online presence, teams, feedback, votes, reactions and pokes. Admins can still see everything.",
-    "type": "fix",
-    "version": "v58"
-  },
-  {
-    "id": "v57-solved-rating-loading-state",
-    "version": "v57",
-    "date": "2026-07-23",
-    "title": "Smooth end-of-game rating flow",
-    "body": "Fixed the solved panel briefly showing Play again before the difficulty question loaded. It now shows a short finalising state and then displays the correct rating prompt without flickering between layouts."
-  },
-  {
-    "id": "v55-release-reaction-rpc",
-    "title": "Reliable What’s New reactions",
-    "body": "Fixed thumbs-up and thumbs-down reactions reverting after selection by saving them through an atomic authenticated database function.",
-    "version": "v55",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "2026-07-08-accounts",
-    "version": "v1",
-    "title": "Accounts & sign-in",
-    "body": "Email code sign-in, Google sign-in, and passkey support. No passwords, and no confusing magic links.",
-    "date": "2026-07-08"
-  },
-  {
-    "id": "2026-07-09-stats",
-    "version": "v2",
-    "title": "Stats tracking",
-    "body": "Every solved puzzle records your time, mistakes, and hints used — see it all on the Stats page.",
-    "date": "2026-07-09"
-  },
-  {
-    "id": "2026-07-10-teams",
-    "version": "v3",
-    "title": "Teams",
-    "body": "Create a team, join as many as you like, add other players, or leave any time. Private profiles can't be added by anyone but themselves.",
-    "date": "2026-07-10"
-  },
-  {
-    "id": "2026-07-12-challenge",
-    "version": "v4",
-    "title": "Challenge mode",
-    "body": "One attempt per puzzle per day, the exact same puzzle for everyone, locked to real calendar dates. Miss a day? You can still catch it up later — still just one shot.",
-    "date": "2026-07-12"
-  },
-  {
-    "id": "2026-07-13-mood",
-    "version": "v5",
-    "title": "Mood status",
-    "body": "Set a short status next to your name, visible to everyone.",
-    "date": "2026-07-13"
-  },
-  {
-    "id": "2026-07-15-rating",
-    "version": "v6",
-    "title": "Post-puzzle difficulty rating",
-    "body": "Tap a bar right after solving to say how hard it felt. See the group's average difficulty before you even start a puzzle.",
-    "date": "2026-07-15"
-  },
-  {
-    "id": "2026-07-16-feedback",
-    "version": "v7",
-    "title": "Feedback board",
-    "body": "Suggest ideas, upvote other people's. Admin can mark things done with a comment.",
-    "date": "2026-07-16"
-  },
-  {
-    "id": "2026-07-17-online",
-    "version": "v8",
-    "title": "Who's online",
-    "body": "See who else currently has the app open and what they're playing. Tap someone to send them a fun poke.",
-    "date": "2026-07-17"
-  },
-  {
-    "id": "2026-07-18-rename",
-    "version": "v9",
-    "title": "Renamed to I'mBoredToday",
-    "body": "New name, new playful font across the whole app.",
-    "date": "2026-07-18"
-  },
-  {
-    "id": "2026-07-19-mistakes-fix",
-    "version": "v10",
-    "title": "Fixed mistake counting in Tango",
-    "body": "Mistakes now only count when Hint actually catches something wrong — not on every tap. Matches how Queens already worked.",
-    "date": "2026-07-19"
-  },
-  {
-    "id": "2026-07-22-hover-effects",
-    "version": "v11",
-    "title": "Nicer button hover/press effects",
-    "body": "Every nav icon now has a springy lift on hover and a satisfying press on tap, each in its own accent color.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-difficulty-bars",
-    "version": "v12",
-    "title": "Difficulty rating redesigned",
-    "body": "Switched from a tap-anywhere triangle to discrete tappable bars, matching watchOS's effort rating pattern.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-feedback-simplified",
-    "version": "v13",
-    "title": "Feedback form simplified",
-    "body": "Down to a single text box instead of separate title and description fields.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-admin-hide",
-    "version": "v14",
-    "title": "Admin: hide a player",
-    "body": "Admin can make a player invisible to everyone but themselves, enforced by the database itself, not just the UI.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-online-redesign",
-    "version": "v15",
-    "title": "Online widget redesign",
-    "body": "Moved next to your profile, wiggles when others are online, expands into a list you can tap to poke someone.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-nav-collapse",
-    "version": "v16",
-    "title": "Nav menu collapsed into one button",
-    "body": "Profile, Feedback, Stats, Teams, and Sign out now live behind a single avatar button instead of cluttering the top bar.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-home-buttons",
-    "version": "v17",
-    "title": "Fixed missing Home buttons",
-    "body": "Teams, Stats, Feedback, Profile, and the Challenge screen all had a barely-visible back arrow — replaced with a clear, labeled Home button everywhere.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-feedback-badge",
-    "version": "v18",
-    "title": "Feedback notification badge",
-    "body": "The nav button now wiggles with a purple count badge whenever there's open feedback waiting to be reviewed.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-presence-fix",
-    "version": "v19",
-    "title": "Fixed online status",
-    "body": "You now show as online for the whole time the app is open, not just while mid-puzzle.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-recursion-fix",
-    "version": "v20",
-    "title": "Fixed a login-breaking bug",
-    "body": "A database policy had an infinite recursion bug that could block sign-in entirely. Fixed at the database level.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-release-notes",
-    "version": "v21",
-    "title": "This page",
-    "body": "Release notes are now fully automatic, synced from a changelog file on every deploy — nobody types these in by hand.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-release-notes-readonly",
-    "version": "v22",
-    "title": "Release notes cleanup",
-    "body": "Removed manual post/delete controls (the changelog file is the single source of truth now) and added version numbers to every entry.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-stats-split",
-    "version": "v23",
-    "title": "Stats split by Challenge/Practice",
-    "body": "Toggle between the two — practice is unlimited so its counts aren't really comparable, challenge is the fair one-shot-a-day metric. Each game shown separately, plus a total.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-hide-label",
-    "version": "v24",
-    "title": "Fixed the mystery hide button",
-    "body": "Admin's player-hide toggle only had a hover tooltip, which does nothing on a phone. Now has a visible text label.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-sync-merge-fix",
-    "version": "v25",
-    "title": "Fixed release notes not updating",
-    "body": "The sync used 'ignore-duplicates', which skips any entry that already exists instead of updating it. Switched to 'merge-duplicates' so edits to CHANGELOG.json actually take effect on already-synced entries.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-solved-home-button",
-    "version": "v26",
-    "title": "Fixed missing Home button on the Solved! screen",
-    "body": "The post-puzzle rating screen (challenge and practice mode both) had no way back to Home at all — only its own continue button. Added a back arrow, top-left.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-mini-sudoku",
-    "version": "v27",
-    "title": "New game: Mini Sudoku",
-    "body": "6x6 sudoku, verified unique every time, difficulty scales through the week via clue count. Hint uses real solving techniques (naked/hidden singles, contradiction test) — never a guess. Works in both Challenge and Practice mode, same as the others. Also brought Queens/Tango/Zip's fonts in line with the rest of the app.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-admin-players-screen",
-    "version": "v28",
-    "title": "New admin screen: Players",
-    "body": "Lists every signed-up player, not just ones who've played something (unlike Stats' hide toggle, which only shows players with game history). Admin-only, hide/unhide from here.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-sudoku-restyle",
-    "version": "v29",
-    "title": "Mini Sudoku redesigned",
-    "body": "White cells throughout, bold black for given numbers vs. light gray for your own entries (not blue), a green outline for the selected cell instead of a filled tint, and a proper 4-column number pad with Erase and Undo built right in.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-mode-pill",
-    "version": "v30",
-    "title": "Mode indicator while playing",
-    "body": "A Challenge/Practice pill now shows the whole time you're playing, and tapping it switches modes without backing out to Home first.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-online-widget-selfhide",
-    "version": "v31",
-    "title": "Cleaned up the online widget",
-    "body": "No longer shows \"1 online\" when that one person is just you.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-last-seen",
-    "version": "v32",
-    "title": "Last seen tracking",
-    "body": "The admin Players screen now shows when each player was last active, not just whether they're online right now.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-daily-leaderboard",
-    "version": "v33",
-    "title": "Best times leaderboard",
-    "body": "Expanding a completed challenge day now shows the fastest 5 times for that specific day.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-favicon",
-    "version": "v34",
-    "title": "Added a favicon",
-    "body": "The browser tab now shows an actual icon instead of a blank one.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-admin-games",
-    "version": "v35",
-    "title": "New admin screen: Games",
-    "body": "Control which games show on the home screen, whether they're playable or \"coming soon\", and their display order.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-default-mode",
-    "version": "v36",
-    "title": "Choose your default mode",
-    "body": "New setting on the Profile screen: pick whether you land in Challenge or Practice mode after logging in.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-admingames-security-fix",
-    "version": "v37",
-    "title": "Fixed a gap in the new Games admin screen",
-    "body": "It didn't check admin status internally — the database would've blocked a non-admin from actually saving changes, but the screen would misleadingly let them try. Fixed.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-queens-no-guessing-fix",
-    "version": "v38",
-    "title": "Fixed Queens sometimes requiring a guess",
-    "body": "Found the real cause: some puzzles needed a brute-force deduction technique that's essentially unspottable by eye. Generation now rejects any layout that ever needs it — every hint step is now something a person could actually reason out, verified across dozens of test puzzles at every size.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-played-today-badge",
-    "version": "v39",
-    "title": "Played-today badge on Home",
-    "body": "See at a glance which games you've already completed today's challenge for, without opening each one.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-reset-mistake",
-    "version": "v40",
-    "title": "Reset now counts as a mistake in Queens",
-    "body": "Starting over after making progress counts against you, same spirit as everything else.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-hint-cooldown",
-    "version": "v41",
-    "title": "Hint cooldown, admin-configurable",
-    "body": "Admin can set how long Hint locks after each use, per game, with an optional per-day ramp so it can get stricter as difficulty increases through the week. Off by default everywhere.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-sudoku-section-flash",
-    "version": "v42",
-    "title": "Sudoku flashes a completed section",
-    "body": "Finish a row, column, or box correctly and it briefly pulses, not just the final win.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-hide-flash-fix",
-    "version": "v43",
-    "title": "Fixed hidden games flashing visible",
-    "body": "A hidden game would show briefly on every page load before disappearing. The config was loading async and defaulting to \"show everything\" in the meantime — now waits for the real answer first.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-rating-inline",
-    "version": "v44",
-    "title": "Rating moved onto the game screen",
-    "body": "No more jumping to a separate page after solving — the difficulty rating now appears right on the completed board. Challenge mode hides \"Play again\" since it's one attempt only; your result stays visible on the challenge screen's day list any time.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-release-notes-order-fix",
-    "version": "v45",
-    "title": "Fixed What's New showing entries out of order",
-    "body": "The sort relied on a timestamp that got recomputed differently every time the sync ran, so entries pushed at different times could interleave wrong. Now sorts by version number, which is fixed and never changes, and switched dates to a fixed value too so they stop drifting.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-release-notes-reactions",
-    "version": "v46",
-    "title": "Thumbs up/down on What's New",
-    "body": "React to any update — thumbs up if it's working, thumbs down if it's not. A thumbs-down automatically creates an entry on the Feedback board (with an optional note about what went wrong), so it's actually followed up on, not just a silent downvote.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-solved-lock-fix",
-    "version": "v47",
-    "title": "Fixed Undo/Reset working after solving",
-    "body": "Undo and Reset stayed clickable even after a puzzle was solved. Undoing the winning move and re-entering it triggered a second save attempt, which hit the once-a-day database limit and kicked you to \"already completed\" with no explanation. Both are now locked the moment a puzzle is solved, across all four games.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-22-rating-collapse",
-    "version": "v48",
-    "title": "Difficulty rating collapses after you pick",
-    "body": "Instead of staying open, it now shrinks to a small confirmation pill so the completed board underneath gets the space back.",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "2026-07-23-gameplay-fixes",
-    "version": "v49",
-    "title": "Gameplay fixes across all puzzle modes",
-    "body": "Difficulty rating now closes the solved overlay and leaves a compact rating indicator on the read-only board. Mini Sudoku hints reveal the correct number, incorrect entries increment mistakes immediately, hint cooldowns resist rapid repeated clicks, and dashboard activity is separated between Challenge and Practice.",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "2026-07-23-admin-reset",
-    "version": "v50",
-    "title": "Admin: reset today's challenge",
-    "body": "Admins can reset today's saved challenge results for an individual game from the Games admin screen, allowing everyone to replay that day's challenge.",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "2026-07-23-release-workflow",
-    "version": "v51",
-    "title": "Release notes workflow repaired",
-    "body": "Updated checkout to the Node.js 24-compatible action, added clear secret and changelog validation, and made Supabase errors visible in GitHub Actions instead of failing without a useful response body.",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "2026-07-23-rating-feedback-polish",
-    "version": "v52",
-    "title": "Clearer difficulty rating feedback",
-    "body": "After choosing a difficulty, the solved panel now briefly confirms that the rating was saved before returning to the board. The saved rating is shown as a compact six-bar indicator matching the original picker, with the selected level highlighted.",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "2026-07-23-release-note-reaction-counts",
-    "version": "v53",
-    "title": "Clearer reactions on What's New",
-    "body": "Thumbs up and thumbs down now always show their counts and update immediately. Your selected reaction changes colour, tapping it again removes it, and choosing the opposite reaction switches your vote instead of allowing both.",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "v54-release-reaction-persistence",
-    "version": "v54",
-    "date": "2026-07-23",
-    "title": "What's New reactions now persist",
-    "body": "Fixed release-note reactions reverting immediately after selection by using explicit insert, update and delete operations instead of an RLS-sensitive upsert."
-  },
-  {
-    "id": "v56-hide-release-notes",
-    "version": "v56",
-    "date": "2026-07-23",
-    "title": "Admins can hide What's New entries",
-    "body": "Admins can now hide or show individual What's New entries. Hidden updates remain visible to admins with a clear badge, are excluded for ordinary players, and retain their existing reaction counts."
-  },
-  {
-    "id": "2026-07-catchup-rewards",
-    "version": "v57",
-    "title": "Points, streaks & levels",
-    "body": "Every solve earns points based on speed, mistakes, and hints — build a daily streak, level up over time, and spend points in the new Rewards shop (admin-approved redemptions, plus a wishlist and player-to-player transfers).",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "2026-07-catchup-admin-rewards",
-    "version": "v58",
-    "title": "New admin screen: Rewards",
-    "body": "Tune the points formula, manage the rewards catalog, review wishlist and redemption requests, and manually adjust a player's balance.",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "2026-07-catchup-privacy",
-    "version": "v59",
-    "title": "Hidden-player privacy, properly complete",
-    "body": "The earlier hide feature only hid the profile row itself. Now a hidden player's stats, leaderboard entries, presence, team memberships, feedback, votes, and pokes are all hidden at the database level too.",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "2026-07-23-hint-cooldown-refetch-fix",
-    "version": "v60",
-    "title": "Fixed hint cooldown not taking effect",
-    "body": "Game settings only loaded once when the app first opened, so changing the hint cooldown mid-session wouldn't reach an already-open game without a full reload. Now refetches the moment you enter a game.",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "2026-07-23-new-game-geo",
-    "version": "v61",
-    "title": "New game: Geo",
-    "body": "Five geography questions a day — a simplified world map plus capitals, landmarks, and native wildlife by continent. Difficulty ramps through the week from famous/easy to properly obscure. 50/50 hint available, same cooldown system as the other games.",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "2026-07-23-blank-page-fix",
-    "version": "v62",
-    "title": "Fixed a blank-page crash",
-    "body": "A missing icon import in Stats.jsx crashed the entire app before anything could render, including login. This time verified by actually running the built app in a real browser and checking for errors, not just a successful build.",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "2026-07-23-geo-map-redesign",
-    "version": "v63",
-    "title": "Fixed Geo's map — it was genuinely bad",
-    "body": "The first version was built blind, without ever actually seeing it rendered, and it showed — unrecognizable blob shapes. Rebuilt with real visual verification this time (actual screenshots checked at each step, not guessed coordinates), so the continents now read clearly and are properly proportioned.",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "2026-07-23-geo-map-real-data",
-    "version": "v64",
-    "title": "Geo's map now uses real geographic data",
-    "body": "Replaced the hand-drawn continent shapes with ones traced from actual Natural Earth coastline data, simplified down cleanly. Should read as real continents now, not abstract blobs.",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "2026-07-23-geo-map-nz-antarctica",
-    "version": "v65",
-    "title": "Added New Zealand, Greenland, Madagascar & Antarctica to Geo's map",
-    "body": "The first real-data pass only kept the single largest landmass per continent, silently dropping genuinely significant secondary ones. Now keeps any landmass at least 1.5% of the mainland's size, plus a simple decorative Antarctica band so the map doesn't look cropped.",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "2026-07-23-geo-countries-expansion",
-    "version": "v66",
-    "title": "Geo's question pool nearly tripled",
-    "body": "Added 118 countries (deliberately excluding every transcontinental/contested case — Russia, Turkey, Kazakhstan, the Caucasus, Cyprus — so nothing is debatable), bringing the total pool from ~60 facts to 177. Static data, no external API dependency, and this scale should hold up to daily play for a long time before repetition becomes noticeable.",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "2026-07-25-points-exploit-fix",
-    "version": "v111",
-    "title": "Closed a real points exploit in team challenges",
-    "body": "Any team owner could set a weekly team challenge's reward up to 100,000 points, credited straight to their real balance on completion — with no relation to normal scoring. That reward is now capped at 500 (enforced in three independent places), and existing challenges above that are clamped down automatically. No action needed.",
-    "date": "2026-07-25"
-  },
-  {
-    "id": "2026-07-25-points-economy-hardening",
-    "version": "v111",
-    "title": "Points economy hardened against misconfiguration",
-    "body": "The admin-tunable scoring rules had no upper bound, so a stray extra zero would have applied to every game, for everyone, instantly. Every scoring field now has sane limits, and point awards are clamped to an absolute ceiling independent of those settings. Normal play is unaffected — every default was already well inside the new limits.",
-    "date": "2026-07-25"
-  },
-  {
-    "id": "2026-07-25-geo-subregions",
-    "version": "v111",
-    "title": "Geo's world got a second layer: subregions",
-    "body": "All 117 countries now carry a subregion (Southern Europe, South-eastern Asia, Andean South America, and so on) between continent and country. This is the data layer the new Zoom game drills through — continent, then region, then country — and it's available for future geography features too.",
-    "date": "2026-07-25"
-  },
-  {
-    "id": "2026-07-25-zoom-launch",
-    "version": "v111",
-    "title": "New game: Zoom",
-    "body": "Three rounds, three quick two-option questions each — continent, then region, then country — all following one clue (an animal, a landmark, a flag) all the way down to the answer. Same daily-challenge structure as the other games, same scoring pipeline, no separate points system.",
-    "date": "2026-07-25"
-  },
-  {
-    "id": "2026-07-25-zoom-followup",
-    "version": "v111",
-    "title": "Zoom: clearer controls, flora questions, easier recall",
-    "body": "Removed the toolbar's redundant ‘New’ button (Restart already covers it). Answer buttons now sit side by side. The continent/region breadcrumb now reveals what was actually correct at each step you've passed, so reaching the country question doesn't require remembering the continent/region cold. Also added flora questions (24 countries) alongside the existing animal/landmark/food/currency/language/flag clues.",
-    "date": "2026-07-25"
-  },
-  {
-    "id": "2026-07-25-toolbar-unification",
-    "version": "v111",
-    "title": "Unified game toolbars, fixed a misleading icon",
-    "body": "Geo had the same broken 'New' button Zoom had (a no-op mid-quiz) — removed, folded into Restart. The Eraser icon on Geo and Zoom's restart button was misleading (nothing is being erased, a fresh quiz is generated) — swapped for a refresh icon. Disabled toolbar buttons (Undo before your first move, Hint on cooldown, etc.) were low-contrast enough to read as missing rather than temporarily unavailable — bumped visibility across every game. Removed a small, unexplained icon that appeared under Zoom's flag prompts.",
-    "date": "2026-07-25"
-  },
-  {
-    "id": "2026-07-25-home-layout-redesign",
-    "version": "v111",
-    "title": "Home screen: smaller header, straight to the games",
-    "body": "The giant centered app-name heading is gone, replaced with a compact header row like the games hubs this app is modeled on (NYT Games, LinkedIn Games). Points and streak moved into a small chip instead of a separate big card. Games start noticeably higher on the screen — nothing about what the page does changed, just how much space it took to get there.",
-    "date": "2026-07-25"
-  },
-  {
-    "id": "2026-07-25-gameplay-visual-polish",
-    "version": "v111",
-    "title": "Game polish: bigger grids, thicker walls, gloss effects, smarter errors",
-    "body": "Zip: 6x6 → 7x7 grid for more substance; walls thicker (3px → 5px). Queens: board border-radius reduced from rounded-xl to rounded-lg, less cartoonish. Tango: sun/moon icons 40% bigger; constraint symbols (=/×) bigger and in larger containers; sun now fully filled instead of outline. Home: practice/challenge toggle now has a gloss effect with gradient overlay and enhanced shadows. Tango validation: errors no longer show instantly while typing — now debounced to 2 seconds, only shown after the full pause (not during continuous editing). Fixed race condition in practice-mode checkboxes that showed incomplete state before data finished loading.",
-    "date": "2026-07-25"
-  },
-  {
-    "id": "2026-07-25-gameplay-fixes-and-polish-part-2",
-    "version": "v111",
-    "title": "Game fixes: Zip difficulty scaling, Tango smart delays, gloss effects, green dot bug, no more holes",
-    "body": "Zip: checkpoint numbers now scale Monday (4) → Sunday (16); walls increase 0→7; black holes removed entirely (visual & gameplay); tunnels capped at 1; grid size 7×7. Tango: conflict errors now debounced to 2 seconds but clear instantly (no delayed clearing). Queens: board border-radius refined. App: iOS-style gloss effect applied globally via new .gloss-button class; Home toggle now uses it. Home: fixed race condition in practice-mode checkmarks — only show after data loads. Presence: immediately clears when exiting a game (was delayed up to 45s, caused 'playing' indicator to persist).",
-    "date": "2026-07-25"
-  },
-  {
-    "id": "2026-07-25-feedback-part-2-comprehensive",
-    "version": "v112",
-    "title": "Complete feedback implementation: Text-only game buttons, immediate Tango errors, gloss CSS foundation, Zip tuning",
-    "body": "Game Toolbars: Converted all 6 games from icon-only to TEXT LABELS spread evenly across top edge (Undo/Reset/New/Hint or Restart/Hint). Clean typography, mobile-friendly. Tango: Constraint violations (sun+sun with =) now show red IMMEDIATELY with no delay. Zip: Checkpoints scale 4→16 (Mon-Sun); walls 0→7; tunnels max 1; removed all black hole visuals; grid 7×7 with 5px walls. Presence: Fixed 45s delay bug — leaving a game now clears the green 'playing' indicator immediately. Gloss CSS: Defined global .gloss-button class with iOS-style gradient overlay + inset shadows; applied to game toolbars and Home toggle as foundation. Remaining: Full gloss rollout across all app pages (Profile, Teams, Admin) and team challenge completion UI redesign.",
-    "date": "2026-07-25"
-  },
-  {
-    "id": "2026-07-25-complete-feedback-implementation",
-    "version": "v113",
-    "title": "Complete feedback implementation: Full gloss rollout, team challenge completion redesign, text buttons across all games",
-    "body": "COMPLETE IMPLEMENTATION: (1) Gloss Effect: Applied .gloss-button class globally to Login buttons, ProfileSetup buttons, Home game tiles + team challenge cards. iOS-style gradient + shadow applied consistently across app. (2) Game Toolbars: All 6 games now show text-only labels (Undo/Reset/New/Hint or Restart/Hint), spread evenly at top, mobile-responsive. (3) Tango Errors: Constraint violations display immediately with zero delay. (4) Zip Scaling: Checkpoints 4→16 (Mon-Sun), walls 0→7, max 1 tunnel, no black holes. (5) Team Challenge Completion: New prominent completion card shows 🏆 trophy, winner name + icon, points earned (large mobile-friendly text). (6) Presence Bug: Fixed green 'playing' indicator lag — clears immediately on game exit. All files verified, clean build successful.",
-    "date": "2026-07-25"
+import { CONTINENTS } from "../geo/geoRegions.js";
+import { COUNTRIES } from "../geo/geoData.js";
+import { SUBREGIONS_BY_CONTINENT, subregionsFor } from "../geo/geoSubregions.js";
+import { shuffle } from "../geo/geoGenerator.js";
+
+// Mon..Sun: same ramp Geo uses, so the two games feel consistent about
+// which day is "easy" and which is "anything goes".
+const DIFFICULTY_CEILING = [2, 2, 2, 3, 3, 3, 3];
+const ROUNDS_PER_QUIZ = 3;
+const LEVELS_PER_ROUND = 3; // continent -> subregion -> country
+
+// One hook fact per round, drawn from whichever of these a country actually
+// has (every country always has a capital, so that's the guaranteed
+// fallback — nothing ever comes back empty-handed).
+const CLUE_SOURCES = [
+  { type: "animal", field: "animals" },
+  { type: "flora", field: "flora" },
+  { type: "landmark", field: "landmarks" },
+  { type: "food", field: "foods" },
+  { type: "naturalFeature", field: "naturalFeatures" },
+  { type: "currency", field: "currencies", pick: (v) => v?.name },
+  { type: "language", field: "languages", pick: (v) => v?.name },
+];
+
+const LEVEL1_TEMPLATES = {
+  capital: (name) => `Which continent is the city of ${name} on?`,
+  animal: (name) => `Which continent is the ${name} native to?`,
+  flora: (name) => `Which continent is ${name} famously grown on?`,
+  landmark: (name) => `Which continent would you find ${name} on?`,
+  food: (name) => `Which continent does the dish ${name} come from?`,
+  naturalFeature: (name) => `Which continent is ${name} located on?`,
+  currency: (name) => `Which continent uses a currency called the ${name}?`,
+  language: (name) => `Which continent is ${name} widely spoken on, in this country?`,
+  flag: () => "Which continent does this flag belong to?",
+};
+
+const LEVEL2_TEMPLATES = {
+  capital: (name, continent) => `Still thinking of ${name} — which part of ${continent} is it in?`,
+  animal: (name, continent) => `Still thinking of the ${name} — which part of ${continent} is its home?`,
+  flora: (name, continent) => `Still thinking of ${name} — which part of ${continent} is it grown in?`,
+  landmark: (name, continent) => `Still thinking of ${name} — which part of ${continent} is it in?`,
+  food: (name, continent) => `Still thinking of ${name} — which part of ${continent} does it come from?`,
+  naturalFeature: (name, continent) => `Still thinking of ${name} — which part of ${continent} is it in?`,
+  currency: (name, continent) => `Same currency, the ${name} — which part of ${continent} is it used in?`,
+  language: (name, continent) => `Same country — which part of ${continent} is it in?`,
+  flag: (name, continent) => `Same flag — which part of ${continent} does it belong to?`,
+};
+
+function level3Prompt(subregion) {
+  return `Down to two — which country in ${subregion} is it?`;
+}
+
+function pickClue(country) {
+  const usable = shuffle(CLUE_SOURCES).find(({ field, pick }) => {
+    const value = country[field]?.[0];
+    return pick ? Boolean(pick(value)) : Boolean(value);
+  });
+  if (!usable) {
+    return { type: "capital", name: country.capital || country.capitals?.[0] || country.name };
   }
-]
+  const raw = shuffle(country[usable.field])[0];
+  const name = usable.pick ? usable.pick(raw) : raw;
+  return { type: usable.type, name, code: usable.type === "currency" || usable.type === "language" ? raw?.code : undefined };
+}
+
+function otherOption(pool, exclude) {
+  const candidates = pool.filter((value) => value !== exclude);
+  return shuffle(candidates)[0];
+}
+
+function buildRound(country, roundIndex, useFlag) {
+  const clue = useFlag && country.flagEmoji ? { type: "flag", name: country.name } : pickClue(country);
+  const subregion = country.subregion;
+  const subregionOptions = subregionsFor(country.continent);
+  const continentDistractor = otherOption(CONTINENTS.filter((c) => c !== "Antarctica"), country.continent);
+  const subregionDistractor = otherOption(subregionOptions, subregion);
+
+  const sameSubregion = COUNTRIES.filter((c) => c.id !== country.id && c.subregion === subregion && c.continent === country.continent);
+  const sameContinent = COUNTRIES.filter((c) => c.id !== country.id && c.continent === country.continent);
+  const countryDistractorRecord = shuffle(sameSubregion.length ? sameSubregion : sameContinent)[0] || shuffle(COUNTRIES.filter((c) => c.id !== country.id))[0];
+
+  const base = {
+    roundId: `zoom:${country.id}:${roundIndex}`,
+    roundIndex,
+    clueType: clue.type,
+    clueName: clue.name,
+    flagCode: clue.type === "flag" ? country.id : undefined,
+    flagEmoji: clue.type === "flag" ? country.flagEmoji : undefined,
+    countryId: country.id,
+    countryName: country.name,
+    continent: country.continent,
+    subregion,
+  };
+
+  const levels = [
+    {
+      ...base,
+      levelIndex: 0,
+      levelKey: "continent",
+      prompt: (LEVEL1_TEMPLATES[clue.type] || LEVEL1_TEMPLATES.capital)(clue.name),
+      answer: country.continent,
+      options: shuffle([country.continent, continentDistractor]),
+    },
+    {
+      ...base,
+      levelIndex: 1,
+      levelKey: "subregion",
+      prompt: (LEVEL2_TEMPLATES[clue.type] || LEVEL2_TEMPLATES.capital)(clue.name, country.continent),
+      answer: subregion,
+      options: shuffle([subregion, subregionDistractor]),
+    },
+    {
+      ...base,
+      levelIndex: 2,
+      levelKey: "country",
+      prompt: level3Prompt(subregion),
+      answer: country.name,
+      options: shuffle([country.name, countryDistractorRecord?.name || "—"]),
+      countryDistractorId: countryDistractorRecord?.id,
+    },
+  ];
+
+  levels[0].isFirstOfRound = true;
+  levels[levels.length - 1].isLastOfRound = true;
+  return levels;
+}
+
+function chooseTargets(ceiling, recentIds = []) {
+  const pool = COUNTRIES.filter((c) => c.difficulty <= ceiling);
+  const fresh = shuffle(pool.filter((c) => !recentIds.includes(c.id)));
+  const stale = shuffle(pool.filter((c) => recentIds.includes(c.id)));
+  const ordered = [...fresh, ...stale];
+  const chosen = [];
+  for (const country of ordered) {
+    if (chosen.length >= ROUNDS_PER_QUIZ) break;
+    chosen.push(country);
+  }
+  return chosen;
+}
+
+// Returns a flat array of "steps" (one per level, ROUNDS_PER_QUIZ *
+// LEVELS_PER_ROUND long) — deliberately flat, not nested, so the game
+// component can reuse the same qIdx/pick/next pattern every other game
+// here already uses.
+function generateZoomQuiz(dayIdx, recentIds = []) {
+  const ceiling = DIFFICULTY_CEILING[dayIdx] ?? 3;
+  const targets = chooseTargets(ceiling, recentIds);
+  const steps = targets.flatMap((country, roundIndex) => buildRound(country, roundIndex, Math.random() < 0.4));
+  return steps;
+}
+
+export { generateZoomQuiz, ROUNDS_PER_QUIZ, LEVELS_PER_ROUND, DIFFICULTY_CEILING };

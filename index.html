@@ -1,21 +1,33 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Loaded once here, globally, rather than per-component: a <style>
-         tag inside a game/screen component only exists in the DOM while
-         that component is mounted, so an @import there disappears the
-         moment you navigate away — every other screen using 'Fredoka'
-         would silently fall back to the browser default font. -->
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <title>I'mBoredToday</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
+import { Swords, Coffee } from "lucide-react";
+import { useI18n } from "./lib/i18n.jsx";
+
+const PANEL = "#FFFFFF";
+const INK = "#1B2129";
+
+// Floating switch shown while playing. The label describes the destination
+// so a Practice screen offers “Challenge”, and vice versa.
+export default function ModePill({ mode, onSwitch }) {
+  const { t } = useI18n();
+  const targetIsChallenge = mode !== "challenge";
+  return (
+    <button
+      onClick={onSwitch}
+      className="gloss-button nav-btn flex items-center gap-1.5 rounded-full pl-2.5 pr-3 py-1.5"
+      style={{
+        "--nav-glow": targetIsChallenge ? "rgba(217,174,88,0.35)" : "rgba(18,148,106,0.35)",
+        "--nav-border": targetIsChallenge ? "rgba(217,174,88,0.4)" : "rgba(18,148,106,0.4)",
+        position: "fixed",
+        top: 16,
+        right: "max(16px, calc((100vw - var(--game-nav-width, 512px)) / 2))",
+        zIndex: 50,
+        background: "rgba(255,255,255,0.9)",
+        backdropFilter: "blur(6px)",
+        border: "1px solid rgba(16,24,40,0.12)",
+        color: INK,
+      }}
+    >
+      {targetIsChallenge ? <Swords size={13} style={{ color: "#D9AE58" }} /> : <Coffee size={13} style={{ color: "#12946A" }} />}
+      <span className="text-xs font-semibold">{targetIsChallenge ? t("common.challenge") : t("common.practice")}</span>
+    </button>
+  );
+}

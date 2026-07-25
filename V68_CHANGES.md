@@ -1,14 +1,59 @@
-# v68
+# Puzzle Games
 
-## Requested
-- Challenge mode's weekly-calendar screen now renders inside the same rounded white panel (shadow, border, heading treatment) used by the actual game screens, so it matches Practice mode's look and feel instead of sitting as loose rows on the grey page background.
-- Points transfers now notify the recipient: a badge appears under the account bubble on login, the "My progress" menu item gets its own "· new" badge, and My Progress shows a dismissible banner naming who sent the points and how many. Clears automatically once My Progress has been opened.
+Currently: Queens. Structured so more games can be dropped into `src/games/`
+and wired into `src/App.jsx` as they're built.
 
-## Also fixed while reviewing
-- **Root cause of the heading-inconsistency reports (Geo and others):** the Fredoka heading font was only ever loaded by a `<style>@import</style>` embedded inside whichever game/Home/Login screen happened to be mounted. Since a `<style>` tag only exists in the DOM while its component is mounted, navigating to any other screen (Challenge's weekly calendar, Progress, Teams, Stats, Feedback, ReleaseNotes, ProfileSetup, every Admin screen) removed the font registration entirely and those screens silently fell back to the browser's default sans-serif — which is exactly why, e.g., Geo's heading looked different depending on whether you got there via Practice (straight into the game, font loads) or Challenge (calendar screen first, no font, falls back). Fixed by loading the font once, globally, in `index.html`, and removed the now-redundant per-component imports.
-- Added a top-level React error boundary (`src/ErrorBoundary.jsx`) plus a per-game one — a crash in one puzzle no longer white-screens the whole app; it now drops the player back to Home with a "Try again" option.
-- Code-split all five games and the less-frequent screens (Teams, Stats, Progress, Feedback, What's New, Admin*) via `React.lazy`/`Suspense` — first-load bundle dropped from ~675KB to ~433KB.
-- Fixed an unguarded `JSON.parse` on localStorage in the completed-feedback notification hook that could throw on corrupted data.
-- Restored pinch-to-zoom (removed `user-scalable=no`/`maximum-scale=1.0`) — disabling it is a WCAG 1.4.4 accessibility violation for low-vision users.
-- Fixed the account-bubble notification dot to show the count relevant to the viewer's role (open tickets for admins, their own updates for everyone else) instead of always showing the admin count.
-- Menu items in the account dropdown are now keyed by a stable id instead of their (sometimes badge-dependent) label, so a badge count changing no longer replays that item's pop-in animation.
+## Local dev
+
+```bash
+npm install
+npm run dev
+```
+
+Opens at http://localhost:5173
+
+## Build
+
+```bash
+npm run build
+```
+
+Outputs static files to `dist/`.
+
+## Deploy (Vercel — free, easiest)
+
+1. Push this folder to a new GitHub repo
+2. Go to vercel.com → "Add New Project" → import the repo
+3. Vercel auto-detects Vite, no config needed — click Deploy
+4. You get a live URL immediately (e.g. `puzzle-games.vercel.app`), and it
+   redeploys automatically on every push to `main`
+
+## Deploy (Netlify — also free, near-identical)
+
+1. Push to GitHub
+2. netlify.com → "Add new site" → import the repo
+3. Build command: `npm run build`, publish directory: `dist`
+4. Deploy
+
+## Custom domain
+
+Both Vercel and Netlify let you attach your own domain for free under
+Project Settings → Domains — just point a CNAME/A record at them.
+
+## Hidden-player privacy migration
+
+After deploying this version, run this file once in **Supabase Dashboard → SQL Editor**:
+
+```text
+supabase/migration_complete_hidden_user_privacy.sql
+```
+
+The earlier implementation hid only the `profiles` row. This migration also hides the player's statistics, leaderboard entries, presence, team memberships, feedback, votes, release-note reactions and pokes at database level. Admins and the hidden player can still see the player's own data.
+
+## Rewards & Progression v60
+
+Run `supabase/migration_rewards_progression_v60.sql` after the v59 migrations.
+It adds secure server-side Points awarding, streaks, levels, transfers, rewards,
+wishes, redemptions, streak protection, and admin configuration. Players only
+see a simple Points/Streak/Level interface; calculation details remain stored
+in the private ledger for tuning and audit.

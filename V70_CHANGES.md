@@ -1,10 +1,13 @@
-# v70 changes
+# v65 changes
 
-- Feedback edits now retry without `updated_at` when an older PostgREST schema cache has not refreshed yet.
-- Added an idempotent v70 Supabase migration that creates the missing feedback and hint-cooldown columns, restores the author edit policy, and reloads the API schema cache.
-- Admins can again see the online-player bubble and poke visible players; admin mode can also include accounts hidden from ordinary players.
-- Added a dedicated Admin bubble and moved Players, Games, and Rewards into it instead of mixing admin tools into the user menu.
+- Zip no longer counts normal route exploration, backtracking, or alternative-path testing as mistakes.
+- Replaced the Zip snake face with a clean high-contrast drag handle.
+- Fixed Zip solved overlay layering and hides checkpoint numbers after completion.
+- Replaced old Home icon+text navigation on updated screens with a compact back arrow.
+- Restyled challenge headings to match game title typography.
+- Constrained in-game Back and Practice/Challenge controls to the centred game width on large Windows screens.
+- Feedback authors can edit their own open items.
+- Closing feedback creates an in-app notification badge for its author until Feedback is opened.
+- Added Monday/Sunday week-start setting to My Profile and challenge calendar ordering.
 
-## Deployment requirement
-
-Run `supabase/migration_v70_feedback_hints_admin.sql` once in the Supabase SQL Editor before or alongside deploying this build.
+Run `supabase/migration_v65_feedback_week_start.sql` before deploying this version. The migration is self-contained and safely adds any required feedback columns if they are missing.

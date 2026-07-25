@@ -1,5 +1,9 @@
-# UI v63 changes
+# Geo v61.9 changes
 
-- Replaced the Queens region palette with the softer peach, lavender, cornflower, sage, coral, grey, lime and stone colours from the supplied reference.
-- Replaced Tango's generic outline sun with a custom filled-centre sunburst icon using rounded rays.
-- Softened the Tango sun and moon colours for a more polished, cohesive appearance.
+- Expanded `geoFacts.json` to a richer reusable country schema with arrays for capitals, cities, languages, currencies, animals, landmarks, foods, natural features, aliases and facts.
+- Country-based animal, landmark, food and natural-feature questions are now generated from the JSON data.
+- Reworked practice repetition protection to track 1,000 question-history entries, avoid recently used facts and countries, and choose the least-recently-seen item when fresh content is exhausted.
+- Removed the forced polar question from every round.
+- Fixed the invalid Geo source syntax that prevented the v61.8 map changes from compiling.
+- Greenland and New Zealand are separate visible paths with enlarged invisible mobile tap targets.
+- Antarctica is thinner and positioned below South America.

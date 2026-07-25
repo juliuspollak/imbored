@@ -1,0 +1,6506 @@
+{
+  "countries": [
+    {
+      "id": "ca",
+      "name": "Canada",
+      "continent": "North America",
+      "difficulty": 1,
+      "capital": "Ottawa",
+      "flag": "🇨🇦",
+      "currencyCode": "CAD",
+      "currencyName": "Canadian Dollar",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "CA",
+      "aliases": [],
+      "capitals": [
+        "Ottawa"
+      ],
+      "cities": [
+        "Toronto",
+        "Vancouver",
+        "Montreal",
+        "Ottawa"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "CAD",
+          "name": "Canadian Dollar"
+        }
+      ],
+      "animals": [
+        "Moose",
+        "Beaver",
+        "Polar bear"
+      ],
+      "landmarks": [
+        "CN Tower",
+        "Niagara Falls"
+      ],
+      "foods": [
+        "Poutine",
+        "Maple syrup"
+      ],
+      "naturalFeatures": [
+        "Rocky Mountains",
+        "Niagara Falls"
+      ],
+      "facts": [],
+      "flagEmoji": "🇨🇦",
+      "flagAsset": "/flags/ca.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ca",
+      "subregion": "Northern America",
+      "flora": [
+        "sugar maple"
+      ]
+    },
+    {
+      "id": "us",
+      "name": "United States",
+      "continent": "North America",
+      "difficulty": 1,
+      "capital": "Washington D.C.",
+      "flag": "🇺🇸",
+      "currencyCode": "USD",
+      "currencyName": "US Dollar",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "US",
+      "aliases": [],
+      "capitals": [
+        "Washington D.C."
+      ],
+      "cities": [
+        "New York",
+        "Los Angeles",
+        "Chicago",
+        "Washington D.C."
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "USD",
+          "name": "US Dollar"
+        }
+      ],
+      "animals": [
+        "Bald eagle",
+        "American bison",
+        "Alligator"
+      ],
+      "landmarks": [
+        "Statue of Liberty",
+        "Golden Gate Bridge",
+        "Mount Rushmore"
+      ],
+      "foods": [
+        "Hamburger",
+        "Apple pie"
+      ],
+      "naturalFeatures": [
+        "Grand Canyon",
+        "Yellowstone"
+      ],
+      "facts": [],
+      "flagEmoji": "🇺🇸",
+      "flagAsset": "/flags/us.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "us",
+      "subregion": "Northern America",
+      "flora": [
+        "giant sequoia"
+      ]
+    },
+    {
+      "id": "mx",
+      "name": "Mexico",
+      "continent": "North America",
+      "difficulty": 1,
+      "capital": "Mexico City",
+      "flag": "🇲🇽",
+      "currencyCode": "MXN",
+      "currencyName": "Mexican Peso",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "MX",
+      "aliases": [],
+      "capitals": [
+        "Mexico City"
+      ],
+      "cities": [
+        "Mexico City",
+        "Guadalajara",
+        "Cancún"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "MXN",
+          "name": "Mexican Peso"
+        }
+      ],
+      "animals": [
+        "Axolotl",
+        "Jaguar"
+      ],
+      "landmarks": [
+        "Chichén Itzá",
+        "Teotihuacán"
+      ],
+      "foods": [
+        "Tacos",
+        "Mole"
+      ],
+      "naturalFeatures": [
+        "Copper Canyon"
+      ],
+      "facts": [],
+      "flagEmoji": "🇲🇽",
+      "flagAsset": "/flags/mx.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "mx",
+      "subregion": "Central America",
+      "flora": [
+        "dahlia",
+        "saguaro cactus"
+      ]
+    },
+    {
+      "id": "cu",
+      "name": "Cuba",
+      "continent": "North America",
+      "difficulty": 2,
+      "capital": "Havana",
+      "flag": "🇨🇺",
+      "currencyCode": "CUC",
+      "currencyName": "Peso Convertible",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "CU",
+      "aliases": [],
+      "capitals": [
+        "Havana"
+      ],
+      "cities": [
+        "Havana"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "CUC",
+          "name": "Peso Convertible"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇨🇺",
+      "flagAsset": "/flags/cu.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "cu",
+      "subregion": "Caribbean",
+      "flora": []
+    },
+    {
+      "id": "jm",
+      "name": "Jamaica",
+      "continent": "North America",
+      "difficulty": 2,
+      "capital": "Kingston",
+      "flag": "🇯🇲",
+      "currencyCode": "JMD",
+      "currencyName": "Jamaican Dollar",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "JM",
+      "aliases": [],
+      "capitals": [
+        "Kingston"
+      ],
+      "cities": [
+        "Kingston"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "JMD",
+          "name": "Jamaican Dollar"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇯🇲",
+      "flagAsset": "/flags/jm.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "jm",
+      "subregion": "Caribbean",
+      "flora": []
+    },
+    {
+      "id": "pa",
+      "name": "Panama",
+      "continent": "North America",
+      "difficulty": 2,
+      "capital": "Panama City",
+      "flag": "🇵🇦",
+      "currencyCode": "PAB",
+      "currencyName": "Balboa",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "PA",
+      "aliases": [],
+      "capitals": [
+        "Panama City"
+      ],
+      "cities": [
+        "Panama City"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "PAB",
+          "name": "Balboa"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇵🇦",
+      "flagAsset": "/flags/pa.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "pa",
+      "subregion": "Central America",
+      "flora": []
+    },
+    {
+      "id": "cr",
+      "name": "Costa Rica",
+      "continent": "North America",
+      "difficulty": 2,
+      "capital": "San José",
+      "flag": "🇨🇷",
+      "currencyCode": "CRC",
+      "currencyName": "Costa Rican Colon",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "CR",
+      "aliases": [],
+      "capitals": [
+        "San José"
+      ],
+      "cities": [
+        "San José"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "CRC",
+          "name": "Costa Rican Colon"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇨🇷",
+      "flagAsset": "/flags/cr.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "cr",
+      "subregion": "Central America",
+      "flora": []
+    },
+    {
+      "id": "gt",
+      "name": "Guatemala",
+      "continent": "North America",
+      "difficulty": 2,
+      "capital": "Guatemala City",
+      "flag": "🇬🇹",
+      "currencyCode": "GTQ",
+      "currencyName": "Quetzal",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "GT",
+      "aliases": [],
+      "capitals": [
+        "Guatemala City"
+      ],
+      "cities": [
+        "Guatemala City"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "GTQ",
+          "name": "Quetzal"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇬🇹",
+      "flagAsset": "/flags/gt.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "gt",
+      "subregion": "Central America",
+      "flora": []
+    },
+    {
+      "id": "hn",
+      "name": "Honduras",
+      "continent": "North America",
+      "difficulty": 3,
+      "capital": "Tegucigalpa",
+      "flag": "🇭🇳",
+      "currencyCode": "HNL",
+      "currencyName": "Lempira",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "HN",
+      "aliases": [],
+      "capitals": [
+        "Tegucigalpa"
+      ],
+      "cities": [
+        "Tegucigalpa"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "HNL",
+          "name": "Lempira"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇭🇳",
+      "flagAsset": "/flags/hn.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "hn",
+      "subregion": "Central America",
+      "flora": []
+    },
+    {
+      "id": "ht",
+      "name": "Haiti",
+      "continent": "North America",
+      "difficulty": 3,
+      "capital": "Port-au-Prince",
+      "flag": "🇭🇹",
+      "currencyCode": "HTG",
+      "currencyName": "Gourde",
+      "languageCode": "fr",
+      "languageName": "French",
+      "iso2": "HT",
+      "aliases": [],
+      "capitals": [
+        "Port-au-Prince"
+      ],
+      "cities": [
+        "Port-au-Prince"
+      ],
+      "languages": [
+        {
+          "code": "fr",
+          "name": "French"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "HTG",
+          "name": "Gourde"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇭🇹",
+      "flagAsset": "/flags/ht.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ht",
+      "subregion": "Caribbean",
+      "flora": []
+    },
+    {
+      "id": "do",
+      "name": "Dominican Republic",
+      "continent": "North America",
+      "difficulty": 3,
+      "capital": "Santo Domingo",
+      "flag": "🇩🇴",
+      "currencyCode": "DOP",
+      "currencyName": "Dominican Peso",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "DO",
+      "aliases": [],
+      "capitals": [
+        "Santo Domingo"
+      ],
+      "cities": [
+        "Santo Domingo"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "DOP",
+          "name": "Dominican Peso"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇩🇴",
+      "flagAsset": "/flags/do.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "do",
+      "subregion": "Caribbean",
+      "flora": []
+    },
+    {
+      "id": "bz",
+      "name": "Belize",
+      "continent": "North America",
+      "difficulty": 3,
+      "capital": "Belmopan",
+      "flag": "🇧🇿",
+      "currencyCode": "BZD",
+      "currencyName": "Belize Dollar",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "BZ",
+      "aliases": [],
+      "capitals": [
+        "Belmopan"
+      ],
+      "cities": [
+        "Belmopan"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "BZD",
+          "name": "Belize Dollar"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇧🇿",
+      "flagAsset": "/flags/bz.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "bz",
+      "subregion": "Central America",
+      "flora": []
+    },
+    {
+      "id": "ni",
+      "name": "Nicaragua",
+      "continent": "North America",
+      "difficulty": 3,
+      "capital": "Managua",
+      "flag": "🇳🇮",
+      "currencyCode": "NIO",
+      "currencyName": "Cordoba Oro",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "NI",
+      "aliases": [],
+      "capitals": [
+        "Managua"
+      ],
+      "cities": [
+        "Managua"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "NIO",
+          "name": "Cordoba Oro"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇳🇮",
+      "flagAsset": "/flags/ni.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ni",
+      "subregion": "Central America",
+      "flora": []
+    },
+    {
+      "id": "sv",
+      "name": "El Salvador",
+      "continent": "North America",
+      "difficulty": 3,
+      "capital": "San Salvador",
+      "flag": "🇸🇻",
+      "currencyCode": "SVC",
+      "currencyName": "El Salvador Colon",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "SV",
+      "aliases": [],
+      "capitals": [
+        "San Salvador"
+      ],
+      "cities": [
+        "San Salvador"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "SVC",
+          "name": "El Salvador Colon"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇸🇻",
+      "flagAsset": "/flags/sv.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "sv",
+      "subregion": "Central America",
+      "flora": []
+    },
+    {
+      "id": "bs",
+      "name": "Bahamas",
+      "continent": "North America",
+      "difficulty": 3,
+      "capital": "Nassau",
+      "flag": "🇧🇸",
+      "currencyCode": "BSD",
+      "currencyName": "Bahamian Dollar",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "BS",
+      "aliases": [],
+      "capitals": [
+        "Nassau"
+      ],
+      "cities": [
+        "Nassau"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "BSD",
+          "name": "Bahamian Dollar"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇧🇸",
+      "flagAsset": "/flags/bs.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "bs",
+      "subregion": "Caribbean",
+      "flora": []
+    },
+    {
+      "id": "tt",
+      "name": "Trinidad and Tobago",
+      "continent": "North America",
+      "difficulty": 3,
+      "capital": "Port of Spain",
+      "flag": "🇹🇹",
+      "currencyCode": "TTD",
+      "currencyName": "Trinidad and Tobago Dollar",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "TT",
+      "aliases": [],
+      "capitals": [
+        "Port of Spain"
+      ],
+      "cities": [
+        "Port of Spain"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "TTD",
+          "name": "Trinidad and Tobago Dollar"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇹🇹",
+      "flagAsset": "/flags/tt.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "tt",
+      "subregion": "Caribbean",
+      "flora": []
+    },
+    {
+      "id": "br",
+      "name": "Brazil",
+      "continent": "South America",
+      "difficulty": 1,
+      "capital": "Brasília",
+      "flag": "🇧🇷",
+      "currencyCode": "BRL",
+      "currencyName": "Brazilian Real",
+      "languageCode": "pt",
+      "languageName": "Portuguese",
+      "iso2": "BR",
+      "aliases": [],
+      "capitals": [
+        "Brasília"
+      ],
+      "cities": [
+        "Rio de Janeiro",
+        "São Paulo",
+        "Brasília"
+      ],
+      "languages": [
+        {
+          "code": "pt",
+          "name": "Portuguese"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "BRL",
+          "name": "Brazilian Real"
+        }
+      ],
+      "animals": [
+        "Jaguar",
+        "Capybara",
+        "Toco toucan"
+      ],
+      "landmarks": [
+        "Christ the Redeemer"
+      ],
+      "foods": [
+        "Feijoada",
+        "Brigadeiro"
+      ],
+      "naturalFeatures": [
+        "Amazon rainforest",
+        "Iguazu Falls"
+      ],
+      "facts": [],
+      "flagEmoji": "🇧🇷",
+      "flagAsset": "/flags/br.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "br",
+      "subregion": "Atlantic South America",
+      "flora": [
+        "Brazil nut tree",
+        "Amazon rubber tree"
+      ]
+    },
+    {
+      "id": "ar",
+      "name": "Argentina",
+      "continent": "South America",
+      "difficulty": 1,
+      "capital": "Buenos Aires",
+      "flag": "🇦🇷",
+      "currencyCode": "ARS",
+      "currencyName": "Argentine Peso",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "AR",
+      "aliases": [],
+      "capitals": [
+        "Buenos Aires"
+      ],
+      "cities": [
+        "Buenos Aires",
+        "Córdoba",
+        "Mendoza"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "ARS",
+          "name": "Argentine Peso"
+        }
+      ],
+      "animals": [
+        "Guanaco",
+        "Puma"
+      ],
+      "landmarks": [
+        "Obelisk of Buenos Aires"
+      ],
+      "foods": [
+        "Empanadas",
+        "Asado"
+      ],
+      "naturalFeatures": [
+        "Patagonia",
+        "Aconcagua"
+      ],
+      "facts": [],
+      "flagEmoji": "🇦🇷",
+      "flagAsset": "/flags/ar.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ar",
+      "subregion": "Atlantic South America",
+      "flora": []
+    },
+    {
+      "id": "cl",
+      "name": "Chile",
+      "continent": "South America",
+      "difficulty": 1,
+      "capital": "Santiago",
+      "flag": "🇨🇱",
+      "currencyCode": "CLF",
+      "currencyName": "Unidad de Fomento",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "CL",
+      "aliases": [],
+      "capitals": [
+        "Santiago"
+      ],
+      "cities": [
+        "Santiago",
+        "Valparaíso"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "CLF",
+          "name": "Unidad de Fomento"
+        }
+      ],
+      "animals": [
+        "Andean condor",
+        "Humboldt penguin"
+      ],
+      "landmarks": [
+        "Easter Island moai"
+      ],
+      "foods": [
+        "Empanada"
+      ],
+      "naturalFeatures": [
+        "Atacama Desert",
+        "Torres del Paine"
+      ],
+      "facts": [],
+      "flagEmoji": "🇨🇱",
+      "flagAsset": "/flags/cl.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "cl",
+      "subregion": "Andean South America",
+      "flora": [
+        "monkey puzzle tree"
+      ]
+    },
+    {
+      "id": "pe",
+      "name": "Peru",
+      "continent": "South America",
+      "difficulty": 1,
+      "capital": "Lima",
+      "flag": "🇵🇪",
+      "currencyCode": "PEN",
+      "currencyName": "Sol",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "PE",
+      "aliases": [],
+      "capitals": [
+        "Lima"
+      ],
+      "cities": [
+        "Lima",
+        "Cusco",
+        "Arequipa"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "PEN",
+          "name": "Sol"
+        }
+      ],
+      "animals": [
+        "Llama",
+        "Vicuña"
+      ],
+      "landmarks": [
+        "Machu Picchu"
+      ],
+      "foods": [
+        "Ceviche"
+      ],
+      "naturalFeatures": [
+        "Andes",
+        "Lake Titicaca"
+      ],
+      "facts": [],
+      "flagEmoji": "🇵🇪",
+      "flagAsset": "/flags/pe.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "pe",
+      "subregion": "Andean South America",
+      "flora": [
+        "cinchona tree"
+      ]
+    },
+    {
+      "id": "co",
+      "name": "Colombia",
+      "continent": "South America",
+      "difficulty": 2,
+      "capital": "Bogotá",
+      "flag": "🇨🇴",
+      "currencyCode": "COP",
+      "currencyName": "Colombian Peso",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "CO",
+      "aliases": [],
+      "capitals": [
+        "Bogotá"
+      ],
+      "cities": [
+        "Bogotá"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "COP",
+          "name": "Colombian Peso"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇨🇴",
+      "flagAsset": "/flags/co.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "co",
+      "subregion": "Andean South America",
+      "flora": []
+    },
+    {
+      "id": "ve",
+      "name": "Venezuela",
+      "continent": "South America",
+      "difficulty": 2,
+      "capital": "Caracas",
+      "flag": "🇻🇪",
+      "currencyCode": "VEF",
+      "currencyName": "VEF",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "VE",
+      "aliases": [],
+      "capitals": [
+        "Caracas"
+      ],
+      "cities": [
+        "Caracas"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "VEF",
+          "name": "VEF"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇻🇪",
+      "flagAsset": "/flags/ve.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ve",
+      "subregion": "Andean South America",
+      "flora": []
+    },
+    {
+      "id": "ec",
+      "name": "Ecuador",
+      "continent": "South America",
+      "difficulty": 2,
+      "capital": "Quito",
+      "flag": "🇪🇨",
+      "currencyCode": "USD",
+      "currencyName": "US Dollar",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "EC",
+      "aliases": [],
+      "capitals": [
+        "Quito"
+      ],
+      "cities": [
+        "Quito"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "USD",
+          "name": "US Dollar"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇪🇨",
+      "flagAsset": "/flags/ec.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ec",
+      "subregion": "Andean South America",
+      "flora": []
+    },
+    {
+      "id": "bo",
+      "name": "Bolivia",
+      "continent": "South America",
+      "difficulty": 2,
+      "capital": "Sucre",
+      "flag": "🇧🇴",
+      "currencyCode": "BOB",
+      "currencyName": "Boliviano",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "BO",
+      "aliases": [],
+      "capitals": [
+        "Sucre"
+      ],
+      "cities": [
+        "Sucre"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "BOB",
+          "name": "Boliviano"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇧🇴",
+      "flagAsset": "/flags/bo.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "bo",
+      "subregion": "Andean South America",
+      "flora": []
+    },
+    {
+      "id": "py",
+      "name": "Paraguay",
+      "continent": "South America",
+      "difficulty": 3,
+      "capital": "Asunción",
+      "flag": "🇵🇾",
+      "currencyCode": "PYG",
+      "currencyName": "Guarani",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "PY",
+      "aliases": [],
+      "capitals": [
+        "Asunción"
+      ],
+      "cities": [
+        "Asunción"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "PYG",
+          "name": "Guarani"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇵🇾",
+      "flagAsset": "/flags/py.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "py",
+      "subregion": "Atlantic South America",
+      "flora": []
+    },
+    {
+      "id": "uy",
+      "name": "Uruguay",
+      "continent": "South America",
+      "difficulty": 3,
+      "capital": "Montevideo",
+      "flag": "🇺🇾",
+      "currencyCode": "UYI",
+      "currencyName": "Uruguay Peso en Unidades Indexadas (UI)",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "UY",
+      "aliases": [],
+      "capitals": [
+        "Montevideo"
+      ],
+      "cities": [
+        "Montevideo"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "UYI",
+          "name": "Uruguay Peso en Unidades Indexadas (UI)"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇺🇾",
+      "flagAsset": "/flags/uy.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "uy",
+      "subregion": "Atlantic South America",
+      "flora": []
+    },
+    {
+      "id": "gy",
+      "name": "Guyana",
+      "continent": "South America",
+      "difficulty": 3,
+      "capital": "Georgetown",
+      "flag": "🇬🇾",
+      "currencyCode": "GYD",
+      "currencyName": "Guyana Dollar",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "GY",
+      "aliases": [],
+      "capitals": [
+        "Georgetown"
+      ],
+      "cities": [
+        "Georgetown"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "GYD",
+          "name": "Guyana Dollar"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇬🇾",
+      "flagAsset": "/flags/gy.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "gy",
+      "subregion": "Atlantic South America",
+      "flora": []
+    },
+    {
+      "id": "sr",
+      "name": "Suriname",
+      "continent": "South America",
+      "difficulty": 3,
+      "capital": "Paramaribo",
+      "flag": "🇸🇷",
+      "currencyCode": "SRD",
+      "currencyName": "Surinam Dollar",
+      "languageCode": "nl",
+      "languageName": "Dutch",
+      "iso2": "SR",
+      "aliases": [],
+      "capitals": [
+        "Paramaribo"
+      ],
+      "cities": [
+        "Paramaribo"
+      ],
+      "languages": [
+        {
+          "code": "nl",
+          "name": "Dutch"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "SRD",
+          "name": "Surinam Dollar"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇸🇷",
+      "flagAsset": "/flags/sr.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "sr",
+      "subregion": "Atlantic South America",
+      "flora": []
+    },
+    {
+      "id": "fr",
+      "name": "France",
+      "continent": "Europe",
+      "difficulty": 1,
+      "capital": "Paris",
+      "flag": "🇫🇷",
+      "currencyCode": "EUR",
+      "currencyName": "Euro",
+      "languageCode": "fr",
+      "languageName": "French",
+      "iso2": "FR",
+      "aliases": [],
+      "capitals": [
+        "Paris"
+      ],
+      "cities": [
+        "Paris",
+        "Lyon",
+        "Marseille"
+      ],
+      "languages": [
+        {
+          "code": "fr",
+          "name": "French"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EUR",
+          "name": "Euro"
+        }
+      ],
+      "animals": [
+        "Alpine marmot"
+      ],
+      "landmarks": [
+        "Eiffel Tower",
+        "Louvre Museum",
+        "Mont Saint-Michel"
+      ],
+      "foods": [
+        "Croissant",
+        "Crêpe"
+      ],
+      "naturalFeatures": [
+        "French Alps"
+      ],
+      "facts": [],
+      "flagEmoji": "🇫🇷",
+      "flagAsset": "/flags/fr.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "fr",
+      "subregion": "Western Europe",
+      "flora": [
+        "lavender"
+      ]
+    },
+    {
+      "id": "de",
+      "name": "Germany",
+      "continent": "Europe",
+      "difficulty": 1,
+      "capital": "Berlin",
+      "flag": "🇩🇪",
+      "currencyCode": "EUR",
+      "currencyName": "Euro",
+      "languageCode": "de",
+      "languageName": "German",
+      "iso2": "DE",
+      "aliases": [],
+      "capitals": [
+        "Berlin"
+      ],
+      "cities": [
+        "Berlin",
+        "Munich",
+        "Hamburg"
+      ],
+      "languages": [
+        {
+          "code": "de",
+          "name": "German"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EUR",
+          "name": "Euro"
+        }
+      ],
+      "animals": [
+        "European badger"
+      ],
+      "landmarks": [
+        "Brandenburg Gate",
+        "Neuschwanstein Castle"
+      ],
+      "foods": [
+        "Pretzel",
+        "Bratwurst"
+      ],
+      "naturalFeatures": [
+        "Black Forest"
+      ],
+      "facts": [],
+      "flagEmoji": "🇩🇪",
+      "flagAsset": "/flags/de.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "de",
+      "subregion": "Western Europe",
+      "flora": [
+        "European beech"
+      ]
+    },
+    {
+      "id": "it",
+      "name": "Italy",
+      "continent": "Europe",
+      "difficulty": 1,
+      "capital": "Rome",
+      "flag": "🇮🇹",
+      "currencyCode": "EUR",
+      "currencyName": "Euro",
+      "languageCode": "it",
+      "languageName": "Italian",
+      "iso2": "IT",
+      "aliases": [],
+      "capitals": [
+        "Rome"
+      ],
+      "cities": [
+        "Rome",
+        "Venice",
+        "Milan"
+      ],
+      "languages": [
+        {
+          "code": "it",
+          "name": "Italian"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EUR",
+          "name": "Euro"
+        }
+      ],
+      "animals": [
+        "Italian wolf"
+      ],
+      "landmarks": [
+        "Colosseum",
+        "Leaning Tower of Pisa",
+        "Venice canals"
+      ],
+      "foods": [
+        "Pizza",
+        "Pasta",
+        "Gelato"
+      ],
+      "naturalFeatures": [
+        "Mount Etna",
+        "Dolomites"
+      ],
+      "facts": [],
+      "flagEmoji": "🇮🇹",
+      "flagAsset": "/flags/it.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "it",
+      "subregion": "Southern Europe",
+      "flora": [
+        "olive tree"
+      ]
+    },
+    {
+      "id": "es",
+      "name": "Spain",
+      "continent": "Europe",
+      "difficulty": 1,
+      "capital": "Madrid",
+      "flag": "🇪🇸",
+      "currencyCode": "EUR",
+      "currencyName": "Euro",
+      "languageCode": "es",
+      "languageName": "Spanish",
+      "iso2": "ES",
+      "aliases": [],
+      "capitals": [
+        "Madrid"
+      ],
+      "cities": [
+        "Madrid",
+        "Barcelona",
+        "Seville"
+      ],
+      "languages": [
+        {
+          "code": "es",
+          "name": "Spanish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EUR",
+          "name": "Euro"
+        }
+      ],
+      "animals": [
+        "Iberian lynx"
+      ],
+      "landmarks": [
+        "Sagrada Família",
+        "Alhambra"
+      ],
+      "foods": [
+        "Paella",
+        "Churros"
+      ],
+      "naturalFeatures": [
+        "Pyrenees"
+      ],
+      "facts": [],
+      "flagEmoji": "🇪🇸",
+      "flagAsset": "/flags/es.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "es",
+      "subregion": "Southern Europe",
+      "flora": []
+    },
+    {
+      "id": "gb",
+      "name": "United Kingdom",
+      "continent": "Europe",
+      "difficulty": 1,
+      "capital": "London",
+      "flag": "🇬🇧",
+      "currencyCode": "GBP",
+      "currencyName": "Pound Sterling",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "GB",
+      "aliases": [],
+      "capitals": [
+        "London"
+      ],
+      "cities": [
+        "London",
+        "Manchester",
+        "Edinburgh"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "GBP",
+          "name": "Pound Sterling"
+        }
+      ],
+      "animals": [
+        "Red fox",
+        "European badger"
+      ],
+      "landmarks": [
+        "Big Ben",
+        "Stonehenge",
+        "Tower Bridge"
+      ],
+      "foods": [
+        "Fish and chips"
+      ],
+      "naturalFeatures": [
+        "White Cliffs of Dover"
+      ],
+      "facts": [],
+      "flagEmoji": "🇬🇧",
+      "flagAsset": "/flags/gb.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "gb",
+      "subregion": "Northern Europe",
+      "flora": [
+        "Scots pine"
+      ]
+    },
+    {
+      "id": "pt",
+      "name": "Portugal",
+      "continent": "Europe",
+      "difficulty": 2,
+      "capital": "Lisbon",
+      "flag": "🇵🇹",
+      "currencyCode": "EUR",
+      "currencyName": "Euro",
+      "languageCode": "pt",
+      "languageName": "Portuguese",
+      "iso2": "PT",
+      "aliases": [],
+      "capitals": [
+        "Lisbon"
+      ],
+      "cities": [
+        "Lisbon"
+      ],
+      "languages": [
+        {
+          "code": "pt",
+          "name": "Portuguese"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EUR",
+          "name": "Euro"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇵🇹",
+      "flagAsset": "/flags/pt.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "pt",
+      "subregion": "Southern Europe",
+      "flora": []
+    },
+    {
+      "id": "nl",
+      "name": "Netherlands",
+      "continent": "Europe",
+      "difficulty": 2,
+      "capital": "Amsterdam",
+      "flag": "🇳🇱",
+      "currencyCode": "EUR",
+      "currencyName": "Euro",
+      "languageCode": "nl",
+      "languageName": "Dutch",
+      "iso2": "NL",
+      "aliases": [],
+      "capitals": [
+        "Amsterdam"
+      ],
+      "cities": [
+        "Amsterdam"
+      ],
+      "languages": [
+        {
+          "code": "nl",
+          "name": "Dutch"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EUR",
+          "name": "Euro"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇳🇱",
+      "flagAsset": "/flags/nl.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "nl",
+      "subregion": "Western Europe",
+      "flora": [
+        "tulip"
+      ]
+    },
+    {
+      "id": "ch",
+      "name": "Switzerland",
+      "continent": "Europe",
+      "difficulty": 2,
+      "capital": "Bern",
+      "flag": "🇨🇭",
+      "currencyCode": "CHE",
+      "currencyName": "WIR Euro",
+      "languageCode": "de",
+      "languageName": "German",
+      "iso2": "CH",
+      "aliases": [],
+      "capitals": [
+        "Bern"
+      ],
+      "cities": [
+        "Bern"
+      ],
+      "languages": [
+        {
+          "code": "de",
+          "name": "German"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "CHE",
+          "name": "WIR Euro"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇨🇭",
+      "flagAsset": "/flags/ch.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ch",
+      "subregion": "Western Europe",
+      "flora": [
+        "edelweiss"
+      ]
+    },
+    {
+      "id": "se",
+      "name": "Sweden",
+      "continent": "Europe",
+      "difficulty": 2,
+      "capital": "Stockholm",
+      "flag": "🇸🇪",
+      "currencyCode": "SEK",
+      "currencyName": "Swedish Krona",
+      "languageCode": "sv",
+      "languageName": "Swedish",
+      "iso2": "SE",
+      "aliases": [],
+      "capitals": [
+        "Stockholm"
+      ],
+      "cities": [
+        "Stockholm"
+      ],
+      "languages": [
+        {
+          "code": "sv",
+          "name": "Swedish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "SEK",
+          "name": "Swedish Krona"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇸🇪",
+      "flagAsset": "/flags/se.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "se",
+      "subregion": "Northern Europe",
+      "flora": []
+    },
+    {
+      "id": "no",
+      "name": "Norway",
+      "continent": "Europe",
+      "difficulty": 2,
+      "capital": "Oslo",
+      "flag": "🇳🇴",
+      "currencyCode": "NOK",
+      "currencyName": "Norwegian Krone",
+      "languageCode": "no",
+      "languageName": "Norwegian",
+      "iso2": "NO",
+      "aliases": [],
+      "capitals": [
+        "Oslo"
+      ],
+      "cities": [
+        "Oslo"
+      ],
+      "languages": [
+        {
+          "code": "no",
+          "name": "Norwegian"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "NOK",
+          "name": "Norwegian Krone"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇳🇴",
+      "flagAsset": "/flags/no.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "no",
+      "subregion": "Northern Europe",
+      "flora": []
+    },
+    {
+      "id": "pl",
+      "name": "Poland",
+      "continent": "Europe",
+      "difficulty": 2,
+      "capital": "Warsaw",
+      "flag": "🇵🇱",
+      "currencyCode": "PLN",
+      "currencyName": "Zloty",
+      "languageCode": "pl",
+      "languageName": "Polish",
+      "iso2": "PL",
+      "aliases": [],
+      "capitals": [
+        "Warsaw"
+      ],
+      "cities": [
+        "Warsaw"
+      ],
+      "languages": [
+        {
+          "code": "pl",
+          "name": "Polish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "PLN",
+          "name": "Zloty"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇵🇱",
+      "flagAsset": "/flags/pl.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "pl",
+      "subregion": "Eastern Europe",
+      "flora": []
+    },
+    {
+      "id": "gr",
+      "name": "Greece",
+      "continent": "Europe",
+      "difficulty": 2,
+      "capital": "Athens",
+      "flag": "🇬🇷",
+      "currencyCode": "EUR",
+      "currencyName": "Euro",
+      "languageCode": "el",
+      "languageName": "Modern Greek (1453-)",
+      "iso2": "GR",
+      "aliases": [],
+      "capitals": [
+        "Athens"
+      ],
+      "cities": [
+        "Athens",
+        "Thessaloniki"
+      ],
+      "languages": [
+        {
+          "code": "el",
+          "name": "Modern Greek (1453-)"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EUR",
+          "name": "Euro"
+        }
+      ],
+      "animals": [
+        "Mediterranean monk seal"
+      ],
+      "landmarks": [
+        "Acropolis",
+        "Parthenon"
+      ],
+      "foods": [
+        "Moussaka",
+        "Souvlaki"
+      ],
+      "naturalFeatures": [
+        "Mount Olympus"
+      ],
+      "facts": [],
+      "flagEmoji": "🇬🇷",
+      "flagAsset": "/flags/gr.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "gr",
+      "subregion": "Southern Europe",
+      "flora": []
+    },
+    {
+      "id": "at",
+      "name": "Austria",
+      "continent": "Europe",
+      "difficulty": 2,
+      "capital": "Vienna",
+      "flag": "🇦🇹",
+      "currencyCode": "EUR",
+      "currencyName": "Euro",
+      "languageCode": "de",
+      "languageName": "German",
+      "iso2": "AT",
+      "aliases": [],
+      "capitals": [
+        "Vienna"
+      ],
+      "cities": [
+        "Vienna",
+        "Salzburg",
+        "Innsbruck"
+      ],
+      "languages": [
+        {
+          "code": "de",
+          "name": "German"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EUR",
+          "name": "Euro"
+        }
+      ],
+      "animals": [
+        "Alpine ibex",
+        "Golden eagle"
+      ],
+      "landmarks": [
+        "Schönbrunn Palace",
+        "Hallstatt"
+      ],
+      "foods": [
+        "Wiener schnitzel",
+        "Sachertorte"
+      ],
+      "naturalFeatures": [
+        "Austrian Alps"
+      ],
+      "facts": [],
+      "flagEmoji": "🇦🇹",
+      "flagAsset": "/flags/at.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "at",
+      "subregion": "Western Europe",
+      "flora": []
+    },
+    {
+      "id": "be",
+      "name": "Belgium",
+      "continent": "Europe",
+      "difficulty": 2,
+      "capital": "Brussels",
+      "flag": "🇧🇪",
+      "currencyCode": "EUR",
+      "currencyName": "Euro",
+      "languageCode": "nl",
+      "languageName": "Dutch",
+      "iso2": "BE",
+      "aliases": [],
+      "capitals": [
+        "Brussels"
+      ],
+      "cities": [
+        "Brussels"
+      ],
+      "languages": [
+        {
+          "code": "nl",
+          "name": "Dutch"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EUR",
+          "name": "Euro"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇧🇪",
+      "flagAsset": "/flags/be.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "be",
+      "subregion": "Western Europe",
+      "flora": []
+    },
+    {
+      "id": "ie",
+      "name": "Ireland",
+      "continent": "Europe",
+      "difficulty": 2,
+      "capital": "Dublin",
+      "flag": "🇮🇪",
+      "currencyCode": "EUR",
+      "currencyName": "Euro",
+      "languageCode": "ga",
+      "languageName": "Irish",
+      "iso2": "IE",
+      "aliases": [],
+      "capitals": [
+        "Dublin"
+      ],
+      "cities": [
+        "Dublin"
+      ],
+      "languages": [
+        {
+          "code": "ga",
+          "name": "Irish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EUR",
+          "name": "Euro"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇮🇪",
+      "flagAsset": "/flags/ie.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ie",
+      "subregion": "Northern Europe",
+      "flora": []
+    },
+    {
+      "id": "fi",
+      "name": "Finland",
+      "continent": "Europe",
+      "difficulty": 3,
+      "capital": "Helsinki",
+      "flag": "🇫🇮",
+      "currencyCode": "EUR",
+      "currencyName": "Euro",
+      "languageCode": "fi",
+      "languageName": "Finnish",
+      "iso2": "FI",
+      "aliases": [],
+      "capitals": [
+        "Helsinki"
+      ],
+      "cities": [
+        "Helsinki"
+      ],
+      "languages": [
+        {
+          "code": "fi",
+          "name": "Finnish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EUR",
+          "name": "Euro"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇫🇮",
+      "flagAsset": "/flags/fi.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "fi",
+      "subregion": "Northern Europe",
+      "flora": []
+    },
+    {
+      "id": "dk",
+      "name": "Denmark",
+      "continent": "Europe",
+      "difficulty": 3,
+      "capital": "Copenhagen",
+      "flag": "🇩🇰",
+      "currencyCode": "DKK",
+      "currencyName": "Danish Krone",
+      "languageCode": "da",
+      "languageName": "Danish",
+      "iso2": "DK",
+      "aliases": [],
+      "capitals": [
+        "Copenhagen"
+      ],
+      "cities": [
+        "Copenhagen"
+      ],
+      "languages": [
+        {
+          "code": "da",
+          "name": "Danish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "DKK",
+          "name": "Danish Krone"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇩🇰",
+      "flagAsset": "/flags/dk.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "dk",
+      "subregion": "Northern Europe",
+      "flora": []
+    },
+    {
+      "id": "is",
+      "name": "Iceland",
+      "continent": "Europe",
+      "difficulty": 3,
+      "capital": "Reykjavik",
+      "flag": "🇮🇸",
+      "currencyCode": "ISK",
+      "currencyName": "Iceland Krona",
+      "languageCode": "is",
+      "languageName": "Icelandic",
+      "iso2": "IS",
+      "aliases": [],
+      "capitals": [
+        "Reykjavik"
+      ],
+      "cities": [
+        "Reykjavik"
+      ],
+      "languages": [
+        {
+          "code": "is",
+          "name": "Icelandic"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "ISK",
+          "name": "Iceland Krona"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇮🇸",
+      "flagAsset": "/flags/is.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "is",
+      "subregion": "Northern Europe",
+      "flora": []
+    },
+    {
+      "id": "hu",
+      "name": "Hungary",
+      "continent": "Europe",
+      "difficulty": 3,
+      "capital": "Budapest",
+      "flag": "🇭🇺",
+      "currencyCode": "HUF",
+      "currencyName": "Forint",
+      "languageCode": "hu",
+      "languageName": "Hungarian",
+      "iso2": "HU",
+      "aliases": [],
+      "capitals": [
+        "Budapest"
+      ],
+      "cities": [
+        "Budapest"
+      ],
+      "languages": [
+        {
+          "code": "hu",
+          "name": "Hungarian"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "HUF",
+          "name": "Forint"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇭🇺",
+      "flagAsset": "/flags/hu.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "hu",
+      "subregion": "Eastern Europe",
+      "flora": []
+    },
+    {
+      "id": "cz",
+      "name": "Czech Republic",
+      "continent": "Europe",
+      "difficulty": 3,
+      "capital": "Prague",
+      "flag": "🇨🇿",
+      "currencyCode": "CZK",
+      "currencyName": "Czech Koruna",
+      "languageCode": "cs",
+      "languageName": "Czech",
+      "iso2": "CZ",
+      "aliases": [],
+      "capitals": [
+        "Prague"
+      ],
+      "cities": [
+        "Prague"
+      ],
+      "languages": [
+        {
+          "code": "cs",
+          "name": "Czech"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "CZK",
+          "name": "Czech Koruna"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇨🇿",
+      "flagAsset": "/flags/cz.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "cz",
+      "subregion": "Eastern Europe",
+      "flora": []
+    },
+    {
+      "id": "ro",
+      "name": "Romania",
+      "continent": "Europe",
+      "difficulty": 3,
+      "capital": "Bucharest",
+      "flag": "🇷🇴",
+      "currencyCode": "RON",
+      "currencyName": "Romanian Leu",
+      "languageCode": "ro",
+      "languageName": "Romanian",
+      "iso2": "RO",
+      "aliases": [],
+      "capitals": [
+        "Bucharest"
+      ],
+      "cities": [
+        "Bucharest"
+      ],
+      "languages": [
+        {
+          "code": "ro",
+          "name": "Romanian"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "RON",
+          "name": "Romanian Leu"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇷🇴",
+      "flagAsset": "/flags/ro.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ro",
+      "subregion": "Eastern Europe",
+      "flora": []
+    },
+    {
+      "id": "hr",
+      "name": "Croatia",
+      "continent": "Europe",
+      "difficulty": 3,
+      "capital": "Zagreb",
+      "flag": "🇭🇷",
+      "currencyCode": "HRK",
+      "currencyName": "Kuna",
+      "languageCode": "hr",
+      "languageName": "Croatian",
+      "iso2": "HR",
+      "aliases": [],
+      "capitals": [
+        "Zagreb"
+      ],
+      "cities": [
+        "Zagreb"
+      ],
+      "languages": [
+        {
+          "code": "hr",
+          "name": "Croatian"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "HRK",
+          "name": "Kuna"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇭🇷",
+      "flagAsset": "/flags/hr.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "hr",
+      "subregion": "Southern Europe",
+      "flora": []
+    },
+    {
+      "id": "sk",
+      "name": "Slovakia",
+      "continent": "Europe",
+      "difficulty": 3,
+      "capital": "Bratislava",
+      "flag": "🇸🇰",
+      "currencyCode": "EUR",
+      "currencyName": "Euro",
+      "languageCode": "sk",
+      "languageName": "Slovak",
+      "iso2": "SK",
+      "aliases": [],
+      "capitals": [
+        "Bratislava"
+      ],
+      "cities": [
+        "Bratislava"
+      ],
+      "languages": [
+        {
+          "code": "sk",
+          "name": "Slovak"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EUR",
+          "name": "Euro"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇸🇰",
+      "flagAsset": "/flags/sk.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "sk",
+      "subregion": "Eastern Europe",
+      "flora": []
+    },
+    {
+      "id": "si",
+      "name": "Slovenia",
+      "continent": "Europe",
+      "difficulty": 3,
+      "capital": "Ljubljana",
+      "flag": "🇸🇮",
+      "currencyCode": "EUR",
+      "currencyName": "Euro",
+      "languageCode": "sl",
+      "languageName": "Slovenian",
+      "iso2": "SI",
+      "aliases": [],
+      "capitals": [
+        "Ljubljana"
+      ],
+      "cities": [
+        "Ljubljana"
+      ],
+      "languages": [
+        {
+          "code": "sl",
+          "name": "Slovenian"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EUR",
+          "name": "Euro"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇸🇮",
+      "flagAsset": "/flags/si.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "si",
+      "subregion": "Southern Europe",
+      "flora": []
+    },
+    {
+      "id": "lu",
+      "name": "Luxembourg",
+      "continent": "Europe",
+      "difficulty": 3,
+      "capital": "Luxembourg",
+      "flag": "🇱🇺",
+      "currencyCode": "EUR",
+      "currencyName": "Euro",
+      "languageCode": "fr",
+      "languageName": "French",
+      "iso2": "LU",
+      "aliases": [],
+      "capitals": [
+        "Luxembourg"
+      ],
+      "cities": [
+        "Luxembourg"
+      ],
+      "languages": [
+        {
+          "code": "fr",
+          "name": "French"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EUR",
+          "name": "Euro"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇱🇺",
+      "flagAsset": "/flags/lu.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "lu",
+      "subregion": "Western Europe",
+      "flora": []
+    },
+    {
+      "id": "mt",
+      "name": "Malta",
+      "continent": "Europe",
+      "difficulty": 3,
+      "capital": "Valletta",
+      "flag": "🇲🇹",
+      "currencyCode": "EUR",
+      "currencyName": "Euro",
+      "languageCode": "mt",
+      "languageName": "Maltese",
+      "iso2": "MT",
+      "aliases": [],
+      "capitals": [
+        "Valletta"
+      ],
+      "cities": [
+        "Valletta"
+      ],
+      "languages": [
+        {
+          "code": "mt",
+          "name": "Maltese"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EUR",
+          "name": "Euro"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇲🇹",
+      "flagAsset": "/flags/mt.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "mt",
+      "subregion": "Southern Europe",
+      "flora": []
+    },
+    {
+      "id": "ee",
+      "name": "Estonia",
+      "continent": "Europe",
+      "difficulty": 3,
+      "capital": "Tallinn",
+      "flag": "🇪🇪",
+      "currencyCode": "EUR",
+      "currencyName": "Euro",
+      "languageCode": "et",
+      "languageName": "Estonian",
+      "iso2": "EE",
+      "aliases": [],
+      "capitals": [
+        "Tallinn"
+      ],
+      "cities": [
+        "Tallinn"
+      ],
+      "languages": [
+        {
+          "code": "et",
+          "name": "Estonian"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EUR",
+          "name": "Euro"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇪🇪",
+      "flagAsset": "/flags/ee.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ee",
+      "subregion": "Northern Europe",
+      "flora": []
+    },
+    {
+      "id": "lv",
+      "name": "Latvia",
+      "continent": "Europe",
+      "difficulty": 3,
+      "capital": "Riga",
+      "flag": "🇱🇻",
+      "currencyCode": "EUR",
+      "currencyName": "Euro",
+      "languageCode": "lv",
+      "languageName": "Latvian",
+      "iso2": "LV",
+      "aliases": [],
+      "capitals": [
+        "Riga"
+      ],
+      "cities": [
+        "Riga"
+      ],
+      "languages": [
+        {
+          "code": "lv",
+          "name": "Latvian"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EUR",
+          "name": "Euro"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇱🇻",
+      "flagAsset": "/flags/lv.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "lv",
+      "subregion": "Northern Europe",
+      "flora": []
+    },
+    {
+      "id": "lt",
+      "name": "Lithuania",
+      "continent": "Europe",
+      "difficulty": 3,
+      "capital": "Vilnius",
+      "flag": "🇱🇹",
+      "currencyCode": "EUR",
+      "currencyName": "Euro",
+      "languageCode": "lt",
+      "languageName": "Lithuanian",
+      "iso2": "LT",
+      "aliases": [],
+      "capitals": [
+        "Vilnius"
+      ],
+      "cities": [
+        "Vilnius"
+      ],
+      "languages": [
+        {
+          "code": "lt",
+          "name": "Lithuanian"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EUR",
+          "name": "Euro"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇱🇹",
+      "flagAsset": "/flags/lt.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "lt",
+      "subregion": "Northern Europe",
+      "flora": []
+    },
+    {
+      "id": "rs",
+      "name": "Serbia",
+      "continent": "Europe",
+      "difficulty": 3,
+      "capital": "Belgrade",
+      "flag": "🇷🇸",
+      "currencyCode": "RSD",
+      "currencyName": "Serbian Dinar",
+      "languageCode": "rs",
+      "languageName": "rs",
+      "iso2": "RS",
+      "aliases": [],
+      "capitals": [
+        "Belgrade"
+      ],
+      "cities": [
+        "Belgrade"
+      ],
+      "languages": [
+        {
+          "code": "rs",
+          "name": "rs"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "RSD",
+          "name": "Serbian Dinar"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇷🇸",
+      "flagAsset": "/flags/rs.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "rs",
+      "subregion": "Eastern Europe",
+      "flora": []
+    },
+    {
+      "id": "bg",
+      "name": "Bulgaria",
+      "continent": "Europe",
+      "difficulty": 3,
+      "capital": "Sofia",
+      "flag": "🇧🇬",
+      "currencyCode": "BGN",
+      "currencyName": "Bulgarian Lev",
+      "languageCode": "bg",
+      "languageName": "Bulgarian",
+      "iso2": "BG",
+      "aliases": [],
+      "capitals": [
+        "Sofia"
+      ],
+      "cities": [
+        "Sofia"
+      ],
+      "languages": [
+        {
+          "code": "bg",
+          "name": "Bulgarian"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "BGN",
+          "name": "Bulgarian Lev"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇧🇬",
+      "flagAsset": "/flags/bg.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "bg",
+      "subregion": "Eastern Europe",
+      "flora": []
+    },
+    {
+      "id": "eg",
+      "name": "Egypt",
+      "continent": "Africa",
+      "difficulty": 1,
+      "capital": "Cairo",
+      "flag": "🇪🇬",
+      "currencyCode": "EGP",
+      "currencyName": "Egyptian Pound",
+      "languageCode": "ar",
+      "languageName": "Arabic",
+      "iso2": "EG",
+      "aliases": [],
+      "capitals": [
+        "Cairo"
+      ],
+      "cities": [
+        "Cairo",
+        "Alexandria"
+      ],
+      "languages": [
+        {
+          "code": "ar",
+          "name": "Arabic"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "EGP",
+          "name": "Egyptian Pound"
+        }
+      ],
+      "animals": [
+        "Nile crocodile",
+        "Camel"
+      ],
+      "landmarks": [
+        "Pyramids of Giza",
+        "Great Sphinx"
+      ],
+      "foods": [
+        "Koshari"
+      ],
+      "naturalFeatures": [
+        "Nile River",
+        "Sahara Desert"
+      ],
+      "facts": [],
+      "flagEmoji": "🇪🇬",
+      "flagAsset": "/flags/eg.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "eg",
+      "subregion": "Northern Africa",
+      "flora": [
+        "papyrus"
+      ]
+    },
+    {
+      "id": "ng",
+      "name": "Nigeria",
+      "continent": "Africa",
+      "difficulty": 1,
+      "capital": "Abuja",
+      "flag": "🇳🇬",
+      "currencyCode": "NGN",
+      "currencyName": "Naira",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "NG",
+      "aliases": [],
+      "capitals": [
+        "Abuja"
+      ],
+      "cities": [
+        "Abuja"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "NGN",
+          "name": "Naira"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇳🇬",
+      "flagAsset": "/flags/ng.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ng",
+      "subregion": "Western Africa",
+      "flora": []
+    },
+    {
+      "id": "ke",
+      "name": "Kenya",
+      "continent": "Africa",
+      "difficulty": 1,
+      "capital": "Nairobi",
+      "flag": "🇰🇪",
+      "currencyCode": "KES",
+      "currencyName": "Kenyan Shilling",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "KE",
+      "aliases": [],
+      "capitals": [
+        "Nairobi"
+      ],
+      "cities": [
+        "Nairobi",
+        "Mombasa"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "KES",
+          "name": "Kenyan Shilling"
+        }
+      ],
+      "animals": [
+        "Lion",
+        "Giraffe",
+        "Elephant"
+      ],
+      "landmarks": [
+        "Fort Jesus"
+      ],
+      "foods": [
+        "Ugali"
+      ],
+      "naturalFeatures": [
+        "Great Rift Valley",
+        "Mount Kenya"
+      ],
+      "facts": [],
+      "flagEmoji": "🇰🇪",
+      "flagAsset": "/flags/ke.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ke",
+      "subregion": "Eastern Africa",
+      "flora": [
+        "coffee"
+      ]
+    },
+    {
+      "id": "za",
+      "name": "South Africa",
+      "continent": "Africa",
+      "difficulty": 1,
+      "capital": "Pretoria",
+      "flag": "🇿🇦",
+      "currencyCode": "ZAR",
+      "currencyName": "Rand",
+      "languageCode": "af",
+      "languageName": "Afrikaans",
+      "iso2": "ZA",
+      "aliases": [],
+      "capitals": [
+        "Pretoria"
+      ],
+      "cities": [
+        "Cape Town",
+        "Johannesburg",
+        "Pretoria"
+      ],
+      "languages": [
+        {
+          "code": "af",
+          "name": "Afrikaans"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "ZAR",
+          "name": "Rand"
+        }
+      ],
+      "animals": [
+        "Lion",
+        "Springbok",
+        "African penguin"
+      ],
+      "landmarks": [
+        "Robben Island"
+      ],
+      "foods": [
+        "Bobotie"
+      ],
+      "naturalFeatures": [
+        "Table Mountain",
+        "Kruger National Park"
+      ],
+      "facts": [],
+      "flagEmoji": "🇿🇦",
+      "flagAsset": "/flags/za.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "za",
+      "subregion": "Southern Africa",
+      "flora": [
+        "king protea"
+      ]
+    },
+    {
+      "id": "ma",
+      "name": "Morocco",
+      "continent": "Africa",
+      "difficulty": 1,
+      "capital": "Rabat",
+      "flag": "🇲🇦",
+      "currencyCode": "MAD",
+      "currencyName": "Moroccan Dirham",
+      "languageCode": "ar",
+      "languageName": "Arabic",
+      "iso2": "MA",
+      "aliases": [],
+      "capitals": [
+        "Rabat"
+      ],
+      "cities": [
+        "Marrakesh",
+        "Casablanca",
+        "Rabat"
+      ],
+      "languages": [
+        {
+          "code": "ar",
+          "name": "Arabic"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "MAD",
+          "name": "Moroccan Dirham"
+        }
+      ],
+      "animals": [
+        "Barbary macaque"
+      ],
+      "landmarks": [
+        "Hassan II Mosque"
+      ],
+      "foods": [
+        "Tagine",
+        "Couscous"
+      ],
+      "naturalFeatures": [
+        "Atlas Mountains",
+        "Sahara Desert"
+      ],
+      "facts": [],
+      "flagEmoji": "🇲🇦",
+      "flagAsset": "/flags/ma.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ma",
+      "subregion": "Northern Africa",
+      "flora": []
+    },
+    {
+      "id": "gh",
+      "name": "Ghana",
+      "continent": "Africa",
+      "difficulty": 2,
+      "capital": "Accra",
+      "flag": "🇬🇭",
+      "currencyCode": "GHS",
+      "currencyName": "Ghana Cedi",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "GH",
+      "aliases": [],
+      "capitals": [
+        "Accra"
+      ],
+      "cities": [
+        "Accra"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "GHS",
+          "name": "Ghana Cedi"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇬🇭",
+      "flagAsset": "/flags/gh.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "gh",
+      "subregion": "Western Africa",
+      "flora": []
+    },
+    {
+      "id": "et",
+      "name": "Ethiopia",
+      "continent": "Africa",
+      "difficulty": 2,
+      "capital": "Addis Ababa",
+      "flag": "🇪🇹",
+      "currencyCode": "ETB",
+      "currencyName": "Ethiopian Birr",
+      "languageCode": "am",
+      "languageName": "Amharic",
+      "iso2": "ET",
+      "aliases": [],
+      "capitals": [
+        "Addis Ababa"
+      ],
+      "cities": [
+        "Addis Ababa"
+      ],
+      "languages": [
+        {
+          "code": "am",
+          "name": "Amharic"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "ETB",
+          "name": "Ethiopian Birr"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇪🇹",
+      "flagAsset": "/flags/et.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "et",
+      "subregion": "Eastern Africa",
+      "flora": []
+    },
+    {
+      "id": "tz",
+      "name": "Tanzania",
+      "continent": "Africa",
+      "difficulty": 2,
+      "capital": "Dodoma",
+      "flag": "🇹🇿",
+      "currencyCode": "TZS",
+      "currencyName": "Tanzanian Shilling",
+      "languageCode": "sw",
+      "languageName": "Swahili (macrolanguage)",
+      "iso2": "TZ",
+      "aliases": [],
+      "capitals": [
+        "Dodoma"
+      ],
+      "cities": [
+        "Dodoma"
+      ],
+      "languages": [
+        {
+          "code": "sw",
+          "name": "Swahili (macrolanguage)"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "TZS",
+          "name": "Tanzanian Shilling"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇹🇿",
+      "flagAsset": "/flags/tz.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "tz",
+      "subregion": "Eastern Africa",
+      "flora": []
+    },
+    {
+      "id": "ug",
+      "name": "Uganda",
+      "continent": "Africa",
+      "difficulty": 2,
+      "capital": "Kampala",
+      "flag": "🇺🇬",
+      "currencyCode": "UGX",
+      "currencyName": "Uganda Shilling",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "UG",
+      "aliases": [],
+      "capitals": [
+        "Kampala"
+      ],
+      "cities": [
+        "Kampala"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "UGX",
+          "name": "Uganda Shilling"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇺🇬",
+      "flagAsset": "/flags/ug.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ug",
+      "subregion": "Eastern Africa",
+      "flora": []
+    },
+    {
+      "id": "sn",
+      "name": "Senegal",
+      "continent": "Africa",
+      "difficulty": 2,
+      "capital": "Dakar",
+      "flag": "🇸🇳",
+      "currencyCode": "XOF",
+      "currencyName": "CFA Franc BCEAO",
+      "languageCode": "fr",
+      "languageName": "French",
+      "iso2": "SN",
+      "aliases": [],
+      "capitals": [
+        "Dakar"
+      ],
+      "cities": [
+        "Dakar"
+      ],
+      "languages": [
+        {
+          "code": "fr",
+          "name": "French"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "XOF",
+          "name": "CFA Franc BCEAO"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇸🇳",
+      "flagAsset": "/flags/sn.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "sn",
+      "subregion": "Western Africa",
+      "flora": []
+    },
+    {
+      "id": "zw",
+      "name": "Zimbabwe",
+      "continent": "Africa",
+      "difficulty": 2,
+      "capital": "Harare",
+      "flag": "🇿🇼",
+      "currencyCode": "USD",
+      "currencyName": "US Dollar",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "ZW",
+      "aliases": [],
+      "capitals": [
+        "Harare"
+      ],
+      "cities": [
+        "Harare"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "USD",
+          "name": "US Dollar"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇿🇼",
+      "flagAsset": "/flags/zw.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "zw",
+      "subregion": "Eastern Africa",
+      "flora": []
+    },
+    {
+      "id": "tn",
+      "name": "Tunisia",
+      "continent": "Africa",
+      "difficulty": 2,
+      "capital": "Tunis",
+      "flag": "🇹🇳",
+      "currencyCode": "TND",
+      "currencyName": "Tunisian Dinar",
+      "languageCode": "ar",
+      "languageName": "Arabic",
+      "iso2": "TN",
+      "aliases": [],
+      "capitals": [
+        "Tunis"
+      ],
+      "cities": [
+        "Tunis"
+      ],
+      "languages": [
+        {
+          "code": "ar",
+          "name": "Arabic"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "TND",
+          "name": "Tunisian Dinar"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇹🇳",
+      "flagAsset": "/flags/tn.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "tn",
+      "subregion": "Northern Africa",
+      "flora": []
+    },
+    {
+      "id": "dz",
+      "name": "Algeria",
+      "continent": "Africa",
+      "difficulty": 2,
+      "capital": "Algiers",
+      "flag": "🇩🇿",
+      "currencyCode": "DZD",
+      "currencyName": "Algerian Dinar",
+      "languageCode": "ar",
+      "languageName": "Arabic",
+      "iso2": "DZ",
+      "aliases": [],
+      "capitals": [
+        "Algiers"
+      ],
+      "cities": [
+        "Algiers"
+      ],
+      "languages": [
+        {
+          "code": "ar",
+          "name": "Arabic"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "DZD",
+          "name": "Algerian Dinar"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇩🇿",
+      "flagAsset": "/flags/dz.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "dz",
+      "subregion": "Northern Africa",
+      "flora": []
+    },
+    {
+      "id": "zm",
+      "name": "Zambia",
+      "continent": "Africa",
+      "difficulty": 3,
+      "capital": "Lusaka",
+      "flag": "🇿🇲",
+      "currencyCode": "ZMK",
+      "currencyName": "ZMK",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "ZM",
+      "aliases": [],
+      "capitals": [
+        "Lusaka"
+      ],
+      "cities": [
+        "Lusaka"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "ZMK",
+          "name": "ZMK"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇿🇲",
+      "flagAsset": "/flags/zm.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "zm",
+      "subregion": "Eastern Africa",
+      "flora": []
+    },
+    {
+      "id": "na",
+      "name": "Namibia",
+      "continent": "Africa",
+      "difficulty": 3,
+      "capital": "Windhoek",
+      "flag": "🇳🇦",
+      "currencyCode": "NAD",
+      "currencyName": "Namibia Dollar",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "NA",
+      "aliases": [],
+      "capitals": [
+        "Windhoek"
+      ],
+      "cities": [
+        "Windhoek"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "NAD",
+          "name": "Namibia Dollar"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇳🇦",
+      "flagAsset": "/flags/na.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "na",
+      "subregion": "Southern Africa",
+      "flora": [
+        "welwitschia"
+      ]
+    },
+    {
+      "id": "bw",
+      "name": "Botswana",
+      "continent": "Africa",
+      "difficulty": 3,
+      "capital": "Gaborone",
+      "flag": "🇧🇼",
+      "currencyCode": "BWP",
+      "currencyName": "Pula",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "BW",
+      "aliases": [],
+      "capitals": [
+        "Gaborone"
+      ],
+      "cities": [
+        "Gaborone"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "BWP",
+          "name": "Pula"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇧🇼",
+      "flagAsset": "/flags/bw.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "bw",
+      "subregion": "Southern Africa",
+      "flora": []
+    },
+    {
+      "id": "rw",
+      "name": "Rwanda",
+      "continent": "Africa",
+      "difficulty": 3,
+      "capital": "Kigali",
+      "flag": "🇷🇼",
+      "currencyCode": "RWF",
+      "currencyName": "Rwanda Franc",
+      "languageCode": "rw",
+      "languageName": "Kinyarwanda",
+      "iso2": "RW",
+      "aliases": [],
+      "capitals": [
+        "Kigali"
+      ],
+      "cities": [
+        "Kigali"
+      ],
+      "languages": [
+        {
+          "code": "rw",
+          "name": "Kinyarwanda"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "RWF",
+          "name": "Rwanda Franc"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇷🇼",
+      "flagAsset": "/flags/rw.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "rw",
+      "subregion": "Eastern Africa",
+      "flora": []
+    },
+    {
+      "id": "mz",
+      "name": "Mozambique",
+      "continent": "Africa",
+      "difficulty": 3,
+      "capital": "Maputo",
+      "flag": "🇲🇿",
+      "currencyCode": "MZN",
+      "currencyName": "Mozambique Metical",
+      "languageCode": "pt",
+      "languageName": "Portuguese",
+      "iso2": "MZ",
+      "aliases": [],
+      "capitals": [
+        "Maputo"
+      ],
+      "cities": [
+        "Maputo"
+      ],
+      "languages": [
+        {
+          "code": "pt",
+          "name": "Portuguese"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "MZN",
+          "name": "Mozambique Metical"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇲🇿",
+      "flagAsset": "/flags/mz.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "mz",
+      "subregion": "Eastern Africa",
+      "flora": []
+    },
+    {
+      "id": "ao",
+      "name": "Angola",
+      "continent": "Africa",
+      "difficulty": 3,
+      "capital": "Luanda",
+      "flag": "🇦🇴",
+      "currencyCode": "AOA",
+      "currencyName": "Kwanza",
+      "languageCode": "pt",
+      "languageName": "Portuguese",
+      "iso2": "AO",
+      "aliases": [],
+      "capitals": [
+        "Luanda"
+      ],
+      "cities": [
+        "Luanda"
+      ],
+      "languages": [
+        {
+          "code": "pt",
+          "name": "Portuguese"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "AOA",
+          "name": "Kwanza"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇦🇴",
+      "flagAsset": "/flags/ao.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ao",
+      "subregion": "Middle Africa",
+      "flora": []
+    },
+    {
+      "id": "cm",
+      "name": "Cameroon",
+      "continent": "Africa",
+      "difficulty": 3,
+      "capital": "Yaoundé",
+      "flag": "🇨🇲",
+      "currencyCode": "XAF",
+      "currencyName": "CFA Franc BEAC",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "CM",
+      "aliases": [],
+      "capitals": [
+        "Yaoundé"
+      ],
+      "cities": [
+        "Yaoundé"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "XAF",
+          "name": "CFA Franc BEAC"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇨🇲",
+      "flagAsset": "/flags/cm.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "cm",
+      "subregion": "Middle Africa",
+      "flora": []
+    },
+    {
+      "id": "ci",
+      "name": "Ivory Coast",
+      "continent": "Africa",
+      "difficulty": 3,
+      "capital": "Yamoussoukro",
+      "flag": "🇨🇮",
+      "currencyCode": "XOF",
+      "currencyName": "CFA Franc BCEAO",
+      "languageCode": "fr",
+      "languageName": "French",
+      "iso2": "CI",
+      "aliases": [],
+      "capitals": [
+        "Yamoussoukro"
+      ],
+      "cities": [
+        "Yamoussoukro"
+      ],
+      "languages": [
+        {
+          "code": "fr",
+          "name": "French"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "XOF",
+          "name": "CFA Franc BCEAO"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇨🇮",
+      "flagAsset": "/flags/ci.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ci",
+      "subregion": "Western Africa",
+      "flora": []
+    },
+    {
+      "id": "ml",
+      "name": "Mali",
+      "continent": "Africa",
+      "difficulty": 3,
+      "capital": "Bamako",
+      "flag": "🇲🇱",
+      "currencyCode": "XOF",
+      "currencyName": "CFA Franc BCEAO",
+      "languageCode": "fr",
+      "languageName": "French",
+      "iso2": "ML",
+      "aliases": [],
+      "capitals": [
+        "Bamako"
+      ],
+      "cities": [
+        "Bamako"
+      ],
+      "languages": [
+        {
+          "code": "fr",
+          "name": "French"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "XOF",
+          "name": "CFA Franc BCEAO"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇲🇱",
+      "flagAsset": "/flags/ml.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ml",
+      "subregion": "Western Africa",
+      "flora": []
+    },
+    {
+      "id": "mg",
+      "name": "Madagascar",
+      "continent": "Africa",
+      "difficulty": 3,
+      "capital": "Antananarivo",
+      "flag": "🇲🇬",
+      "currencyCode": "MGA",
+      "currencyName": "Malagasy Ariary",
+      "languageCode": "fr",
+      "languageName": "French",
+      "iso2": "MG",
+      "aliases": [],
+      "capitals": [
+        "Antananarivo"
+      ],
+      "cities": [
+        "Antananarivo"
+      ],
+      "languages": [
+        {
+          "code": "fr",
+          "name": "French"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "MGA",
+          "name": "Malagasy Ariary"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇲🇬",
+      "flagAsset": "/flags/mg.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "mg",
+      "subregion": "Eastern Africa",
+      "flora": [
+        "baobab"
+      ]
+    },
+    {
+      "id": "sd",
+      "name": "Sudan",
+      "continent": "Africa",
+      "difficulty": 3,
+      "capital": "Khartoum",
+      "flag": "🇸🇩",
+      "currencyCode": "SDG",
+      "currencyName": "Sudanese Pound",
+      "languageCode": "ar",
+      "languageName": "Arabic",
+      "iso2": "SD",
+      "aliases": [],
+      "capitals": [
+        "Khartoum"
+      ],
+      "cities": [
+        "Khartoum"
+      ],
+      "languages": [
+        {
+          "code": "ar",
+          "name": "Arabic"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "SDG",
+          "name": "Sudanese Pound"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇸🇩",
+      "flagAsset": "/flags/sd.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "sd",
+      "subregion": "Northern Africa",
+      "flora": []
+    },
+    {
+      "id": "jp",
+      "name": "Japan",
+      "continent": "Asia",
+      "difficulty": 1,
+      "capital": "Tokyo",
+      "flag": "🇯🇵",
+      "currencyCode": "JPY",
+      "currencyName": "Yen",
+      "languageCode": "ja",
+      "languageName": "Japanese",
+      "iso2": "JP",
+      "aliases": [],
+      "capitals": [
+        "Tokyo"
+      ],
+      "cities": [
+        "Tokyo",
+        "Kyoto",
+        "Osaka"
+      ],
+      "languages": [
+        {
+          "code": "ja",
+          "name": "Japanese"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "JPY",
+          "name": "Yen"
+        }
+      ],
+      "animals": [
+        "Japanese macaque",
+        "Red-crowned crane"
+      ],
+      "landmarks": [
+        "Mount Fuji",
+        "Fushimi Inari Shrine"
+      ],
+      "foods": [
+        "Sushi",
+        "Ramen"
+      ],
+      "naturalFeatures": [
+        "Mount Fuji"
+      ],
+      "facts": [],
+      "flagEmoji": "🇯🇵",
+      "flagAsset": "/flags/jp.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "jp",
+      "subregion": "Eastern Asia",
+      "flora": [
+        "cherry blossom"
+      ]
+    },
+    {
+      "id": "cn",
+      "name": "China",
+      "continent": "Asia",
+      "difficulty": 1,
+      "capital": "Beijing",
+      "flag": "🇨🇳",
+      "currencyCode": "CNY",
+      "currencyName": "Yuan Renminbi",
+      "languageCode": "zh",
+      "languageName": "Chinese",
+      "iso2": "CN",
+      "aliases": [],
+      "capitals": [
+        "Beijing"
+      ],
+      "cities": [
+        "Beijing",
+        "Shanghai",
+        "Shenzhen"
+      ],
+      "languages": [
+        {
+          "code": "zh",
+          "name": "Chinese"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "CNY",
+          "name": "Yuan Renminbi"
+        }
+      ],
+      "animals": [
+        "Giant panda",
+        "Golden snub-nosed monkey"
+      ],
+      "landmarks": [
+        "Great Wall of China",
+        "Forbidden City"
+      ],
+      "foods": [
+        "Peking duck",
+        "Dumplings"
+      ],
+      "naturalFeatures": [
+        "Yangtze River"
+      ],
+      "facts": [],
+      "flagEmoji": "🇨🇳",
+      "flagAsset": "/flags/cn.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "cn",
+      "subregion": "Eastern Asia",
+      "flora": [
+        "ginkgo"
+      ]
+    },
+    {
+      "id": "in",
+      "name": "India",
+      "continent": "Asia",
+      "difficulty": 1,
+      "capital": "New Delhi",
+      "flag": "🇮🇳",
+      "currencyCode": "INR",
+      "currencyName": "Indian Rupee",
+      "languageCode": "hi",
+      "languageName": "Hindi",
+      "iso2": "IN",
+      "aliases": [],
+      "capitals": [
+        "New Delhi"
+      ],
+      "cities": [
+        "New Delhi",
+        "Mumbai",
+        "Kolkata"
+      ],
+      "languages": [
+        {
+          "code": "hi",
+          "name": "Hindi"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "INR",
+          "name": "Indian Rupee"
+        }
+      ],
+      "animals": [
+        "Bengal tiger",
+        "Indian elephant",
+        "Peacock"
+      ],
+      "landmarks": [
+        "Taj Mahal"
+      ],
+      "foods": [
+        "Biryani",
+        "Dosa"
+      ],
+      "naturalFeatures": [
+        "Himalayas",
+        "Ganges River"
+      ],
+      "facts": [],
+      "flagEmoji": "🇮🇳",
+      "flagAsset": "/flags/in.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "in",
+      "subregion": "Southern Asia",
+      "flora": [
+        "lotus"
+      ]
+    },
+    {
+      "id": "th",
+      "name": "Thailand",
+      "continent": "Asia",
+      "difficulty": 1,
+      "capital": "Bangkok",
+      "flag": "🇹🇭",
+      "currencyCode": "THB",
+      "currencyName": "Baht",
+      "languageCode": "th",
+      "languageName": "Thai",
+      "iso2": "TH",
+      "aliases": [],
+      "capitals": [
+        "Bangkok"
+      ],
+      "cities": [
+        "Bangkok",
+        "Chiang Mai",
+        "Phuket"
+      ],
+      "languages": [
+        {
+          "code": "th",
+          "name": "Thai"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "THB",
+          "name": "Baht"
+        }
+      ],
+      "animals": [
+        "Asian elephant"
+      ],
+      "landmarks": [
+        "Wat Arun"
+      ],
+      "foods": [
+        "Pad Thai",
+        "Tom yum"
+      ],
+      "naturalFeatures": [
+        "Phang Nga Bay"
+      ],
+      "facts": [],
+      "flagEmoji": "🇹🇭",
+      "flagAsset": "/flags/th.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "th",
+      "subregion": "South-eastern Asia",
+      "flora": []
+    },
+    {
+      "id": "kr",
+      "name": "South Korea",
+      "continent": "Asia",
+      "difficulty": 1,
+      "capital": "Seoul",
+      "flag": "🇰🇷",
+      "currencyCode": "KRW",
+      "currencyName": "Won",
+      "languageCode": "ko",
+      "languageName": "Korean",
+      "iso2": "KR",
+      "aliases": [],
+      "capitals": [
+        "Seoul"
+      ],
+      "cities": [
+        "Seoul"
+      ],
+      "languages": [
+        {
+          "code": "ko",
+          "name": "Korean"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "KRW",
+          "name": "Won"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇰🇷",
+      "flagAsset": "/flags/kr.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "kr",
+      "subregion": "Eastern Asia",
+      "flora": []
+    },
+    {
+      "id": "vn",
+      "name": "Vietnam",
+      "continent": "Asia",
+      "difficulty": 2,
+      "capital": "Hanoi",
+      "flag": "🇻🇳",
+      "currencyCode": "VND",
+      "currencyName": "Dong",
+      "languageCode": "vi",
+      "languageName": "Vietnamese",
+      "iso2": "VN",
+      "aliases": [],
+      "capitals": [
+        "Hanoi"
+      ],
+      "cities": [
+        "Hanoi"
+      ],
+      "languages": [
+        {
+          "code": "vi",
+          "name": "Vietnamese"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "VND",
+          "name": "Dong"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇻🇳",
+      "flagAsset": "/flags/vn.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "vn",
+      "subregion": "South-eastern Asia",
+      "flora": []
+    },
+    {
+      "id": "id",
+      "name": "Indonesia",
+      "continent": "Asia",
+      "difficulty": 2,
+      "capital": "Jakarta",
+      "flag": "🇮🇩",
+      "currencyCode": "IDR",
+      "currencyName": "Rupiah",
+      "languageCode": "id",
+      "languageName": "Indonesian",
+      "iso2": "ID",
+      "aliases": [],
+      "capitals": [
+        "Jakarta"
+      ],
+      "cities": [
+        "Jakarta",
+        "Surabaya",
+        "Denpasar"
+      ],
+      "languages": [
+        {
+          "code": "id",
+          "name": "Indonesian"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "IDR",
+          "name": "Rupiah"
+        }
+      ],
+      "animals": [
+        "Komodo dragon",
+        "Orangutan"
+      ],
+      "landmarks": [
+        "Borobudur"
+      ],
+      "foods": [
+        "Nasi goreng",
+        "Satay"
+      ],
+      "naturalFeatures": [
+        "Mount Bromo"
+      ],
+      "facts": [],
+      "flagEmoji": "🇮🇩",
+      "flagAsset": "/flags/id.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "id",
+      "subregion": "South-eastern Asia",
+      "flora": [
+        "Rafflesia arnoldii"
+      ]
+    },
+    {
+      "id": "ph",
+      "name": "Philippines",
+      "continent": "Asia",
+      "difficulty": 2,
+      "capital": "Manila",
+      "flag": "🇵🇭",
+      "currencyCode": "PHP",
+      "currencyName": "Philippine Peso",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "PH",
+      "aliases": [],
+      "capitals": [
+        "Manila"
+      ],
+      "cities": [
+        "Manila"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "PHP",
+          "name": "Philippine Peso"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇵🇭",
+      "flagAsset": "/flags/ph.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ph",
+      "subregion": "South-eastern Asia",
+      "flora": []
+    },
+    {
+      "id": "my",
+      "name": "Malaysia",
+      "continent": "Asia",
+      "difficulty": 2,
+      "capital": "Kuala Lumpur",
+      "flag": "🇲🇾",
+      "currencyCode": "MYR",
+      "currencyName": "Malaysian Ringgit",
+      "iso2": "MY",
+      "aliases": [],
+      "capitals": [
+        "Kuala Lumpur"
+      ],
+      "cities": [
+        "Kuala Lumpur"
+      ],
+      "languages": [],
+      "currencies": [
+        {
+          "code": "MYR",
+          "name": "Malaysian Ringgit"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇲🇾",
+      "flagAsset": "/flags/my.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "my",
+      "subregion": "South-eastern Asia",
+      "flora": []
+    },
+    {
+      "id": "sg",
+      "name": "Singapore",
+      "continent": "Asia",
+      "difficulty": 2,
+      "capital": "Singapore",
+      "flag": "🇸🇬",
+      "currencyCode": "SGD",
+      "currencyName": "Singapore Dollar",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "SG",
+      "aliases": [],
+      "capitals": [
+        "Singapore"
+      ],
+      "cities": [
+        "Singapore"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "SGD",
+          "name": "Singapore Dollar"
+        }
+      ],
+      "animals": [
+        "Smooth-coated otter"
+      ],
+      "landmarks": [
+        "Marina Bay Sands",
+        "Merlion"
+      ],
+      "foods": [
+        "Hainanese chicken rice"
+      ],
+      "naturalFeatures": [
+        "Gardens by the Bay"
+      ],
+      "facts": [],
+      "flagEmoji": "🇸🇬",
+      "flagAsset": "/flags/sg.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "sg",
+      "subregion": "South-eastern Asia",
+      "flora": []
+    },
+    {
+      "id": "sa",
+      "name": "Saudi Arabia",
+      "continent": "Asia",
+      "difficulty": 2,
+      "capital": "Riyadh",
+      "flag": "🇸🇦",
+      "currencyCode": "SAR",
+      "currencyName": "Saudi Riyal",
+      "languageCode": "ar",
+      "languageName": "Arabic",
+      "iso2": "SA",
+      "aliases": [],
+      "capitals": [
+        "Riyadh"
+      ],
+      "cities": [
+        "Riyadh"
+      ],
+      "languages": [
+        {
+          "code": "ar",
+          "name": "Arabic"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "SAR",
+          "name": "Saudi Riyal"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇸🇦",
+      "flagAsset": "/flags/sa.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "sa",
+      "subregion": "Western Asia",
+      "flora": []
+    },
+    {
+      "id": "il",
+      "name": "Israel",
+      "continent": "Asia",
+      "difficulty": 2,
+      "capital": "Jerusalem",
+      "flag": "🇮🇱",
+      "currencyCode": "ILS",
+      "currencyName": "New Israeli Sheqel",
+      "languageCode": "he",
+      "languageName": "Hebrew",
+      "iso2": "IL",
+      "aliases": [],
+      "capitals": [
+        "Jerusalem"
+      ],
+      "cities": [
+        "Jerusalem"
+      ],
+      "languages": [
+        {
+          "code": "he",
+          "name": "Hebrew"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "ILS",
+          "name": "New Israeli Sheqel"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇮🇱",
+      "flagAsset": "/flags/il.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "il",
+      "subregion": "Western Asia",
+      "flora": []
+    },
+    {
+      "id": "ae",
+      "name": "United Arab Emirates",
+      "continent": "Asia",
+      "difficulty": 2,
+      "capital": "Abu Dhabi",
+      "flag": "🇦🇪",
+      "currencyCode": "AED",
+      "currencyName": "UAE Dirham",
+      "languageCode": "ar",
+      "languageName": "Arabic",
+      "iso2": "AE",
+      "aliases": [],
+      "capitals": [
+        "Abu Dhabi"
+      ],
+      "cities": [
+        "Abu Dhabi"
+      ],
+      "languages": [
+        {
+          "code": "ar",
+          "name": "Arabic"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "AED",
+          "name": "UAE Dirham"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇦🇪",
+      "flagAsset": "/flags/ae.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ae",
+      "subregion": "Western Asia",
+      "flora": []
+    },
+    {
+      "id": "pk",
+      "name": "Pakistan",
+      "continent": "Asia",
+      "difficulty": 2,
+      "capital": "Islamabad",
+      "flag": "🇵🇰",
+      "currencyCode": "PKR",
+      "currencyName": "Pakistan Rupee",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "PK",
+      "aliases": [],
+      "capitals": [
+        "Islamabad"
+      ],
+      "cities": [
+        "Islamabad"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "PKR",
+          "name": "Pakistan Rupee"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇵🇰",
+      "flagAsset": "/flags/pk.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "pk",
+      "subregion": "Southern Asia",
+      "flora": []
+    },
+    {
+      "id": "lk",
+      "name": "Sri Lanka",
+      "continent": "Asia",
+      "difficulty": 3,
+      "capital": "Colombo",
+      "flag": "🇱🇰",
+      "currencyCode": "LKR",
+      "currencyName": "Sri Lanka Rupee",
+      "languageCode": "si",
+      "languageName": "Sinhala",
+      "iso2": "LK",
+      "aliases": [],
+      "capitals": [
+        "Colombo"
+      ],
+      "cities": [
+        "Colombo"
+      ],
+      "languages": [
+        {
+          "code": "si",
+          "name": "Sinhala"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "LKR",
+          "name": "Sri Lanka Rupee"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇱🇰",
+      "flagAsset": "/flags/lk.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "lk",
+      "subregion": "Southern Asia",
+      "flora": []
+    },
+    {
+      "id": "np",
+      "name": "Nepal",
+      "continent": "Asia",
+      "difficulty": 3,
+      "capital": "Kathmandu",
+      "flag": "🇳🇵",
+      "currencyCode": "NPR",
+      "currencyName": "Nepalese Rupee",
+      "languageCode": "ne",
+      "languageName": "Nepali (macrolanguage)",
+      "iso2": "NP",
+      "aliases": [],
+      "capitals": [
+        "Kathmandu"
+      ],
+      "cities": [
+        "Kathmandu",
+        "Pokhara"
+      ],
+      "languages": [
+        {
+          "code": "ne",
+          "name": "Nepali (macrolanguage)"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "NPR",
+          "name": "Nepalese Rupee"
+        }
+      ],
+      "animals": [
+        "Snow leopard",
+        "Red panda"
+      ],
+      "landmarks": [
+        "Boudhanath Stupa"
+      ],
+      "foods": [
+        "Momo"
+      ],
+      "naturalFeatures": [
+        "Mount Everest",
+        "Himalayas"
+      ],
+      "facts": [],
+      "flagEmoji": "🇳🇵",
+      "flagAsset": "/flags/np.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "np",
+      "subregion": "Southern Asia",
+      "flora": []
+    },
+    {
+      "id": "kh",
+      "name": "Cambodia",
+      "continent": "Asia",
+      "difficulty": 3,
+      "capital": "Phnom Penh",
+      "flag": "🇰🇭",
+      "currencyCode": "KHR",
+      "currencyName": "Riel",
+      "languageCode": "km",
+      "languageName": "Khmer",
+      "iso2": "KH",
+      "aliases": [],
+      "capitals": [
+        "Phnom Penh"
+      ],
+      "cities": [
+        "Phnom Penh"
+      ],
+      "languages": [
+        {
+          "code": "km",
+          "name": "Khmer"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "KHR",
+          "name": "Riel"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇰🇭",
+      "flagAsset": "/flags/kh.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "kh",
+      "subregion": "South-eastern Asia",
+      "flora": []
+    },
+    {
+      "id": "la",
+      "name": "Laos",
+      "continent": "Asia",
+      "difficulty": 3,
+      "capital": "Vientiane",
+      "flag": "🇱🇦",
+      "currencyCode": "LAK",
+      "currencyName": "Lao Kip",
+      "languageCode": "lo",
+      "languageName": "Lao",
+      "iso2": "LA",
+      "aliases": [],
+      "capitals": [
+        "Vientiane"
+      ],
+      "cities": [
+        "Vientiane"
+      ],
+      "languages": [
+        {
+          "code": "lo",
+          "name": "Lao"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "LAK",
+          "name": "Lao Kip"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇱🇦",
+      "flagAsset": "/flags/la.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "la",
+      "subregion": "South-eastern Asia",
+      "flora": []
+    },
+    {
+      "id": "mn",
+      "name": "Mongolia",
+      "continent": "Asia",
+      "difficulty": 3,
+      "capital": "Ulan Bator",
+      "flag": "🇲🇳",
+      "currencyCode": "MNT",
+      "currencyName": "Tugrik",
+      "languageCode": "mn",
+      "languageName": "Mongolian",
+      "iso2": "MN",
+      "aliases": [],
+      "capitals": [
+        "Ulan Bator"
+      ],
+      "cities": [
+        "Ulan Bator"
+      ],
+      "languages": [
+        {
+          "code": "mn",
+          "name": "Mongolian"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "MNT",
+          "name": "Tugrik"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇲🇳",
+      "flagAsset": "/flags/mn.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "mn",
+      "subregion": "Eastern Asia",
+      "flora": []
+    },
+    {
+      "id": "bd",
+      "name": "Bangladesh",
+      "continent": "Asia",
+      "difficulty": 3,
+      "capital": "Dhaka",
+      "flag": "🇧🇩",
+      "currencyCode": "BDT",
+      "currencyName": "Taka",
+      "languageCode": "bn",
+      "languageName": "Bengali",
+      "iso2": "BD",
+      "aliases": [],
+      "capitals": [
+        "Dhaka"
+      ],
+      "cities": [
+        "Dhaka"
+      ],
+      "languages": [
+        {
+          "code": "bn",
+          "name": "Bengali"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "BDT",
+          "name": "Taka"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇧🇩",
+      "flagAsset": "/flags/bd.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "bd",
+      "subregion": "Southern Asia",
+      "flora": []
+    },
+    {
+      "id": "mm",
+      "name": "Myanmar",
+      "continent": "Asia",
+      "difficulty": 3,
+      "capital": "Naypyidaw",
+      "flag": "🇲🇲",
+      "currencyCode": "MMK",
+      "currencyName": "Kyat",
+      "languageCode": "my",
+      "languageName": "Burmese",
+      "iso2": "MM",
+      "aliases": [],
+      "capitals": [
+        "Naypyidaw"
+      ],
+      "cities": [
+        "Naypyidaw"
+      ],
+      "languages": [
+        {
+          "code": "my",
+          "name": "Burmese"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "MMK",
+          "name": "Kyat"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇲🇲",
+      "flagAsset": "/flags/mm.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "mm",
+      "subregion": "South-eastern Asia",
+      "flora": []
+    },
+    {
+      "id": "bt",
+      "name": "Bhutan",
+      "continent": "Asia",
+      "difficulty": 3,
+      "capital": "Thimphu",
+      "flag": "🇧🇹",
+      "currencyCode": "BTN",
+      "currencyName": "Ngultrum",
+      "languageCode": "dz",
+      "languageName": "Dzongkha",
+      "iso2": "BT",
+      "aliases": [],
+      "capitals": [
+        "Thimphu"
+      ],
+      "cities": [
+        "Thimphu"
+      ],
+      "languages": [
+        {
+          "code": "dz",
+          "name": "Dzongkha"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "BTN",
+          "name": "Ngultrum"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇧🇹",
+      "flagAsset": "/flags/bt.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "bt",
+      "subregion": "Southern Asia",
+      "flora": [
+        "Himalayan blue poppy"
+      ]
+    },
+    {
+      "id": "jo",
+      "name": "Jordan",
+      "continent": "Asia",
+      "difficulty": 3,
+      "capital": "Amman",
+      "flag": "🇯🇴",
+      "currencyCode": "JOD",
+      "currencyName": "Jordanian Dinar",
+      "languageCode": "ar",
+      "languageName": "Arabic",
+      "iso2": "JO",
+      "aliases": [],
+      "capitals": [
+        "Amman"
+      ],
+      "cities": [
+        "Amman"
+      ],
+      "languages": [
+        {
+          "code": "ar",
+          "name": "Arabic"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "JOD",
+          "name": "Jordanian Dinar"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇯🇴",
+      "flagAsset": "/flags/jo.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "jo",
+      "subregion": "Western Asia",
+      "flora": []
+    },
+    {
+      "id": "lb",
+      "name": "Lebanon",
+      "continent": "Asia",
+      "difficulty": 3,
+      "capital": "Beirut",
+      "flag": "🇱🇧",
+      "currencyCode": "LBP",
+      "currencyName": "Lebanese Pound",
+      "languageCode": "ar",
+      "languageName": "Arabic",
+      "iso2": "LB",
+      "aliases": [],
+      "capitals": [
+        "Beirut"
+      ],
+      "cities": [
+        "Beirut"
+      ],
+      "languages": [
+        {
+          "code": "ar",
+          "name": "Arabic"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "LBP",
+          "name": "Lebanese Pound"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇱🇧",
+      "flagAsset": "/flags/lb.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "lb",
+      "subregion": "Western Asia",
+      "flora": [
+        "cedar of Lebanon"
+      ]
+    },
+    {
+      "id": "qa",
+      "name": "Qatar",
+      "continent": "Asia",
+      "difficulty": 3,
+      "capital": "Doha",
+      "flag": "🇶🇦",
+      "currencyCode": "QAR",
+      "currencyName": "Qatari Rial",
+      "languageCode": "ar",
+      "languageName": "Arabic",
+      "iso2": "QA",
+      "aliases": [],
+      "capitals": [
+        "Doha"
+      ],
+      "cities": [
+        "Doha"
+      ],
+      "languages": [
+        {
+          "code": "ar",
+          "name": "Arabic"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "QAR",
+          "name": "Qatari Rial"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇶🇦",
+      "flagAsset": "/flags/qa.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "qa",
+      "subregion": "Western Asia",
+      "flora": []
+    },
+    {
+      "id": "kw",
+      "name": "Kuwait",
+      "continent": "Asia",
+      "difficulty": 3,
+      "capital": "Kuwait City",
+      "flag": "🇰🇼",
+      "currencyCode": "KWD",
+      "currencyName": "Kuwaiti Dinar",
+      "languageCode": "ar",
+      "languageName": "Arabic",
+      "iso2": "KW",
+      "aliases": [],
+      "capitals": [
+        "Kuwait City"
+      ],
+      "cities": [
+        "Kuwait City"
+      ],
+      "languages": [
+        {
+          "code": "ar",
+          "name": "Arabic"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "KWD",
+          "name": "Kuwaiti Dinar"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇰🇼",
+      "flagAsset": "/flags/kw.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "kw",
+      "subregion": "Western Asia",
+      "flora": []
+    },
+    {
+      "id": "om",
+      "name": "Oman",
+      "continent": "Asia",
+      "difficulty": 3,
+      "capital": "Muscat",
+      "flag": "🇴🇲",
+      "currencyCode": "OMR",
+      "currencyName": "Rial Omani",
+      "languageCode": "ar",
+      "languageName": "Arabic",
+      "iso2": "OM",
+      "aliases": [],
+      "capitals": [
+        "Muscat"
+      ],
+      "cities": [
+        "Muscat"
+      ],
+      "languages": [
+        {
+          "code": "ar",
+          "name": "Arabic"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "OMR",
+          "name": "Rial Omani"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇴🇲",
+      "flagAsset": "/flags/om.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "om",
+      "subregion": "Western Asia",
+      "flora": []
+    },
+    {
+      "id": "au",
+      "name": "Australia",
+      "continent": "Oceania",
+      "difficulty": 1,
+      "capital": "Canberra",
+      "flag": "🇦🇺",
+      "currencyCode": "AUD",
+      "currencyName": "Australian Dollar",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "AU",
+      "aliases": [
+        "Australia"
+      ],
+      "capitals": [
+        "Canberra"
+      ],
+      "cities": [
+        "Sydney",
+        "Melbourne",
+        "Brisbane",
+        "Perth"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "AUD",
+          "name": "Australian Dollar"
+        }
+      ],
+      "animals": [
+        "Kangaroo",
+        "Koala",
+        "Platypus",
+        "Tasmanian devil"
+      ],
+      "landmarks": [
+        "Sydney Opera House",
+        "Uluru",
+        "Great Barrier Reef"
+      ],
+      "foods": [
+        "Vegemite",
+        "Lamington"
+      ],
+      "naturalFeatures": [
+        "Great Barrier Reef",
+        "Uluru"
+      ],
+      "facts": [
+        "Australia is both a country and the largest landmass in Oceania."
+      ],
+      "flagEmoji": "🇦🇺",
+      "flagAsset": "/flags/au.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [
+        "Australia is both a country and the largest landmass in Oceania."
+      ],
+      "flagCode": "au",
+      "subregion": "Australia",
+      "flora": [
+        "eucalyptus",
+        "golden wattle"
+      ]
+    },
+    {
+      "id": "fj",
+      "name": "Fiji",
+      "continent": "Oceania",
+      "difficulty": 2,
+      "capital": "Suva",
+      "flag": "🇫🇯",
+      "currencyCode": "FJD",
+      "currencyName": "Fiji Dollar",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "FJ",
+      "aliases": [],
+      "capitals": [
+        "Suva"
+      ],
+      "cities": [
+        "Suva"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "FJD",
+          "name": "Fiji Dollar"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇫🇯",
+      "flagAsset": "/flags/fj.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "fj",
+      "subregion": "Melanesia",
+      "flora": []
+    },
+    {
+      "id": "pg",
+      "name": "Papua New Guinea",
+      "continent": "Oceania",
+      "difficulty": 2,
+      "capital": "Port Moresby",
+      "flag": "🇵🇬",
+      "currencyCode": "PGK",
+      "currencyName": "Kina",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "PG",
+      "aliases": [],
+      "capitals": [
+        "Port Moresby"
+      ],
+      "cities": [
+        "Port Moresby"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "PGK",
+          "name": "Kina"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇵🇬",
+      "flagAsset": "/flags/pg.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "pg",
+      "subregion": "Melanesia",
+      "flora": []
+    },
+    {
+      "id": "ws",
+      "name": "Samoa",
+      "continent": "Oceania",
+      "difficulty": 3,
+      "capital": "Apia",
+      "flag": "🇼🇸",
+      "currencyCode": "WST",
+      "currencyName": "Tala",
+      "languageCode": "sm",
+      "languageName": "Samoan",
+      "iso2": "WS",
+      "aliases": [],
+      "capitals": [
+        "Apia"
+      ],
+      "cities": [
+        "Apia"
+      ],
+      "languages": [
+        {
+          "code": "sm",
+          "name": "Samoan"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "WST",
+          "name": "Tala"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇼🇸",
+      "flagAsset": "/flags/ws.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "ws",
+      "subregion": "Polynesia",
+      "flora": []
+    },
+    {
+      "id": "to",
+      "name": "Tonga",
+      "continent": "Oceania",
+      "difficulty": 3,
+      "capital": "Nuku'alofa",
+      "flag": "🇹🇴",
+      "currencyCode": "TOP",
+      "currencyName": "Pa’anga",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "TO",
+      "aliases": [],
+      "capitals": [
+        "Nuku'alofa"
+      ],
+      "cities": [
+        "Nuku'alofa"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "TOP",
+          "name": "Pa’anga"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇹🇴",
+      "flagAsset": "/flags/to.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "to",
+      "subregion": "Polynesia",
+      "flora": []
+    },
+    {
+      "id": "vu",
+      "name": "Vanuatu",
+      "continent": "Oceania",
+      "difficulty": 3,
+      "capital": "Port Vila",
+      "flag": "🇻🇺",
+      "currencyCode": "VUV",
+      "currencyName": "Vatu",
+      "languageCode": "bi",
+      "languageName": "Bislama",
+      "iso2": "VU",
+      "aliases": [],
+      "capitals": [
+        "Port Vila"
+      ],
+      "cities": [
+        "Port Vila"
+      ],
+      "languages": [
+        {
+          "code": "bi",
+          "name": "Bislama"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "VUV",
+          "name": "Vatu"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇻🇺",
+      "flagAsset": "/flags/vu.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "vu",
+      "subregion": "Melanesia",
+      "flora": []
+    },
+    {
+      "id": "sb",
+      "name": "Solomon Islands",
+      "continent": "Oceania",
+      "difficulty": 3,
+      "capital": "Honiara",
+      "flag": "🇸🇧",
+      "currencyCode": "SBD",
+      "currencyName": "Solomon Islands Dollar",
+      "languageCode": "en",
+      "languageName": "English",
+      "iso2": "SB",
+      "aliases": [],
+      "capitals": [
+        "Honiara"
+      ],
+      "cities": [
+        "Honiara"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "SBD",
+          "name": "Solomon Islands Dollar"
+        }
+      ],
+      "animals": [],
+      "landmarks": [],
+      "foods": [],
+      "naturalFeatures": [],
+      "facts": [],
+      "flagEmoji": "🇸🇧",
+      "flagAsset": "/flags/sb.svg",
+      "birds": [],
+      "mountains": [],
+      "sports": [],
+      "oceans": [],
+      "hemispheres": [],
+      "neighbours": [],
+      "regions": [],
+      "nationalSymbols": [],
+      "funFacts": [],
+      "flagCode": "sb",
+      "subregion": "Melanesia",
+      "flora": []
+    }
+  ],
+  "specialRegions": [
+    {
+      "id": "greenland",
+      "name": "Greenland",
+      "mapRegion": "Greenland",
+      "continent": "North America",
+      "difficulty": 1,
+      "aliases": [
+        "Kalaallit Nunaat"
+      ],
+      "capitals": [
+        "Nuuk"
+      ],
+      "cities": [
+        "Nuuk",
+        "Sisimiut",
+        "Ilulissat"
+      ],
+      "languages": [
+        {
+          "code": "kl",
+          "name": "Greenlandic"
+        },
+        {
+          "code": "da",
+          "name": "Danish"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "DKK",
+          "name": "Danish krone"
+        }
+      ],
+      "animals": [
+        "Polar bear",
+        "Arctic fox",
+        "Musk ox",
+        "Narwhal"
+      ],
+      "landmarks": [
+        "Ilulissat Icefjord"
+      ],
+      "foods": [
+        "Suaasat"
+      ],
+      "naturalFeatures": [
+        "Greenland Ice Sheet",
+        "Ilulissat Icefjord"
+      ],
+      "facts": [
+        "Greenland is the world’s largest island.",
+        "Greenland is geographically part of North America."
+      ],
+      "birds": [],
+      "subregion": "Northern America"
+    },
+    {
+      "id": "new-zealand",
+      "name": "New Zealand",
+      "mapRegion": "New Zealand",
+      "continent": "Oceania",
+      "difficulty": 1,
+      "aliases": [
+        "Aotearoa"
+      ],
+      "capitals": [
+        "Wellington"
+      ],
+      "cities": [
+        "Auckland",
+        "Wellington",
+        "Christchurch",
+        "Queenstown"
+      ],
+      "languages": [
+        {
+          "code": "en",
+          "name": "English"
+        },
+        {
+          "code": "mi",
+          "name": "Māori"
+        }
+      ],
+      "currencies": [
+        {
+          "code": "NZD",
+          "name": "New Zealand dollar"
+        }
+      ],
+      "animals": [
+        "Kiwi",
+        "Kākāpō",
+        "Kea",
+        "Tuatara"
+      ],
+      "landmarks": [
+        "Sky Tower",
+        "Aoraki / Mount Cook"
+      ],
+      "foods": [
+        "Hāngi",
+        "Pavlova"
+      ],
+      "naturalFeatures": [
+        "Milford Sound",
+        "Southern Alps",
+        "Rotorua geothermal area"
+      ],
+      "facts": [
+        "New Zealand consists mainly of the North Island and South Island.",
+        "Aotearoa is the Māori name commonly used for New Zealand."
+      ],
+      "birds": [],
+      "subregion": "Australia"
+    },
+    {
+      "id": "antarctica",
+      "name": "Antarctica",
+      "mapRegion": "Antarctica",
+      "continent": "Antarctica",
+      "difficulty": 1,
+      "aliases": [],
+      "capitals": [],
+      "cities": [],
+      "languages": [],
+      "currencies": [],
+      "animals": [
+        "Emperor penguin",
+        "Adélie penguin",
+        "Weddell seal"
+      ],
+      "landmarks": [
+        "South Pole",
+        "McMurdo Station",
+        "Mount Erebus"
+      ],
+      "foods": [],
+      "naturalFeatures": [
+        "Antarctic Ice Sheet",
+        "Ross Ice Shelf"
+      ],
+      "facts": [
+        "Antarctica contains the geographic South Pole."
+      ],
+      "birds": [],
+      "subregion": null
+    }
+  ]
+}
