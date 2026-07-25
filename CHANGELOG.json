@@ -629,5 +629,12 @@
     "title": "Game polish: bigger grids, thicker walls, gloss effects, smarter errors",
     "body": "Zip: 6x6 → 7x7 grid for more substance; walls thicker (3px → 5px). Queens: board border-radius reduced from rounded-xl to rounded-lg, less cartoonish. Tango: sun/moon icons 40% bigger; constraint symbols (=/×) bigger and in larger containers; sun now fully filled instead of outline. Home: practice/challenge toggle now has a gloss effect with gradient overlay and enhanced shadows. Tango validation: errors no longer show instantly while typing — now debounced to 2 seconds, only shown after the full pause (not during continuous editing). Fixed race condition in practice-mode checkboxes that showed incomplete state before data finished loading.",
     "date": "2026-07-25"
+  },
+  {
+    "id": "2026-07-25-gameplay-fixes-and-polish-part-2",
+    "version": "v111",
+    "title": "Game fixes: Zip difficulty scaling, Tango smart delays, gloss effects, green dot bug, no more holes",
+    "body": "Zip: checkpoint numbers now scale Monday (4) → Sunday (16); walls increase 0→7; black holes removed entirely (visual & gameplay); tunnels capped at 1; grid size 7×7. Tango: conflict errors now debounced to 2 seconds but clear instantly (no delayed clearing). Queens: board border-radius refined. App: iOS-style gloss effect applied globally via new .gloss-button class; Home toggle now uses it. Home: fixed race condition in practice-mode checkmarks — only show after data loads. Presence: immediately clears when exiting a game (was delayed up to 45s, caused 'playing' indicator to persist).",
+    "date": "2026-07-25"
   }
 ]
