@@ -5,3 +5,6 @@ project_id = "imbored"
 # newer asymmetric ES256 signing-key system.
 [functions.admin-user-action]
 verify_jwt = false
+
+[functions.send-app-invite]
+verify_jwt = false
