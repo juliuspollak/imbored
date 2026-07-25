@@ -608,5 +608,12 @@
     "title": "Zoom: clearer controls, flora questions, easier recall",
     "body": "Removed the toolbar's redundant ‘New’ button (Restart already covers it). Answer buttons now sit side by side. The continent/region breadcrumb now reveals what was actually correct at each step you've passed, so reaching the country question doesn't require remembering the continent/region cold. Also added flora questions (24 countries) alongside the existing animal/landmark/food/currency/language/flag clues.",
     "date": "2026-07-25"
+  },
+  {
+    "id": "2026-07-25-toolbar-unification",
+    "version": "v111",
+    "title": "Unified game toolbars, fixed a misleading icon",
+    "body": "Geo had the same broken 'New' button Zoom had (a no-op mid-quiz) — removed, folded into Restart. The Eraser icon on Geo and Zoom's restart button was misleading (nothing is being erased, a fresh quiz is generated) — swapped for a refresh icon. Disabled toolbar buttons (Undo before your first move, Hint on cooldown, etc.) were low-contrast enough to read as missing rather than temporarily unavailable — bumped visibility across every game. Removed a small, unexplained icon that appeared under Zoom's flag prompts.",
+    "date": "2026-07-25"
   }
 ]
