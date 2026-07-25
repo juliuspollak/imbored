@@ -250,10 +250,10 @@ const ZIP_GREEN = "#12946A";
 const WALL_COLOR = "#E5484D";
 const TUNNEL_COLORS = ["#6D5BD0", "#2878B5", "#B7791F", "#B24C7C"];
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const CHECKPOINT_COUNTS = [7, 6, 5, 5, 4, 4, 3];
-const WALL_COUNTS = [0, 1, 2, 3, 4, 5, 6];
-const BLACKHOLE_COUNTS = [0, 0, 1, 1, 2, 2, 3];
-const TUNNEL_PAIR_COUNTS = [0, 0, 0, 0, 1, 1, 2];
+const CHECKPOINT_COUNTS = [4, 6, 8, 10, 12, 14, 16];
+const WALL_COUNTS = [0, 1, 2, 3, 5, 6, 7];
+const BLACKHOLE_COUNTS = [0, 0, 0, 0, 0, 0, 0];
+const TUNNEL_PAIR_COUNTS = [0, 0, 0, 0, 0, 1, 1];
 
 function fmtTime(s) {
   const m = Math.floor(s / 60);
@@ -739,8 +739,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
             style={{ background: "rgba(16,24,40,0.05)", color: CREAM, opacity: 0.75, lineHeight: 1.4 }}
           >
             Drag through cells (or tap one at a time) to extend your path — orange bars are walls
-            you can't cross, dark voids are black holes you must route around, and matching colored
-            letters are linked tunnels: step into one and you continue from its pair. Tap any earlier
+            you can't cross, and matching colored letters are linked tunnels: step into one and you continue from its pair. Tap any earlier
             cell on your path to roll back to it and correct your route. Hint points to your last
             correct cell if you've gone off track, or the next cell if you're still on it. Visit
             every open cell once, hit the checkpoints in order, and finish on the highest number.
@@ -763,37 +762,6 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
           {Array.from({ length: boardSize }, (_, r) =>
             Array.from({ length: boardSize }, (_, c) => {
               const key = `${r}-${c}`;
-              const isBlackHole = puzzle.blockedSet.has(`${r},${c}`);
-
-              if (isBlackHole) {
-                return (
-                  <div
-                    key={key}
-                    style={{
-                      position: "relative",
-                      border: "1px solid rgba(20,20,24,0.30)",
-                      overflow: "hidden",
-                      background: "rgba(255,255,255,0.18)",
-                    }}
-                  >
-                    <img
-                      src="/assets/zip-black-hole-d1.png"
-                      alt=""
-                      draggable="false"
-                      style={{
-                        position: "absolute",
-                        inset: "9%",
-                        width: "82%",
-                        height: "82%",
-                        objectFit: "contain",
-                        pointerEvents: "none",
-                        userSelect: "none",
-                      }}
-                    />
-                  </div>
-                );
-              }
-
               const isVisited = visited.has(key);
               const isCurrent = r === curR && c === curC;
               const num = puzzle.numberGrid[r][c];
@@ -862,7 +830,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
                       {tunnel.label}
                     </span>
                   )}
-                  {isCurrent && (
+                  {isCurrent && !solved && (
                     <span style={{ position: "absolute", inset: 0, borderRadius: 8, boxShadow: `inset 0 0 0 2px ${ZIP_GREEN}`, pointerEvents: "none" }} />
                   )}
                 </div>
