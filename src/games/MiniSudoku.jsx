@@ -349,6 +349,10 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   function digitFullyUsed(digit) {
     return board.flat().filter((value) => value === digit).length >= N;
   }
+  const unfinishedDigits = [1, 2, 3, 4, 5, 6].filter((digit) => !digitFullyUsed(digit));
+  const paletteDigits = unfinishedDigits.length <= 2
+    ? [...new Set([...unfinishedDigits, ...(selectedValue ? [selectedValue] : [])])].sort()
+    : [1, 2, 3, 4, 5, 6];
 
   function pushHistory() {
     setHistory((h) => [...h, { board: board.map((row) => row.slice()), mistakes, hints: hintsUsed }].slice(-50));
@@ -711,7 +715,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
 
         {/* number palette */}
         <div className="grid grid-cols-4 gap-2 mt-4">
-          {[1, 2, 3].map((d) => (
+          {paletteDigits.map((d) => (
             <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={solved || !selected} used={digitFullyUsed(d)} active={selectedValue === d} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
               {d}
             </NumBtn>
@@ -719,11 +723,6 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
           <NumBtn onClick={handleErase} disabled={solved || !selected} aria-label={t("common.erase")}>
             <Delete size={18} />
           </NumBtn>
-          {[4, 5, 6].map((d) => (
-            <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={solved || !selected} used={digitFullyUsed(d)} active={selectedValue === d} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
-              {d}
-            </NumBtn>
-          ))}
           <NumBtn onClick={handleUndo} disabled={solved || history.length === 0} aria-label={t("common.undo")}>
             <CornerUpLeft size={18} />
           </NumBtn>
