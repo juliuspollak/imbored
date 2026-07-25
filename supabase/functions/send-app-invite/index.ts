@@ -66,6 +66,11 @@ Deno.serve(async (req) => {
     return json({ ok:true });
   } catch (error) {
     console.error("send-app-invite failed",error);
-    return json({ error:error instanceof Error ? error.message : "Invitation failed" },400);
+    const message=error instanceof Error
+      ? error.message
+      : error && typeof error==="object" && "message" in error
+        ? String(error.message)
+        : "Invitation failed";
+    return json({ error:message },400);
   }
 });
