@@ -1,31 +1,184 @@
 @import "tailwindcss";
 
-/* iOS/IMDB-style gloss button effect - applied to all interactive elements */
+/*
+ * Shared glossy control
+ *
+ * Usage:
+ *   class="gloss-button"
+ *   class="gloss-button gloss-button--dark"
+ *   class="gloss-button gloss-button--imdb"
+ */
 .gloss-button {
+  --gloss-bg-top: #ffffff;
+  --gloss-bg-middle: #f5f7fa;
+  --gloss-bg-bottom: #e7ebf0;
+
+  --gloss-border: rgba(15, 23, 42, 0.14);
+  --gloss-text: #111827;
+
+  --gloss-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.12),
+    0 5px 14px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(15, 23, 42, 0.08);
+
   position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  min-height: 44px;
+  padding: 0.65rem 1rem;
+
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(245, 250, 255, 0.96) 100%);
-  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -1px 0 rgba(16, 24, 40, 0.08);
-  border: 1px solid rgba(16, 24, 40, 0.08);
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid var(--gloss-border);
+  border-radius: 12px;
+
+  color: var(--gloss-text);
+  background:
+    linear-gradient(
+      180deg,
+      var(--gloss-bg-top) 0%,
+      var(--gloss-bg-middle) 48%,
+      var(--gloss-bg-bottom) 100%
+    );
+
+  box-shadow: var(--gloss-shadow);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
+  transition:
+    transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 160ms ease,
+    filter 160ms ease,
+    border-color 160ms ease;
 }
 
+/* Upper reflective layer */
 .gloss-button::before {
-  content: '';
+  content: "";
   position: absolute;
+  z-index: -1;
+  top: 1px;
+  right: 2px;
+  left: 2px;
+  height: 52%;
+
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.78) 0%,
+      rgba(255, 255, 255, 0.34) 58%,
+      rgba(255, 255, 255, 0) 100%
+    );
+
+  pointer-events: none;
+}
+
+/* Subtle surface reflection */
+.gloss-button::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
   inset: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(16, 24, 40, 0.05) 100%);
+
+  background:
+    linear-gradient(
+      115deg,
+      transparent 18%,
+      rgba(255, 255, 255, 0.22) 38%,
+      transparent 58%
+    );
+
+  opacity: 0.55;
   pointer-events: none;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .gloss-button:not(:disabled):hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(16, 24, 40, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 -1px 0 rgba(16, 24, 40, 0.1);
+    transform: translateY(-1px);
+    filter: brightness(1.025);
+
+    box-shadow:
+      0 2px 3px rgba(15, 23, 42, 0.12),
+      0 8px 18px rgba(15, 23, 42, 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 1),
+      inset 0 -1px 0 rgba(15, 23, 42, 0.09);
   }
 }
 
-.gloss-button:active {
-  transform: translateY(0);
-  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(16, 24, 40, 0.06);
+.gloss-button:not(:disabled):active {
+  transform: translateY(1px) scale(0.985);
+  filter: brightness(0.98);
+
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.12),
+    inset 0 2px 5px rgba(15, 23, 42, 0.16),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.gloss-button:not(:disabled):active::before {
+  opacity: 0.55;
+}
+
+.gloss-button:focus-visible {
+  outline: 3px solid rgba(0, 122, 255, 0.32);
+  outline-offset: 3px;
+}
+
+.gloss-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  filter: saturate(0.7);
+}
+
+/* Dark iOS-like variant */
+.gloss-button--dark {
+  --gloss-bg-top: #3a3a3c;
+  --gloss-bg-middle: #262628;
+  --gloss-bg-bottom: #18181a;
+
+  --gloss-border: rgba(255, 255, 255, 0.14);
+  --gloss-text: #ffffff;
+
+  --gloss-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 6px 16px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.45);
+}
+
+/* IMDb-inspired black and gold variant */
+.gloss-button--imdb {
+  --gloss-bg-top: #f7d552;
+  --gloss-bg-middle: #e8ba1f;
+  --gloss-bg-bottom: #c99500;
+
+  --gloss-border: rgba(85, 61, 0, 0.55);
+  --gloss-text: #111111;
+
+  --gloss-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 5px 14px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    inset 0 -1px 0 rgba(89, 59, 0, 0.35);
+}
+
+.gloss-button--imdb:focus-visible {
+  outline-color: rgba(245, 197, 24, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gloss-button {
+    transition: none;
+  }
+
+  .gloss-button:hover,
+  .gloss-button:active {
+    transform: none;
+  }
 }
