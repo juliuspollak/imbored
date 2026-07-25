@@ -385,7 +385,7 @@ export default function Teams({ onBack }) {
                 </div>}
                 {roster.length === 0 && blocked.length === 0 && <p className="text-center text-xs opacity-45 py-8">No matching members</p>}
               </div>
-              {manager && <div className="mt-3 pt-3" style={{ borderTop:"1px solid rgba(16,24,40,.08)" }}>
+              {owner && <div className="mt-3 pt-3" style={{ borderTop:"1px solid rgba(16,24,40,.08)" }}>
                 {deleteTeamTarget?.id !== rosterTeam.id ? <div className="flex items-center justify-between gap-3"><p className="text-[10px] opacity-40">Remove allows rejoining. Block prevents it.</p><button onClick={() => { setDeleteTeamTarget(rosterTeam);setDeleteConfirmation(""); }} className="shrink-0 rounded-full px-3 py-2 text-[11px] font-semibold flex items-center gap-1" style={{ background:"rgba(181,67,58,.08)",color:"#B5433A" }}><Trash2 size={12}/>Delete team</button></div>
                   : <div className="rounded-2xl p-3" style={{ background:"rgba(181,67,58,.06)" }}>
                     <div className="text-xs font-semibold" style={{ color:"#9F2F2A" }}>Delete this team permanently?</div>
