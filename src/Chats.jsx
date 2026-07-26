@@ -13,7 +13,7 @@ function formatWhen(value) {
   return new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" }).format(date);
 }
 
-export default function Chats({ currentUser, currentProfile, onBack, onOpenChat, onOpenAdminPlayers, onOpenFeedback, onOpenTeams }) {
+export default function Chats({ currentUser, currentProfile, onBack, onOpenChat, onOpenAdminPlayers, onOpenFeedback, onOpenTeams, onOpenChallenges }) {
   const [messages, setMessages] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [presence, setPresence] = useState(new Set());
@@ -31,10 +31,10 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
     ]);
     if (messageResult.error) setError(messageResult.error.message || "Couldn’t load chats.");
     else setMessages((messageResult.data || []).filter(
-      (message) => !(message.system_generated && message.sender_id === currentUser.id)
+      (message) => !(message.system_generated && message.sender_id === currentUser.id && message.recipient_id !== currentUser.id)
     ));
     if (!profileResult.error) {
-      setProfiles((profileResult.data || []).filter((p) => {
+      const visibleProfiles = (profileResult.data || []).filter((p) => {
         const active = !p.account_deleted_at && !p.is_blocked && (p.is_admin || p.is_approved !== false);
         const pendingForAdmin = !!currentProfile?.is_admin
           && !p.account_deleted_at
@@ -43,7 +43,8 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
           && p.is_approved === false;
         return (active || pendingForAdmin)
           && (currentProfile?.is_admin || (!p.hidden_from_others && !p.is_private));
-      }));
+      });
+      setProfiles([{ ...currentProfile, id:currentUser.id, name:"Challenge results", icon:"🏆" }, ...visibleProfiles]);
     }
     setPresence(new Set((presenceResult.data || []).map((p) => p.user_id)));
     setLoading(false);
@@ -92,6 +93,15 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
       onOpenFeedback?.();
       return;
     }
+    if (latest?.activity_type === "team_challenge_winner") {
+      await supabase
+        .from("direct_messages")
+        .update({ read_at:new Date().toISOString() })
+        .eq("id", latest.id)
+        .eq("recipient_id", currentUser.id);
+      onOpenChallenges?.();
+      return;
+    }
     if (currentProfile?.is_admin && latest?.activity_type === "user_approval_required") {
       await supabase
         .from("direct_messages")
@@ -136,7 +146,7 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
         {conversations.filter(c => (c.profile.name||"").toLowerCase().includes(query.toLowerCase())).map(({peerId,profile,latest,unread}) => (
           <button type="button" className="conversation" key={peerId} onClick={()=>open(profile,latest)}>
             <div className="conversation-avatar">{profile.icon||"🙂"}{presence.has(peerId)&&<span className="online-dot"/>}</div>
-            <div style={{flex:1,minWidth:0}}><div style={{display:"flex",justifyContent:"space-between",gap:8}}><strong style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile.name||"Player"}</strong><span style={{fontSize:10,opacity:.45}}>{formatWhen(latest.created_at)}</span></div><div style={{fontSize:12,opacity:unread?.85:.5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:unread?700:400}}>{latest.activity_type==="user_approval_required" ? "" : latest.activity_type==="feedback_completed" ? "Feedback update · " : latest.activity_type==="team_invitation" ? "Team invitation · " : latest.system_generated ? "Team update · " : latest.sender_id===currentUser.id?"You: ":""}{latest.body}</div></div>
+            <div style={{flex:1,minWidth:0}}><div style={{display:"flex",justifyContent:"space-between",gap:8}}><strong style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile.name||"Player"}</strong><span style={{fontSize:10,opacity:.45}}>{formatWhen(latest.created_at)}</span></div><div style={{fontSize:12,opacity:unread?.85:.5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:unread?700:400}}>{latest.activity_type==="user_approval_required" ? "" : latest.activity_type==="feedback_completed" ? "Feedback update · " : latest.activity_type==="team_invitation" ? "Team invitation · " : latest.activity_type==="team_challenge_winner" ? "Challenge result · " : latest.system_generated ? "Team update · " : latest.sender_id===currentUser.id?"You: ":""}{latest.body}</div></div>
             {latest.activity_type==="user_approval_required"
               ? <span className="rounded-full px-2.5 py-1 text-[10px] font-bold" style={{background:"#FFF0C2",color:"#8A5C00"}}>Review</span>
               : unread>0&&<span className="unread-pill">{unread}</span>}
