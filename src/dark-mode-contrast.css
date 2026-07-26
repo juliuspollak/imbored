@@ -106,8 +106,8 @@
     color: #1b2129 !important;
   }
 
-  /* Queens region colours were visually glaring against the graphite shell.
-     Slightly lower their luminance and saturation without changing gameplay. */
+  /* Queens uses a deliberately dark, high-separation palette rather than
+     filtering its light board. Filtering also dimmed hint rings and pieces. */
   .qp-card .relative.w-full.rounded-lg.overflow-hidden.select-none {
     background: #dfe4ec !important;
     box-shadow:
@@ -115,14 +115,11 @@
       inset 0 0 0 1px rgba(16, 24, 40, 0.10);
   }
 
-  .qp-cell {
-    filter: brightness(0.84) saturate(0.82);
-  }
-
-  .qp-cell .qp-crown,
-  .qp-cell > span {
-    filter: brightness(1.18) saturate(1.15);
-  }
+  .qp-cell { background-color: var(--qp-region-dark) !important; color: #f8fafc !important; }
+  .qp-cell svg { color: #ffffff !important; filter: drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
+  .qp-cell > span { background: rgba(255,255,255,.72) !important; }
+  .qp-hint-cross { animation-name: qp-hint-pulse; outline: 3px solid #78a9ff; outline-offset: -4px; }
+  .qp-hint-queen { animation-name: qp-hint-queen; outline: 3px solid #5ee0ae; outline-offset: -4px; }
 
   /* Keep result overlays readable on top of intentionally light boards. */
   .qp-card [style*="rgba(255,255,255,0.95)"],
@@ -367,9 +364,10 @@
   }
 
   .game-toolbar .gloss-button {
-    background: linear-gradient(160deg, rgba(62, 76, 97, 0.96), rgba(29, 38, 51, 0.96)) !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    background: rgba(109, 156, 255, 0.12) !important;
+    border: 1px solid rgba(109, 156, 255, 0.28) !important;
     color: #f4f7fb !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 3px 10px rgba(0,0,0,.2) !important;
   }
 
   .game-toolbar .gloss-button:disabled {
@@ -378,6 +376,15 @@
     color: rgba(232, 238, 247, 0.34) !important;
     box-shadow: none !important;
     opacity: 1;
+  }
+
+  /* Manage is a full-page layer, so both the viewport and centered shell must
+     own the dark background instead of exposing the light Teams page below. */
+  .teams-page,
+  .teams-manage-page,
+  .teams-manage-shell {
+    background: radial-gradient(circle at 50% -8%, rgba(74,105,156,.2), transparent 38%), #0d1118 !important;
+    color: #f4f7fb !important;
   }
 
   .chats-page .chat-search:focus-within {

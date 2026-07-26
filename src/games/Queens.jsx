@@ -316,6 +316,7 @@ function findNextLogicalStepPure(board, regionGrid, n) {
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const SIZES = [4, 5, 6, 6, 7, 7, 8];
 const REGION_COLORS = ["#E4EEFF", "#FCECCF", "#E2F4E9", "#F5E3F1", "#E9E2F7", "#FCE1DC", "#E3F2F8", "#F2EBD9"];
+const DARK_REGION_COLORS = ["#29466F", "#66502B", "#285841", "#633B59", "#4C3E70", "#704039", "#285967", "#5B5337"];
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
 const INK = "#1B2129";
@@ -819,7 +820,9 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
                   onClick={() => handleCellClick(r, c)}
                   className={`qp-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`}
                   style={{
-                    backgroundColor: REGION_COLORS[region % REGION_COLORS.length],
+                    "--qp-region-color": REGION_COLORS[region % REGION_COLORS.length],
+                    "--qp-region-dark": DARK_REGION_COLORS[region % DARK_REGION_COLORS.length],
+                    backgroundColor: "var(--qp-region-color)",
                     borderTop: edgeBorder(r, c, -1, 0),
                     borderBottom: edgeBorder(r, c, 1, 0),
                     borderLeft: edgeBorder(r, c, 0, -1),
