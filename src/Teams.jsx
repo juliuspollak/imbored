@@ -8,6 +8,7 @@ import BackButton from "./BackButton.jsx";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
+import { buildTeamChallengeRounds } from "./lib/teamChallengeRounds.js";
 
 const BG = "#F1F3F7";
 const PANEL = "#fff";
@@ -17,13 +18,8 @@ const CREAM = "#1B2129";
 const TEAM_EMOJIS = ["🎮","🧩","🚀","🔥","⭐","🏆","🦄","🐉","🦊","🐼","🌈","⚡","💎","👑","🎯","🛸"];
 const DAYS = [{id:1,label:"Mon"},{id:2,label:"Tue"},{id:3,label:"Wed"},{id:4,label:"Thu"},{id:5,label:"Fri"},{id:6,label:"Sat"},{id:7,label:"Sun"}];
 const DEFAULT_GAMES = ["queens","tango","zip","minisudoku","geo","zoom"];
-// Points-economy safety: a weekly challenge reward is a bonus for finishing
-// every game in the challenge, not a second currency system — it stays in
-// the same range a single game's best-case score can reach (20-250 today),
-// with headroom for "finish all N games" to feel like a real bonus. This
-// must match the server-side cap enforced in set_team_weekly_challenge;
-// changing one without the other just means the UI and the database
-// disagree about the limit, not that a higher value can get through.
+// The configured amount is the winner's prize, separate from daily challenge
+// score and from the wallet points earned for completing a puzzle.
 const MAX_CHALLENGE_REWARD_POINTS = 500;
 
 function suggestEmoji(value) {
@@ -486,7 +482,7 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
                     const challengeOpen=String(expandedChallengeId) === challengeKey;
                     return <div key={challengeKey} className="rounded-2xl overflow-hidden" style={{ background:"#F7F8FB",border:challengeOpen ? "1px solid rgba(47,111,237,.18)" : "1px solid transparent" }}>
                       <button className="gloss-button" type="button" onClick={() => setExpandedChallengeId(challengeOpen ? null : challengeKey)} className="w-full flex items-center gap-2 p-3 text-left">
-                        <div className="flex-1 min-w-0"><div className="text-xs font-semibold truncate">{edit.title || challenge.challenge_title || "Weekly challenge"}</div><div className="text-[10px] opacity-45 mt-0.5">{edit.games.length} games · {edit.rewardType === "points" ? `${edit.reward} pts` : edit.rewardLabel || "Prize"}</div></div>
+                        <div className="flex-1 min-w-0"><div className="text-xs font-semibold truncate">{edit.title || challenge.challenge_title || "Weekly challenge"}</div><div className="text-[10px] opacity-45 mt-0.5">{edit.days.length} daily rounds · {edit.rewardType === "points" ? `${edit.reward} pts prize` : edit.rewardLabel || "Prize"}</div></div>
                         {edit.locked && <Lock size={12} style={{ color:"#8A681D" }}/>}<ChevronDown size={15} style={{ opacity:.35,transform:challengeOpen ? "rotate(180deg)" : "none" }}/>
                       </button>
                       {challengeOpen && <div className="px-3 pb-3" style={{ borderTop:"1px solid rgba(16,24,40,.06)" }}>
@@ -496,6 +492,11 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
                         <div className="text-[11px] font-semibold mt-4 mb-1">Playing days</div>
                         {challenge.isNew && <div className="text-[10px] opacity-45 mb-2">Choose every day this challenge can be played. No days are selected yet.</div>}
                         <div className="grid grid-cols-7 gap-1">{DAYS.map((day) => { const chosen=edit.days.includes(day.id);return <button className="gloss-button" disabled={!owner || edit.locked} type="button" key={day.id} onClick={() => toggleDay(challengeKey,day.id)} aria-pressed={chosen} className="rounded-lg py-2 text-[10px] font-semibold disabled:opacity-70" style={{ background:chosen ? "rgba(18,148,106,.12)" : "rgba(16,24,40,.05)",color:chosen ? "#0B7C58" : INK,border:chosen ? "1px solid rgba(18,148,106,.35)" : "1px solid transparent" }}>{chosen ? `✓ ${day.label}` : day.label}</button>; })}</div>
+                        {!!edit.games.length && !!edit.days.length && <div className="rounded-2xl p-3 mt-3" style={{ background:"rgba(47,111,237,.055)",border:"1px solid rgba(47,111,237,.10)" }}>
+                          <div className="text-[10px] font-semibold mb-2">Daily game schedule</div>
+                          <div className="flex flex-wrap gap-1.5">{buildTeamChallengeRounds({ activeDays:edit.days,gameIds:edit.games }).map((round) => <span key={round.date} className="rounded-full px-2.5 py-1 text-[10px] font-semibold capitalize" style={{ background:"#fff",color:INK }}>{DAYS[round.isoDay-1]?.label} · {round.game}</span>)}</div>
+                          <div className="text-[9px] opacity-45 mt-2">One attempt on that day only. A missed round scores −100.</div>
+                        </div>}
                         <fieldset className="mt-4" disabled={!owner || edit.locked}>
                           <legend className="text-[11px] font-semibold">Schedule</legend>
                           <div className="text-[10px] opacity-45 mt-0.5 mb-2">Choose one. Recurring challenges have fresh results and a new winner each week.</div>
