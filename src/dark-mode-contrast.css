@@ -1,0 +1,157 @@
+/* Component-specific dark-mode contrast fixes.
+ *
+ * The puzzle canvases intentionally remain light in dark mode so their existing
+ * symbols, grid lines and region colours keep the contrast they were designed
+ * for. Surrounding chrome follows the graphite app theme.
+ */
+@media (prefers-color-scheme: dark) {
+  /* Shared floating navigation and account trigger. */
+  .nav-btn {
+    background: linear-gradient(160deg, rgba(62, 76, 97, 0.96), rgba(25, 33, 46, 0.96)) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    color: #f4f7fb !important;
+    box-shadow:
+      0 10px 28px rgba(0, 0, 0, 0.42),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(130%);
+    backdrop-filter: blur(14px) saturate(130%);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .nav-btn:hover {
+      background: linear-gradient(160deg, rgba(78, 94, 118, 0.98), rgba(31, 41, 56, 0.98)) !important;
+    }
+  }
+
+  /* Account/avatar dropdown. */
+  [role="menu"].absolute.right-0 {
+    background: rgba(24, 31, 43, 0.97) !important;
+    border-color: rgba(255, 255, 255, 0.13) !important;
+    color: #f4f7fb !important;
+    box-shadow: 0 28px 72px rgba(0, 0, 0, 0.58) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(135%);
+    backdrop-filter: blur(24px) saturate(135%);
+  }
+
+  [role="menu"].absolute.right-0 > button:first-child {
+    background: linear-gradient(135deg, rgba(71, 106, 171, 0.22), rgba(114, 78, 170, 0.15)) !important;
+  }
+
+  [role="menu"] button[role="menuitem"],
+  [role="menu"].absolute.right-0 > button:first-child {
+    color: #f4f7fb !important;
+  }
+
+  [role="menu"] button[role="menuitem"]:active,
+  [role="menu"] button[role="menuitem"]:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  [role="menu"] button[role="menuitem"] > span:first-child,
+  [role="menu"].absolute.right-0 > button:first-child > span:first-child {
+    background: rgba(255, 255, 255, 0.09) !important;
+    color: rgba(244, 247, 251, 0.82) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  }
+
+  [role="menu"] [style*="color: rgba(27,33,41"],
+  [role="menu"] [style*="color:rgba(27,33,41"],
+  [role="menu"] [style*="color: #1B2129"],
+  [role="menu"] [style*="color:#1B2129"] {
+    color: rgba(232, 238, 247, 0.72) !important;
+  }
+
+  [role="menu"] .border-t,
+  [role="menu"] [style*="borderColor"] {
+    border-color: rgba(255, 255, 255, 0.09) !important;
+  }
+
+  /* Practice day selectors. Inline light colours were too faint on dark cards. */
+  .qp-day-btn,
+  .tg-day-btn,
+  .zp-day-btn {
+    border: 1px solid rgba(255, 255, 255, 0.09);
+  }
+
+  .qp-day-btn:not([style*="background: rgb"]),
+  .tg-day-btn:not([style*="background: rgb"]),
+  .zp-day-btn:not([style*="background: rgb"]) {
+    color: #f4f7fb !important;
+  }
+
+  .qp-day-btn[style*="rgba(16, 24, 40"],
+  .qp-day-btn[style*="rgba(16,24,40"],
+  .tg-day-btn[style*="rgba(16, 24, 40"],
+  .tg-day-btn[style*="rgba(16,24,40"],
+  .zp-day-btn[style*="rgba(16, 24, 40"],
+  .zp-day-btn[style*="rgba(16,24,40"] {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: rgba(244, 247, 251, 0.88) !important;
+  }
+
+  /* Toolbar disabled states need visible labels without looking enabled. */
+  .qp-card .gloss-button:disabled,
+  .tg-card .gloss-button:disabled,
+  .zp-card .gloss-button:disabled {
+    background: rgba(255, 255, 255, 0.045) !important;
+    color: rgba(232, 238, 247, 0.38) !important;
+  }
+
+  /* Tango and Zip were designed as light puzzle sheets. Keep those canvases
+     light and restore their dark grid lines, while the outer card remains dark. */
+  .tg-card .relative.w-full.rounded-xl.overflow-hidden[style*="aspect-ratio"],
+  .zp-card .relative.w-full.rounded-xl.overflow-hidden[style*="aspect-ratio"] {
+    background: #e9edf4 !important;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow:
+      0 12px 30px rgba(0, 0, 0, 0.34),
+      inset 0 0 0 1px rgba(16, 24, 40, 0.08);
+  }
+
+  .tg-cell {
+    border-color: rgba(20, 20, 24, 0.36) !important;
+    color: #1b2129 !important;
+  }
+
+  .tg-cell:disabled {
+    background: rgba(16, 24, 40, 0.065) !important;
+    opacity: 1;
+  }
+
+  .zp-cell {
+    border-color: rgba(20, 20, 24, 0.36) !important;
+    color: #1b2129 !important;
+  }
+
+  .zp-dot[style*="rgba(16, 24, 40"],
+  .zp-dot[style*="rgba(16,24,40"] {
+    background: rgba(16, 24, 40, 0.10) !important;
+    color: #1b2129 !important;
+  }
+
+  /* Queens region colours were visually glaring against the graphite shell.
+     Slightly lower their luminance and saturation without changing gameplay. */
+  .qp-card .relative.w-full.rounded-lg.overflow-hidden.select-none {
+    background: #dfe4ec !important;
+    box-shadow:
+      0 12px 30px rgba(0, 0, 0, 0.34),
+      inset 0 0 0 1px rgba(16, 24, 40, 0.10);
+  }
+
+  .qp-cell {
+    filter: brightness(0.84) saturate(0.82);
+  }
+
+  .qp-cell .qp-crown,
+  .qp-cell > span {
+    filter: brightness(1.18) saturate(1.15);
+  }
+
+  /* Keep result overlays readable on top of intentionally light boards. */
+  .qp-card [style*="rgba(255,255,255,0.95)"],
+  .tg-card [style*="rgba(255,255,255,0.95)"],
+  .zp-card [style*="rgba(255,255,255,0.97)"] {
+    background: rgba(25, 33, 46, 0.95) !important;
+    color: #f4f7fb !important;
+  }
+}
