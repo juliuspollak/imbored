@@ -10,7 +10,7 @@ import { getQuestionHistory, rememberQuestions } from "./geo/geoHistory.js";
 import FlagImage from "./geo/FlagImage.jsx";
 import { useI18n } from "../lib/i18n.jsx";
 import { localizeGeoQuestion, localizeGeoValue } from "./geo/geoLocalization.js";
-import DaySelector from "../DaySelector";
+import DaySelector from "../DaySelector.jsx";
 
 /* ---------------- continents & map ---------------- */
 
@@ -170,7 +170,6 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
         .geo-card { font-family: 'Inter', sans-serif; }
         @media (hover: hover) and (pointer: fine) {
           .geo-option:not(:disabled):hover { filter: brightness(0.97); transform: translateY(-1px); }
-          .geo-day-btn:hover { filter: brightness(1.12); }
           .geo-icon-btn:hover { opacity: 0.85; }
           .geo-toolbar-btn:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.03); }
           .geo-next-btn:hover { filter: brightness(1.08); }
@@ -207,18 +206,11 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
             </div>
           </div>
         ) : (
-          <div className="flex flex-wrap justify-center gap-1.5 mb-4">
-            {days.map((d, i) => (
-              <button
-                key={d}
-                onClick={() => setDayIdx(i)}
-                className="geo-day-btn flex items-center justify-center rounded-lg px-2.5 py-1.5 transition-colors"
-                style={{ background: i === dayIdx ? ACCENT : "rgba(16,24,40,0.05)", color: i === dayIdx ? "#FFFFFF" : INK, minWidth: 38 }}
-              >
-                <span className="text-xs font-semibold">{d}</span>
-              </button>
-            ))}
-          </div>
+          <DaySelector
+            days={days}
+            value={dayIdx}
+            onChange={setDayIdx}
+          />
         )}
 
         <div className="flex items-center justify-center gap-4 mb-3 px-1">

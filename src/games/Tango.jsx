@@ -5,7 +5,7 @@ import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import { Moon, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
-import DaySelector from "../DaySelector";
+import DaySelector from "../DaySelector.jsx";
 
 function SunBurstIcon({ size = 24, className = "", style, ...props }) {
   return (
@@ -539,7 +539,6 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
         }
         @media (hover: hover) and (pointer: fine) {
           .tg-cell:not(:disabled):hover { filter: brightness(1.2); }
-          .tg-day-btn:hover { filter: brightness(1.12); }
           .tg-icon-btn:hover { opacity: 0.85; }
           .tg-play-again:hover { filter: brightness(1.08); }
           .tg-toolbar-btn:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.03); }
@@ -580,23 +579,11 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
             </div>
           </div>
         ) : (
-          <div className="flex flex-wrap justify-center gap-1.5 mb-4">
-            {DAYS.map((d, i) => (
-              <button
-                key={d}
-                onClick={() => setDayIdx(i)}
-                className="tg-day-btn flex flex-col items-center justify-center rounded-lg px-2 py-1.5 transition-colors"
-                style={{
-                  background: i === dayIdx ? GOLD : "rgba(16,24,40,0.05)",
-                  color: i === dayIdx ? "#FFFFFF" : CREAM,
-                  minWidth: 38,
-                }}
-              >
-                <span className="text-xs font-semibold">{d}</span>
-                <span className="text-[10px] opacity-70">{GIVEN_TARGETS[i]} clues</span>
-              </button>
-            ))}
-          </div>
+          <DaySelector
+            days={DAYS}
+            value={dayIdx}
+            onChange={setDayIdx}
+          />
         )}
 
         {solved && difficultyRating !== null && (

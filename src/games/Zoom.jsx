@@ -8,7 +8,7 @@ import { getTargetHistory, rememberTargets } from "./zoom/zoomHistory.js";
 import FlagImage from "./geo/FlagImage.jsx";
 import { useI18n } from "../lib/i18n.jsx";
 import { localizeZoomValue, localizeZoomPrompt } from "./zoom/zoomLocalization.js";
-import DaySelector from "../DaySelector";
+import DaySelector from "../DaySelector.jsx";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -157,7 +157,6 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
         .zoom-card { font-family: 'Inter', sans-serif; }
         @media (hover: hover) and (pointer: fine) {
           .zoom-option:not(:disabled):hover { filter: brightness(0.97); transform: translateY(-1px); }
-          .zoom-day-btn:hover { filter: brightness(1.12); }
           .zoom-icon-btn:hover { opacity: 0.85; }
           .zoom-toolbar-btn:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.03); }
           .zoom-next-btn:hover { filter: brightness(1.08); }
@@ -189,18 +188,11 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
             </div>
           </div>
         ) : (
-          <div className="flex flex-wrap justify-center gap-1.5 mb-4">
-            {days.map((d, i) => (
-              <button
-                key={d}
-                onClick={() => setDayIdx(i)}
-                className="zoom-day-btn flex items-center justify-center rounded-lg px-2.5 py-1.5 transition-colors"
-                style={{ background: i === dayIdx ? ACCENT : "rgba(16,24,40,0.05)", color: i === dayIdx ? "#FFFFFF" : INK, minWidth: 38 }}
-              >
-                <span className="text-xs font-semibold">{d}</span>
-              </button>
-            ))}
-          </div>
+          <DaySelector
+            days={days}
+            value={dayIdx}
+            onChange={setDayIdx}
+          />
         )}
 
         <div className="flex items-center justify-center gap-4 mb-3 px-1">
