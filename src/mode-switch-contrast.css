@@ -1,5 +1,7 @@
 /* Make the selected Challenge / Practice mode unmistakable.
- * Loaded after the shared glass styles so inactive buttons stay quiet and transparent.
+ * The inactive state is identified by the explicit Tailwind class already
+ * rendered by Home.jsx. This avoids unreliable matching against serialised
+ * React inline-style text.
  */
 
 .inline-flex.rounded-full.p-1:has(> button.gloss-button) {
@@ -11,21 +13,21 @@
     0 1px 0 rgba(255, 255, 255, 0.78) !important;
 }
 
-.inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button[style*="transparent"] {
-  color: rgba(27, 33, 41, 0.40) !important;
+.inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button.\!bg-transparent {
+  color: rgba(27, 33, 41, 0.38) !important;
   background: transparent !important;
   border-color: transparent !important;
   box-shadow: none !important;
-  opacity: 0.82;
+  opacity: 0.76;
   filter: none !important;
 }
 
-.inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button[style*="transparent"]::before,
-.inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button[style*="transparent"]::after {
+.inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button.\!bg-transparent::before,
+.inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button.\!bg-transparent::after {
   opacity: 0 !important;
 }
 
-.inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button:not([style*="transparent"]) {
+.inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button:not(.\!bg-transparent) {
   color: #111827 !important;
   background:
     linear-gradient(155deg, rgba(255, 255, 255, 0.98), rgba(235, 241, 251, 0.80)) !important;
@@ -39,8 +41,8 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button[style*="transparent"]:hover {
-    color: rgba(27, 33, 41, 0.62) !important;
-    background: rgba(255, 255, 255, 0.20) !important;
+  .inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button.\!bg-transparent:hover {
+    color: rgba(27, 33, 41, 0.60) !important;
+    background: rgba(255, 255, 255, 0.18) !important;
   }
 }
