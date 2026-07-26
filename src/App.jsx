@@ -268,7 +268,6 @@ function AppShell() {
           onOpenAdminPlayers={() => setActive("adminplayers")}
           onOpenFeedback={() => setActive("feedback")}
           onOpenTeams={() => openSection("teams")}
-          onOpenChallenges={() => setActive(null)}
         />
       </Suspense>
     );
@@ -568,10 +567,14 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
             top:0,
             width:44,
             height:44,
-            color:"#303138",
-            background:incognito ? "#D9D9E0" : "rgba(255,255,255,.94)",
-            border:incognito ? "2px solid #303138" : "1px solid rgba(16,24,40,.12)",
-            boxShadow:incognito ? "0 8px 24px rgba(48,49,56,.22)" : "0 8px 24px rgba(16,24,40,.12)",
+            color:incognito ? "#334E7D" : "#303138",
+            background:"linear-gradient(145deg,rgba(255,255,255,.94),rgba(225,230,240,.74))",
+            backdropFilter:"blur(14px)",
+            WebkitBackdropFilter:"blur(14px)",
+            border:"1px solid rgba(255,255,255,.78)",
+            boxShadow:incognito
+              ? "inset 0 1px 0 rgba(255,255,255,.95),0 0 0 1px rgba(47,111,237,.24),0 9px 24px rgba(47,111,237,.20)"
+              : "inset 0 1px 0 rgba(255,255,255,.95),0 8px 24px rgba(16,24,40,.12)",
           }}
         >
           <IncognitoIcon size={25}/>
@@ -715,14 +718,16 @@ const NAV_BTN_STYLE = `
     transition-duration: 0.08s;
   }
   .incognito-button:hover {
-    color: #303138 !important;
-    background: #ECECF1 !important;
+    color: #334E7D !important;
+    background: linear-gradient(145deg,rgba(255,255,255,.98),rgba(231,236,247,.82)) !important;
+    border-color: rgba(255,255,255,.88) !important;
   }
   .incognito-button.is-active,
   .incognito-button.is-active:hover {
-    color: #303138 !important;
-    background: #D9D9E0 !important;
-    border-color: #303138 !important;
+    color: #334E7D !important;
+    background: linear-gradient(145deg,rgba(255,255,255,.96),rgba(216,228,250,.78)) !important;
+    border-color: rgba(255,255,255,.88) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.98),0 0 0 1px rgba(47,111,237,.26),0 9px 24px rgba(47,111,237,.22) !important;
   }
 `;
 
