@@ -10,6 +10,7 @@ import { getQuestionHistory, rememberQuestions } from "./geo/geoHistory.js";
 import FlagImage from "./geo/FlagImage.jsx";
 import { useI18n } from "../lib/i18n.jsx";
 import { localizeGeoQuestion, localizeGeoValue } from "./geo/geoLocalization.js";
+import DaySelector from "../DaySelector";
 
 /* ---------------- continents & map ---------------- */
 
