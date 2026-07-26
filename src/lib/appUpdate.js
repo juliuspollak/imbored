@@ -30,9 +30,11 @@ export function enableAutomaticAppUpdates() {
         deployedBundlePath(),
       ]);
       if (loaded && deployed && loaded !== deployed) {
-        const url = new URL(window.location.href);
-        url.searchParams.set("app-update", Date.now().toString());
-        window.location.replace(url.toString());
+        // Vite fingerprints every production asset, so once the fresh HTML
+        // has been fetched a normal reload will select the new bundle. A
+        // cache-busting query on the visible URL is unnecessary and used to
+        // leave players stranded on `?app-update=...`.
+        window.location.reload();
       }
     } catch {
       // Being offline or between deployments is normal; try again later.
