@@ -514,7 +514,9 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
 
   function handleMouseDown(e) {
     if (solved) return;
-    e.preventDefault();
+    // Keep the generated click for a stationary iOS tap, while preventing
+    // desktop text/button selection during drag.
+    if (!e.touches) e.preventDefault();
     const target = e.target.closest(".qp-cell");
     if (!target) return;
     const cells = Array.from(boardRef.current.querySelectorAll(".qp-cell"));
@@ -646,7 +648,7 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
     const nr = r + dr, nc = c + dc;
     if (nr < 0 || nr >= boardSize || nc < 0 || nc >= boardSize) return "none";
     return puzzle.regionGrid[r][c] !== puzzle.regionGrid[nr][nc]
-      ? `2px solid ${BOARD_LINE}`
+      ? `2.5px solid ${BOARD_LINE}`
       : `1px solid ${BOARD_LINE}`;
   }
 
@@ -819,6 +821,7 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
         <div
           ref={boardRef}
           onMouseDown={handleMouseDown}
+          onTouchStart={handleMouseDown}
           className="relative w-full rounded-lg overflow-hidden select-none"
           style={{
             aspectRatio: "1 / 1",
@@ -826,7 +829,7 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
             gridTemplateColumns: `repeat(${boardSize}, 1fr)`,
             gridTemplateRows: `repeat(${boardSize}, 1fr)`,
             touchAction: "none",
-            border: `2px solid ${BOARD_LINE}`,
+            border: `2.5px solid ${BOARD_LINE}`,
           }}
         >
           {board.map((row, r) =>
