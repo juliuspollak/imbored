@@ -141,17 +141,10 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
 
   if (playingIdx !== null) {
     const date = dates[playingIdx];
-    const leaveGame = () => {
-      if (challengeScope?.type === "team") {
-        onExit?.();
-        return;
-      }
-      setPlayingIdx(null);
-    };
     return (
       <div style={{ position: "relative" }}>
         <button
-          onClick={leaveGame}
+          onClick={onExit}
           className="gloss-button nav-btn"
           style={{
             "--nav-glow": "rgba(47,111,237,0.35)",
@@ -160,7 +153,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
             background: "rgba(255,255,255,0.9)", backdropFilter: "blur(6px)", border: "1px solid rgba(16,24,40,0.12)",
             display: "flex", alignItems: "center", justifyContent: "center", color: INK,
           }}
-          aria-label={challengeScope?.type === "team" ? "Back to team challenge" : "Back to challenge days"}
+          aria-label="Back to challenges"
         >
           <ArrowLeft size={18} />
         </button>
