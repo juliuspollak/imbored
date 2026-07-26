@@ -5,6 +5,7 @@ import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useI18n } from "./lib/i18n.jsx";
 import { challengeProgress, groupChallengeCompletions } from "./lib/challengeProgress.js";
 import ChallengeStandings from "./ChallengeStandings.jsx";
+import ChallengeStreakBadge from "./ChallengeStreakBadge.jsx";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -258,6 +259,13 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
           .home-tile:not(:disabled):hover { transform: translateY(-2px); filter: brightness(1.08); }
         }
         .home-tile { transition: transform 0.15s ease, filter 0.15s ease; }
+        .home-status-row { display:flex; align-items:stretch; gap:8px; margin-bottom:8px; }
+        .home-progress-pill { flex:0 0 auto; min-height:48px; }
+        .home-status-row .challenge-streak-badge { flex:1 1 auto; min-width:0; }
+        @media (max-width:520px) {
+          .home-status-row { flex-direction:column; align-items:stretch; }
+          .home-progress-pill { align-self:flex-start; min-height:auto; }
+        }
       `}</style>
       <div className="w-full max-w-2xl" style={{ fontFamily: "'Inter', sans-serif" }}>
         <div className="flex items-center gap-2 mb-2 pr-14">
@@ -270,30 +278,33 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
           </h1>
         </div>
 
-        {progress && onOpenProgress && (
-          <button
-            onClick={onOpenProgress}
-            className="flex items-center gap-2 rounded-full pl-3 pr-2 py-1.5 mb-3"
-            style={{
-              background: PANEL,
-              border: "1px solid rgba(16,24,40,0.09)",
-              boxShadow: "0 4px 14px rgba(16,24,40,0.06)",
-              color: CREAM,
-            }}
-            aria-label={`Open My Progress — ${(progress.available_points || 0).toLocaleString(language === "sk" ? "sk-SK" : "en")} ${t("home.points")}, ${progress.current_streak || 0} ${progress.current_streak === 1 ? t("home.day") : t("home.days")}`}
-          >
-            <span className="flex items-center gap-1 text-xs font-semibold whitespace-nowrap">
-              <Star size={13} fill="currentColor" style={{ color: "#D9AE58" }} />
-              {(progress.available_points || 0).toLocaleString(language === "sk" ? "sk-SK" : "en")}
-            </span>
-            <span className="h-3.5 w-px" style={{ background: "rgba(16,24,40,0.10)" }} />
-            <span className="flex items-center gap-1 text-xs font-semibold whitespace-nowrap">
-              <Flame size={13} style={{ color: "#E05A47" }} />
-              {progress.current_streak || 0}
-            </span>
-            <ChevronRight size={13} style={{ opacity: 0.3 }} />
-          </button>
-        )}
+        <div className="home-status-row">
+          {progress && onOpenProgress && (
+            <button
+              onClick={onOpenProgress}
+              className="home-progress-pill flex items-center gap-2 rounded-full pl-3 pr-2 py-1.5"
+              style={{
+                background: PANEL,
+                border: "1px solid rgba(16,24,40,0.09)",
+                boxShadow: "0 4px 14px rgba(16,24,40,0.06)",
+                color: CREAM,
+              }}
+              aria-label={`Open My Progress — ${(progress.available_points || 0).toLocaleString(language === "sk" ? "sk-SK" : "en")} ${t("home.points")}, ${progress.current_streak || 0} ${progress.current_streak === 1 ? t("home.day") : t("home.days")}`}
+            >
+              <span className="flex items-center gap-1 text-xs font-semibold whitespace-nowrap">
+                <Star size={13} fill="currentColor" style={{ color: "#D9AE58" }} />
+                {(progress.available_points || 0).toLocaleString(language === "sk" ? "sk-SK" : "en")}
+              </span>
+              <span className="h-3.5 w-px" style={{ background: "rgba(16,24,40,0.10)" }} />
+              <span className="flex items-center gap-1 text-xs font-semibold whitespace-nowrap">
+                <Flame size={13} style={{ color: "#E05A47" }} />
+                {progress.current_streak || 0}
+              </span>
+              <ChevronRight size={13} style={{ opacity: 0.3 }} />
+            </button>
+          )}
+          <ChallengeStreakBadge />
+        </div>
         <p style={{ color: CREAM, opacity: 0.4 }} className="text-[11px] mb-4">
           {t("home.tagline")}
         </p>
