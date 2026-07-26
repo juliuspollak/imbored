@@ -314,7 +314,7 @@ function findNextLogicalStepPure(board, regionGrid, n) {
 }
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const SIZES = [4, 5, 6, 6, 7, 7, 9];
+const SIZES = [5, 5, 6, 6, 7, 7, 9];
 const REGION_COLORS = ["#96BEFF", "#DFDFDF", "#DFA0BF", "#FF7B60", "#FFC992", "#B9B29E", "#B3DFA0", "#BBA3E2", "#E6F388"];
 const DARK_REGION_COLORS = ["#29466F", "#66502B", "#285841", "#633B59", "#4C3E70", "#704039", "#285967", "#5B5337"];
 const BG = "#F1F3F7";
@@ -324,6 +324,7 @@ const BOARD_LINE = "#000000";
 const CREAM = "#1B2129";
 const GOLD = "#2F6FED";
 const RED = "#D9695C";
+const puzzleCache = new Map();
 
 function makePuzzle(n) {
   for (let attempt = 0; attempt < 200; attempt++) {
@@ -339,7 +340,40 @@ function makePuzzle(n) {
 }
 
 function createPuzzleForSeed(n, seedKey) {
-  return withSeededRandom(seedKey, () => makePuzzle(n));
+  const cacheKey = `${n}:${seedKey}`;
+  const memoryCached = puzzleCache.get(cacheKey);
+  if (memoryCached) return memoryCached;
+
+  // Daily practice boards are stable, so keep them across page reloads as
+  // well as day changes. Version the key so generator changes can invalidate
+  // older cached shapes safely.
+  const isDailyPractice = /^queens:\d{4}-\d{2}-\d{2}:day:\d:\d+$/.test(seedKey);
+  const storageKey = `imbored:queens-puzzle:v1:${cacheKey}`;
+  if (isDailyPractice && typeof window !== "undefined") {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(storageKey));
+      const valid = stored?.solution?.length === n
+        && stored?.regionGrid?.length === n
+        && stored.regionGrid.every((row) => Array.isArray(row) && row.length === n);
+      if (valid) {
+        puzzleCache.set(cacheKey, stored);
+        return stored;
+      }
+    } catch {
+      // Ignore unavailable storage or an invalid old entry and regenerate.
+    }
+  }
+
+  const generated = withSeededRandom(seedKey, () => makePuzzle(n));
+  puzzleCache.set(cacheKey, generated);
+  if (isDailyPractice && typeof window !== "undefined") {
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(generated));
+    } catch {
+      // Memory caching still keeps day switching fast when storage is blocked.
+    }
+  }
+  return generated;
 }
 
 function todayKey() {
@@ -366,7 +400,7 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
   const requestedDayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
   const [dayIdx, setDayIdx] = useState(requestedDayIdx);
   const n = SIZES[dayIdx];
-  const [puzzle, setPuzzle] = useState(() => createPuzzleForSeed(n, seed || `queens:${todayKey()}:${n}`));
+  const [puzzle, setPuzzle] = useState(() => createPuzzleForSeed(n, seed || `queens:${todayKey()}:day:${requestedDayIdx}:${n}`));
   const [board, setBoard] = useState(() => initialBoard(n));
   const [history, setHistory] = useState([]);
   const [seconds, setSeconds] = useState(0);
@@ -387,6 +421,7 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
   const lastHandledPointerRef = useRef(null);
   const handleCellClickRef = useRef(null);
   const puzzleKeyRef = useRef(0);
+  const didRunDayEffectRef = useRef(false);
   const saveInFlightRef = useRef(false);
   const savedOnceRef = useRef(false);
   const statsRef = useRef({ seconds: 0, mistakes: 0, hintsUsed: 0 });
@@ -461,9 +496,30 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
 
   useEffect(() => {
     if (isChallenge) return;
-    newPuzzle(SIZES[dayIdx]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dayIdx]);
+    // The initial state already generated today's board; do not immediately
+    // repeat that expensive work after the first render.
+    if (!didRunDayEffectRef.current) {
+      didRunDayEffectRef.current = true;
+      return;
+    }
+    const size = SIZES[dayIdx];
+    const dailySeed = `queens:${todayKey()}:day:${dayIdx}:${size}`;
+    setPuzzle(createPuzzleForSeed(size, dailySeed));
+    setBoard(initialBoard(size));
+    setHistory([]);
+    setSeconds(0);
+    setRunning(true);
+    setMistakes(0);
+    setHintsUsed(0);
+    setSolved(false);
+    setHintCell(null);
+    setDifficultyRating(null);
+    setSavedStatId(null);
+    setRewardResult(null);
+    setSolvedAtMs(null);
+    savedOnceRef.current = false;
+    saveInFlightRef.current = false;
+  }, [dayIdx, isChallenge]);
 
   function pushHistory(snapshot = board) {
     setHistory((h) => [...h, snapshot.map((row) => row.slice())]);
