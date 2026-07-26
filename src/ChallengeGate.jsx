@@ -1,6 +1,6 @@
 
 const CREAM = "#1B2129";import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, Lock, Check, Play, X } from "lucide-react";
+import { Home, Lock, Check, Play, X } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { saveStats } from "./lib/saveStats.js";
 import { weekDates, todayIndex, weekDayLabels } from "./lib/week.js";
@@ -153,9 +153,9 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
             background: "rgba(255,255,255,0.9)", backdropFilter: "blur(6px)", border: "1px solid rgba(16,24,40,0.12)",
             display: "flex", alignItems: "center", justifyContent: "center", color: INK,
           }}
-          aria-label="Back to challenges"
+          aria-label="Home"
         >
-          <ArrowLeft size={18} />
+          <Home size={17} />
         </button>
         <GameComponent
           userId={userId}
@@ -186,9 +186,9 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           backdropFilter: "blur(6px)", border: "1px solid rgba(16,24,40,0.12)",
           display: "flex", alignItems: "center", justifyContent: "center", color: INK,
         }}
-        aria-label="Back to all games"
+        aria-label="Home"
       >
-        <ArrowLeft size={18} />
+        <Home size={17} />
       </button>
       {onSwitchMode && <ModePill mode="challenge" onSwitch={onSwitchMode} />}
 
