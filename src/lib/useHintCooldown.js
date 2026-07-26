@@ -7,11 +7,13 @@ export function useHintCooldown(cooldownSeconds) {
   const [remaining, setRemaining] = useState(0);
   const intervalRef = useRef(null);
   const lockedRef = useRef(false);
+  const durationRef = useRef(0);
 
   const reset = useCallback(() => {
     clearInterval(intervalRef.current);
     intervalRef.current = null;
     lockedRef.current = false;
+    durationRef.current = 0;
     setRemaining(0);
   }, []);
 
@@ -22,6 +24,7 @@ export function useHintCooldown(cooldownSeconds) {
     if (!duration) return;
 
     lockedRef.current = true;
+    durationRef.current = duration;
     setRemaining(duration);
     clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
@@ -42,6 +45,9 @@ export function useHintCooldown(cooldownSeconds) {
     startCooldown,
     reset,
     locked: remaining > 0,
+    progress: remaining > 0 && durationRef.current > 0
+      ? 1 - remaining / durationRef.current
+      : 1,
     isLocked: () => lockedRef.current,
   };
 }
