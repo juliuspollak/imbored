@@ -12,3 +12,4 @@ This migration:
 - leaves the winner-only prize and adjusted-time ranking rules unchanged.
 
 No frontend environment variable or Cloudflare setting changes are required.
+Cloudflare will deploy the frontend automatically from `main`.
