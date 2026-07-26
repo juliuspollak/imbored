@@ -118,8 +118,13 @@ function generateHamiltonianPath(n, blockedSet, tunnelMap, maxAttempts = 40) {
   return null;
 }
 
-function chooseCheckpoints(path, totalCheckpoints) {
+function chooseCheckpoints(path, totalCheckpoints, excludedCells = new Set()) {
   const last = path.length - 1;
+  const cellKeyAt = (pos) => `${path[pos][0]},${path[pos][1]}`;
+  // Checkpoints 1 and max always anchor the path, so a candidate whose start
+  // or finish is a tunnel cannot produce a clean board.
+  if (excludedCells.has(cellKeyAt(0)) || excludedCells.has(cellKeyAt(last))) return null;
+
   const positions = new Set([0, last]);
   const need = totalCheckpoints - 2;
   if (need > 0) {
@@ -127,9 +132,14 @@ function chooseCheckpoints(path, totalCheckpoints) {
     for (let i = 1; i <= need; i++) {
       const base = Math.round((i * last) / segments);
       const jitter = Math.round((Math.random() - 0.5) * (last / segments) * 0.6);
-      let pos = Math.min(last - 1, Math.max(1, base + jitter));
-      while (positions.has(pos) && pos < last - 1) pos++;
-      positions.add(pos);
+      const target = Math.min(last - 1, Math.max(1, base + jitter));
+      const available = [];
+      for (let pos = 1; pos < last; pos++) {
+        if (!positions.has(pos) && !excludedCells.has(cellKeyAt(pos))) available.push(pos);
+      }
+      if (!available.length) return null;
+      available.sort((a, b) => Math.abs(a - target) - Math.abs(b - target));
+      positions.add(available[0]);
     }
   }
   const sorted = [...positions].sort((a, b) => a - b);
@@ -174,7 +184,14 @@ function generatePuzzle(n, checkpointCount, wallCount, blackHoleCount, tunnelPai
     const tunnelMap = buildTunnelMap(tunnels);
     const path = generateHamiltonianPath(n, blockedSet, tunnelMap);
     if (!path) continue;
-    const checkpoints = chooseCheckpoints(path, checkpointCount);
+    const tunnelCells = new Set(
+      tunnels.flatMap((t) => [
+        `${t.a[0]},${t.a[1]}`,
+        `${t.b[0]},${t.b[1]}`,
+      ])
+    );
+    const checkpoints = chooseCheckpoints(path, checkpointCount, tunnelCells);
+    if (!checkpoints) continue;
     const numberGrid = Array.from({ length: n }, () => Array(n).fill(0));
     for (const cp of checkpoints) numberGrid[cp.r][cp.c] = cp.num;
     const walls = chooseWalls(path, n, wallCount, blockedSet);
