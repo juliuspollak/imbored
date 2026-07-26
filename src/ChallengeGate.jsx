@@ -3,9 +3,10 @@ const CREAM = "#1B2129";import { useState, useEffect, useCallback } from "react"
 import { Home, Lock, Check, Play, X } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { saveStats } from "./lib/saveStats.js";
-import { weekDates, todayIndex, weekDayLabels } from "./lib/week.js";
+import { weekDates, weekDayLabels } from "./lib/week.js";
 import ModePill from "./ModePill.jsx";
 import PointsToast from "./PointsToast.jsx";
+import { buildTeamChallengeRounds, localDateString } from "./lib/teamChallengeRounds.js";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -28,19 +29,25 @@ function describeAvg(avg) {
 
 export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId, onExit, onSwitchMode, hintCooldownConfig, weekStartsOn = 1, challengeScope = { type: "personal" } }) {
   const dates = weekDates(new Date(), weekStartsOn);
-  const todayIdx = todayIndex(new Date(), weekStartsOn);
   const dayLabels = weekDayLabels(weekStartsOn);
-  const scheduledDateEntries = dates
-    .map((date, index) => ({ date, index }))
-    .filter(({ date }) => {
-      if (challengeScope?.type !== "team" || !challengeScope.activeDays?.length) return true;
-      const weekday = new Date(`${date}T12:00:00`).getDay() || 7;
-      return challengeScope.activeDays.map(Number).includes(weekday);
-    });
+  const teamRounds = challengeScope?.type === "team"
+    ? challengeScope.dailyRounds?.length
+      ? challengeScope.dailyRounds
+      : buildTeamChallengeRounds({
+        activeDays:challengeScope.activeDays,
+        gameIds:challengeScope.gameIds,
+      })
+    : [];
+  const scheduledDateEntries = challengeScope?.type === "team"
+    ? teamRounds
+      .filter((round) => round.game === gameId)
+      .map((round) => ({ date:round.date,index:(round.isoDay || (new Date(`${round.date}T12:00:00`).getDay() || 7)) - 1 }))
+    : dates.map((date, index) => ({ date,index }));
   const scheduledDates = scheduledDateEntries.map(({ date }) => date);
   const [results, setResults] = useState({});
   const [loading, setLoading] = useState(true);
   const [playingIdx, setPlayingIdx] = useState(null);
+  const [playingDate, setPlayingDate] = useState(null);
   const [viewingIdx, setViewingIdx] = useState(null);
   const [alreadyPlayedNotice, setAlreadyPlayedNotice] = useState(false);
   const [savedStatId, setSavedStatId] = useState(null);
@@ -106,12 +113,13 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
     refresh();
   }, [refresh]);
 
-  async function startChallenge(index) {
-    const date = dates[index];
+  async function startChallenge(index, selectedDate = null) {
+    const date = selectedDate || dates[index];
     setStartError("");
     if (challengeScope?.type !== "team") {
       setSavedStatId(null);
       setPlayingIdx(index);
+      setPlayingDate(date);
       return;
     }
     setStartingIdx(index);
@@ -127,6 +135,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
     }
     setSavedStatId(null);
     setPlayingIdx(index);
+    setPlayingDate(date);
   }
 
   async function handleSolved(stats) {
@@ -170,7 +179,10 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   }
 
   if (playingIdx !== null) {
-    const date = dates[playingIdx];
+    const date = playingDate || dates[playingIdx];
+    const forcedDayIndex = challengeScope?.type === "team"
+      ? ((new Date(`${date}T12:00:00`).getDay() || 7) - 1)
+      : playingIdx;
     return (
       <div style={{ position: "relative" }}>
         <button
@@ -191,7 +203,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           userId={userId}
           onSolved={handleSolved}
           mode="challenge"
-          forcedDayIdx={playingIdx}
+          forcedDayIdx={forcedDayIndex}
           seed={`${gameId}-${date}${challengeScope?.type === "team" ? `-team-${challengeScope.id}` : ""}`}
           challengeDate={date}
           hintCooldownConfig={hintCooldownConfig}
@@ -264,21 +276,22 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
         ) : (
           <div className="flex flex-col gap-2">
             {scheduledDateEntries.map(({ date, index: i }) => {
-              const isFuture = i > todayIdx;
-              const isToday = i === todayIdx;
+              const isFuture = date > localDateString();
+              const isToday = date === localDateString();
               const result = results[date];
               const isExpanded = viewingIdx === i;
-              const isPlayable = !isFuture && !result; // today or a missed past day, not yet attempted
+              const isPlayable = !result && (challengeScope?.type === "team" ? isToday : !isFuture);
+              const isMissedTeamRound = challengeScope?.type === "team" && date < localDateString() && !result;
 
               return (
                 <div key={date}>
                   <button
-                    disabled={isFuture || startingIdx !== null}
+                    disabled={(!result && !isPlayable) || startingIdx !== null}
                     onClick={() => {
-                      if (isFuture) return;
+                      if (!result && !isPlayable) return;
                       if (result) setViewingIdx(isExpanded ? null : i);
                       else {
-                        startChallenge(i);
+                        startChallenge(i,date);
                       }
                     }}
                     className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-left"
@@ -286,7 +299,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                       background: result ? "rgba(22,163,74,0.05)" : isPlayable ? "rgba(47,111,237,0.05)" : "rgba(16,24,40,0.03)",
                       border: isPlayable ? `1.5px solid ${isToday ? ACCENT : "rgba(47,111,237,0.4)"}` : "1px solid rgba(16,24,40,0.07)",
                       opacity: isFuture ? 0.45 : 1,
-                      cursor: isFuture ? "default" : "pointer",
+                      cursor: result || isPlayable ? "pointer" : "default",
                     }}
                   >
                     <div
@@ -306,7 +319,9 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                     </div>
                     <div className="flex-1">
                       <div style={{ color: INK, fontWeight: 600 }} className="text-sm">
-                        {dayLabels[i]}{isToday ? " · Today" : ""}
+                        {challengeScope?.type === "team"
+                          ? new Date(`${date}T12:00:00`).toLocaleDateString(undefined,{ weekday:"short" })
+                          : dayLabels[i]}{isToday ? " · Today" : ""}
                       </div>
                       <div style={{ color: INK, opacity: 0.45 }} className="text-[11px]">
                         {isFuture
@@ -317,6 +332,8 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                           ? communityRatings[date]
                             ? `Tap to play — ${describeAvg(communityRatings[date].avg).toLowerCase()} so far`
                             : "Tap to play"
+                          : isMissedTeamRound
+                          ? "Missed · −100 challenge score"
                           : "Missed — tap to catch up"}
                       </div>
                     </div>
