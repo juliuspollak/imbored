@@ -68,33 +68,31 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
               : t("standings.personalSummary", { players:playedCount, games:games.length })}
           </span>
         </span>
-        {open ? <ChevronUp size={16} style={{ opacity:.35 }}/> : <ChevronDown size={16} style={{ opacity:.35 }}/>}
+        {open ? <ChevronUp size={16} style={{ opacity:.35 }}/> : <ChevronDown size={16} style={{ opacity:.35 }}/>} 
       </button>
 
       {open && (
         <div className="px-3 pb-3">
           {!loading && standings.some((s) => s.completed === games.length) && isTeam && (
-            <div className="gloss-button rounded-2xl p-4 mb-3 text-center" style={{ background: "linear-gradient(135deg, rgba(22,163,74,0.08), rgba(16,185,129,0.06))", border: "1px solid rgba(22,163,74,0.2)" }}>
-              <div style={{ color: "#16A34A", fontSize: "28px", marginBottom: "8px" }}>🏆</div>
-              <div className="text-sm font-bold mb-2" style={{ color: "#137A3A" }}>Challenge Complete!</div>
-              {leader && (
-                <>
-                  <div className="text-xs mb-3" style={{ color: "rgba(27,33,41,.6)" }}>
-                    <span className="text-lg" style={{ marginRight: "4px" }}>{leader.icon || "🙂"}</span>
-                    <span className="font-semibold" style={{ color: "#16A34A" }}>{leader.name} Won</span>
-                  </div>
-                  {isTeam && rewardPoints > 0 && (
-                    <div className="text-sm font-bold" style={{ color: "#9A721F" }}>
-                      +{rewardPoints} Points Earned
-                    </div>
-                  )}
-                </>
+            <div className="challenge-complete-card rounded-2xl mb-3" role="status">
+              <span className="challenge-complete-icon" aria-hidden="true">🏆</span>
+              <span className="challenge-complete-copy">
+                <span className="challenge-complete-title">All games completed</span>
+                {leader && (
+                  <span className="challenge-complete-winner">
+                    <span aria-hidden="true">{leader.icon || "🙂"}</span>
+                    <span><strong>{leader.name}</strong> finished first</span>
+                  </span>
+                )}
+              </span>
+              {isTeam && rewardPoints > 0 && (
+                <span className="challenge-complete-points">+{rewardPoints}<small>Points</small></span>
               )}
             </div>
           )}
           {loading ? (
             <div className="space-y-2" role="status" aria-label={t("standings.loading")}>
-              {[0,1,2].map((item) => <div key={item} className="h-[58px] rounded-2xl animate-pulse" style={{ background:"linear-gradient(90deg,#F4F5F8,#FAFAFC,#F4F5F8)" }}/>)}
+              {[0,1,2].map((item) => <div key={item} className="h-[58px] rounded-2xl animate-pulse" style={{ background:"linear-gradient(90deg,#F4F5F8,#FAFAFC,#F4F5F8)" }}/>) }
             </div>
           ) : standings.length === 0 ? (
             <div className="rounded-2xl py-5 px-4 text-center" style={{ background:"#F7F8FB" }}>
@@ -122,7 +120,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                       <span className="flex-1 min-w-0">
                         <span className="flex items-center gap-1.5">
                           <span className="text-xs font-semibold truncate">{standing.name || t("common.player")}{standing.id === userId ? ` · ${t("standings.you")}` : ""}</span>
-                          {finished && <Check size={12} strokeWidth={3} style={{ color:"#12946A" }}/>}
+                          {finished && <Check size={12} strokeWidth={3} style={{ color:"#12946A" }}/>} 
                         </span>
                         {standing.privateStats ? (
                           <span className="flex items-center gap-1 text-[10px] mt-0.5" style={{ color:"rgba(27,33,41,.42)" }}><LockKeyhole size={10}/>{t("standings.private")}</span>
