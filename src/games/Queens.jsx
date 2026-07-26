@@ -320,6 +320,7 @@ const DARK_REGION_COLORS = ["#29466F", "#66502B", "#285841", "#633B59", "#4C3E70
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
 const INK = "#1B2129";
+const BOARD_LINE = "#000000";
 const CREAM = "#1B2129";
 const GOLD = "#2F6FED";
 const RED = "#D9695C";
@@ -645,8 +646,8 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
     const nr = r + dr, nc = c + dc;
     if (nr < 0 || nr >= boardSize || nc < 0 || nc >= boardSize) return "none";
     return puzzle.regionGrid[r][c] !== puzzle.regionGrid[nr][nc]
-      ? `1.5px solid ${INK}`
-      : "1px solid rgba(16,24,40,0.20)";
+      ? `2px solid ${BOARD_LINE}`
+      : `1px solid ${BOARD_LINE}`;
   }
 
   if (isChallenge && !isIncluded) {
@@ -667,7 +668,7 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
   }
 
   return (
-    <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-center justify-center p-4">
+    <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-start justify-center p-4 pt-[72px]">
       <style>{`
         @keyframes qp-pop {
           0% { transform: scale(0.6); opacity: 0; }
@@ -693,8 +694,8 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
         .qp-hint-queen { animation: qp-hint-queen 0.7s ease-in-out infinite; z-index: 2; }
         .qp-card { container-type: inline-size; }
         @container (min-width: 430px) {
-          .qp-cell .qp-crown { width: 30px; height: 30px; }
-          .qp-cell .qp-cross { width: 20px; height: 20px; }
+          .qp-cell .qp-crown { width: 26px; height: 26px; }
+          .qp-cell .qp-cross { width: 16px; height: 16px; }
         }
         @media (hover: hover) and (pointer: fine) {
           .qp-cell:hover { filter: brightness(1.15); }
@@ -825,7 +826,7 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
             gridTemplateColumns: `repeat(${boardSize}, 1fr)`,
             gridTemplateRows: `repeat(${boardSize}, 1fr)`,
             touchAction: "none",
-            border: `1.5px solid ${INK}`,
+            border: `2px solid ${BOARD_LINE}`,
           }}
         >
           {board.map((row, r) =>
@@ -854,7 +855,7 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
                     <Crown
                       key={`crown-${r}-${c}`}
                       className="qp-crown"
-                      size={Math.max(18, 29 - boardSize)}
+                      size={Math.max(17, 27 - boardSize)}
                       style={{
                         color: isConflict ? RED : INK,
                         fill: isConflict ? "rgba(217,105,92,0.22)" : "#F6C453",
@@ -865,7 +866,7 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
                   {val === 1 && (
                     <X
                       className="qp-cross"
-                      size={Math.max(15, 24 - boardSize)}
+                      size={Math.max(13, 22 - boardSize)}
                       strokeWidth={2.6}
                       style={{ color: "rgba(17,24,39,0.60)" }}
                     />
