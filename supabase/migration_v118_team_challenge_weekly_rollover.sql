@@ -585,6 +585,11 @@ $$;
 revoke all on function public.get_my_team_challenge_history(integer) from public;
 grant execute on function public.get_my_team_challenge_history(integer) to authenticated;
 
+-- Drop both the current and legacy signatures so this migration is safe to
+-- rerun after a previous successful or partially applied V118 execution.
+drop function if exists public.set_team_weekly_challenge(
+  bigint,text[],integer[],integer,text,text,bigint,text,boolean,integer
+);
 drop function if exists public.set_team_weekly_challenge(
   bigint,text[],integer[],integer,text,text,bigint,text
 );
