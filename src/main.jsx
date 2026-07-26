@@ -12,6 +12,7 @@ import "./mode-switch-contrast.css";
 import "./theme.css";
 import "./dark-mode-contrast.css";
 import "./profile-dark-fix.css";
+import "./game-control-contrast.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
