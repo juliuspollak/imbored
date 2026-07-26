@@ -20,6 +20,18 @@ export default function PointsToast({ reward }) {
   if (!visible || !reward || (reward.points_awarded == null && !reward.completed)) return null;
   const hasPoints = Number.isFinite(Number(reward.points_awarded));
   const noPoints = reward.points_awarded === 0;
+  const breakdown = reward.breakdown || null;
+  const breakdownParts = breakdown ? [
+    ["base", "base"],
+    ["time", "time"],
+    ["hints", "hints"],
+    ["mistakes", "mistakes"],
+    ["weekly_streak", "weekly streak"],
+  ].flatMap(([key, label]) => {
+    const value = Number(breakdown[key] || 0);
+    if (key !== "base" && value === 0) return [];
+    return [`${value > 0 && key !== "base" ? "+" : ""}${value} ${label}`];
+  }) : [];
 
   return (
     <div style={{ position: "fixed", inset: 0, overflow:"hidden", pointerEvents: "none", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding:16 }}>
@@ -47,6 +59,11 @@ export default function PointsToast({ reward }) {
         ) : (
           <>
             <div className="flex items-center justify-center gap-2" style={{ color: "#D9AE58" }}><Star size={22} fill="currentColor"/><span className="text-2xl font-bold">+{reward.points_awarded} Points</span></div>
+            {breakdownParts.length > 0 && (
+              <div className="mt-2 text-[11px] leading-relaxed" style={{ color:"#1B2129", opacity:.58 }}>
+                {breakdownParts.join(" · ")}
+              </div>
+            )}
             <div className="flex items-center justify-center gap-4 mt-2 text-xs" style={{ color: "#1B2129", opacity: .65 }}>
               <span className="flex items-center gap-1"><Flame size={14}/>{reward.streak || 0} day streak</span>
               <span className="flex items-center gap-1"><Trophy size={14}/>Level {reward.level || 1}</span>
