@@ -1,6 +1,7 @@
 
 const CREAM = "#1B2129";import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, ChevronUp, ChevronDown, Eye, EyeOff, Lock, Unlock, Wrench, Eraser } from "lucide-react";
+import { ChevronUp, ChevronDown, Eye, EyeOff, Lock, Unlock, Wrench, Eraser } from "lucide-react";
+import BackButton from "./BackButton.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { GAME_META } from "./Home.jsx";
@@ -123,14 +124,7 @@ export default function AdminGames({ onBack }) {
     <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex justify-center p-4 pt-10">
       <div className="w-full max-w-md">
         <div className="flex items-center gap-3 mb-2">
-          <button
-            onClick={onBack}
-            className="gloss-button nav-btn flex items-center justify-center rounded-full"
-            style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)", width: 34, height: 34 }}
-            aria-label="Back to home"
-          >
-            <ArrowLeft size={16} />
-          </button>
+          <BackButton onClick={onBack} />
           <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl">
             Games
           </h1>

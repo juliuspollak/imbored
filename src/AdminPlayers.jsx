@@ -1,9 +1,10 @@
 
 const CREAM = "#1B2129";import { useState, useEffect, useCallback } from "react";
 import {
-  ArrowLeft, CheckCircle2, Crown, Ellipsis, EyeOff, Lock,
+  CheckCircle2, Crown, Ellipsis, EyeOff, Lock,
   RotateCcw, ShieldBan, UserX, X,
 } from "lucide-react";
+import BackButton from "./BackButton.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 
@@ -178,7 +179,7 @@ export default function AdminPlayers({ onBack }) {
     <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter',sans-serif" }} className="flex justify-center p-4 pt-10">
       <div className="w-full max-w-md">
         <header className="flex items-center gap-3 mb-6">
-          <button onClick={onBack} className="gloss-button grid place-items-center rounded-full" style={{ width: 36, height: 36, background: "rgba(16,24,40,.05)" }} aria-label="Back"><ArrowLeft size={17}/></button>
+          <BackButton onClick={onBack} ariaLabel="Back" />
           <div><h1 className="text-2xl font-bold" style={{ fontFamily: "'Fredoka',sans-serif" }}>Players</h1><p className="text-xs opacity-45">Approvals first, account controls when needed</p></div>
         </header>
         {notice && <div className="rounded-2xl px-3 py-2.5 mb-4 text-xs" style={{ background:"rgba(47,111,237,.08)", color:INK }}>{notice}</div>}
