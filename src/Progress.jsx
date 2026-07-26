@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Star, Flame, Trophy, Gift, Send, Plus, ShieldCheck, ExternalLink, PartyPopper, X, Pencil, Save, Sparkles, Lock } from "lucide-react";
+import { Star, Flame, Trophy, Gift, Send, Plus, ShieldCheck, ExternalLink, PartyPopper, X, Pencil, Save, Sparkles, Lock } from "lucide-react";
+import BackButton from "./BackButton.jsx";
 import { supabase } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { markTransfersSeen } from "./lib/useNewTransfers.js";
@@ -86,7 +87,7 @@ export default function Progress({ onBack }) {
   async function protect(){const {error}=await supabase.rpc("protect_streak"); setMessage(error?.message||"Streak protected"); refresh();}
 
   return <div style={{background:BG,minHeight:"100vh",fontFamily:"'Inter',sans-serif"}} className="p-4 pt-10 flex justify-center"><div className="w-full max-w-md">
-    <div className="flex items-center gap-3 mb-5"><button onClick={onBack} className="nav-btn flex items-center justify-center rounded-full" style={{background:"rgba(16,24,40,.05)",color:INK,width:34,height:34}} aria-label="Back to home"><ArrowLeft size={16}/></button><h1 className="text-2xl" style={{fontFamily:"'Fredoka',sans-serif",fontWeight:700,color:INK}}>My Progress</h1></div>
+    <div className="flex items-center gap-3 mb-5"><BackButton onClick={onBack}/><h1 className="text-2xl" style={{fontFamily:"'Fredoka',sans-serif",fontWeight:700,color:INK}}>My Progress</h1></div>
     {loading?<p className="text-center text-sm opacity-40">Loading…</p>:<>
       {newTransfers.length>0&&<div className="flex flex-col gap-2 mb-3">{newTransfers.map(n=><div key={n.id} className="rounded-xl p-3 flex items-center gap-2.5" style={{background:"rgba(139,92,246,.10)",border:"1px solid rgba(139,92,246,.28)"}}><PartyPopper size={18} style={{color:"#8B5CF6",flexShrink:0}}/><div className="flex-1 text-xs" style={{color:INK}}><span className="font-semibold">{n.sender?.icon||"🙂"} {n.sender?.name||"Someone"}</span> sent you <span className="font-semibold">{n.points.toLocaleString()} points</span>!</div><button onClick={()=>dismissTransferNotice(n.id)} aria-label="Dismiss" style={{color:INK,opacity:.4}}><X size={14}/></button></div>)}</div>}
       <div className="grid grid-cols-3 gap-2 mb-3">
