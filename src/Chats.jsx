@@ -13,7 +13,7 @@ function formatWhen(value) {
   return new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" }).format(date);
 }
 
-export default function Chats({ currentUser, currentProfile, onBack, onOpenChat, onOpenAdminPlayers, onOpenFeedback, onOpenTeams, onOpenChallenges }) {
+export default function Chats({ currentUser, currentProfile, onBack, onOpenChat, onOpenAdminPlayers, onOpenFeedback, onOpenTeams }) {
   const [messages, setMessages] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [presence, setPresence] = useState(new Set());
@@ -91,15 +91,6 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
         .eq("id", latest.id)
         .eq("recipient_id", currentUser.id);
       onOpenFeedback?.();
-      return;
-    }
-    if (latest?.activity_type === "team_challenge_winner") {
-      await supabase
-        .from("direct_messages")
-        .update({ read_at:new Date().toISOString() })
-        .eq("id", latest.id)
-        .eq("recipient_id", currentUser.id);
-      onOpenChallenges?.();
       return;
     }
     if (currentProfile?.is_admin && latest?.activity_type === "user_approval_required") {
