@@ -395,8 +395,11 @@ function fmtTime(sec) {
 }
 
 export default function Queens({
+  userId,
   mode = "practice",
   seed = null,
+  forcedDayIdx,
+  challengeDate,
   onSolved,
   savedStatId: completedStatId = null,
   rewardResult: completedReward = null,
@@ -410,7 +413,7 @@ export default function Queens({
   const { t } = useI18n();
   const isChallenge = mode === "challenge";
   const requestedDayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
-  const [dayIdx, setDayIdx] = useState(requestedDayIdx);
+  const [dayIdx, setDayIdx] = useState(isChallenge ? forcedDayIdx ?? requestedDayIdx : requestedDayIdx);
   const n = SIZES[dayIdx];
   const [puzzle, setPuzzle] = useState(() => createPuzzleForSeed(n, seed || `queens:${todayKey()}:day:${requestedDayIdx}:${n}`));
   const [board, setBoard] = useState(() => initialBoard(n));
@@ -467,26 +470,41 @@ export default function Queens({
     (async () => {
       const solvedStats = statsRef.current;
       const payload = {
+        userId,
         game: "queens",
+        dayIndex: dayIdx,
         seconds: solvedStats.seconds,
         mistakes: solvedStats.mistakes,
         hints: solvedStats.hintsUsed,
+        mode,
+        challengeDate:isChallenge ? challengeDate : undefined,
+      };
+      const legacyPayload = {
+        game:"queens",
+        seconds:solvedStats.seconds,
+        mistakes:solvedStats.mistakes,
+        hints:solvedStats.hintsUsed,
         difficulty: dayIdx,
         seed: seed || null,
       };
       if (onSolved) {
         try {
-          await onSolved(payload);
-        } catch (error) {
-          console.error("Unable to save Queens result", error);
-        } finally {
+          const result = await onSolved(payload);
+          if (result?.error || !result?.data) {
+            throw result?.error || new Error("The Queens result was not saved.");
+          }
+          if (cancelled) return;
           savedOnceRef.current = true;
           saveInFlightRef.current = false;
           setCompletionFinished(true);
+        } catch (error) {
+          console.error("Unable to save Queens result", error);
+          saveInFlightRef.current = false;
+          window.setTimeout(() => setSyncRetryTick((tick) => tick + 1), 1500);
         }
         return;
       }
-      const result = await onChallengeComplete?.(payload);
+      const result = await onChallengeComplete?.(legacyPayload);
       if (cancelled) return;
       if (result?.error) {
         console.error("Unable to save Queens result", result.error);
@@ -501,7 +519,7 @@ export default function Queens({
       setCompletionFinished(true);
     })();
     return () => { cancelled = true; };
-  }, [dayIdx, onChallengeComplete, onSolved, seed, solved, syncRetryTick]);
+  }, [challengeDate, dayIdx, isChallenge, mode, onChallengeComplete, onSolved, seed, solved, syncRetryTick, userId]);
 
   const newPuzzle = useCallback((size = n) => {
     puzzleKeyRef.current += 1;

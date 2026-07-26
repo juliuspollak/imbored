@@ -356,11 +356,32 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
 
   return (
     <div style={{ background:BG, minHeight:"100vh", fontFamily:"'Inter',sans-serif" }} className="teams-page flex justify-center p-4 pt-10">
+      <style>{`
+        @media (max-width: 520px) {
+          .teams-page-header {
+            display:grid !important;
+            grid-template-columns:44px minmax(0,1fr) 52px;
+            align-items:center;
+            column-gap:10px;
+          }
+          .teams-page-header-copy {
+            grid-column:2;
+            min-width:0;
+          }
+          .teams-page-new-button {
+            grid-column:2 / 4;
+            grid-row:2;
+            justify-self:stretch;
+            justify-content:center;
+            margin-top:10px;
+          }
+        }
+      `}</style>
       <div className="w-full max-w-md">
-        <header className="flex items-center gap-3 mb-5">
+        <header className="teams-page-header flex items-center gap-3 mb-5">
           <BackButton onClick={onBack} ariaLabel="Back" />
-          <div className="flex-1"><h1 className="text-2xl font-bold" style={{ fontFamily:"'Fredoka',sans-serif" }}>Teams</h1><p className="text-xs opacity-45">Play together, your way</p></div>
-          {!profile?.hidden_from_others && <button className="gloss-button" onClick={() => setComposerOpen((open) => !open)} className="rounded-full px-3 py-2 text-xs font-semibold flex items-center gap-1" style={{ background:ACCENT,color:"#fff" }}><Plus size={14}/>New team</button>}
+          <div className="teams-page-header-copy flex-1"><h1 className="text-2xl font-bold" style={{ fontFamily:"'Fredoka',sans-serif" }}>Teams</h1><p className="text-xs opacity-45">Play together, your way</p></div>
+          {!profile?.hidden_from_others && <button onClick={() => setComposerOpen((open) => !open)} className="gloss-button teams-page-new-button rounded-full px-3 py-2 text-xs font-semibold flex items-center gap-1" style={{ background:ACCENT,color:"#fff" }}><Plus size={14}/>New team</button>}
         </header>
 
         {!profile?.hidden_from_others && <div className="mb-4">

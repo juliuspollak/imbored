@@ -45,6 +45,9 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   const [alreadyPlayedNotice, setAlreadyPlayedNotice] = useState(false);
   const [savedStatId, setSavedStatId] = useState(null);
   const [rewardResult, setRewardResult] = useState(null);
+  const [saveError, setSaveError] = useState("");
+  const [lastSolvedStats, setLastSolvedStats] = useState(null);
+  const [pointsRetryStatId, setPointsRetryStatId] = useState(null);
   const [communityRatings, setCommunityRatings] = useState({}); // date -> { avg, count }
   const [leaderboards, setLeaderboards] = useState({}); // date -> [{ user_id, seconds, profiles }]
   const [startError, setStartError] = useState("");
@@ -127,6 +130,9 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   }
 
   async function handleSolved(stats) {
+    setLastSolvedStats(stats);
+    setSaveError("");
+    setPointsRetryStatId(null);
     setSavedStatId(null);
     const res = await saveStats({ ...stats, teamChallengeId: challengeScope?.type === "team" ? challengeScope.id : null, teamId: challengeScope?.type === "team" ? challengeScope.teamId : null });
     if (res?.alreadyPlayed) {
@@ -135,8 +141,32 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
     } else if (res?.data) {
       setSavedStatId(res.data.id);
       setRewardResult({ ...(res.reward || {}), completed:true, eventId:Date.now() });
+      if (res.rewardError) {
+        setPointsRetryStatId(res.data.id);
+        setSaveError(res.rewardError.message || "Your result was saved, but its points could not be awarded.");
+      }
+    } else {
+      const message = res?.error?.message || "Your result could not be saved. Please retry before leaving.";
+      setSaveError(message);
+      setRewardResult({ completed:true,error:true,eventId:Date.now() });
     }
-    refresh();
+    await refresh();
+    return res;
+  }
+
+  async function retryResultSave() {
+    if (pointsRetryStatId) {
+      const { data, error } = await supabase.rpc("award_game_points", { target_stat_id:pointsRetryStatId });
+      if (error) {
+        setSaveError(error.message || "Your points still could not be awarded.");
+        return;
+      }
+      setRewardResult({ ...(data || {}),completed:true,eventId:Date.now() });
+      setPointsRetryStatId(null);
+      setSaveError("");
+      return;
+    }
+    if (lastSolvedStats) await handleSolved(lastSolvedStats);
   }
 
   if (playingIdx !== null) {
@@ -168,6 +198,12 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           savedStatId={savedStatId}
           rewardResult={rewardResult}
         />
+        {saveError && (
+          <div className="fixed left-4 right-4 bottom-5 z-[130] mx-auto max-w-sm rounded-2xl p-3 flex items-center gap-3" role="alert" style={{ background:"rgba(255,255,255,.98)",border:"1px solid rgba(181,67,58,.28)",boxShadow:"0 16px 44px rgba(16,24,40,.22)",color:"#9F2F2A" }}>
+            <span className="flex-1 text-xs font-semibold">{saveError}</span>
+            <button type="button" disabled={!lastSolvedStats && !pointsRetryStatId} onClick={retryResultSave} className="rounded-full px-3 py-2 text-xs font-bold text-white disabled:opacity-40" style={{ background:"#B5433A" }}>Retry</button>
+          </div>
+        )}
         {onSwitchMode && <ModePill mode="challenge" onSwitch={onSwitchMode} />}
         <PointsToast reward={rewardResult} />
       </div>

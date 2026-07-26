@@ -552,7 +552,16 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
   }
 
   return (
-    <div ref={menuRef} style={{ position:"fixed", top:16, right:16, zIndex:80 }}>
+    <div
+      ref={menuRef}
+      className="account-menu-dock"
+      style={{
+        position:"fixed",
+        top:"max(16px, env(safe-area-inset-top))",
+        right:"max(16px, env(safe-area-inset-right))",
+        zIndex:80,
+      }}
+    >
       {(menuOpen || incognito) && (
         <button
           type="button"

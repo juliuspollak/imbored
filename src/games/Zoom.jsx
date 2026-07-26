@@ -24,7 +24,7 @@ function fmtTime(s) {
   return `${m}:${ss.toString().padStart(2, "0")}`;
 }
 
-export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, savedStatId } = {}) {
+export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, savedStatId, rewardResult } = {}) {
   const { t, language } = useI18n();
   const days = t("zoom.days").split(",");
   const todayIdx = (() => {
@@ -351,7 +351,14 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
             <p style={{ color: INK, opacity: 0.7 }} className="text-xs mb-1">
               {fmtTime(seconds)} &middot; {t("zoom.roundsNailed", { count: roundsNailed, total: totalRounds })}
             </p>
-            {savedStatId && <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} />}
+            {rewardResult?.points_awarded != null && (
+              <div className="rounded-full px-3 py-1 text-sm font-bold" style={{ background:"rgba(217,174,88,.14)",color:"#B88724" }}>
+                {rewardResult.points_awarded > 0 ? `★ +${rewardResult.points_awarded} Points` : t("common.noPoints")}
+              </div>
+            )}
+            {savedStatId
+              ? <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} />
+              : <div className="text-xs py-3" style={{ color:INK,opacity:.55 }}>Finalising your result…</div>}
             {!isChallenge && (
               <button onClick={() => newQuiz(dayIdx)} className="zoom-next-btn mt-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors" style={{ background: ACCENT, color: "#FFFFFF" }}>
                 {t("zoom.playAgain")}
