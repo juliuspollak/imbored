@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import InvitedApprovalNotice from "./InvitedApprovalNotice.jsx";
+import ChallengeStreakBadge from "./ChallengeStreakBadge.jsx";
 import { I18nProvider } from "./lib/i18n.jsx";
 import "./index.css";
 import "./profile-glass.css";
@@ -17,6 +18,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <ErrorBoundary onReset={() => window.location.reload()}>
         <App />
         <InvitedApprovalNotice />
+        <ChallengeStreakBadge />
       </ErrorBoundary>
     </I18nProvider>
   </React.StrictMode>
