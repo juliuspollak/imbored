@@ -269,7 +269,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
           <button
             type="button"
             onClick={() => setShowStatsToOthers((value) => !value)}
-            className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 mb-3 text-left"
+            className="profile-privacy-card w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 mb-3 text-left"
             style={{ border: "1px solid rgba(16,24,40,0.14)" }}
           >
             {showStatsToOthers ? <Unlock size={15} style={{ color: INK, opacity: 0.4 }} /> : <Lock size={15} style={{ color: INK }} />}
@@ -293,7 +293,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
           <button
             type="button"
             onClick={() => setIsPrivate((p) => !p)}
-            className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 mb-4 text-left"
+            className="profile-privacy-card w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 mb-4 text-left"
             style={{ border: "1px solid rgba(16,24,40,0.14)" }}
           >
             {isPrivate ? <Lock size={15} style={{ color: INK }} /> : <Unlock size={15} style={{ color: INK, opacity: 0.4 }} />}

@@ -752,7 +752,7 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
         </div>
 
         {/* toolbar - text labels, spread at top */}
-        <div className="flex items-center justify-between gap-2 mb-3 px-1">
+        <div className="game-toolbar flex items-center justify-between gap-2 mb-3 px-1">
           {[
             { label: t("common.undo"), onClick: handleUndo, disabled: solved || history.length === 0 },
             { label: t("common.reset"), onClick: handleReset, disabled: solved },

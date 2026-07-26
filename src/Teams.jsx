@@ -379,7 +379,7 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
           <div className="text-sm font-bold">Create a team</div>
           <div className="text-[11px] opacity-45 mt-0.5 mb-3">Give it a name. We’ll suggest an icon.</div>
           <div className="flex gap-2">
-            <button className="gloss-button" type="button" onClick={() => setEmojiPickerOpen((open) => !open)} className="rounded-2xl text-2xl shrink-0 flex items-center justify-center gap-0.5" style={{ width:54,background:"linear-gradient(145deg,#eef3ff,#fff)" }} aria-label="Choose team icon">{emoji}<ChevronDown size={11} style={{ opacity:.35 }}/></button>
+            <button className="gloss-button" type="button" onClick={() => setEmojiPickerOpen((open) => !open)} className="team-icon-control rounded-2xl text-2xl shrink-0 flex items-center justify-center gap-0.5" style={{ width:54,background:"linear-gradient(145deg,#eef3ff,#fff)" }} aria-label="Choose team icon">{emoji}<ChevronDown size={11} style={{ opacity:.35 }}/></button>
             <input autoFocus value={name} onChange={(e) => updateName(e.target.value)} placeholder="Team name" className="flex-1 min-w-0 rounded-2xl border px-3 py-2.5 text-sm outline-none"/>
           </div>
           {emojiPickerOpen && <div className="mt-3 rounded-2xl p-2.5" style={{ background:"rgba(16,24,40,.035)" }}><div className="grid grid-cols-8 gap-1">{TEAM_EMOJIS.map((item) => <button className="gloss-button" type="button" key={item} onClick={() => { setEmoji(item);setEmojiTouched(true);setEmojiPickerOpen(false); }} className="rounded-xl text-lg" style={{ height:34,background:item === emoji ? "rgba(47,111,237,.14)" : "transparent" }}>{item}</button>)}</div></div>}
@@ -449,7 +449,7 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
               </div>
               {member && <button className="gloss-button" onClick={() => { setInviteTeam(rosterTeam);setInviteQuery(""); }} className="w-full rounded-2xl px-4 py-3 mb-3 text-sm font-semibold flex items-center justify-center gap-2 text-white" style={{ background:ACCENT }}><UserPlus size={16}/>Invite a player</button>}
 
-              {member && <div className="rounded-3xl p-4 mb-3" style={{ background:"#fff",border:"1px solid rgba(16,24,40,.07)" }}>
+              {member && <div className="team-challenges-panel rounded-3xl p-4 mb-3" style={{ background:"#fff",border:"1px solid rgba(16,24,40,.07)" }}>
                 <div className="flex items-center gap-2 mb-3"><div className="grid place-items-center rounded-xl" style={{ width:34,height:34,background:"rgba(18,148,106,.09)",color:"#0B7C58" }}><CalendarDays size={15}/></div><div className="flex-1"><div className="text-sm font-bold">Challenges</div><div className="text-[10px] opacity-45">{rosterChallenges.length} this week</div></div>{owner && <button className="gloss-button" type="button" onClick={() => startNewChallenge(rosterTeam.id)} className="rounded-full px-3 py-2 text-[11px] font-semibold flex items-center gap-1" style={{ background:"rgba(47,111,237,.09)",color:ACCENT }}><Plus size={12}/>New</button>}</div>
                 {visibleChallenges.length === 0 && <div className="rounded-2xl p-4 text-center" style={{ background:"#F7F8FB" }}><div className="text-xs font-semibold">No challenge yet</div><div className="text-[10px] opacity-45 mt-1">{owner ? "Create one for your team to play this week." : "The owner hasn’t created one this week."}</div></div>}
                 <div className="space-y-2">
@@ -475,7 +475,7 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
                 </div>
               </div>}
 
-              <div className="rounded-3xl p-3 sm:p-4" style={{ background:"#fff",border:"1px solid rgba(16,24,40,.07)" }}>
+              <div className="team-members-panel rounded-3xl p-3 sm:p-4" style={{ background:"#fff",border:"1px solid rgba(16,24,40,.07)" }}>
               <div className="flex items-center justify-between px-1 mb-3"><div className="text-sm font-bold">Members</div><div className="text-[11px] opacity-45">{rosterFor(rosterTeam.id).length}</div></div>
               {rosterFor(rosterTeam.id).length + blocksFor(rosterTeam.id).length > 6 && <label className="flex items-center gap-2 rounded-2xl px-3 py-2.5 mb-3" style={{ background:"#F4F6FA" }}><Search size={15} style={{ opacity:.4 }}/><input value={rosterQuery} onChange={(event) => setRosterQuery(event.target.value)} placeholder="Find a member…" className="flex-1 bg-transparent outline-none text-base"/></label>}
               <div className="space-y-2 pr-0.5">
@@ -484,7 +484,7 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
                   const isMe = member.id === user?.id;
                   return <div key={member.id} className="rounded-2xl p-3" style={{ background:isMe ? "rgba(47,111,237,.07)" : "#F8F9FC" }}>
                     <div className="flex items-center gap-3">
-                      <span className="grid place-items-center rounded-xl text-xl" style={{ width:38,height:38,background:"#fff" }}>{member.icon || "🙂"}</span>
+                      <span className="team-member-icon grid place-items-center rounded-xl text-xl" style={{ width:38,height:38,background:"#fff" }}>{member.icon || "🙂"}</span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5"><span className="text-sm font-semibold truncate">{isMe ? `${member.name} (you)` : member.name}</span>{teamOwner && <Crown size={11} style={{ color:"#D9AE58" }}/>}</div>
                         <div className="text-[10px] opacity-40 truncate">{teamOwner ? "Team owner" : member.mood || "Team member"}</div>

@@ -548,7 +548,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         </div>
 
         {/* toolbar - text labels, spread at top */}
-        <div className="flex items-center justify-between gap-2 mb-3 px-1">
+        <div className="game-toolbar flex items-center justify-between gap-2 mb-3 px-1">
           {[
             { label: t("common.reset"), onClick: handleReset, disabled: solved },
             { label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
