@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
 import { ArrowLeft, LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3, Star, Gift, MessagesSquare } from "lucide-react";
 import Home from "./Home.jsx";
 import Login from "./Login.jsx";
@@ -44,6 +44,7 @@ import { useNewTransfersCount } from "./lib/useNewTransfers.js";
 import { usePokes } from "./lib/pokes.js";
 import { useUnreadMessages } from "./lib/useUnreadMessages.js";
 import { useI18n } from "./lib/i18n.jsx";
+import { applyThemePreference } from "./lib/theme.js";
 
 const GAME_COMPONENTS = {
   queens: { Component: QueensGame, label: "Queens" },
@@ -70,6 +71,9 @@ function AppShell() {
   const [playMode, setPlayMode] = useState("challenge");
   const [challengeScope, setChallengeScope] = useState({ type: "personal", id: null, name: t("home.myChallenge"), gameIds: null });
   const { loading, user, profile, profileLoading, signOut } = useAuth();
+  useLayoutEffect(() => {
+    applyThemePreference(profile?.theme_preference || "system");
+  }, [profile?.theme_preference]);
   useEffect(() => {
     if (!profile?.account_deleted_at) return;
     // A historical/deleted profile must never render the Login component

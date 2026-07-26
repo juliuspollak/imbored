@@ -12,6 +12,7 @@ create table profiles (
   is_admin boolean not null default false,
   show_stats_to_others boolean not null default true,
   week_starts_on integer not null default 1 check (week_starts_on in (0, 1)),
+  theme_preference text not null default 'system' check (theme_preference in ('system', 'light', 'dark')),
   created_at timestamptz default now()
 );
 

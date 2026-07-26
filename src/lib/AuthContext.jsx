@@ -259,7 +259,7 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut();
   }
 
-  async function saveProfile({ name, icon, is_private, mood, default_mode, show_stats_to_others, week_starts_on }) {
+  async function saveProfile({ name, icon, is_private, mood, default_mode, show_stats_to_others, week_starts_on, theme_preference }) {
     if (!supabaseReady || !session) return { error: new Error("Not logged in") };
     const { data, error } = await supabase.rpc("save_my_profile", {
       profile_name: name ?? null,
@@ -269,6 +269,7 @@ export function AuthProvider({ children }) {
       profile_default_mode: default_mode ?? null,
       profile_show_stats: show_stats_to_others ?? null,
       profile_week_starts_on: week_starts_on ?? null,
+      profile_theme_preference: theme_preference ?? null,
     });
     const row = Array.isArray(data) ? data[0] : data;
     if (!error && row) setProfile(row);

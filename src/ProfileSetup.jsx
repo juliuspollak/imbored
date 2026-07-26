@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Lock, Unlock, Users, ArrowLeft, Fingerprint, Trash2, Plus, Link2, Unlink, Mail, Languages } from "lucide-react";
+import { Lock, Unlock, Users, ArrowLeft, Fingerprint, Trash2, Plus, Link2, Unlink, Mail, Languages, Monitor, Sun, Moon } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { PROFILE_ICONS } from "./lib/icons.js";
 import { useI18n } from "./lib/i18n.jsx";
+import { applyThemePreference } from "./lib/theme.js";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -27,6 +28,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
   const [defaultMode, setDefaultMode] = useState(profile?.default_mode || "challenge");
   const [showStatsToOthers, setShowStatsToOthers] = useState(profile?.show_stats_to_others ?? true);
   const [weekStartsOn, setWeekStartsOn] = useState(profile?.week_starts_on ?? 1);
+  const [themePreference, setThemePreference] = useState(profile?.theme_preference || "system");
   const [showIconPicker, setShowIconPicker] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -122,6 +124,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
       setDefaultMode(profile.default_mode || "challenge");
       setShowStatsToOthers(profile.show_stats_to_others ?? true);
       setWeekStartsOn(profile.week_starts_on ?? 1);
+      setThemePreference(profile.theme_preference || "system");
     }
   }, [profile]);
 
@@ -130,7 +133,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
     if (!name.trim() || saving) return;
     setSaving(true);
     setError(null);
-    const { error } = await saveProfile({ name: name.trim(), icon, is_private: isPrivate, mood: mood.trim() || null, default_mode: defaultMode, show_stats_to_others: showStatsToOthers, week_starts_on: weekStartsOn });
+    const { error } = await saveProfile({ name: name.trim(), icon, is_private: isPrivate, mood: mood.trim() || null, default_mode: defaultMode, show_stats_to_others: showStatsToOthers, week_starts_on: weekStartsOn, theme_preference: themePreference });
     setSaving(false);
     if (error) setError(error.message);
     else if (onDone) onDone();
@@ -240,6 +243,33 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
                 }}
               >
                 {t(`common.${m}`)}
+              </button>
+            ))}
+          </div>
+
+
+          <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
+            {t("profile.theme")}
+          </label>
+          <div className="grid grid-cols-3 rounded-lg p-1 mb-4" style={{ background: "rgba(16,24,40,0.05)" }}>
+            {[
+              { value: "system", label: t("profile.themeSystem"), Icon: Monitor },
+              { value: "light", label: t("profile.themeLight"), Icon: Sun },
+              { value: "dark", label: t("profile.themeDark"), Icon: Moon },
+            ].map(({ value, label, Icon }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => { setThemePreference(value); applyThemePreference(value); }}
+                className="flex items-center justify-center gap-1 rounded-md py-1.5 text-xs font-semibold"
+                style={{
+                  background: themePreference === value ? "var(--app-panel-solid)" : "transparent",
+                  color: themePreference === value ? "var(--app-text)" : "var(--app-text-muted)",
+                  boxShadow: themePreference === value ? "0 2px 6px rgba(16,24,40,0.10)" : "none",
+                }}
+                aria-pressed={themePreference === value}
+              >
+                <Icon size={13} /> {label}
               </button>
             ))}
           </div>
