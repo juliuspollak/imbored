@@ -30,6 +30,14 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   const dates = weekDates(new Date(), weekStartsOn);
   const todayIdx = todayIndex(new Date(), weekStartsOn);
   const dayLabels = weekDayLabels(weekStartsOn);
+  const scheduledDateEntries = dates
+    .map((date, index) => ({ date, index }))
+    .filter(({ date }) => {
+      if (challengeScope?.type !== "team" || !challengeScope.activeDays?.length) return true;
+      const weekday = new Date(`${date}T12:00:00`).getDay() || 7;
+      return challengeScope.activeDays.map(Number).includes(weekday);
+    });
+  const scheduledDates = scheduledDateEntries.map(({ date }) => date);
   const [results, setResults] = useState({});
   const [loading, setLoading] = useState(true);
   const [playingIdx, setPlayingIdx] = useState(null);
@@ -53,12 +61,12 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
       : query.is("team_challenge_id", null);
     const [{ data }, { data: allRatings }, { data: allTimes }] = await Promise.all([
       scopeQuery(supabase.from("game_stats").select("*")
-        .eq("user_id", userId).eq("game", gameId).eq("mode", "challenge").in("challenge_date", dates)),
+        .eq("user_id", userId).eq("game", gameId).eq("mode", "challenge").in("challenge_date", scheduledDates)),
       scopeQuery(supabase.from("game_stats").select("challenge_date, difficulty_rating")
-        .eq("game", gameId).eq("mode", "challenge").in("challenge_date", dates)
+        .eq("game", gameId).eq("mode", "challenge").in("challenge_date", scheduledDates)
         .not("difficulty_rating", "is", null)),
       scopeQuery(supabase.from("game_stats").select("challenge_date, user_id, seconds, profiles(name, icon)")
-        .eq("game", gameId).eq("mode", "challenge").in("challenge_date", dates)),
+        .eq("game", gameId).eq("mode", "challenge").in("challenge_date", scheduledDates)),
     ]);
     const byDate = {};
     (data || []).forEach((row) => {
@@ -89,7 +97,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
 
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameId, userId, challengeScope?.id, challengeScope?.type]);
+  }, [gameId, userId, challengeScope?.id, challengeScope?.type, challengeScope?.activeDays?.join(",")]);
 
   useEffect(() => {
     refresh();
@@ -219,7 +227,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           <p style={{ color: INK, opacity: 0.4 }} className="text-sm text-center py-8">Loading…</p>
         ) : (
           <div className="flex flex-col gap-2">
-            {dates.map((date, i) => {
+            {scheduledDateEntries.map(({ date, index: i }) => {
               const isFuture = i > todayIdx;
               const isToday = i === todayIdx;
               const result = results[date];

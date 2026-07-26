@@ -447,13 +447,12 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                                 disabled={actionDisabled}
                                 onClick={() => {
                                   chooseTeamChallenge(item);
-                                  setExpandedChallengeId(null);
                                   requestAnimationFrame(() => document.querySelector(".challenge-games-heading")?.scrollIntoView({ behavior:"smooth",block:"start" }));
                                 }}
                                 className="gloss-button w-full rounded-full py-2.5 mt-3 text-xs font-bold disabled:opacity-45"
                                 style={{ background:actionDisabled ? "rgba(16,24,40,.06)" : "#2F6FED",color:actionDisabled ? "rgba(27,33,41,.48)" : "#fff" }}
                               >
-                                {status.done ? "Challenge completed" : item.active_today ? "Play this challenge" : "Available on its scheduled days"}
+                                {status.done ? "Challenge completed" : item.active_today ? "Choose a game" : "Available on its scheduled days"}
                               </button>
                               <div className="flex items-center gap-2 mt-3">
                                 <div className="flex">
