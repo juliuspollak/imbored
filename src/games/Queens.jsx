@@ -438,7 +438,7 @@ export default function Queens({
   const saveInFlightRef = useRef(false);
   const savedOnceRef = useRef(false);
   const statsRef = useRef({ seconds: 0, mistakes: 0, hintsUsed: 0 });
-  const hintCooldown = useHintCooldown(4500);
+  const hintCooldown = useHintCooldown(5);
   const savedStatId = completedStatId ?? localSavedStatId;
   const rewardResult = completedReward ?? localRewardResult;
 
@@ -520,6 +520,7 @@ export default function Queens({
     setLocalRewardResult(null);
     setCompletionFinished(false);
     setSolvedAtMs(null);
+    hintCooldown.reset();
     savedOnceRef.current = false;
     saveInFlightRef.current = false;
   }, [n, seed]);
@@ -548,6 +549,7 @@ export default function Queens({
     setLocalRewardResult(null);
     setCompletionFinished(false);
     setSolvedAtMs(null);
+    hintCooldown.reset();
     savedOnceRef.current = false;
     saveInFlightRef.current = false;
   }, [dayIdx, isChallenge]);
@@ -697,8 +699,8 @@ export default function Queens({
   }
 
   function handleHint() {
-    if (solved || hintCooldown.locked) return;
-    hintCooldown.trigger();
+    if (solved || hintCooldown.isLocked()) return;
+    hintCooldown.startCooldown();
     const wrong = [];
     for (let r = 0; r < boardSize; r++) {
       for (let c = 0; c < boardSize; c++) {
