@@ -1,86 +1,102 @@
-/* Challenge / Practice mode switch.
- * Inspired by the soft outlined glass control in the supplied reference:
- * transparent body, bright upper rim, stronger lower edge, and restrained depth.
+/* Shared liquid-glass segmented control.
+ *
+ * Home currently renders the mode switch with Tailwind utility classes, while
+ * Stats and Progress use .game-mode-switch. Both structures are intentionally
+ * covered here so the visual state is consistent across the application.
  */
 
-.inline-flex.rounded-full.p-1:has(> button.gloss-button) {
-  gap: 5px;
+:where(.game-mode-switch, .inline-flex.rounded-full.p-1:has(> button.gloss-button)) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 5px !important;
-  border: 1px solid rgba(255, 255, 255, 0.28) !important;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(126, 143, 166, 0.10)) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.56),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.18),
-    0 9px 22px rgba(42, 57, 79, 0.10) !important;
-  -webkit-backdrop-filter: blur(22px) saturate(130%);
-  backdrop-filter: blur(22px) saturate(130%);
-}
-
-.inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button {
-  min-height: 39px;
+  border: 1px solid rgba(255, 255, 255, 0.42) !important;
   border-radius: 999px !important;
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.10), rgba(164, 181, 203, 0.10)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    inset 0 -2px 1px rgba(238, 246, 255, 0.52),
+    0 10px 28px rgba(49, 64, 88, 0.13) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  backdrop-filter: blur(22px) saturate(145%);
 }
 
-/* Inactive mode: almost invisible glass, like text sitting inside the shared capsule. */
+:where(.game-mode-switch, .inline-flex.rounded-full.p-1:has(> button.gloss-button)) > button.gloss-button {
+  min-height: 40px;
+  padding: 0 20px !important;
+  border-radius: 999px !important;
+  transition:
+    color 160ms ease,
+    opacity 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+/* Active state: outlined liquid glass, not an opaque white pill. */
+.game-mode-switch > button.gloss-button.is-active,
+.inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button:not(.\!bg-transparent) {
+  color: #111827 !important;
+  opacity: 1;
+  border: 1px solid rgba(239, 247, 255, 0.72) !important;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.30), rgba(184, 201, 221, 0.13)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.86),
+    inset 0 -2px 1px rgba(244, 250, 255, 0.76),
+    0 5px 15px rgba(45, 60, 84, 0.13) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(155%);
+  backdrop-filter: blur(20px) saturate(155%);
+}
+
+/* Inactive state: visually recedes into the shared glass track. */
+.game-mode-switch > button.gloss-button:not(.is-active),
 .inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button.\!bg-transparent {
-  color: rgba(27, 33, 41, 0.42) !important;
-  background: rgba(255, 255, 255, 0.015) !important;
+  color: rgba(27, 33, 41, 0.40) !important;
+  opacity: 0.72;
   border-color: transparent !important;
+  background: transparent !important;
   box-shadow: none !important;
-  opacity: 0.76;
   filter: none !important;
 }
 
+.game-mode-switch > button.gloss-button:not(.is-active)::before,
+.game-mode-switch > button.gloss-button:not(.is-active)::after,
 .inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button.\!bg-transparent::before,
 .inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button.\!bg-transparent::after {
   opacity: 0 !important;
 }
 
-/* Selected mode: outlined liquid-glass surface rather than an opaque white pill. */
-.inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button:not(.\!bg-transparent) {
-  color: #151b26 !important;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(226, 235, 246, 0.09)) !important;
-  border: 1px solid rgba(255, 255, 255, 0.48) !important;
-  box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.88),
-    inset 0 -2px 0 rgba(225, 235, 247, 0.72),
-    inset 0 -5px 10px rgba(89, 107, 132, 0.06),
-    0 7px 16px rgba(40, 55, 78, 0.10) !important;
-  opacity: 1;
-  -webkit-backdrop-filter: blur(20px) saturate(145%);
-  backdrop-filter: blur(20px) saturate(145%);
-}
-
+:where(.game-mode-switch, .inline-flex.rounded-full.p-1:has(> button.gloss-button)) > button.gloss-button.is-active::before,
 .inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button:not(.\!bg-transparent)::before {
-  top: 1px;
-  right: 10px;
-  left: 10px;
+  top: 2px;
+  right: 8px;
+  left: 8px;
   height: 42%;
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0));
-  opacity: 0.58;
-}
-
-.inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button:not(.\!bg-transparent)::after {
-  background: linear-gradient(112deg, transparent 24%, rgba(255, 255, 255, 0.18) 45%, transparent 66%);
-  opacity: 0.45;
+  opacity: 0.56;
 }
 
 @media (hover: hover) and (pointer: fine) {
+  .game-mode-switch > button.gloss-button:not(.is-active):hover,
   .inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button.\!bg-transparent:hover {
-    color: rgba(27, 33, 41, 0.64) !important;
+    color: rgba(27, 33, 41, 0.66) !important;
+    opacity: 0.94;
     background: rgba(255, 255, 255, 0.09) !important;
+    transform: none;
+  }
+}
+
+@media (max-width: 380px) {
+  :where(.game-mode-switch, .inline-flex.rounded-full.p-1:has(> button.gloss-button)) > button.gloss-button {
+    padding-inline: 15px !important;
   }
 }
 
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-  .inline-flex.rounded-full.p-1:has(> button.gloss-button) {
-    background: rgba(225, 231, 239, 0.90) !important;
-  }
-
-  .inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button:not(.\!bg-transparent) {
-    background: rgba(248, 250, 253, 0.72) !important;
+  :where(.game-mode-switch, .inline-flex.rounded-full.p-1:has(> button.gloss-button)) {
+    background: rgba(225, 231, 240, 0.88) !important;
   }
 }
