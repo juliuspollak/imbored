@@ -77,6 +77,8 @@ grant execute on function public.get_my_team_challenge_lifecycle() to authentica
 alter table public.direct_messages
   drop constraint if exists direct_messages_not_to_self;
 alter table public.direct_messages
+  drop constraint if exists direct_messages_not_to_self_check;
+alter table public.direct_messages
   add constraint direct_messages_not_to_self
   check (sender_id<>recipient_id or system_generated);
 
