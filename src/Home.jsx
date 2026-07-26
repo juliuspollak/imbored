@@ -29,6 +29,17 @@ function todayString() {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+function currentWeekRange() {
+  const date = new Date();
+  const isoDay = date.getDay() || 7;
+  const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate() - isoDay + 1);
+  const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+  const format = (value) => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
+  return { start:format(monday), end:format(sunday) };
+}
+
+const DAY_LABELS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
 export default function Home({ onSelect, playMode, onPlayModeChange, players = [], userId, onOpenProgress, onOpenTeams, challengeScope, onChallengeScopeChange }) {
   const { t, language } = useI18n();
   const { config: gameConfig, loading: gameConfigLoading } = useGameConfig();
@@ -48,17 +59,28 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
     let cancelled = false;
     async function loadTeamChallenges() {
       if (!supabaseReady || !userId) return;
-      const [{ data }, { data: completionRows }, { data: rosterData }] = await Promise.all([
+      const week = currentWeekRange();
+      const [{ data }, { data: personalRows }, { data: teamRows }, { data: rosterData }] = await Promise.all([
         supabase.rpc("get_my_active_team_challenges"),
         supabase
           .from("game_stats")
           .select("game,team_challenge_id")
           .eq("user_id", userId)
           .eq("mode", "challenge")
+          .is("team_challenge_id", null)
           .eq("challenge_date", todayString()),
+        supabase
+          .from("game_stats")
+          .select("game,team_challenge_id")
+          .eq("user_id", userId)
+          .eq("mode", "challenge")
+          .not("team_challenge_id", "is", null)
+          .gte("challenge_date", week.start)
+          .lte("challenge_date", week.end),
         supabase.rpc("get_my_team_rosters"),
       ]);
       const challenges = data || [];
+      const completionRows = [...(personalRows || []), ...(teamRows || [])];
       if (cancelled) return;
       setTeamChallenges(challenges);
       setChallengesLoaded(true);
@@ -154,14 +176,6 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
     loadChallengeStandings();
     return () => { cancelled = true; };
   }, [userId, playMode, challengeScope?.type, challengeScope?.id]);
-
-  useEffect(() => {
-    if (!challengesLoaded || challengeScope?.type !== "team") return;
-    const selected = teamChallenges.find((item) => item.challenge_id === challengeScope.id);
-    if (!selected?.active_today) {
-      onChallengeScopeChange?.({ type:"personal",id:null,name:"My Challenge",gameIds:null });
-    }
-  }, [challengeScope?.id, challengeScope?.type, challengesLoaded, onChallengeScopeChange, teamChallenges]);
 
   useEffect(() => {
     let cancelled = false;
@@ -404,8 +418,11 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                             </span>
                             <span className="block text-[10px] mt-0.5 truncate" style={{ color:"rgba(27,33,41,.45)" }}>{item.team_name}</span>
                           </span>
-                          <span className="text-[10px] font-bold shrink-0" style={{ color:!item.active_today ? "rgba(27,33,41,.38)" : status.done ? "#137A3A" : "#A9363B" }}>
-                            {!item.active_today ? t("home.notToday") : status.done ? t("home.done") : t("home.gamesLeft", { count:status.remaining })}
+                          <span className="text-right shrink-0">
+                            <span className="block text-[10px] font-bold" style={{ color:status.done ? "#137A3A" : status.completed === 0 ? "#6B7280" : "#A9363B" }}>
+                              {status.done ? t("home.done") : status.completed === 0 ? "Not started" : `${status.remaining} ${status.remaining === 1 ? "game" : "games"} left`}
+                            </span>
+                            {!item.active_today && <span className="block text-[9px] mt-0.5" style={{ color:"rgba(27,33,41,.40)" }}>Not scheduled today</span>}
                           </span>
                           <ChevronDown size={15} style={{ opacity:.35,transform:expanded ? "rotate(180deg)" : "none",transition:"transform .15s ease" }}/>
                         </button>
@@ -419,6 +436,22 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                                   return <span key={game.id} className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold" style={{ background:`${game.accent}13`,color:game.accent }}><GameIcon size={11}/>{game.label}</span>;
                                 })}
                               </div>
+                              <div className="text-[10px] mt-2" style={{ color:"rgba(27,33,41,.48)" }}>
+                                Plays {item.active_days?.length === 7 ? "every day" : (item.active_days || []).map((day) => DAY_LABELS[day - 1]).filter(Boolean).join(", ")}
+                              </div>
+                              <button
+                                type="button"
+                                disabled={!item.active_today}
+                                onClick={() => {
+                                  chooseTeamChallenge(item);
+                                  setExpandedChallengeId(null);
+                                  requestAnimationFrame(() => document.querySelector(".challenge-games-heading")?.scrollIntoView({ behavior:"smooth",block:"start" }));
+                                }}
+                                className="gloss-button w-full rounded-full py-2.5 mt-3 text-xs font-bold disabled:opacity-45"
+                                style={{ background:item.active_today ? "#2F6FED" : "rgba(16,24,40,.06)",color:item.active_today ? "#fff" : "rgba(27,33,41,.48)" }}
+                              >
+                                {item.active_today ? "Play this challenge" : "Available on its scheduled days"}
+                              </button>
                               <div className="flex items-center gap-2 mt-3">
                                 <div className="flex">
                                   {roster.slice(0,4).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-[9px]" style={{ width:22,height:22,background:"#F1F3F7",border:"2px solid white",marginLeft:index ? -5 : 0 }}>{member.icon || "🙂"}</span>)}
@@ -462,6 +495,15 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
           </div>
         )}
 
+        {playMode === "challenge" && challengeScope?.type === "team" && (
+          <div className="challenge-games-heading mb-3 rounded-2xl px-4 py-3 flex items-center gap-3" style={{ background:"rgba(47,111,237,.08)",border:"1px solid rgba(47,111,237,.16)" }}>
+            <span className="text-xl">{challengeScope.emoji || "⭐"}</span>
+            <span className="min-w-0">
+              <strong className="block text-sm truncate">{challengeScope.name}</strong>
+              <small className="block text-[10px] mt-0.5" style={{ color:"rgba(27,33,41,.50)" }}>Choose one of this challenge’s games</small>
+            </span>
+          </div>
+        )}
         {gameConfigLoading ? (
           <p style={{ color: CREAM, opacity: 0.3 }} className="text-xs text-center py-8">{t("common.loading")}</p>
         ) : (
