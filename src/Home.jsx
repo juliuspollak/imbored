@@ -46,6 +46,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   const [progress, setProgress] = useState(null);
   const [teamChallenges, setTeamChallenges] = useState([]);
   const [teamRosters, setTeamRosters] = useState({});
+  const [challengeLifecycle, setChallengeLifecycle] = useState({});
   const [challengeCompletions, setChallengeCompletions] = useState({ personal: new Set() });
   const [challengesLoaded, setChallengesLoaded] = useState(false);
   const [expandedChallengeId, setExpandedChallengeId] = useState(null);
@@ -66,7 +67,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
     async function loadTeamChallenges() {
       if (!supabaseReady || !userId) return;
       const week = currentWeekRange();
-      const [{ data }, { data: personalRows }, { data: teamRows }, { data: rosterData }] = await Promise.all([
+      const [{ data }, { data: personalRows }, { data: teamRows }, { data: rosterData }, { data: lifecycleData }] = await Promise.all([
         supabase.rpc("get_my_active_team_challenges"),
         supabase
           .from("game_stats")
@@ -84,6 +85,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
           .gte("challenge_date", week.start)
           .lte("challenge_date", week.end),
         supabase.rpc("get_my_team_rosters"),
+        supabase.rpc("get_my_team_challenge_lifecycle"),
       ]);
       const challenges = data || [];
       const completionRows = [...(personalRows || []), ...(teamRows || [])];
@@ -91,6 +93,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
       setTeamChallenges(challenges);
       setChallengesLoaded(true);
       setChallengeCompletions(groupChallengeCompletions(completionRows));
+      setChallengeLifecycle(Object.fromEntries((lifecycleData || []).map((item) => [String(item.challenge_id), item])));
       if (challenges.length > 0) {
         const teamIds = new Set(challenges.map((item) => Number(item.team_id)));
         if (!cancelled) {
@@ -138,14 +141,14 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         setChallengeRows([]);
         setChallengeProfiles({});
       }
+      const week = currentWeekRange();
       let query = supabase
         .from("game_stats")
         .select("user_id,game,seconds,mistakes,hints,completed_at,profiles(name,icon,show_stats_to_others)")
-        .eq("mode", "challenge")
-        .eq("challenge_date", todayString());
+        .eq("mode", "challenge");
       query = challengeScope?.type === "team"
-        ? query.eq("team_challenge_id", challengeScope.id)
-        : query.is("team_challenge_id", null);
+        ? query.eq("team_challenge_id", challengeScope.id).gte("challenge_date", week.start).lte("challenge_date", week.end)
+        : query.is("team_challenge_id", null).eq("challenge_date", todayString());
       let { data: resultRows, error } = await query;
       if (cancelled) return;
 
@@ -155,11 +158,10 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         let fallback = supabase
           .from("game_stats")
           .select("user_id,game,seconds,mistakes,hints,completed_at")
-          .eq("mode", "challenge")
-          .eq("challenge_date", todayString());
+          .eq("mode", "challenge");
         fallback = challengeScope?.type === "team"
-          ? fallback.eq("team_challenge_id", challengeScope.id)
-          : fallback.is("team_challenge_id", null);
+          ? fallback.eq("team_challenge_id", challengeScope.id).gte("challenge_date", week.start).lte("challenge_date", week.end)
+          : fallback.is("team_challenge_id", null).eq("challenge_date", todayString());
         const { data } = await fallback;
         if (cancelled) return;
         rows = data || [];
@@ -229,6 +231,20 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
     return challengeProgress(gameIds, completed);
   };
   const personalStatus = challengeStatus(null);
+  const teamStatusLabel = (teamChallenge, status) => {
+    const lifecycle = challengeLifecycle[String(teamChallenge.challenge_id)];
+    if (lifecycle?.winner_id) {
+      return lifecycle.winner_id === userId
+        ? "Finished · You won"
+        : `Finished · ${lifecycle.winner_name || "A teammate"} won`;
+    }
+    if (lifecycle?.current_user_finished || status.done) {
+      const waiting = Math.max(0, Number(lifecycle?.member_count || 0) - Number(lifecycle?.finished_count || 0));
+      return waiting > 0 ? `You finished · waiting for ${waiting}` : "You finished · finalising";
+    }
+    if (status.completed === 0) return "Not started";
+    return `${status.remaining} ${status.remaining === 1 ? "game" : "games"} left`;
+  };
   const challengeItems = [
     { key:"personal", type:"personal", active_today:true, status:personalStatus },
     ...teamChallenges.map((item) => ({ ...item, key:String(item.challenge_id), type:"team", status:challengeStatus(item) })),
@@ -401,6 +417,10 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                 <div className="space-y-2">
                   {teamChallenges.map((item) => {
                     const status = challengeStatus(item);
+                    const lifecycle = challengeLifecycle[String(item.challenge_id)];
+                    const lifecycleLabel = teamStatusLabel(item, status);
+                    const challengeFinished = !!lifecycle?.winner_id;
+                    const playerFinished = !!lifecycle?.current_user_finished || status.done;
                     const selected = challengeScope?.type === "team" && String(challengeScope.id) === String(item.challenge_id);
                     const expanded = String(expandedChallengeId) === String(item.challenge_id);
                     const roster = teamRosters[item.team_id] || [];
@@ -427,8 +447,8 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                             <span className="block text-[10px] mt-0.5 truncate" style={{ color:"rgba(27,33,41,.45)" }}>{item.team_name}</span>
                           </span>
                           <span className="text-right shrink-0">
-                            <span className="block text-[10px] font-bold" style={{ color:status.done ? "#137A3A" : status.completed === 0 ? "#6B7280" : "#A9363B" }}>
-                              {status.done ? t("home.done") : status.completed === 0 ? "Not started" : `${status.remaining} ${status.remaining === 1 ? "game" : "games"} left`}
+                            <span className="block text-[10px] font-bold" style={{ color:challengeFinished ? "#7A5711" : playerFinished ? "#137A3A" : status.completed === 0 ? "#6B7280" : "#A9363B" }}>
+                              {lifecycleLabel}
                             </span>
                             {!item.active_today && <span className="block text-[9px] mt-0.5" style={{ color:"rgba(27,33,41,.40)" }}>Not scheduled today</span>}
                           </span>
