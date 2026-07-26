@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock, Unlock, Users, ArrowLeft, Fingerprint, Trash2, Plus, Link2, Unlink, Mail, Languages, Monitor, Sun, Moon } from "lucide-react";
+import { Lock, Unlock, Users, Home, Fingerprint, Trash2, Plus, Link2, Unlink, Mail, Languages, Monitor, Sun, Moon } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { PROFILE_ICONS } from "./lib/icons.js";
 import { useI18n } from "./lib/i18n.jsx";
@@ -140,48 +140,50 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
   }
 
   return (
-    <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-center justify-center p-4">
-      <div
-        className="w-full max-w-sm rounded-2xl p-6 relative"
-        style={{ background: PANEL, boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}
-      >
-        {onDone && (
-          <button
-            onClick={onDone}
-            className="nav-btn absolute top-5 left-5 flex items-center justify-center rounded-full"
-            style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)", width: 34, height: 34 }}
-            aria-label="Back to home"
-          >
-            <ArrowLeft size={16} />
-          </button>
-        )}
-
-        <div className="text-center mb-6">
+    <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="profile-page flex justify-center p-4 pt-10">
+      <div className="w-full max-w-md">
+        <div className="profile-header flex items-center gap-3 mb-6">
+          {onDone && (
+            <button
+              onClick={onDone}
+              className="nav-btn flex items-center justify-center rounded-full shrink-0"
+              style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)", width: 34, height: 34 }}
+              aria-label="Home"
+            >
+              <Home size={16} />
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setShowIconPicker((value) => !value)}
-            className="mx-auto mb-2 flex items-center justify-center rounded-full transition-transform active:scale-95"
+            className="flex items-center justify-center rounded-full transition-transform active:scale-95 shrink-0"
             style={{
-              width: 56,
-              height: 56,
+              width: 46,
+              height: 46,
               background: showIconPicker ? "rgba(47,111,237,0.16)" : "rgba(47,111,237,0.1)",
               border: showIconPicker ? "2px solid rgba(47,111,237,0.45)" : "2px solid transparent",
-              fontSize: 28,
+              fontSize: 23,
             }}
             aria-label={showIconPicker ? "Close avatar picker" : "Change avatar"}
             aria-expanded={showIconPicker}
           >
             {icon}
           </button>
-          <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl">
-            {isFirstTime ? t("profile.welcome") : t("profile.title")}
-          </h1>
-          <p style={{ color: INK, opacity: 0.5 }} className="text-xs mt-1">
-            {isFirstTime ? t("profile.firstHint", { email:user?.email || "" }) : user?.email}
-          </p>
+          <div className="flex-1 min-w-0">
+            <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl">
+              {isFirstTime ? t("profile.welcome") : t("profile.title")}
+            </h1>
+            <p style={{ color: INK, opacity: 0.5 }} className="text-xs mt-0.5 truncate">
+              {isFirstTime ? t("profile.firstHint", { email:user?.email || "" }) : user?.email}
+            </p>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={handleSubmit}
+          className="profile-panel rounded-2xl p-5"
+          style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)" }}
+        >
           <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
             {t("profile.name")}
           </label>
