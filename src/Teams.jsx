@@ -349,7 +349,7 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
   }) : [];
 
   return (
-    <div style={{ background:BG, minHeight:"100vh", fontFamily:"'Inter',sans-serif" }} className="flex justify-center p-4 pt-10">
+    <div style={{ background:BG, minHeight:"100vh", fontFamily:"'Inter',sans-serif" }} className="teams-page flex justify-center p-4 pt-10">
       <div className="w-full max-w-md">
         <header className="flex items-center gap-3 mb-5">
           <button onClick={onBack} className="gloss-button grid place-items-center rounded-full" style={{ width:36,height:36,background:"rgba(16,24,40,.05)" }} aria-label="Back"><ArrowLeft size={17}/></button>
@@ -440,8 +440,8 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
           const visibleChallenges = expandedChallengeId === newChallengeKey
             ? [...rosterChallenges,{ challenge_id:newChallengeKey,challenge_title:"New challenge",isNew:true }]
             : rosterChallenges;
-          return <div className="fixed inset-0 z-50 flex justify-center overflow-y-auto" style={{ background:BG }}>
-            <div className="w-full max-w-md p-4 pt-6 flex flex-col" style={{ background:BG,minHeight:"100dvh" }}>
+          return <div className="teams-manage-page fixed inset-0 z-50 flex justify-center overflow-y-auto" style={{ background:BG }}>
+            <div className="teams-manage-shell w-full max-w-md p-4 pt-6 flex flex-col" style={{ background:BG,minHeight:"100dvh" }}>
               <div className="flex items-center gap-3 mb-3">
                 <button className="gloss-button" onClick={() => { setRosterTeam(null);setDeleteTeamTarget(null);setDeleteConfirmation(""); }} className="grid place-items-center rounded-full shrink-0" style={{ width:36,height:36,background:"rgba(16,24,40,.05)" }} aria-label="Back to teams"><ArrowLeft size={17}/></button>
                 <div className="grid place-items-center rounded-2xl text-2xl" style={{ width:44,height:44,background:"linear-gradient(145deg,#eef3ff,#fff)" }}>{rosterTeam.emoji || "⭐"}</div>
