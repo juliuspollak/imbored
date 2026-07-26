@@ -252,7 +252,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                         startChallenge(i);
                       }
                     }}
-                    className="gloss-button w-full flex items-center gap-3 rounded-xl px-4 py-3 text-left"
+                    className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-left"
                     style={{
                       background: result ? "rgba(22,163,74,0.05)" : isPlayable ? "rgba(47,111,237,0.05)" : "rgba(16,24,40,0.03)",
                       border: isPlayable ? `1.5px solid ${isToday ? ACCENT : "rgba(47,111,237,0.4)"}` : "1px solid rgba(16,24,40,0.07)",
