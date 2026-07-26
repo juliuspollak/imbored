@@ -397,7 +397,6 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                     const status = challengeStatus(item);
                     const selected = challengeScope?.type === "team" && String(challengeScope.id) === String(item.challenge_id);
                     const expanded = String(expandedChallengeId) === String(item.challenge_id);
-                    const actionDisabled = !item.active_today || status.done;
                     const roster = teamRosters[item.team_id] || [];
                     const games = (item.game_ids || [])
                       .map((id) => configuredGames.find((game) => game.id === id) || GAME_META.find((game) => game.id === id))
@@ -442,18 +441,6 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                               <div className="text-[10px] mt-2" style={{ color:"rgba(27,33,41,.48)" }}>
                                 Plays {item.active_days?.length === 7 ? "every day" : (item.active_days || []).map((day) => DAY_LABELS[day - 1]).filter(Boolean).join(", ")}
                               </div>
-                              <button
-                                type="button"
-                                disabled={actionDisabled}
-                                onClick={() => {
-                                  chooseTeamChallenge(item);
-                                  requestAnimationFrame(() => document.querySelector(".challenge-games-heading")?.scrollIntoView({ behavior:"smooth",block:"start" }));
-                                }}
-                                className="gloss-button w-full rounded-full py-2.5 mt-3 text-xs font-bold disabled:opacity-45"
-                                style={{ background:actionDisabled ? "rgba(16,24,40,.06)" : "#2F6FED",color:actionDisabled ? "rgba(27,33,41,.48)" : "#fff" }}
-                              >
-                                {status.done ? "Challenge completed" : item.active_today ? "Choose a game" : "Available on its scheduled days"}
-                              </button>
                               <div className="flex items-center gap-2 mt-3">
                                 <div className="flex">
                                   {roster.slice(0,4).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-[9px]" style={{ width:22,height:22,background:"#F1F3F7",border:"2px solid white",marginLeft:index ? -5 : 0 }}>{member.icon || "🙂"}</span>)}
