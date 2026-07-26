@@ -5,7 +5,7 @@ import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import { Moon, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
-
+import DaySelector from "../DaySelector";
 
 function SunBurstIcon({ size = 24, className = "", style, ...props }) {
   return (
