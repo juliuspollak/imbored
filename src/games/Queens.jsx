@@ -394,7 +394,19 @@ function fmtTime(sec) {
   return m ? `${m}:${s.toString().padStart(2, "0")}` : `${s}s`;
 }
 
-export default function Queens({ mode = "practice", seed = null, onChallengeComplete, onBack, isIncluded = true, challengeName = null, onPlayPersonalChallenge, onChooseAnotherChallenge }) {
+export default function Queens({
+  mode = "practice",
+  seed = null,
+  onSolved,
+  savedStatId: completedStatId = null,
+  rewardResult: completedReward = null,
+  onChallengeComplete,
+  onBack,
+  isIncluded = true,
+  challengeName = null,
+  onPlayPersonalChallenge,
+  onChooseAnotherChallenge,
+}) {
   const { t } = useI18n();
   const isChallenge = mode === "challenge";
   const requestedDayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
@@ -411,8 +423,9 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
   const [showHelp, setShowHelp] = useState(false);
   const [hintCell, setHintCell] = useState(null);
   const [difficultyRating, setDifficultyRating] = useState(null);
-  const [savedStatId, setSavedStatId] = useState(null);
-  const [rewardResult, setRewardResult] = useState(null);
+  const [localSavedStatId, setLocalSavedStatId] = useState(null);
+  const [localRewardResult, setLocalRewardResult] = useState(null);
+  const [completionFinished, setCompletionFinished] = useState(false);
   const [syncRetryTick, setSyncRetryTick] = useState(0);
   const [solvedAtMs, setSolvedAtMs] = useState(null);
   const dragRef = useRef({ active: false, mode: null, visited: new Set(), startCell: null, moved: false });
@@ -426,6 +439,8 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
   const savedOnceRef = useRef(false);
   const statsRef = useRef({ seconds: 0, mistakes: 0, hintsUsed: 0 });
   const hintCooldown = useHintCooldown(4500);
+  const savedStatId = completedStatId ?? localSavedStatId;
+  const rewardResult = completedReward ?? localRewardResult;
 
   const boardSize = board.length;
   const queensCount = board.flat().filter((v) => v === 2).length;
@@ -451,14 +466,27 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
     let cancelled = false;
     (async () => {
       const solvedStats = statsRef.current;
-      const result = await onChallengeComplete?.({
+      const payload = {
         game: "queens",
         seconds: solvedStats.seconds,
         mistakes: solvedStats.mistakes,
         hints: solvedStats.hintsUsed,
         difficulty: dayIdx,
         seed: seed || null,
-      });
+      };
+      if (onSolved) {
+        try {
+          await onSolved(payload);
+        } catch (error) {
+          console.error("Unable to save Queens result", error);
+        } finally {
+          savedOnceRef.current = true;
+          saveInFlightRef.current = false;
+          setCompletionFinished(true);
+        }
+        return;
+      }
+      const result = await onChallengeComplete?.(payload);
       if (cancelled) return;
       if (result?.error) {
         console.error("Unable to save Queens result", result.error);
@@ -468,11 +496,12 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
       }
       savedOnceRef.current = true;
       saveInFlightRef.current = false;
-      setSavedStatId(result?.stat_id ?? null);
-      setRewardResult(result?.reward ?? null);
+      setLocalSavedStatId(result?.stat_id ?? null);
+      setLocalRewardResult(result?.reward ?? null);
+      setCompletionFinished(true);
     })();
     return () => { cancelled = true; };
-  }, [dayIdx, onChallengeComplete, seed, solved, syncRetryTick]);
+  }, [dayIdx, onChallengeComplete, onSolved, seed, solved, syncRetryTick]);
 
   const newPuzzle = useCallback((size = n) => {
     puzzleKeyRef.current += 1;
@@ -487,8 +516,9 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
     setSolved(false);
     setHintCell(null);
     setDifficultyRating(null);
-    setSavedStatId(null);
-    setRewardResult(null);
+    setLocalSavedStatId(null);
+    setLocalRewardResult(null);
+    setCompletionFinished(false);
     setSolvedAtMs(null);
     savedOnceRef.current = false;
     saveInFlightRef.current = false;
@@ -514,8 +544,9 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
     setSolved(false);
     setHintCell(null);
     setDifficultyRating(null);
-    setSavedStatId(null);
-    setRewardResult(null);
+    setLocalSavedStatId(null);
+    setLocalRewardResult(null);
+    setCompletionFinished(false);
     setSolvedAtMs(null);
     savedOnceRef.current = false;
     saveInFlightRef.current = false;
@@ -612,9 +643,13 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
         const next = prev.map((row) => row.slice());
         if (isFirstMove && dragRef.current.startCell) {
           const start = dragRef.current.startCell;
-          next[start.r][start.c] = dragRef.current.mode;
+          if (next[start.r][start.c] !== 2) {
+            next[start.r][start.c] = dragRef.current.mode;
+          }
         }
-        next[r][c] = dragRef.current.mode;
+        if (next[r][c] !== 2) {
+          next[r][c] = dragRef.current.mode;
+        }
         return next;
       });
     }
@@ -930,6 +965,22 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
                       style={{ color: "rgba(17,24,39,0.60)" }}
                     />
                   )}
+                  {isHint && hintCell.type === "cross" && val === 0 && (
+                    <X
+                      className="qp-cross"
+                      size={Math.max(13, 22 - boardSize)}
+                      strokeWidth={2.8}
+                      style={{ color: "#2563EB", opacity: 0.72, pointerEvents: "none" }}
+                    />
+                  )}
+                  {isHint && hintCell.type === "queen" && val !== 2 && (
+                    <Crown
+                      className="qp-crown"
+                      size={Math.max(17, 27 - boardSize)}
+                      strokeWidth={2.6}
+                      style={{ color: "#047857", fill: "rgba(16,185,129,0.28)", opacity: 0.82, pointerEvents: "none" }}
+                    />
+                  )}
                 </button>
               );
             })
@@ -964,6 +1015,10 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
               )}
               {savedStatId ? (
                 <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} onRated={setDifficultyRating} />
+              ) : completionFinished ? (
+                <p className="text-xs font-medium py-3" style={{ color: CREAM, opacity: 0.62 }}>
+                  Result completed
+                </p>
               ) : (
                 <div className="flex items-center gap-2 py-3" role="status" aria-live="polite">
                   <span
@@ -975,7 +1030,7 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
                   </span>
                 </div>
               )}
-              {!isChallenge && savedStatId && (
+              {!isChallenge && (savedStatId || completionFinished) && (
                 <button
                   onClick={() => newPuzzle(n)}
                   className="qp-play-again mt-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors"
