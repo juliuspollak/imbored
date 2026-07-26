@@ -324,7 +324,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
   const [showHelp, setShowHelp] = useState(false);
   const timerRef = useRef(null);
   const boardRef = useRef(null);
-  const dragRef = useRef({ active: false, historyPushed: false, lastKey: null, startCell: null, moved: false });
+  const dragRef = useRef({ active: false, historyPushed: false, lastKey: null, startCell: null, moved: false, rollbackCounted: false });
   const suppressClickRef = useRef(false);
   const latest = useRef({});
 
@@ -392,7 +392,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
       if (!t) return;
       const cell = cellFromPoint(t.clientX, t.clientY);
       if (!cell) return;
-      dragRef.current = { active: true, historyPushed: false, lastKey: null, startCell: cell, moved: false };
+      dragRef.current = { active: true, historyPushed: false, lastKey: null, startCell: cell, moved: false, rollbackCounted: false };
     }
     function onTouchMove(e) {
       if (!dragRef.current.active) return;
@@ -492,8 +492,17 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
 
   function applyStep(r, c, restrictRollback) {
     if (latest.current.solved) return;
+    const currentPath = latest.current.path;
+    const p = latest.current.puzzle;
+    const preview = processStep(currentPath, r, c, p.wallSet, p.numberGrid, p.tunnelMap, p.blockedSet, restrictRollback);
+    if (preview.length < currentPath.length) {
+      const shouldCount = !restrictRollback || !dragRef.current.rollbackCounted;
+      if (shouldCount) {
+        setMistakes((value) => value + 1);
+        if (restrictRollback) dragRef.current.rollbackCounted = true;
+      }
+    }
     setPath((prev) => {
-      const p = latest.current.puzzle;
       return processStep(prev, r, c, p.wallSet, p.numberGrid, p.tunnelMap, p.blockedSet, restrictRollback);
     });
   }
@@ -538,7 +547,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
     e.preventDefault();
     const cell = cellFromPointMouse(e.clientX, e.clientY);
     if (!cell) return;
-    dragRef.current = { active: true, historyPushed: false, lastKey: null, startCell: cell, moved: false };
+    dragRef.current = { active: true, historyPushed: false, lastKey: null, startCell: cell, moved: false, rollbackCounted: false };
     function onMove(ev) {
       const c = cellFromPointMouse(ev.clientX, ev.clientY);
       if (c) {
@@ -695,7 +704,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
             <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
           </div>
           <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
-            route: <span style={{ color: ZIP_GREEN }}>explore freely</span>
+            returns: <span style={{ color: mistakes > 0 ? RED : CREAM }}>{mistakes}</span>
           </div>
           <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
             hints: <span style={{ color: hintsUsed > 0 ? GOLD : CREAM }}>{hintsUsed}</span>
@@ -738,7 +747,8 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
           >
             Drag through cells (or tap one at a time) to extend your path — orange bars are walls
             you can't cross, and matching colored letters are linked tunnels: step into one and you continue from its pair. Tap any earlier
-            cell on your path to roll back to it and correct your route. Hint points to your last
+            cell on your path to roll back to it and correct your route. Each tap backwards, or each
+            continuous backwards drag, counts as one return and reduces your score. Hint points to your last
             correct cell if you've gone off track, or the next cell if you're still on it. Visit
             every open cell once, hit the checkpoints in order, and finish on the highest number.
           </div>
@@ -967,7 +977,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
               <Flag size={28} style={{ color: ZIP_GREEN }} />
               <p style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 600, color: CREAM }} className="text-2xl">{t("common.solved")}</p>
               <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs mb-1">
-                {fmtTime(seconds)} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
+                {fmtTime(seconds)} &middot; {mistakes} return{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
               </p>
               {rewardResult?.points_awarded != null && (
                 <div
