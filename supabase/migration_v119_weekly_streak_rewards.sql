@@ -36,6 +36,8 @@ declare
   benchmark game_time_benchmarks;
   benchmark_seconds numeric;
   points_total int;
+  raw_points_total int;
+  limit_adjustment int := 0;
   time_points int := 0;
   hint_points int := 0;
   mistake_points int := 0;
@@ -159,11 +161,13 @@ begin
     + hint_points
     + mistake_points
     + streak_points;
+  raw_points_total := points_total;
   points_total := greatest(
     r.minimum_points,
     least(r.maximum_points,points_total)
   );
   points_total := greatest(0,least(500,points_total));
+  limit_adjustment := points_total-raw_points_total;
 
   breakdown := jsonb_build_object(
     'base',r.base_points,
@@ -172,6 +176,7 @@ begin
     'mistakes',mistake_points,
     'weekly_streak',streak_points,
     'challenge',0,
+    'limit_adjustment',limit_adjustment,
     'benchmark_seconds',benchmark_seconds,
     'total',points_total
   );

@@ -3,7 +3,7 @@ function groupChallengeCompletions(rows = []) {
   rows.forEach((row) => {
     const key = row.team_challenge_id == null ? "personal" : String(row.team_challenge_id);
     if (!grouped[key]) grouped[key] = new Set();
-    grouped[key].add(row.game);
+    grouped[key].add(row.team_challenge_id == null ? row.game : row.challenge_date);
   });
   return grouped;
 }
