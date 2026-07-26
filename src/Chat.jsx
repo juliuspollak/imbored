@@ -4,7 +4,7 @@ import { supabase, supabaseReady } from "./lib/supabase.js";
 import { sendPoke } from "./lib/pokes.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
 
-const QUICK_REACTIONS = ["😂", "❤️", "🔥", "👏", "🎮", "👀"];
+const QUICK_REACTIONS = ["👍", "👎", "😂", "❤️", "🔥", "👏", "🎮", "👀"];
 
 function formatMessageTime(value) {
   if (!value) return "";
