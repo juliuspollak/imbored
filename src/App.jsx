@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
-import { Home as HomeIcon, LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3, Star, Gift, MessagesSquare } from "lucide-react";
+import { Home as HomeIcon, LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3, Star, Gift, MessagesSquare, VenetianMask } from "lucide-react";
 import Home from "./Home.jsx";
 import Login from "./Login.jsx";
 import ProfileSetup from "./ProfileSetup.jsx";
@@ -69,8 +69,33 @@ function AppShell() {
   // are tied to a user) — default to it when logged in, otherwise practice
   // is the only real option.
   const [playMode, setPlayMode] = useState("challenge");
+  const [incognito, setIncognito] = useState(false);
   const [challengeScope, setChallengeScope] = useState({ type: "personal", id: null, name: t("home.myChallenge"), gameIds: null });
   const { loading, user, profile, profileLoading, signOut } = useAuth();
+  useEffect(() => {
+    if (!user?.id) {
+      setIncognito(false);
+      return;
+    }
+    try {
+      setIncognito(window.localStorage.getItem(`imbored-incognito-${user.id}`) === "true");
+    } catch {
+      setIncognito(false);
+    }
+  }, [user?.id]);
+
+  function toggleIncognito() {
+    setIncognito((current) => {
+      const next = !current;
+      try {
+        if (user?.id) window.localStorage.setItem(`imbored-incognito-${user.id}`, String(next));
+      } catch {
+        // Storage can be unavailable in strict private browsing. The setting
+        // still applies for the current session.
+      }
+      return next;
+    });
+  }
   useLayoutEffect(() => {
     applyThemePreference(profile?.theme_preference || "system");
   }, [profile?.theme_preference]);
@@ -116,7 +141,7 @@ function AppShell() {
   }, [playMode, user?.id]);
   const players = useOnlinePlayers({ includeHidden: !!profile?.is_admin });
   const { config: gameConfig, refetch: refetchGameConfig } = useGameConfig();
-  usePresence(["queens", "tango", "zip", "minisudoku", "geo", "zoom"].includes(active) ? active : null, playMode);
+  usePresence(["queens", "tango", "zip", "minisudoku", "geo", "zoom"].includes(active) ? active : null, playMode, incognito);
   const openFeedbackCount = useOpenFeedbackCount(profile?.is_admin ? user?.id : undefined);
   const completedFeedbackCount = useCompletedFeedbackCount(profile?.is_admin ? undefined : user?.id);
   const newTransfersCount = useNewTransfersCount(user?.id);
@@ -199,6 +224,8 @@ function AppShell() {
       newTransfersCount={newTransfersCount}
       unreadMessages={unreadMessages}
       sectionSignals={sectionSignals}
+      incognito={incognito}
+      onToggleIncognito={toggleIncognito}
       onOpenChat={(player) => { setChatReturn(null); setChatPlayer(player); }}
     />
   ) : null;
@@ -229,6 +256,7 @@ function AppShell() {
           onOpenAdminPlayers={() => setActive("adminplayers")}
           onOpenFeedback={() => setActive("feedback")}
           onOpenTeams={() => openSection("teams")}
+          onOpenChallenges={() => setActive(null)}
         />
       </Suspense>
     );
@@ -467,7 +495,7 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
   );
 }
 
-function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenTeams, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, unreadMessages = { total: 0, bySender: {} }, onOpenChat }) {
+function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenTeams, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, onToggleIncognito, onOpenChat }) {
   const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -514,6 +542,29 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
 
   return (
     <div ref={menuRef} style={{ position:"fixed", top:16, right:16, zIndex:80 }}>
+      {(menuOpen || incognito) && (
+        <button
+          type="button"
+          onClick={onToggleIncognito}
+          className="nav-btn grid place-items-center rounded-full"
+          aria-label={incognito ? "Turn off incognito mode" : "Turn on incognito mode"}
+          aria-pressed={incognito}
+          title={incognito ? "Incognito on — you appear offline" : "Go incognito"}
+          style={{
+            position:"absolute",
+            right:52,
+            top:0,
+            width:44,
+            height:44,
+            color:incognito ? "#fff" : "#1B2129",
+            background:incognito ? "#1B2129" : "rgba(255,255,255,.94)",
+            border:incognito ? "2px solid rgba(139,92,246,.7)" : "1px solid rgba(16,24,40,.12)",
+            boxShadow:incognito ? "0 8px 24px rgba(27,33,41,.28)" : "0 8px 24px rgba(16,24,40,.12)",
+          }}
+        >
+          <VenetianMask size={20}/>
+        </button>
+      )}
       <button
         type="button"
         onClick={() => setMenuOpen((value) => !value)}
