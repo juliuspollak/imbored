@@ -657,5 +657,12 @@
     "title": "Complete app-wide gloss effect rollout + all feedback implemented",
     "body": "COMPREHENSIVE GLOSS IMPLEMENTATION: Applied .gloss-button class systematically to ALL interactive buttons across entire app: Teams (31 buttons), AdminPlayers (10), AdminGames (6), AdminRewards (7), Feedback (11), Chat (5), ChallengeGate (4), Progress (protect + tabs), Stats (mode toggle), ProfileSetup, Home, Geo, Zoom, Login + all 6 game toolbars. Total: 100+ buttons with iOS-style gloss effect. All feedback items complete: (1) Gloss everywhere ✓ (2) Text-only game buttons ✓ (3) Tango smart delay ✓ (4) Zip difficulty 4→16 ✓ (5) Team challenge completion UI ✓ (6) Presence instant clear ✓ (7) No black holes ✓ (8) No cell borders ✓ Clean build verified. Gloss styles moved to src/index.css for easy global customization.",
     "date": "2026-07-25"
+  },
+  {
+    "id": "2026-07-25-professional-gloss-css-overhaul",
+    "version": "v113 premium",
+    "title": "Professional iOS/IMDb gloss design system — comprehensive CSS overhaul",
+    "body": "MAJOR DESIGN UPGRADE: Replaced basic gloss CSS with sophisticated, production-grade design system including: (1) Refined gradient-based glossy buttons with dual reflection layers (::before + ::after), (2) Segmented control styling (.game-mode-switch) for Challenge/Practice toggles with active state management, (3) Count badges for mode indicators, (4) Dark mode variant (.gloss-button--dark), (5) IMDb gold variant (.gloss-button--imdb), (6) Compact icon buttons (.gloss-icon-button), (7) Full accessibility support (focus-visible outlines, prefers-reduced-motion). Updated Stats.jsx + Progress.jsx to use semantic class-based styling instead of inline styles. Smooth 140ms cubic-bezier transitions, proper z-index layering with CSS variables, touch-friendly hit targets (34px min-height). Production-ready design system ready for rapid customization.",
+    "date": "2026-07-25"
   }
 ]

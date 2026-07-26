@@ -93,9 +93,9 @@ export default function Stats({ onBack }) {
         ) : (
           <>
             <div className="flex justify-center mb-6">
-              <div className="inline-flex rounded-full p-1" style={{ background: "rgba(16,24,40,0.06)" }}>
+              <div className="game-mode-switch">
                 {["challenge", "practice"].map((m) => (
-                  <button key={m} onClick={() => { setMode(m); setExpandedUserId(null); }} className="gloss-button rounded-full px-4 py-1.5 text-xs font-semibold capitalize" style={{ color: mode === m ? CREAM : "rgba(27,33,41,0.5)" }}>{m}</button>
+                  <button key={m} onClick={() => { setMode(m); setExpandedUserId(null); }} className={`gloss-button ${mode === m ? "is-active" : ""}`}>{m}</button>
                 ))}
               </div>
             </div>
