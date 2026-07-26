@@ -178,9 +178,34 @@ function AppShell() {
     if (!profile.is_admin && profile.is_approved === false) return <PendingApproval />;
   }
 
+  const accountMenu = supabaseReady && profile ? (
+    <AccountBadge
+      profile={profile}
+      onSignOut={signOut}
+      onOpenProfile={() => setActive("profile")}
+      onOpenTeams={() => openSection("teams")}
+      onOpenChats={() => setActive("chats")}
+      onOpenStats={() => setActive("stats")}
+      onOpenProgress={() => setActive("progress")}
+      onOpenFeedback={() => setActive("feedback")}
+      onOpenWhatsNew={() => openSection("whatsnew")}
+      onOpenAdminPlayers={() => setActive("adminplayers")}
+      onOpenAdminGames={() => setActive("admingames")}
+      onOpenAdminRewards={() => setActive("adminrewards")}
+      players={players}
+      userId={user?.id}
+      openFeedbackCount={openFeedbackCount}
+      completedFeedbackCount={completedFeedbackCount}
+      newTransfersCount={newTransfersCount}
+      unreadMessages={unreadMessages}
+      sectionSignals={sectionSignals}
+      onOpenChat={(player) => { setChatReturn(null); setChatPlayer(player); }}
+    />
+  ) : null;
+  const withAccountMenu = (content) => <>{content}{accountMenu}</>;
 
   if (chatPlayer) {
-    return (
+    return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Opening chat…" />}>
         <Chat
           currentUser={user}
@@ -194,7 +219,7 @@ function AppShell() {
 
 
   if (active === "chats") {
-    return (
+    return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading chats…" />}>
         <Chats
           currentUser={user}
@@ -210,11 +235,11 @@ function AppShell() {
   }
 
   if (active === "profile") {
-    return <ProfileSetup onDone={() => setActive(null)} onOpenTeams={() => openSection("teams")} />;
+    return withAccountMenu(<ProfileSetup onDone={() => setActive(null)} onOpenTeams={() => openSection("teams")} />);
   }
 
   if (active === "teams") {
-    return (
+    return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
         <Teams
           onBack={() => { setTeamsTarget(null);setActive(null); }}
@@ -226,7 +251,7 @@ function AppShell() {
   }
 
   if (active === "stats") {
-    return (
+    return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
         <Stats onBack={() => setActive(null)} />
       </Suspense>
@@ -234,7 +259,7 @@ function AppShell() {
   }
 
   if (active === "progress") {
-    return (
+    return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
         <Progress onBack={() => setActive(null)} />
       </Suspense>
@@ -242,7 +267,7 @@ function AppShell() {
   }
 
   if (active === "feedback") {
-    return (
+    return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
         <Feedback onBack={() => setActive(null)} />
       </Suspense>
@@ -250,7 +275,7 @@ function AppShell() {
   }
 
   if (active === "whatsnew") {
-    return (
+    return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
         <ReleaseNotes onBack={() => setActive(null)} />
       </Suspense>
@@ -258,7 +283,7 @@ function AppShell() {
   }
 
   if (active === "adminplayers") {
-    return (
+    return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
         <AdminPlayers onBack={() => setActive(null)} />
       </Suspense>
@@ -266,7 +291,7 @@ function AppShell() {
   }
 
   if (active === "admingames") {
-    return (
+    return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
         <AdminGames onBack={() => setActive(null)} />
       </Suspense>
@@ -274,7 +299,7 @@ function AppShell() {
   }
 
   if (active === "adminrewards") {
-    return (
+    return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
         <AdminRewards onBack={() => setActive(null)} />
       </Suspense>
@@ -298,30 +323,7 @@ function AppShell() {
           challengeScope={challengeScope}
           onChallengeScopeChange={setChallengeScope}
         />
-        {supabaseReady && profile && (
-          <AccountBadge
-            profile={profile}
-            onSignOut={signOut}
-            onOpenProfile={() => setActive("profile")}
-            onOpenTeams={() => openSection("teams")}
-            onOpenChats={() => setActive("chats")}
-            onOpenStats={() => setActive("stats")}
-            onOpenProgress={() => setActive("progress")}
-            onOpenFeedback={() => setActive("feedback")}
-            onOpenWhatsNew={() => openSection("whatsnew")}
-            onOpenAdminPlayers={() => setActive("adminplayers")}
-            onOpenAdminGames={() => setActive("admingames")}
-            onOpenAdminRewards={() => setActive("adminrewards")}
-            players={players}
-            userId={user?.id}
-            openFeedbackCount={openFeedbackCount}
-            completedFeedbackCount={completedFeedbackCount}
-            newTransfersCount={newTransfersCount}
-            unreadMessages={unreadMessages}
-            sectionSignals={sectionSignals}
-            onOpenChat={(player) => { setChatReturn(null); setChatPlayer(player); }}
-          />
-        )}
+        {accountMenu}
       </>
     );
   }
@@ -568,7 +570,7 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
             backdropFilter:"blur(18px)",
           }}
         >
-          <button type="button" onClick={onOpenProfile} className="w-full flex items-center gap-3 p-4 text-left" style={{ background:"linear-gradient(135deg,rgba(47,111,237,.08),rgba(139,92,246,.05))" }}>
+          <button type="button" onClick={() => openItem({ onClick:onOpenProfile })} className="w-full flex items-center gap-3 p-4 text-left" style={{ background:"linear-gradient(135deg,rgba(47,111,237,.08),rgba(139,92,246,.05))" }}>
             <span className="grid place-items-center rounded-2xl text-2xl" style={{ width:48, height:48, background:"#fff", boxShadow:"0 5px 16px rgba(16,24,40,.08)" }}>{profile.icon || "🙂"}</span>
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-bold truncate" style={{ color:"#1B2129" }}>{profile.name}</span>
