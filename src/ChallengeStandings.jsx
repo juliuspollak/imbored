@@ -107,7 +107,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                 )}
               </span>
               {rewardPoints > 0 && (
-                <span className="challenge-complete-points">+{rewardPoints}<small>Each finisher</small></span>
+                <span className="challenge-complete-points">+{rewardPoints}<small>Winner’s prize</small></span>
               )}
             </div>
           )}
