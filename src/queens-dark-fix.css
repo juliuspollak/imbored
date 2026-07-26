@@ -4,8 +4,8 @@
 @media (prefers-color-scheme: dark) {
   .qp-card .relative.w-full.rounded-lg.overflow-hidden.select-none {
     background: #f4f6fa !important;
-    border-width: 1.5px !important;
-    border-color: #111827 !important;
+    border-width: 2px !important;
+    border-color: #000000 !important;
     box-shadow:
       0 14px 34px rgba(0, 0, 0, 0.42),
       inset 0 0 0 1px rgba(16, 24, 40, 0.10) !important;
