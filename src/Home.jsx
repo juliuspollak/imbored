@@ -229,7 +229,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   ];
   const pendingChallenges = challengeItems.filter((item) => item.active_today && item.status.remaining > 0);
   const selectedTeam = challengeScope?.type === "team"
-    ? teamChallenges.find((item) => item.challenge_id === challengeScope.id)
+    ? teamChallenges.find((item) => String(item.challenge_id) === String(challengeScope.id))
     : null;
   const todayCompletions = challengeScope?.type === "team"
     ? challengeCompletions[String(challengeScope.id)] || new Set()
@@ -244,6 +244,9 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   const standingsRoster = challengeScope?.type === "team"
     ? selectedRoster
     : Object.values(challengeProfiles);
+  const selectedChallengeStatus = selectedTeam ? challengeStatus(selectedTeam) : null;
+  const selectedChallengePlayable = challengeScope?.type !== "team"
+    || (selectedTeam?.active_today && !selectedChallengeStatus?.done);
 
   function choosePersonalChallenge() {
     onChallengeScopeChange({ type:"personal",id:null,name:"My Challenge",gameIds:null });
@@ -251,7 +254,6 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   }
 
   function chooseTeamChallenge(teamChallenge) {
-    if (!teamChallenge.active_today) return;
     onChallengeScopeChange({
       type:"team",
       id:teamChallenge.challenge_id,
@@ -393,8 +395,9 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                 <div className="space-y-2">
                   {teamChallenges.map((item) => {
                     const status = challengeStatus(item);
-                    const selected = challengeScope?.type === "team" && challengeScope.id === item.challenge_id;
-                    const expanded = expandedChallengeId === item.challenge_id;
+                    const selected = challengeScope?.type === "team" && String(challengeScope.id) === String(item.challenge_id);
+                    const expanded = String(expandedChallengeId) === String(item.challenge_id);
+                    const actionDisabled = !item.active_today || status.done;
                     const roster = teamRosters[item.team_id] || [];
                     const games = (item.game_ids || [])
                       .map((id) => configuredGames.find((game) => game.id === id) || GAME_META.find((game) => game.id === id))
@@ -405,7 +408,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                           type="button"
                           onClick={() => {
                             setExpandedChallengeId(expanded ? null : item.challenge_id);
-                            if (item.active_today) chooseTeamChallenge(item);
+                            chooseTeamChallenge(item);
                           }}
                           className="w-full flex items-center gap-3 p-3 text-left"
                           aria-expanded={expanded}
@@ -441,16 +444,16 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                               </div>
                               <button
                                 type="button"
-                                disabled={!item.active_today}
+                                disabled={actionDisabled}
                                 onClick={() => {
                                   chooseTeamChallenge(item);
                                   setExpandedChallengeId(null);
                                   requestAnimationFrame(() => document.querySelector(".challenge-games-heading")?.scrollIntoView({ behavior:"smooth",block:"start" }));
                                 }}
                                 className="gloss-button w-full rounded-full py-2.5 mt-3 text-xs font-bold disabled:opacity-45"
-                                style={{ background:item.active_today ? "#2F6FED" : "rgba(16,24,40,.06)",color:item.active_today ? "#fff" : "rgba(27,33,41,.48)" }}
+                                style={{ background:actionDisabled ? "rgba(16,24,40,.06)" : "#2F6FED",color:actionDisabled ? "rgba(27,33,41,.48)" : "#fff" }}
                               >
-                                {item.active_today ? "Play this challenge" : "Available on its scheduled days"}
+                                {status.done ? "Challenge completed" : item.active_today ? "Play this challenge" : "Available on its scheduled days"}
                               </button>
                               <div className="flex items-center gap-2 mt-3">
                                 <div className="flex">
@@ -511,15 +514,16 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
           {visibleGames.map((g) => {
             const Icon = g.icon;
             const playingCount = players.filter((p) => p.game === g.id && p.mode === playMode).length;
+            const canOpenGame = g.available && selectedChallengePlayable;
             return (
               <button
                 key={g.id}
-                disabled={!g.available}
-                onClick={() => g.available && onSelect(g.id)}
+                disabled={!canOpenGame}
+                onClick={() => canOpenGame && onSelect(g.id)}
                 className="gloss-button home-tile relative flex flex-col items-start gap-3 rounded-2xl p-4 text-left"
                 style={{
-                  opacity: g.available ? 1 : 0.45,
-                  cursor: g.available ? "pointer" : "default",
+                  opacity: canOpenGame ? 1 : 0.45,
+                  cursor: canOpenGame ? "pointer" : "default",
                 }}
               >
                 {challengesLoaded && todayCompletions.has(g.id) && (
