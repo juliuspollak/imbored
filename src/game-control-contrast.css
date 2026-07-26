@@ -1,0 +1,122 @@
+/* Shared game-control contrast.
+ *
+ * Game components still own their accent colours in light mode. In dark mode
+ * all practice-day selectors use one predictable inactive surface and one
+ * obvious active surface. This avoids relying on component-specific colour
+ * strings, which browsers serialise differently on iOS.
+ */
+@media (prefers-color-scheme: dark) {
+  :where(
+    .qp-day-btn,
+    .tg-day-btn,
+    .zp-day-btn,
+    .ms-day-btn,
+    .geo-day-btn,
+    .zoom-day-btn
+  ) {
+    background: rgba(255, 255, 255, 0.075) !important;
+    color: rgba(244, 247, 251, 0.82) !important;
+    border: 1px solid rgba(255, 255, 255, 0.11) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+  }
+
+  /* Every selected day currently carries white inline text. Use that stable
+     state signal and render the same selected treatment in every game. */
+  :where(
+    .qp-day-btn,
+    .tg-day-btn,
+    .zp-day-btn,
+    .ms-day-btn,
+    .geo-day-btn,
+    .zoom-day-btn
+  )[style*="color: rgb(255, 255, 255)"],
+  :where(
+    .qp-day-btn,
+    .tg-day-btn,
+    .zp-day-btn,
+    .ms-day-btn,
+    .geo-day-btn,
+    .zoom-day-btn
+  )[style*="color: #FFFFFF"],
+  :where(
+    .qp-day-btn,
+    .tg-day-btn,
+    .zp-day-btn,
+    .ms-day-btn,
+    .geo-day-btn,
+    .zoom-day-btn
+  )[style*="color:#FFFFFF"] {
+    background: linear-gradient(155deg, #7d6df2, #586fe9) !important;
+    color: #ffffff !important;
+    border-color: rgba(164, 183, 255, 0.58) !important;
+    box-shadow:
+      0 7px 18px rgba(52, 66, 170, 0.34),
+      inset 0 1px 0 rgba(255, 255, 255, 0.30) !important;
+  }
+
+  :where(
+    .qp-day-btn,
+    .tg-day-btn,
+    .zp-day-btn,
+    .ms-day-btn,
+    .geo-day-btn,
+    .zoom-day-btn
+  ):active {
+    transform: scale(0.96);
+  }
+
+  /* Zoom's neutral answers were near-black text on a darkened panel. */
+  .zoom-option {
+    background: rgba(255, 255, 255, 0.075) !important;
+    color: #f4f7fb !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  }
+
+  .zoom-option:not(:disabled):active {
+    background: rgba(109, 92, 252, 0.22) !important;
+    border-color: rgba(143, 128, 255, 0.48) !important;
+  }
+
+  /* Preserve the correct/wrong feedback after the neutral override. */
+  .zoom-option[style*="color: rgb(22, 163, 74)"],
+  .zoom-option[style*="color: #16A34A"],
+  .zoom-option[style*="color:#16A34A"] {
+    background: rgba(34, 197, 94, 0.15) !important;
+    color: #6ee7a0 !important;
+    border-color: rgba(74, 222, 128, 0.42) !important;
+  }
+
+  .zoom-option[style*="color: rgb(229, 72, 77)"],
+  .zoom-option[style*="color: #E5484D"],
+  .zoom-option[style*="color:#E5484D"] {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #ff8d91 !important;
+    border-color: rgba(248, 113, 113, 0.42) !important;
+  }
+
+  .zoom-option:disabled {
+    opacity: 1;
+  }
+
+  .zoom-card .gloss-button,
+  .zoom-next-btn {
+    color: #ffffff !important;
+  }
+
+  .zoom-card .gloss-button:disabled {
+    background: rgba(255, 255, 255, 0.045) !important;
+    color: rgba(232, 238, 247, 0.40) !important;
+  }
+
+  .zoom-card [style*="background: rgba(16,24,40,0.04)"],
+  .zoom-card [style*="background: rgba(16,24,40,0.05)"],
+  .zoom-card [style*="background: rgba(16,24,40,0.12)"] {
+    background: rgba(255, 255, 255, 0.075) !important;
+  }
+
+  .zoom-card [style*="color: rgba(27,33,41,0.35)"],
+  .zoom-card [style*="color: rgba(27, 33, 41, 0.35)"] {
+    color: rgba(232, 238, 247, 0.52) !important;
+  }
+}
