@@ -27,6 +27,7 @@ export default function PointsToast({ reward }) {
     ["hints", "hints"],
     ["mistakes", "mistakes"],
     ["weekly_streak", "weekly streak"],
+    ["limit_adjustment", "minimum/maximum limit"],
   ].flatMap(([key, label]) => {
     const value = Number(breakdown[key] || 0);
     if (key !== "base" && value === 0) return [];
