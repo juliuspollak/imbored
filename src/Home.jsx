@@ -65,6 +65,9 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   const [challengeRows, setChallengeRows] = useState([]);
   const [challengeRounds, setChallengeRounds] = useState([]);
   const [challengeBenchmarks, setChallengeBenchmarks] = useState([]);
+  const [previousChallengeRows, setPreviousChallengeRows] = useState([]);
+  const [previousChallengeRounds, setPreviousChallengeRounds] = useState([]);
+  const [previousChallengeLabel, setPreviousChallengeLabel] = useState(null);
   const [challengeProfiles, setChallengeProfiles] = useState({});
   const [standingsLoading, setStandingsLoading] = useState(false);
   const [standingsRefreshing, setStandingsRefreshing] = useState(false);
@@ -157,14 +160,29 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         setChallengeRows([]);
         setChallengeRounds([]);
         setChallengeBenchmarks([]);
+        setPreviousChallengeRows([]);
+        setPreviousChallengeRounds([]);
+        setPreviousChallengeLabel(null);
         setChallengeProfiles({});
         setStandingsLoading(false);
         setStandingsRefreshing(false);
         return;
       }
       const cacheKey = challengeScope?.type === "team" ? `team:${challengeScope.id}` : "personal";
+      const activeChallenge = challengeScope?.type === "team"
+        ? teamChallenges.find((item) => String(item.challenge_id) === String(challengeScope.id))
+        : null;
+      const previousChallenge = activeChallenge
+        ? challengeHistory.find((item) =>
+            Number(item.team_id) === Number(activeChallenge.team_id)
+            && item.challenge_title === activeChallenge.challenge_title
+          )
+        : null;
       setChallengeRounds([]);
       setChallengeBenchmarks([]);
+      setPreviousChallengeRows([]);
+      setPreviousChallengeRounds([]);
+      setPreviousChallengeLabel(previousChallenge ? challengeWeekLabel(previousChallenge.week_start) : null);
       const cached = standingsCacheRef.current[cacheKey];
       if (cached) {
         setChallengeRows(cached.rows);
@@ -200,6 +218,24 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
       ]);
       if (cancelled) return;
 
+      let previousRows = [];
+      let previousRoundRows = [];
+      if (previousChallenge) {
+        const [{ data:priorResults }, { data:priorRounds }] = await Promise.all([
+          supabase.from("game_stats")
+            .select("user_id,game,challenge_date,seconds,mistakes,hints,completed_at")
+            .eq("mode","challenge")
+            .eq("team_challenge_id",previousChallenge.challenge_id),
+          supabase.from("team_challenge_rounds")
+            .select("challenge_date,game,round_number")
+            .eq("challenge_id",previousChallenge.challenge_id)
+            .order("round_number"),
+        ]);
+        if (cancelled) return;
+        previousRows = priorResults || [];
+        previousRoundRows = priorRounds || [];
+      }
+
       let rows = resultRows || [];
       let profiles = rows.flatMap((row) => row.profiles ? [{ id:row.user_id, ...row.profiles }] : []);
       if (error) {
@@ -230,6 +266,12 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
           roundNumber:round.round_number,
         })));
         setChallengeBenchmarks(benchmarkRows || []);
+        setPreviousChallengeRows(previousRows);
+        setPreviousChallengeRounds(previousRoundRows.map((round) => ({
+          date:round.challenge_date,
+          game:round.game,
+          roundNumber:round.round_number,
+        })));
         setChallengeProfiles(profileMap);
         setStandingsLoading(false);
         setStandingsRefreshing(false);
@@ -237,7 +279,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
     }
     loadChallengeStandings();
     return () => { cancelled = true; };
-  }, [userId, playMode, challengeScope?.type, challengeScope?.id]);
+  }, [userId, playMode, challengeScope?.type, challengeScope?.id, challengeHistory, teamChallenges]);
 
   useEffect(() => {
     let cancelled = false;
@@ -580,11 +622,14 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                                 games={selectedChallengeGames}
                                 rounds={challengeRounds.length ? challengeRounds : selectedRounds}
                                 benchmarks={challengeBenchmarks}
+                                previousRows={previousChallengeRows}
+                                previousRounds={previousChallengeRounds}
+                                previousWeekLabel={previousChallengeLabel}
                                 isTeam
                                 userId={userId}
                                 loading={standingsLoading || !selectedTeam}
                                 refreshing={standingsRefreshing}
-                                defaultOpen={false}
+                                defaultOpen
                                 embedded
                                 rewardPoints={challengeScope?.rewardPoints || 0}
                                 closed={!!challengeLifecycle[String(challengeScope.id)]?.closed_at}
