@@ -644,10 +644,14 @@ begin
     raise exception 'Choose a repeat duration between 2 and 52 weeks.';
   end if;
 
-  select array_agg(distinct game order by game)
+  select array_agg(game order by first_position)
   into clean_games
-  from unnest(selected_games) game
-  where game in ('queens','tango','zip','minisudoku','geo','zoom');
+  from (
+    select game,min(selected.ordinality) as first_position
+    from unnest(selected_games) with ordinality selected(game,ordinality)
+    where game in ('queens','tango','zip','minisudoku','geo','zoom')
+    group by game
+  ) valid_games;
 
   select array_agg(distinct day order by day)
   into clean_days
