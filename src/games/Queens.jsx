@@ -421,7 +421,7 @@ export default function Queens({
   const [hintsUsed, setHintsUsed] = useState(0);
   const [solved, setSolved] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [hintCell, setHintCell] = useState(null);
+  const [hintCells, setHintCells] = useState([]);
   const [difficultyRating, setDifficultyRating] = useState(null);
   const [localSavedStatId, setLocalSavedStatId] = useState(null);
   const [localRewardResult, setLocalRewardResult] = useState(null);
@@ -514,7 +514,7 @@ export default function Queens({
     setMistakes(0);
     setHintsUsed(0);
     setSolved(false);
-    setHintCell(null);
+    setHintCells([]);
     setDifficultyRating(null);
     setLocalSavedStatId(null);
     setLocalRewardResult(null);
@@ -543,7 +543,7 @@ export default function Queens({
     setMistakes(0);
     setHintsUsed(0);
     setSolved(false);
-    setHintCell(null);
+    setHintCells([]);
     setDifficultyRating(null);
     setLocalSavedStatId(null);
     setLocalRewardResult(null);
@@ -695,12 +695,17 @@ export default function Queens({
     setHintsUsed(0);
     setSeconds(0);
     setRunning(true);
-    setHintCell(null);
+    setHintCells([]);
   }
 
   function handleHint() {
     if (solved || hintCooldown.isLocked()) return;
     hintCooldown.startCooldown();
+    const showHints = (cells) => {
+      setHintCells(cells);
+      setHintsUsed((h) => h + 1);
+      window.setTimeout(() => setHintCells([]), 2200);
+    };
     const wrong = [];
     for (let r = 0; r < boardSize; r++) {
       for (let c = 0; c < boardSize; c++) {
@@ -709,16 +714,35 @@ export default function Queens({
       }
     }
     if (wrong.length) {
-      setHintCell(wrong[0]);
-      setHintsUsed((h) => h + 1);
-      window.setTimeout(() => setHintCell(null), 1200);
+      showHints([wrong[0]]);
       return;
     }
+
+    // A correctly placed queen rules out its entire row and column. Highlight
+    // every still-blank cell in that obvious follow-up move together.
+    for (let queenRow = 0; queenRow < boardSize; queenRow++) {
+      const queenCol = puzzle.solution[queenRow];
+      if (board[queenRow][queenCol] !== 2) continue;
+      const eliminated = [];
+      const seen = new Set();
+      for (let index = 0; index < boardSize; index++) {
+        for (const [r, c] of [[queenRow, index], [index, queenCol]]) {
+          const key = `${r}-${c}`;
+          if (board[r][c] === 0 && !seen.has(key)) {
+            seen.add(key);
+            eliminated.push({ r, c, type:"cross", src:"queen-elimination" });
+          }
+        }
+      }
+      if (eliminated.length) {
+        showHints(eliminated);
+        return;
+      }
+    }
+
     const step = findNextLogicalStepPure(board, puzzle.regionGrid, boardSize);
     if (step) {
-      setHintCell(step);
-      setHintsUsed((h) => h + 1);
-      window.setTimeout(() => setHintCell(null), 1200);
+      showHints([step]);
       return;
     }
     // Safety fallback for any generated board that still defeats the logical
@@ -726,9 +750,7 @@ export default function Queens({
     for (let r = 0; r < boardSize; r++) {
       const c = puzzle.solution[r];
       if (board[r][c] !== 2) {
-        setHintCell({ r, c, type: "queen", src: "fallback" });
-        setHintsUsed((h) => h + 1);
-        window.setTimeout(() => setHintCell(null), 1200);
+        showHints([{ r, c, type: "queen", src: "fallback" }]);
         return;
       }
     }
@@ -787,6 +809,18 @@ export default function Queens({
         .qp-hint-wrong { animation: qp-wrong 0.35s ease-in-out 2; }
         .qp-hint-cross { animation: qp-hint-pulse 0.7s ease-in-out infinite; z-index: 2; }
         .qp-hint-queen { animation: qp-hint-queen 0.7s ease-in-out infinite; z-index: 2; }
+        .qp-hint-cross::after, .qp-hint-queen::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: 1;
+          pointer-events: none;
+          background: repeating-linear-gradient(135deg, rgba(255,255,255,.58) 0 3px, rgba(47,111,237,.24) 3px 5px);
+        }
+        .qp-hint-queen::after {
+          background: repeating-linear-gradient(135deg, rgba(255,255,255,.58) 0 3px, rgba(18,148,106,.28) 3px 5px);
+        }
+        .qp-cell > svg { position: relative; z-index: 2; }
         .qp-card { container-type: inline-size; }
         @container (min-width: 430px) {
           .qp-cell .qp-crown { width: 26px; height: 26px; }
@@ -929,8 +963,9 @@ export default function Queens({
             row.map((val, c) => {
               const region = puzzle.regionGrid[r][c];
               const isConflict = conflicts.has(`${r}-${c}`);
-              const isHint = hintCell && hintCell.r === r && hintCell.c === c;
-              const hintClass = isHint ? `qp-hint-${hintCell.type}` : "";
+              const cellHint = hintCells.find((hint) => hint.r === r && hint.c === c);
+              const isHint = !!cellHint;
+              const hintClass = isHint ? `qp-hint-${cellHint.type}` : "";
               return (
                 <button
                   key={`${r}-${c}`}
@@ -967,7 +1002,7 @@ export default function Queens({
                       style={{ color: "rgba(17,24,39,0.60)" }}
                     />
                   )}
-                  {isHint && hintCell.type === "cross" && val === 0 && (
+                  {isHint && cellHint.type === "cross" && cellHint.src !== "queen-elimination" && val === 0 && (
                     <X
                       className="qp-cross"
                       size={Math.max(13, 22 - boardSize)}
@@ -975,7 +1010,7 @@ export default function Queens({
                       style={{ color: "#2563EB", opacity: 0.72, pointerEvents: "none" }}
                     />
                   )}
-                  {isHint && hintCell.type === "queen" && val !== 2 && (
+                  {isHint && cellHint.type === "queen" && val !== 2 && (
                     <Crown
                       className="qp-crown"
                       size={Math.max(17, 27 - boardSize)}
