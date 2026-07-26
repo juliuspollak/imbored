@@ -56,6 +56,12 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   const standingsCacheRef = useRef({});
 
   useEffect(() => {
+    if (challengeScope?.type === "team" && challengeScope.id != null) {
+      setExpandedChallengeId(challengeScope.id);
+    }
+  }, [challengeScope?.id, challengeScope?.type]);
+
+  useEffect(() => {
     let cancelled = false;
     async function loadTeamChallenges() {
       if (!supabaseReady || !userId) return;
