@@ -4,6 +4,7 @@ import {
   Lock, Mail, Plus, RotateCcw, Search, Trash2,
   UserMinus, UserPlus, Users, X,
 } from "lucide-react";
+import BackButton from "./BackButton.jsx";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
@@ -352,7 +353,7 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
     <div style={{ background:BG, minHeight:"100vh", fontFamily:"'Inter',sans-serif" }} className="flex justify-center p-4 pt-10">
       <div className="w-full max-w-md">
         <header className="flex items-center gap-3 mb-5">
-          <button onClick={onBack} className="gloss-button grid place-items-center rounded-full" style={{ width:36,height:36,background:"rgba(16,24,40,.05)" }} aria-label="Back"><ArrowLeft size={17}/></button>
+          <BackButton onClick={onBack} ariaLabel="Back" />
           <div className="flex-1"><h1 className="text-2xl font-bold" style={{ fontFamily:"'Fredoka',sans-serif" }}>Teams</h1><p className="text-xs opacity-45">Play together, your way</p></div>
           {!profile?.hidden_from_others && <button className="gloss-button" onClick={() => setComposerOpen((open) => !open)} className="rounded-full px-3 py-2 text-xs font-semibold flex items-center gap-1" style={{ background:ACCENT,color:"#fff" }}><Plus size={14}/>New team</button>}
         </header>
