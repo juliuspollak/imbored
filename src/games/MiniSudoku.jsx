@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
+import HintCooldownButton from "../HintCooldownButton.jsx";
 import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import { Grid3x3, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Delete, Lock } from "lucide-react";
@@ -553,11 +554,20 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
             { label: t("common.reset"), onClick: handleReset, disabled: solved },
             { label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
             {
-              label: hintCooldown.locked ? `${hintCooldown.remaining}s` : t("common.hint"),
+              label: t("common.hint"),
               onClick: handleHint,
-              disabled: solved || hintCooldown.locked,
+              disabled: solved,
+              hint: true,
             },
-          ].map(({ label, onClick, disabled }) => (
+          ].map(({ label, onClick, disabled, hint }) => hint ? (
+            <HintCooldownButton
+              key="hint"
+              cooldown={hintCooldown}
+              label={label}
+              onClick={onClick}
+              disabled={disabled}
+            />
+          ) : (
             <button
               key={label}
               onClick={onClick}
