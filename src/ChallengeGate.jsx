@@ -141,11 +141,18 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
 
   if (playingIdx !== null) {
     const date = dates[playingIdx];
+    const leaveGame = () => {
+      if (challengeScope?.type === "team") {
+        onExit?.();
+        return;
+      }
+      setPlayingIdx(null);
+    };
     return (
       <div style={{ position: "relative" }}>
-        <button className="gloss-button"
-          onClick={() => setPlayingIdx(null)}
-          className="nav-btn"
+        <button
+          onClick={leaveGame}
+          className="gloss-button nav-btn"
           style={{
             "--nav-glow": "rgba(47,111,237,0.35)",
             "--nav-border": "rgba(47,111,237,0.4)",
@@ -153,7 +160,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
             background: "rgba(255,255,255,0.9)", backdropFilter: "blur(6px)", border: "1px solid rgba(16,24,40,0.12)",
             display: "flex", alignItems: "center", justifyContent: "center", color: INK,
           }}
-          aria-label="Back to challenge"
+          aria-label={challengeScope?.type === "team" ? "Back to team challenge" : "Back to challenge days"}
         >
           <ArrowLeft size={18} />
         </button>
@@ -236,7 +243,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
 
               return (
                 <div key={date}>
-                  <button className="gloss-button"
+                  <button
                     disabled={isFuture || startingIdx !== null}
                     onClick={() => {
                       if (isFuture) return;
@@ -245,7 +252,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                         startChallenge(i);
                       }
                     }}
-                    className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-left"
+                    className="gloss-button w-full flex items-center gap-3 rounded-xl px-4 py-3 text-left"
                     style={{
                       background: result ? "rgba(22,163,74,0.05)" : isPlayable ? "rgba(47,111,237,0.05)" : "rgba(16,24,40,0.03)",
                       border: isPlayable ? `1.5px solid ${isToday ? ACCENT : "rgba(47,111,237,0.4)"}` : "1px solid rgba(16,24,40,0.07)",
