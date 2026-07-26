@@ -66,29 +66,6 @@
     border-color: rgba(255, 255, 255, 0.09) !important;
   }
 
-  /* Practice day selectors. Inline light colours were too faint on dark cards. */
-  .qp-day-btn,
-  .tg-day-btn,
-  .zp-day-btn {
-    border: 1px solid rgba(255, 255, 255, 0.09);
-  }
-
-  .qp-day-btn:not([style*="background: rgb"]),
-  .tg-day-btn:not([style*="background: rgb"]),
-  .zp-day-btn:not([style*="background: rgb"]) {
-    color: #f4f7fb !important;
-  }
-
-  .qp-day-btn[style*="rgba(16, 24, 40"],
-  .qp-day-btn[style*="rgba(16,24,40"],
-  .tg-day-btn[style*="rgba(16, 24, 40"],
-  .tg-day-btn[style*="rgba(16,24,40"],
-  .zp-day-btn[style*="rgba(16, 24, 40"],
-  .zp-day-btn[style*="rgba(16,24,40"] {
-    background: rgba(255, 255, 255, 0.08) !important;
-    color: rgba(244, 247, 251, 0.88) !important;
-  }
-
   /* Toolbar disabled states need visible labels without looking enabled. */
   .qp-card .gloss-button:disabled,
   .tg-card .gloss-button:disabled,

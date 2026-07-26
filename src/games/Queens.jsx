@@ -5,7 +5,7 @@ import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import { Crown, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
-import DaySelector from "../DaySelector";
+import DaySelector from "../DaySelector.jsx";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -678,7 +678,6 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
         }
         @media (hover: hover) and (pointer: fine) {
           .qp-cell:hover { filter: brightness(1.15); }
-          .qp-day-btn:hover { filter: brightness(1.12); }
           .qp-icon-btn:hover { opacity: 0.85; }
           .qp-play-again:hover { filter: brightness(1.08); }
           .qp-toolbar-btn:not(:disabled):hover {
@@ -725,23 +724,11 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
             </div>
           </div>
         ) : (
-          <div className="flex flex-wrap justify-center gap-1.5 mb-4">
-            {DAYS.map((d, i) => (
-              <button
-                key={d}
-                onClick={() => setDayIdx(i)}
-                className="qp-day-btn flex flex-col items-center justify-center rounded-lg px-2 py-1.5 transition-colors"
-                style={{
-                  background: i === dayIdx ? GOLD : "rgba(16,24,40,0.05)",
-                  color: i === dayIdx ? "#FFFFFF" : CREAM,
-                  minWidth: 38,
-                }}
-              >
-                <span className="text-xs font-semibold">{d}</span>
-                <span className="text-[10px] opacity-70">{SIZES[i]}×{SIZES[i]}</span>
-              </button>
-            ))}
-          </div>
+          <DaySelector
+            days={DAYS}
+            value={dayIdx}
+            onChange={setDayIdx}
+          />
         )}
 
         {solved && difficultyRating !== null && (

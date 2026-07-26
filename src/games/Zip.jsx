@@ -5,7 +5,7 @@ import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Flag, Lock } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
-import DaySelector from "../DaySelector";
+import DaySelector from "../DaySelector.jsx";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -628,7 +628,6 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
         }
         @media (hover: hover) and (pointer: fine) {
           .zp-cell:hover { filter: brightness(1.25); }
-          .zp-day-btn:hover { filter: brightness(1.12); }
           .zp-icon-btn:hover { opacity: 0.85; }
           .zp-play-again:hover { filter: brightness(1.08); }
           .zp-toolbar-btn:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.03); }
@@ -666,22 +665,11 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
             </div>
           </div>
         ) : (
-          <div className="flex flex-wrap justify-center gap-1.5 mb-4">
-            {DAYS.map((d, i) => (
-              <button
-                key={d}
-                onClick={() => setDayIdx(i)}
-                className="zp-day-btn flex flex-col items-center justify-center rounded-lg px-2 py-1.5 transition-colors"
-                style={{
-                  background: i === dayIdx ? GOLD : "rgba(16,24,40,0.05)",
-                  color: i === dayIdx ? "#FFFFFF" : CREAM,
-                  minWidth: 38,
-                }}
-              >
-                <span className="text-xs font-semibold">{d}</span>
-              </button>
-            ))}
-          </div>
+          <DaySelector
+            days={DAYS}
+            value={dayIdx}
+            onChange={setDayIdx}
+          />
         )}
 
         <div className="flex items-center justify-center gap-4 mb-3 px-1">
