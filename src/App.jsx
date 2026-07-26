@@ -81,32 +81,64 @@ function AppShell() {
   // are tied to a user) — default to it when logged in, otherwise practice
   // is the only real option.
   const [playMode, setPlayMode] = useState("challenge");
-  const [incognito, setIncognito] = useState(false);
+  // null means the privacy preference has not loaded yet. Treating that
+  // state as offline prevents a presence heartbeat leaking during startup.
+  const [incognito, setIncognito] = useState(null);
   const [challengeScope, setChallengeScope] = useState({ type: "personal", id: null, name: t("home.myChallenge"), gameIds: null });
   const { loading, user, profile, profileLoading, signOut } = useAuth();
   useEffect(() => {
-    if (!user?.id) {
-      setIncognito(false);
-      return;
+    if (!user?.id || !profile) {
+      setIncognito(null);
+      return undefined;
     }
-    try {
-      setIncognito(window.localStorage.getItem(`imbored-incognito-${user.id}`) === "true");
-    } catch {
-      setIncognito(false);
-    }
-  }, [user?.id]);
 
-  function toggleIncognito() {
-    setIncognito((current) => {
-      const next = !current;
-      try {
-        if (user?.id) window.localStorage.setItem(`imbored-incognito-${user.id}`, String(next));
-      } catch {
-        // Storage can be unavailable in strict private browsing. The setting
-        // still applies for the current session.
+    const key = `imbored-incognito-${user.id}`;
+    const serverValue = profile.incognito_mode === true;
+    setIncognito(serverValue);
+    try {
+      window.localStorage.setItem(key, String(serverValue));
+    } catch {
+      // Server state remains authoritative when storage is unavailable.
+    }
+
+    // Keep every tab in this browser aligned. Server-side RLS is the final
+    // guard for other devices and for a tab that was suspended during this event.
+    const onStorage = (event) => {
+      if (event.key === key && (event.newValue === "true" || event.newValue === "false")) {
+        setIncognito(event.newValue === "true");
       }
-      return next;
-    });
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [user?.id, profile?.incognito_mode]);
+
+  async function toggleIncognito() {
+    if (!user?.id || incognito === null) return;
+    const previous = incognito;
+    const next = !previous;
+    const key = `imbored-incognito-${user.id}`;
+
+    setIncognito(next);
+    try {
+      window.localStorage.setItem(key, String(next));
+    } catch {
+      // The server value still protects this and other sessions.
+    }
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ incognito_mode: next })
+      .eq("id", user.id);
+
+    if (error) {
+      setIncognito(previous);
+      try {
+        window.localStorage.setItem(key, String(previous));
+      } catch {
+        // Nothing else to restore.
+      }
+      window.alert(`Couldn't change incognito mode: ${error.message}`);
+    }
   }
   useLayoutEffect(() => {
     applyThemePreference(profile?.theme_preference || "system");
@@ -236,7 +268,8 @@ function AppShell() {
       newTransfersCount={newTransfersCount}
       unreadMessages={unreadMessages}
       sectionSignals={sectionSignals}
-      incognito={incognito}
+      incognito={incognito === true}
+      incognitoReady={incognito !== null}
       onToggleIncognito={toggleIncognito}
       onOpenChat={(player) => { setChatReturn(null); setChatPlayer(player); }}
     />
@@ -506,7 +539,7 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
   );
 }
 
-function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenTeams, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, onToggleIncognito, onOpenChat }) {
+function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenTeams, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
   const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -566,6 +599,7 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
         <button
           type="button"
           onClick={onToggleIncognito}
+          disabled={!incognitoReady}
           className={`nav-btn incognito-button grid place-items-center rounded-full${incognito ? " is-active" : ""}`}
           aria-label={incognito ? "Turn off incognito mode" : "Turn on incognito mode"}
           aria-pressed={incognito}

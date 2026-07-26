@@ -2,22 +2,16 @@ import { useEffect, useRef } from "react";
 import { supabase, supabaseReady } from "./supabase.js";
 import { useAuth } from "./AuthContext.jsx";
 
-// Call with the game id ('queens' | 'tango' | 'zip' | 'minisudoku') while
-// that game's screen is mounted, or null while just browsing elsewhere.
-// Writes a heartbeat while the player is actually active. A visible tab with
-// no interaction goes quiet after two minutes, so leaving the app open does
-// not create endless database traffic or make someone look online forever.
-//
-// Deliberately does NOT delete the row when a screen unmounts or the tab
-// closes — it just stops updating. That's what makes "last seen" possible:
-// the row's last_seen timestamp is left in place as a record of when they
-// were last around, rather than vanishing the moment they close the tab.
-// A private profile is the one exception — going private clears any
-// existing row immediately, since privacy means not being tracked at all.
-export function usePresence(game, mode, incognito = false) {
+// Presence writes are serialised. When privacy changes, the delete is queued
+// after every older heartbeat and future queued writes re-check the latest
+// privacy value before touching the database.
+export function usePresence(game, mode, incognito = null) {
   const { user, profile } = useAuth();
   const presenceValueRef = useRef({ game, mode });
+  const offlineRef = useRef(true);
+  const writeQueueRef = useRef(Promise.resolve());
   presenceValueRef.current = { game, mode };
+
   const isPrivate = profile?.is_private;
   const userId = user?.id;
   const hasProfile = !!profile;
@@ -27,60 +21,68 @@ export function usePresence(game, mode, incognito = false) {
     !profile.account_deleted_at &&
     !profile.is_blocked &&
     (profile.is_admin || profile.is_approved !== false);
+  // Unknown startup state is deliberately offline.
+  const isOffline = !!isPrivate || incognito !== false;
+  offlineRef.current = isOffline;
 
-  // Immediately update presence when game changes
-  useEffect(() => {
-    if (!supabaseReady || !userId || !canWritePresence || isPrivate || incognito) return;
-    const current = presenceValueRef.current;
-    supabase
-      .from("presence")
-      .upsert({
+  function enqueue(task) {
+    writeQueueRef.current = writeQueueRef.current
+      .catch(() => undefined)
+      .then(task);
+    return writeQueueRef.current;
+  }
+
+  function enqueueBeat() {
+    if (!supabaseReady || !userId || !canWritePresence || offlineRef.current) return;
+    enqueue(async () => {
+      if (offlineRef.current) return;
+      const current = presenceValueRef.current;
+      const { error } = await supabase.from("presence").upsert({
         user_id: userId,
         game: current.game,
         mode: current.game ? current.mode : null,
         last_seen: new Date().toISOString(),
-      })
-      .then(({ error }) => {
-        if (error && error.code !== "42501") console.warn("Unable to update presence:", error.message);
       });
-  }, [game, mode, userId, canWritePresence, isPrivate, incognito]);
+      if (error && error.code !== "42501") {
+        console.warn("Unable to update presence:", error.message);
+      }
+    });
+  }
 
   useEffect(() => {
     if (!supabaseReady || !userId || !hasProfile) return;
 
-    if (isPrivate || incognito) {
-      supabase.from("presence").delete().eq("user_id", userId).then();
+    if (isOffline) {
+      // This delete runs after any request already in flight. The database
+      // migration also hides incognito rows and blocks stale clients from
+      // recreating them, so a failed delete cannot reveal the player.
+      enqueue(async () => {
+        const { error } = await supabase.from("presence").delete().eq("user_id", userId);
+        if (error && error.code !== "42501") {
+          console.warn("Unable to clear incognito presence:", error.message);
+        }
+      });
       return;
     }
 
-    // Presence writes are protected by the approved-user trigger. Do not
-    // repeatedly send requests for incomplete, blocked or deleted profiles:
-    // those writes are correctly rejected with 403 and can otherwise keep a
-    // stale/deleted Auth session busy while the app is trying to sign it out.
-    if (!canWritePresence) return;
+    enqueueBeat();
+  }, [game, mode, userId, hasProfile, canWritePresence, isOffline]);
+
+  useEffect(() => {
+    if (!supabaseReady || !userId || !hasProfile || isOffline || !canWritePresence) return;
 
     let cancelled = false;
     let lastActivityAt = Date.now();
     let lastBeatAt = 0;
     const beat = () => {
       if (
-        cancelled
-        || document.visibilityState !== "visible"
-        || Date.now() - lastActivityAt > 120000
+        cancelled ||
+        offlineRef.current ||
+        document.visibilityState !== "visible" ||
+        Date.now() - lastActivityAt > 120000
       ) return;
       lastBeatAt = Date.now();
-      const current = presenceValueRef.current;
-      supabase
-        .from("presence")
-        .upsert({
-          user_id: userId,
-          game: current.game,
-          mode: current.game ? current.mode : null,
-          last_seen: new Date().toISOString(),
-        })
-        .then(({ error }) => {
-          if (error && error.code !== "42501") console.warn("Unable to update presence:", error.message);
-        });
+      enqueueBeat();
     };
     const noteActivity = () => {
       const wasIdle = Date.now() - lastActivityAt > 120000;
@@ -109,5 +111,5 @@ export function usePresence(game, mode, incognito = false) {
       document.removeEventListener("touchstart", noteActivity);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [userId, isPrivate, incognito, canWritePresence, hasProfile]);
+  }, [userId, isOffline, canWritePresence, hasProfile]);
 }
