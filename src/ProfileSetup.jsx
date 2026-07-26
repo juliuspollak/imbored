@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock, Unlock, Users, Home, Fingerprint, Trash2, Plus, Link2, Unlink, Mail, Languages, Monitor, Sun, Moon } from "lucide-react";
+import { Lock, Unlock, Users, ArrowLeft, Fingerprint, Trash2, Plus, Link2, Unlink, Mail, Languages, Monitor, Sun, Moon } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { PROFILE_ICONS } from "./lib/icons.js";
 import { useI18n } from "./lib/i18n.jsx";
@@ -148,9 +148,9 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
               onClick={onDone}
               className="nav-btn flex items-center justify-center rounded-full shrink-0"
               style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)", width: 34, height: 34 }}
-              aria-label="Home"
+              aria-label="Back to home"
             >
-              <Home size={16} />
+              <ArrowLeft size={16} />
             </button>
           )}
           <button
@@ -181,9 +181,9 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
 
         <form
           onSubmit={handleSubmit}
-          className="profile-panel rounded-2xl p-5"
-          style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)" }}
+          className="profile-panel"
         >
+          <div className="profile-section rounded-2xl p-5 mb-3" style={{ background:PANEL, border:"1px solid rgba(16,24,40,.09)" }}>
           <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
             {t("profile.name")}
           </label>
@@ -297,12 +297,13 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
               </button>
             ))}
           </div>
+          </div>
 
           <button
             type="button"
             onClick={() => setShowStatsToOthers((value) => !value)}
             className="profile-privacy-card w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 mb-3 text-left"
-            style={{ border: "1px solid rgba(16,24,40,0.14)" }}
+            style={{ border: "1px solid rgba(16,24,40,0.14)", background:PANEL }}
           >
             {showStatsToOthers ? <Unlock size={15} style={{ color: INK, opacity: 0.4 }} /> : <Lock size={15} style={{ color: INK }} />}
             <div className="flex-1">
@@ -326,7 +327,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
             type="button"
             onClick={() => setIsPrivate((p) => !p)}
             className="profile-privacy-card w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 mb-4 text-left"
-            style={{ border: "1px solid rgba(16,24,40,0.14)" }}
+            style={{ border: "1px solid rgba(16,24,40,0.14)", background:PANEL }}
           >
             {isPrivate ? <Lock size={15} style={{ color: INK }} /> : <Unlock size={15} style={{ color: INK, opacity: 0.4 }} />}
             <div className="flex-1">
@@ -346,7 +347,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
             </div>
           </button>
 
-          <div className="rounded-xl p-3 mb-4" style={{ border:"1px solid rgba(16,24,40,.14)", background:"rgba(47,111,237,.025)" }}>
+          <div className="profile-section rounded-xl p-3 mb-4" style={{ border:"1px solid rgba(16,24,40,.14)", background:PANEL }}>
             <div className="flex items-center gap-2 mb-2">
               <Languages size={15} style={{ color:ACCENT }}/>
               <div className="text-xs font-semibold" style={{ color:INK }}>{t("language.label")}</div>
@@ -373,7 +374,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
           </div>
 
           {!isFirstTime && (
-            <div className="rounded-xl px-3 py-3 mb-3" style={{ border: "1px solid rgba(16,24,40,0.14)" }}>
+            <div className="profile-section rounded-xl px-3 py-3 mb-3" style={{ border: "1px solid rgba(16,24,40,0.14)", background:PANEL }}>
               <div className="flex items-center gap-2 mb-2"><Link2 size={15} style={{color:ACCENT}}/><span className="text-xs font-semibold" style={{color:INK}}>Sign-in methods</span></div>
               <div className="space-y-2">
                 {identities.map((identity) => {
@@ -394,7 +395,7 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
           )}
 
           {!isFirstTime && passkeySupported && (
-            <div className="rounded-lg px-3 py-2.5 mb-3" style={{ border: "1px solid rgba(16,24,40,0.14)" }}>
+            <div className="profile-section rounded-lg px-3 py-2.5 mb-3" style={{ border: "1px solid rgba(16,24,40,0.14)", background:PANEL }}>
               <div className="flex items-center gap-2.5 mb-2">
                 <Fingerprint size={15} style={{ color: INK, opacity: 0.6 }} />
                 <div style={{ color: INK }} className="text-xs font-medium">Passkeys</div>
