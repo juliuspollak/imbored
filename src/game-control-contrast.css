@@ -2,8 +2,7 @@
  *
  * Game components still own their accent colours in light mode. In dark mode
  * all practice-day selectors use one predictable inactive surface and one
- * obvious active surface. This avoids relying on component-specific colour
- * strings, which browsers serialise differently on iOS.
+ * obvious active surface.
  */
 @media (prefers-color-scheme: dark) {
   :where(
@@ -20,38 +19,48 @@
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
   }
 
-  /* Every selected day currently carries white inline text. Use that stable
-     state signal and render the same selected treatment in every game. */
+  /* Selected days. React/Safari may serialise inline colours as hex, rgb,
+     lowercase hex, background-color, or the keyword white. */
   :where(
     .qp-day-btn,
     .tg-day-btn,
     .zp-day-btn,
     .ms-day-btn,
-    .geo-day-btn,
-    .zoom-day-btn
+    .geo-day-btn
   )[style*="color: rgb(255, 255, 255)"],
   :where(
     .qp-day-btn,
     .tg-day-btn,
     .zp-day-btn,
     .ms-day-btn,
-    .geo-day-btn,
-    .zoom-day-btn
+    .geo-day-btn
   )[style*="color: #FFFFFF"],
   :where(
     .qp-day-btn,
     .tg-day-btn,
     .zp-day-btn,
     .ms-day-btn,
-    .geo-day-btn,
-    .zoom-day-btn
-  )[style*="color:#FFFFFF"] {
-    background: linear-gradient(155deg, #7d6df2, #586fe9) !important;
+    .geo-day-btn
+  )[style*="color: #ffffff"],
+  :where(
+    .qp-day-btn,
+    .tg-day-btn,
+    .zp-day-btn,
+    .ms-day-btn,
+    .geo-day-btn
+  )[style*="color: white"],
+  .zoom-day-btn[style*="background: rgb(124, 58, 237)"],
+  .zoom-day-btn[style*="background-color: rgb(124, 58, 237)"],
+  .zoom-day-btn[style*="background: #7C3AED"],
+  .zoom-day-btn[style*="background:#7C3AED"],
+  .zoom-day-btn[style*="background: #7c3aed"],
+  .zoom-day-btn[style*="background:#7c3aed"] {
+    background: linear-gradient(155deg, #8b72ff, #6950df) !important;
     color: #ffffff !important;
-    border-color: rgba(164, 183, 255, 0.58) !important;
+    border-color: rgba(190, 177, 255, 0.72) !important;
     box-shadow:
-      0 7px 18px rgba(52, 66, 170, 0.34),
-      inset 0 1px 0 rgba(255, 255, 255, 0.30) !important;
+      0 7px 18px rgba(88, 65, 190, 0.42),
+      inset 0 1px 0 rgba(255, 255, 255, 0.34) !important;
   }
 
   :where(
@@ -65,7 +74,6 @@
     transform: scale(0.96);
   }
 
-  /* Zoom's neutral answers were near-black text on a darkened panel. */
   .zoom-option {
     background: rgba(255, 255, 255, 0.075) !important;
     color: #f4f7fb !important;
@@ -78,7 +86,6 @@
     border-color: rgba(143, 128, 255, 0.48) !important;
   }
 
-  /* Preserve the correct/wrong feedback after the neutral override. */
   .zoom-option[style*="color: rgb(22, 163, 74)"],
   .zoom-option[style*="color: #16A34A"],
   .zoom-option[style*="color:#16A34A"] {
