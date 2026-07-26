@@ -1,19 +1,33 @@
 /* Reliable My Profile dark mode overrides.
  *
  * Do not rely on :has() or browser-serialised inline-style selectors here.
- * The ProfileSetup screen has a unique max-w-sm / p-6 card structure and these
+ * The ProfileSetup screen uses unique profile-page and profile-panel classes; these
  * rules deliberately target that structure so iOS Safari and installed PWAs
  * render the same result.
  */
 @media (prefers-color-scheme: dark) {
-  #root > div.flex.items-center.justify-center.p-4 {
+  .profile-page {
     background:
       radial-gradient(circle at 50% -10%, rgba(77, 111, 170, 0.18), transparent 36%),
       #0d1118 !important;
     color: #f4f7fb !important;
   }
 
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative {
+  .profile-header h1 {
+    color: #f4f7fb !important;
+  }
+
+  .profile-header p {
+    color: rgba(232, 238, 247, 0.66) !important;
+  }
+
+  .profile-header .nav-btn {
+    background: linear-gradient(160deg, rgba(67, 82, 104, 0.98), rgba(26, 35, 48, 0.98)) !important;
+    color: #f4f7fb !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+  }
+
+  .profile-panel {
     background: linear-gradient(155deg, rgba(38, 48, 64, 0.98), rgba(22, 29, 40, 0.99)) !important;
     border: 1px solid rgba(255, 255, 255, 0.13) !important;
     color: #f4f7fb !important;
@@ -22,22 +36,22 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.10) !important;
   }
 
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative h1,
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative h2,
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative h3,
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative label,
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative strong {
+  .profile-panel h1,
+  .profile-panel h2,
+  .profile-panel h3,
+  .profile-panel label,
+  .profile-panel strong {
     color: #f4f7fb !important;
   }
 
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative p,
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative small {
+  .profile-panel p,
+  .profile-panel small {
     color: rgba(232, 238, 247, 0.66) !important;
   }
 
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative input,
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative select,
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative textarea {
+  .profile-panel input,
+  .profile-panel select,
+  .profile-panel textarea {
     background: rgba(10, 15, 24, 0.62) !important;
     border: 1px solid rgba(255, 255, 255, 0.14) !important;
     color: #f4f7fb !important;
@@ -45,38 +59,38 @@
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.34) !important;
   }
 
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative input::placeholder,
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative textarea::placeholder {
+  .profile-panel input::placeholder,
+  .profile-panel textarea::placeholder {
     color: rgba(232, 238, 247, 0.40) !important;
     -webkit-text-fill-color: rgba(232, 238, 247, 0.40) !important;
   }
 
   /* Avatar button and picker. */
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative .grid.grid-cols-6 {
+  .profile-panel .grid.grid-cols-6 {
     background: rgba(5, 9, 15, 0.34) !important;
     border-color: rgba(255, 255, 255, 0.10) !important;
   }
 
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative .grid.grid-cols-6 button,
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative button.rounded-full {
+  .profile-panel .grid.grid-cols-6 button,
+  .profile-panel button.rounded-full {
     background: rgba(255, 255, 255, 0.09) !important;
     border-color: rgba(255, 255, 255, 0.12) !important;
     color: #f4f7fb !important;
   }
 
   /* Challenge / Practice and Monday / Sunday selectors. */
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative .flex.rounded-lg.p-1 {
+  .profile-panel .flex.rounded-lg.p-1 {
     background: rgba(5, 9, 15, 0.40) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
   }
 
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative .flex.rounded-lg.p-1 button {
+  .profile-panel .flex.rounded-lg.p-1 button {
     color: rgba(232, 238, 247, 0.58) !important;
     background: transparent !important;
     box-shadow: none !important;
   }
 
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative .flex.rounded-lg.p-1 button[style*="background"]:not([style*="transparent"]) {
+  .profile-panel .flex.rounded-lg.p-1 button[style*="background"]:not([style*="transparent"]) {
     background: linear-gradient(160deg, rgba(255, 255, 255, 0.18), rgba(120, 145, 181, 0.09)) !important;
     color: #ffffff !important;
     box-shadow:
@@ -85,24 +99,24 @@
   }
 
   /* Account, privacy and security rows. */
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative .rounded-xl,
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative .rounded-lg {
+  .profile-panel .rounded-xl,
+  .profile-panel .rounded-lg {
     border-color: rgba(255, 255, 255, 0.10) !important;
   }
 
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative div[style*="rgba(16,24,40"],
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative div[style*="rgba(16, 24, 40"] {
+  .profile-panel div[style*="rgba(16,24,40"],
+  .profile-panel div[style*="rgba(16, 24, 40"] {
     background: rgba(255, 255, 255, 0.06) !important;
     border-color: rgba(255, 255, 255, 0.09) !important;
   }
 
   /* Preserve semantic action colours while keeping labels readable. */
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative button:not([style*="#B5433A"]):not([style*="#b5433a"]),
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative span {
+  .profile-panel button:not([style*="#B5433A"]):not([style*="#b5433a"]),
+  .profile-panel span {
     color: inherit;
   }
 
-  #root > div.flex.items-center.justify-center.p-4 > .w-full.max-w-sm.rounded-2xl.p-6.relative .nav-btn {
+  .profile-panel .nav-btn {
     background: linear-gradient(160deg, rgba(67, 82, 104, 0.98), rgba(26, 35, 48, 0.98)) !important;
     color: #f4f7fb !important;
     border-color: rgba(255, 255, 255, 0.16) !important;
