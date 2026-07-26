@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
-import { ArrowLeft, LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3, Star, Gift, MessagesSquare } from "lucide-react";
+import { Home as HomeIcon, LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3, Star, Gift, MessagesSquare } from "lucide-react";
 import Home from "./Home.jsx";
 import Login from "./Login.jsx";
 import ProfileSetup from "./ProfileSetup.jsx";
@@ -433,9 +433,9 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
           justifyContent: "center",
           color: "#1B2129",
         }}
-        aria-label={t("common.backHome")}
+        aria-label="Home"
       >
-        <ArrowLeft size={18} />
+        <HomeIcon size={17} />
       </button>
       <Current
         userId={userId}
