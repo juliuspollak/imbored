@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
-import { Check, ChevronDown, ChevronUp, Clock3, LockKeyhole, Trophy } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Clock3, Lightbulb, LockKeyhole, TriangleAlert, Trophy } from "lucide-react";
 import { useI18n } from "./lib/i18n.jsx";
 
 const INK = "#1B2129";
+const HINT_PENALTY_SECONDS = 30;
+const MISTAKE_PENALTY_SECONDS = 15;
 
 function formatDuration(value) {
   const seconds = Math.max(0, Number(value) || 0);
@@ -32,13 +34,21 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
           privateStats,
           completed: playerRows.length,
           totalSeconds: playerRows.reduce((total, row) => total + (Number(row.seconds) || 0), 0),
+          hints: playerRows.reduce((total, row) => total + (Number(row.hints) || 0), 0),
           mistakes: playerRows.reduce((total, row) => total + (Number(row.mistakes) || 0), 0),
         };
       })
+      .map((standing) => ({
+        ...standing,
+        adjustedSeconds: standing.totalSeconds
+          + standing.hints * HINT_PENALTY_SECONDS
+          + standing.mistakes * MISTAKE_PENALTY_SECONDS,
+      }))
       .sort((a, b) => {
         if (a.privateStats !== b.privateStats) return a.privateStats ? 1 : -1;
         if (a.completed !== b.completed) return b.completed - a.completed;
-        if (a.totalSeconds !== b.totalSeconds) return a.totalSeconds - b.totalSeconds;
+        if (a.adjustedSeconds !== b.adjustedSeconds) return a.adjustedSeconds - b.adjustedSeconds;
+        if (a.hints !== b.hints) return a.hints - b.hints;
         if (a.mistakes !== b.mistakes) return a.mistakes - b.mistakes;
         return (a.name || "").localeCompare(b.name || "");
       });
@@ -92,12 +102,12 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                 {leader && (
                   <span className="challenge-complete-winner">
                     <span aria-hidden="true">{leader.icon || "🙂"}</span>
-                    <span><strong>{leader.name}</strong> won in {formatDuration(leader.totalSeconds)}</span>
+                    <span><strong>{leader.name}</strong> won with {formatDuration(leader.adjustedSeconds)} adjusted time</span>
                   </span>
                 )}
               </span>
               {rewardPoints > 0 && (
-                <span className="challenge-complete-points">+{rewardPoints}<small>Points</small></span>
+                <span className="challenge-complete-points">+{rewardPoints}<small>Each finisher</small></span>
               )}
             </div>
           )}
@@ -145,7 +155,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                         <span className="text-right shrink-0">
                           <span className="block text-xs font-bold">{standing.completed}/{games.length}</span>
                           <span className="flex items-center justify-end gap-1 text-[10px] mt-0.5" style={{ color:"rgba(27,33,41,.48)" }}>
-                            {standing.completed > 0 ? <><Clock3 size={10}/>{formatDuration(standing.totalSeconds)}</> : t("standings.notStarted")}
+                            {standing.completed > 0 ? <><Clock3 size={10}/>{formatDuration(standing.adjustedSeconds)} adjusted</> : t("standings.notStarted")}
                           </span>
                         </span>
                       )}
@@ -160,7 +170,15 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                             <span key={game.id} className="flex items-center gap-2 rounded-xl px-2.5 py-2" style={{ background:"#fff" }}>
                               <GameIcon size={13} style={{ color:game.accent }}/>
                               <span className="text-[11px] font-medium flex-1">{game.label}</span>
-                              <span className="text-[10px] font-semibold" style={{ color:result ? INK : "rgba(27,33,41,.32)" }}>{result ? formatDuration(result.seconds) : t("standings.notPlayed")}</span>
+                              {result ? (
+                                <span className="text-[10px] font-semibold flex items-center gap-1.5" style={{ color:INK }}>
+                                  <Clock3 size={10}/>{formatDuration(result.seconds)}
+                                  {(Number(result.hints) || 0) > 0 && <><Lightbulb size={10}/>{result.hints}</>}
+                                  {(Number(result.mistakes) || 0) > 0 && <><TriangleAlert size={10}/>{result.mistakes}</>}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-semibold" style={{ color:"rgba(27,33,41,.32)" }}>{t("standings.notPlayed")}</span>
+                              )}
                             </span>
                           );
                         })}
@@ -170,7 +188,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                 );
               })}
               <div className="px-2 pt-1 text-[10px] text-center" style={{ color:"rgba(27,33,41,.38)" }}>
-                {challengeComplete ? "Final ranking by fastest total time." : t("standings.rankingRule")}
+                Ranked by games completed, then adjusted time · hint +30s · mistake/reset +15s
               </div>
             </div>
           )}
