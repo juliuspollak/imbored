@@ -8,6 +8,7 @@ import { getTargetHistory, rememberTargets } from "./zoom/zoomHistory.js";
 import FlagImage from "./geo/FlagImage.jsx";
 import { useI18n } from "../lib/i18n.jsx";
 import { localizeZoomValue, localizeZoomPrompt } from "./zoom/zoomLocalization.js";
+import DaySelector from "../DaySelector";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
