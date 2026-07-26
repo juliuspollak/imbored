@@ -1,4 +1,4 @@
--- Fair challenge scoring v112
+-- Fair challenge scoring v114
 -- Slow solves now reduce the normal game award, and a clean board is the
 -- baseline rather than a separate bonus. Challenge standings use their own
 -- adjusted-time calculation in the client and never alter account points.
