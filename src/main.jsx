@@ -13,6 +13,7 @@ import "./theme.css";
 import "./dark-mode-contrast.css";
 import "./profile-dark-fix.css";
 import "./game-control-contrast.css";
+import "./queens-dark-fix.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
