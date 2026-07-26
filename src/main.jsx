@@ -21,5 +21,5 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <InvitedApprovalNotice />
       </ErrorBoundary>
     </I18nProvider>
-  </React.StrictMode>,
+  </React.StrictMode>
 );
