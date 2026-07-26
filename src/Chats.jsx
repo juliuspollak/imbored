@@ -119,9 +119,9 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
         .conversation-avatar{position:relative;width:52px;height:52px;flex:0 0 auto;border-radius:19px;display:grid;place-items:center;font-size:29px;background:linear-gradient(145deg,#fff,#e9e5ff)}
         .online-dot{position:absolute;right:-1px;bottom:-1px;width:13px;height:13px;border:3px solid white;border-radius:50%;background:#24c27a}
         .unread-pill{min-width:22px;height:22px;padding:0 6px;border-radius:999px;display:grid;place-items:center;background:#6d5dfc;color:#fff;font-size:11px;font-weight:900}
-        .people-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px}
-        .person-card{border:0;background:rgba(255,255,255,.82);border-radius:22px;padding:16px 12px;text-align:center;box-shadow:0 8px 22px rgba(27,33,41,.07)}
-        .person-avatar{width:58px;height:58px;border-radius:21px;margin:0 auto 9px;display:grid;place-items:center;font-size:32px;background:linear-gradient(145deg,#fff,#ece8ff)}
+        .people-list{display:flex;flex-direction:column;gap:8px}
+        .person-card{width:100%;display:flex;align-items:center;gap:12px;border:0;background:rgba(255,255,255,.82);border-radius:18px;padding:10px 12px;text-align:left;box-shadow:0 8px 22px rgba(27,33,41,.07);transition:.16s ease}.person-card:active{transform:scale(.985)}
+        .person-avatar{position:relative;width:46px;height:46px;flex:0 0 auto;border-radius:16px;display:grid;place-items:center;font-size:26px;background:linear-gradient(145deg,#fff,#ece8ff)}
       `}</style>
       <div className="chats-shell">
         <header className="chats-head">
@@ -143,8 +143,9 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
           </button>
         ))}
         <div className="chat-section-title"><Sparkles size={14}/>Start a new chat</div>
-        <div className="people-grid">
-          {newPeople.map((profile)=><button type="button" className="person-card" key={profile.id} onClick={()=>open(profile)}><div className="person-avatar" style={{position:"relative"}}>{profile.icon||"🙂"}{presence.has(profile.id)&&<span className="online-dot"/>}</div><strong>{profile.name||"Player"}</strong><div style={{fontSize:11,opacity:.48,marginTop:3}}>{presence.has(profile.id)?"Online now":"Offline · message anyway"}</div></button>)}
+        <div className="people-list">
+          {newPeople.map((profile)=><button type="button" className="person-card" key={profile.id} onClick={()=>open(profile)}><div className="person-avatar">{profile.icon||"🙂"}{presence.has(profile.id)&&<span className="online-dot"/>}</div><span style={{flex:1,minWidth:0}}><strong style={{display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile.name||"Player"}</strong><span style={{display:"block",fontSize:11,opacity:.48,marginTop:2}}>{presence.has(profile.id)?"Online now":"Offline · message anyway"}</span></span><MessageCircle size={17} style={{opacity:.35}} aria-hidden="true"/></button>)}
+          {!loading && newPeople.length === 0 && query && <div style={{padding:18,textAlign:"center",fontSize:12,opacity:.55}}>No new players match your search.</div>}
         </div>
       </div>
     </div>

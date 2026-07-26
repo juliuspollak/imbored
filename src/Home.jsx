@@ -344,7 +344,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                 border:challengeScope?.type !== "team" ? "1px solid rgba(47,111,237,.18)" : "1px solid transparent",
               }}
             >
-              <span className="grid place-items-center rounded-xl text-xl shrink-0" style={{ width:42,height:42,background:"#F1F5FF" }}>🎯</span>
+              <span className="personal-challenge-icon grid place-items-center rounded-xl text-xl shrink-0" style={{ width:42,height:42,background:"#F1F5FF" }}>🎯</span>
               <span className="flex-1 min-w-0">
                 <span className="flex items-center gap-2">
                   <span className="text-sm font-bold">{t("home.myChallenge")}</span>

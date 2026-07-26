@@ -319,3 +319,73 @@
     border-color: rgba(255, 255, 255, 0.10) !important;
   }
 }
+
+@media (prefers-color-scheme: dark) {
+  /* Purpose-built surfaces avoid relying on fragile inline-style matching. */
+  .personal-challenge-icon,
+  .team-icon-control,
+  .team-member-icon {
+    background: linear-gradient(145deg, rgba(85, 104, 135, 0.42), rgba(35, 45, 60, 0.94)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.13) !important;
+    color: #f4f7fb !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 6px 16px rgba(0, 0, 0, 0.24) !important;
+  }
+
+  .account-history-row {
+    background: rgba(31, 40, 54, 0.78) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+    color: #e8eef7 !important;
+  }
+
+  .account-history-row [style*="color: #15803D"] {
+    color: #66d9a6 !important;
+  }
+
+  .team-challenges-panel,
+  .team-members-panel {
+    background: linear-gradient(155deg, rgba(35, 45, 60, 0.94), rgba(23, 30, 42, 0.96)) !important;
+    border-color: rgba(255, 255, 255, 0.11) !important;
+    color: #f4f7fb !important;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.25);
+  }
+
+  .profile-privacy-card {
+    background: rgba(255, 255, 255, 0.055) !important;
+    border-color: rgba(255, 255, 255, 0.13) !important;
+    color: #f4f7fb !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .profile-privacy-card:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .profile-privacy-card svg,
+  .profile-privacy-card [style*="color: rgb(27, 33, 41)"],
+  .profile-privacy-card [style*="color: #1B2129"] {
+    color: #dfe7f2 !important;
+  }
+
+  .game-toolbar .gloss-button {
+    background: linear-gradient(160deg, rgba(62, 76, 97, 0.96), rgba(29, 38, 51, 0.96)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    color: #f4f7fb !important;
+  }
+
+  .game-toolbar .gloss-button:disabled {
+    background: rgba(255, 255, 255, 0.035) !important;
+    border-color: rgba(255, 255, 255, 0.07) !important;
+    color: rgba(232, 238, 247, 0.34) !important;
+    box-shadow: none !important;
+    opacity: 1;
+  }
+
+  .chats-page .chat-search:focus-within {
+    border-color: rgba(143, 128, 255, 0.62) !important;
+    box-shadow: 0 0 0 3px rgba(109, 92, 252, 0.16), 0 12px 30px rgba(0, 0, 0, 0.28) !important;
+  }
+
+  .chats-page .chat-search svg {
+    color: #a99cff !important;
+  }
+}
