@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Check, ChevronDown, ChevronUp, Clock3, Lightbulb, LockKeyhole, TriangleAlert, Trophy } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronUp, Clock3, Lightbulb, LockKeyhole, Minus, TriangleAlert, Trophy } from "lucide-react";
 import { useI18n } from "./lib/i18n.jsx";
 
 const INK = "#1B2129";
@@ -38,7 +38,7 @@ function dailyChallengeScore(result, benchmark) {
   };
 }
 
-export default function ChallengeStandings({ rows = [], roster = [], games = [], rounds = [], benchmarks = [], isTeam = false, userId, loading = false, refreshing = false, defaultOpen = true, embedded = false, rewardPoints = 0, closed = false, winnerId = null }) {
+export default function ChallengeStandings({ rows = [], roster = [], games = [], rounds = [], benchmarks = [], previousRows = [], previousRounds = [], previousWeekLabel = null, isTeam = false, userId, loading = false, refreshing = false, defaultOpen = true, embedded = false, rewardPoints = 0, closed = false, winnerId = null }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(defaultOpen);
   const [expandedPlayerId, setExpandedPlayerId] = useState(null);
@@ -150,6 +150,39 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
     }));
   }, [benchmarks, closed, gameIds, isTeam, roster, rounds, rows, userId]);
 
+  const myStanding = standings.find((standing) => standing.id === userId) || null;
+  const previousComparison = useMemo(() => {
+    if (!isTeam || !myStanding || previousRounds.length === 0) return null;
+    const comparableCount = closed
+      ? rounds.length
+      : myStanding.dailyResults.filter((round) => !round.upcoming).length;
+    if (comparableCount <= 0) return null;
+
+    const benchmarkMap = Object.fromEntries(
+      benchmarks.map((item) => [`${item.game}:${item.day_index}`,Number(item.effective_seconds) || 100])
+    );
+    const myPreviousRows = previousRows.filter((row) => row.user_id === userId);
+    const priorScore = previousRounds.slice(0,comparableCount).reduce((sum,round) => {
+      const result = myPreviousRows.find((row) =>
+        row.challenge_date === round.date && row.game === round.game
+      );
+      if (!result) return sum + MISSED_ROUND_SCORE;
+      return sum + dailyChallengeScore(
+        result,
+        benchmarkMap[`${round.game}:${isoDayIndex(round.date)}`]
+      ).score;
+    },0);
+    const currentScore = myStanding.dailyResults
+      .slice(0,comparableCount)
+      .reduce((sum,round) => sum + round.score,0);
+    return {
+      rounds:comparableCount,
+      previousScore:priorScore,
+      currentScore,
+      delta:currentScore-priorScore,
+    };
+  }, [benchmarks, closed, isTeam, myStanding, previousRounds, previousRows, rounds.length, userId]);
+
   const playedCount = standings.filter((standing) => standing.completed > 0).length;
   const leader = (closed && winnerId
     ? standings.find((standing) => standing.id === winnerId)
@@ -201,6 +234,60 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
               {rewardPoints > 0 && (
                 <span className="challenge-complete-points">+{rewardPoints}<small>Winner’s prize</small></span>
               )}
+            </div>
+          )}
+          {!loading && isTeam && myStanding && (
+            <div className="rounded-2xl p-3 mb-3" style={{ background:"linear-gradient(135deg,rgba(47,111,237,.10),rgba(124,58,237,.055))",border:"1px solid rgba(47,111,237,.14)" }}>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.42)" }}>Your week</div>
+                  <div className="text-sm font-bold mt-0.5">
+                    {myStanding.rank ? `#${myStanding.rank} of ${standings.filter((item) => item.rank).length}` : "Not ranked yet"}
+                  </div>
+                </div>
+                <div className="rounded-full px-3 py-1.5 text-sm font-bold" style={{ background:"#fff",color:"#2F6FED",boxShadow:"0 4px 12px rgba(47,111,237,.10)" }}>
+                  {myStanding.challengeScore} pts
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-xl p-2.5" style={{ background:"rgba(255,255,255,.72)" }}>
+                  <div className="text-[9px] font-semibold" style={{ color:"rgba(27,33,41,.42)" }}>Played</div>
+                  <div className="text-sm font-bold mt-0.5">{myStanding.completed}/{rounds.length || games.length}</div>
+                </div>
+                <div className="rounded-xl p-2.5" style={{ background:"rgba(255,255,255,.72)" }}>
+                  <div className="text-[9px] font-semibold" style={{ color:"rgba(27,33,41,.42)" }}>Missed</div>
+                  <div className="text-sm font-bold mt-0.5" style={{ color:myStanding.missed ? "#B5433A" : INK }}>{myStanding.missed}</div>
+                </div>
+                <div className="rounded-xl p-2.5" style={{ background:"rgba(255,255,255,.72)" }}>
+                  <div className="text-[9px] font-semibold" style={{ color:"rgba(27,33,41,.42)" }}>Last week</div>
+                  <div className="text-sm font-bold mt-0.5">{previousComparison ? previousComparison.previousScore : "—"}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 mt-2.5 rounded-xl px-3 py-2" style={{ background:"rgba(255,255,255,.66)" }}>
+                {previousComparison ? (
+                  <>
+                    <span className="grid place-items-center rounded-full" style={{ width:24,height:24,background:previousComparison.delta > 0 ? "rgba(18,148,106,.12)" : previousComparison.delta < 0 ? "rgba(181,67,58,.10)" : "rgba(16,24,40,.06)",color:previousComparison.delta > 0 ? "#0B7C58" : previousComparison.delta < 0 ? "#B5433A" : "rgba(27,33,41,.55)" }}>
+                      {previousComparison.delta > 0 ? <ArrowUp size={13}/> : previousComparison.delta < 0 ? <ArrowDown size={13}/> : <Minus size={13}/>}
+                    </span>
+                    <span className="text-[11px] font-semibold">
+                      {previousComparison.delta > 0
+                        ? `${previousComparison.delta} points better than last week`
+                        : previousComparison.delta < 0
+                          ? `${Math.abs(previousComparison.delta)} points behind last week`
+                          : "Level with last week"}
+                    </span>
+                    <span className="ml-auto text-[9px]" style={{ color:"rgba(27,33,41,.42)" }}>after {previousComparison.rounds} round{previousComparison.rounds === 1 ? "" : "s"}</span>
+                  </>
+                ) : (
+                  <span className="text-[10px]" style={{ color:"rgba(27,33,41,.45)" }}>{previousWeekLabel ? "Comparison starts after your first scheduled round." : "No previous matching challenge to compare yet."}</span>
+                )}
+              </div>
+            </div>
+          )}
+          {!loading && isTeam && standings.length > 0 && (
+            <div className="flex items-center justify-between px-1 mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.38)" }}>Team standings</span>
+              <span className="text-[9px]" style={{ color:"rgba(27,33,41,.38)" }}>Highest score first</span>
             </div>
           )}
           {loading ? (
