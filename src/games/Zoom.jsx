@@ -134,7 +134,26 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
       setSolved(true);
       setRunning(false);
       sessionStorage.removeItem(stateKey);
-      onSolved && onSolved({ userId, game: "zoom", dayIndex: dayIdx, seconds, mistakes, hints: 0, mode, challengeDate: isChallenge ? challengeDate : undefined });
+      const finalCorrectLog = [...correctLog];
+      finalCorrectLog[qIdx] = selected === step.answer;
+      const correctCount = finalCorrectLog.filter(Boolean).length;
+      const completedRounds = Array.from({ length: totalRounds }, (_, round) => {
+        const start = round * LEVELS_PER_ROUND;
+        return finalCorrectLog[start] && finalCorrectLog[start + 1] && finalCorrectLog[start + 2];
+      }).filter(Boolean).length;
+      onSolved && onSolved({
+        userId,
+        game: "zoom",
+        dayIndex: dayIdx,
+        seconds,
+        mistakes,
+        hints: 0,
+        correctCount,
+        totalCount: steps.length,
+        roundsNailed: completedRounds,
+        mode,
+        challengeDate: isChallenge ? challengeDate : undefined,
+      });
       return;
     }
     // One wrong level fails the whole round. Do not continue revealing easier
@@ -346,7 +365,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
           <div className="flex flex-col items-center gap-2 py-4">
             <ZoomIn size={32} style={{ color: ACCENT }} />
             <p style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 600, color: INK }} className="text-2xl">
-              {t("zoom.result", { correct: steps.length - mistakes, total: steps.length })}
+              {t("zoom.result", { correct: correctLog.filter(Boolean).length, total: steps.length })}
             </p>
             <p style={{ color: INK, opacity: 0.7 }} className="text-xs mb-1">
               {fmtTime(seconds)} &middot; {t("zoom.roundsNailed", { count: roundsNailed, total: totalRounds })}
