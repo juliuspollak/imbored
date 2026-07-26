@@ -28,12 +28,16 @@
   }
 
   .profile-panel {
-    background: linear-gradient(155deg, rgba(38, 48, 64, 0.98), rgba(22, 29, 40, 0.99)) !important;
-    border: 1px solid rgba(255, 255, 255, 0.13) !important;
+    background: transparent !important;
+    border: 0 !important;
     color: #f4f7fb !important;
-    box-shadow:
-      0 26px 70px rgba(0, 0, 0, 0.52),
-      inset 0 1px 0 rgba(255, 255, 255, 0.10) !important;
+    box-shadow: none !important;
+  }
+
+  .profile-panel .profile-section,
+  .profile-panel .profile-privacy-card {
+    background: linear-gradient(155deg, rgba(38, 48, 64, 0.98), rgba(22, 29, 40, 0.99)) !important;
+    border-color: rgba(255, 255, 255, 0.13) !important;
   }
 
   .profile-panel h1,
