@@ -397,7 +397,6 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
               <span className="flex-1 min-w-0">
                 <span className="flex items-center gap-2">
                   <span className="text-sm font-bold">{t("home.myChallenge")}</span>
-                  {challengeScope?.type !== "team" && <Check size={13} strokeWidth={3} style={{ color:"#2F6FED" }}/>}
                 </span>
                 <span className="block h-1.5 rounded-full mt-2 overflow-hidden" style={{ background:"rgba(16,24,40,.07)" }}>
                   <span className="block h-full rounded-full" style={{ width:`${personalStatus.total ? (personalStatus.completed / personalStatus.total) * 100 : 0}%`,background:personalStatus.done ? "#16A34A" : "#2F6FED" }}/>
