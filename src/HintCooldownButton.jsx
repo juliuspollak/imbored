@@ -31,7 +31,8 @@ export default function HintCooldownButton({ cooldown, label = "Hint", onClick, 
           background: rgba(16,24,40,.06);
           transition: transform .16s ease, box-shadow .2s ease, border-color .2s ease;
         }
-        .hint-liquid-button:disabled {
+        .hint-liquid-button:disabled,
+        .game-toolbar .hint-liquid-button:disabled {
           cursor: default;
           opacity: 1 !important;
           filter: none !important;
@@ -73,7 +74,8 @@ export default function HintCooldownButton({ cooldown, label = "Hint", onClick, 
         }
         @media (prefers-color-scheme: dark) {
           .hint-liquid-button,
-          .hint-liquid-button:disabled {
+          .hint-liquid-button:disabled,
+          .game-toolbar .hint-liquid-button:disabled {
             color: rgba(238,243,251,.88) !important;
             background: rgba(255,255,255,.07) !important;
             border-color: rgba(255,255,255,.12) !important;
