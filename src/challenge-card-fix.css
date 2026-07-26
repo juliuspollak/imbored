@@ -1,0 +1,51 @@
+/* Team challenge cards are expandable content panels, not compact buttons.
+ * Reset the shared .gloss-button control layout while keeping the glass surface.
+ */
+.gloss-button.rounded-2xl.overflow-hidden:has(> button[aria-expanded]) {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  gap: 0;
+  white-space: normal;
+  text-align: initial;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.72), rgba(229, 236, 248, 0.48));
+  box-shadow:
+    0 8px 20px rgba(37, 53, 84, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    inset 0 -1px 0 rgba(55, 72, 105, 0.08);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  backdrop-filter: blur(18px) saturate(145%);
+}
+
+.gloss-button.rounded-2xl.overflow-hidden:has(> button[aria-expanded])::before,
+.gloss-button.rounded-2xl.overflow-hidden:has(> button[aria-expanded])::after {
+  display: none;
+}
+
+.gloss-button.rounded-2xl.overflow-hidden:has(> button[aria-expanded]) > button[aria-expanded] {
+  width: 100%;
+  min-width: 0;
+  min-height: 72px;
+  padding: 12px;
+  white-space: normal;
+}
+
+.gloss-button.rounded-2xl.overflow-hidden:has(> button[aria-expanded="true"]) > button[aria-expanded] {
+  border-bottom: 1px solid rgba(16, 24, 40, 0.07);
+}
+
+.gloss-button.rounded-2xl.overflow-hidden:has(> button[aria-expanded]) > .px-3.pb-3 {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding-top: 12px;
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .gloss-button.rounded-2xl.overflow-hidden:has(> button[aria-expanded]) {
+    background: rgba(248, 250, 253, 0.97);
+  }
+}
