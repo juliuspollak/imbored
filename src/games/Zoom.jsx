@@ -110,6 +110,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
   const isLast = qIdx === steps.length - 1;
   const totalRounds = Math.max(...steps.map((s) => s.roundIndex)) + 1;
   const roundNumber = step.roundIndex + 1;
+  const isFinalRound = step.roundIndex === totalRounds - 1;
   const shownAnswer = localizeZoomValue(step.answer, language, step);
   const shownSelected = localizeZoomValue(selected, language, step);
   const prompt = localizeZoomPrompt(step, language);
@@ -128,14 +129,17 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
   }
 
   function next() {
-    if (isLast) {
+    const roundFailed = selected !== step.answer;
+    if (isLast || (roundFailed && isFinalRound)) {
       setSolved(true);
       setRunning(false);
       sessionStorage.removeItem(stateKey);
       onSolved && onSolved({ userId, game: "zoom", dayIndex: dayIdx, seconds, mistakes, hints: 0, mode, challengeDate: isChallenge ? challengeDate : undefined });
       return;
     }
-    setQIdx((i) => i + 1);
+    // One wrong level fails the whole round. Do not continue revealing easier
+    // levels from the same clue; move to the first level of the next round.
+    setQIdx(roundFailed ? (step.roundIndex + 1) * LEVELS_PER_ROUND : qIdx + 1);
     setSelected(null);
     setAnswered(false);
   }
@@ -328,7 +332,11 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
 
             {answered && (
               <button onClick={next} className="zoom-next-btn w-full rounded-lg py-2.5 text-sm font-semibold transition-all" style={{ background: ACCENT, color: "#FFFFFF" }}>
-                {isLast ? t("common.seeResults") : step.levelKey === "country" ? t("zoom.nextRound") : t("common.nextQuestion")}
+                {isLast || (selected !== step.answer && isFinalRound)
+                  ? t("common.seeResults")
+                  : selected !== step.answer || step.levelKey === "country"
+                    ? t("zoom.nextRound")
+                    : t("common.nextQuestion")}
               </button>
             )}
           </>
