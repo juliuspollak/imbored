@@ -40,11 +40,22 @@ function currentWeekRange() {
 
 const DAY_LABELS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
+function challengeWeekLabel(weekStart) {
+  if (!weekStart) return "";
+  const monday = new Date(`${weekStart}T00:00:00`);
+  if (Number.isNaN(monday.getTime())) return weekStart;
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate()+6);
+  const format = (date) => date.toLocaleDateString(undefined, { day:"numeric",month:"short" });
+  return `${format(monday)} – ${format(sunday)}`;
+}
+
 export default function Home({ onSelect, playMode, onPlayModeChange, players = [], userId, onOpenProgress, onOpenTeams, challengeScope, onChallengeScopeChange }) {
   const { t, language } = useI18n();
   const { config: gameConfig, loading: gameConfigLoading } = useGameConfig();
   const [progress, setProgress] = useState(null);
   const [teamChallenges, setTeamChallenges] = useState([]);
+  const [challengeHistory, setChallengeHistory] = useState([]);
   const [teamRosters, setTeamRosters] = useState({});
   const [challengeLifecycle, setChallengeLifecycle] = useState({});
   const [challengeCompletions, setChallengeCompletions] = useState({ personal: new Set() });
@@ -63,11 +74,22 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   }, [challengeScope?.id, challengeScope?.type]);
 
   useEffect(() => {
+    if (!challengesLoaded || challengeScope?.type !== "team") return;
+    const stillActive = teamChallenges.some(
+      (item) => String(item.challenge_id) === String(challengeScope.id)
+    );
+    if (!stillActive) {
+      onChallengeScopeChange?.({ type:"personal",id:null,name:"My Challenge",gameIds:null });
+      setExpandedChallengeId(null);
+    }
+  }, [challengeScope?.id, challengeScope?.type, challengesLoaded, onChallengeScopeChange, teamChallenges]);
+
+  useEffect(() => {
     let cancelled = false;
     async function loadTeamChallenges() {
       if (!supabaseReady || !userId) return;
       const week = currentWeekRange();
-      const [{ data }, { data: personalRows }, { data: teamRows }, { data: rosterData }, { data: lifecycleData }] = await Promise.all([
+      const [{ data }, { data: personalRows }, { data: teamRows }, { data: rosterData }, { data: lifecycleData }, { data: historyData }] = await Promise.all([
         supabase.rpc("get_my_active_team_challenges"),
         supabase
           .from("game_stats")
@@ -86,11 +108,13 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
           .lte("challenge_date", week.end),
         supabase.rpc("get_my_team_rosters"),
         supabase.rpc("get_my_team_challenge_lifecycle"),
+        supabase.rpc("get_my_team_challenge_history", { history_limit_in:30 }),
       ]);
       const challenges = data || [];
       const completionRows = [...(personalRows || []), ...(teamRows || [])];
       if (cancelled) return;
       setTeamChallenges(challenges);
+      setChallengeHistory(historyData || []);
       setChallengesLoaded(true);
       setChallengeCompletions(groupChallengeCompletions(completionRows));
       setChallengeLifecycle(Object.fromEntries((lifecycleData || []).map((item) => [String(item.challenge_id), item])));
@@ -466,6 +490,10 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                               <div className="text-[10px] mt-2" style={{ color:"rgba(27,33,41,.48)" }}>
                                 Plays {item.active_days?.length === 7 ? "every day" : (item.active_days || []).map((day) => DAY_LABELS[day - 1]).filter(Boolean).join(", ")}
                               </div>
+                              <div className="text-[10px] mt-1" style={{ color:"rgba(27,33,41,.48)" }}>
+                                {item.repeats_weekly ? `Week ${item.occurrence_number} of ${item.series_weeks}` : "One week only"}
+                                {item.closes_on ? ` · closes after ${new Date(`${item.closes_on}T00:00:00`).toLocaleDateString(undefined,{ weekday:"short",day:"numeric",month:"short" })}` : ""}
+                              </div>
                               <div className="flex items-center gap-2 mt-3">
                                 <div className="flex">
                                   {roster.slice(0,4).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-[9px]" style={{ width:22,height:22,background:"#F1F3F7",border:"2px solid white",marginLeft:index ? -5 : 0 }}>{member.icon || "🙂"}</span>)}
@@ -505,6 +533,41 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                   })}
                 </div>
               </div>
+            )}
+
+            {challengeHistory.length > 0 && (
+              <details className="mt-3 pt-3 group" style={{ borderTop:"1px solid rgba(16,24,40,.07)" }}>
+                <summary className="flex items-center gap-2 px-1 cursor-pointer list-none">
+                  <span className="grid place-items-center rounded-lg text-sm" style={{ width:28,height:28,background:"rgba(16,24,40,.05)" }}>🕘</span>
+                  <span className="flex-1">
+                    <span className="block text-xs font-bold">Past team challenges</span>
+                    <span className="block text-[9px] mt-0.5" style={{ color:"rgba(27,33,41,.43)" }}>Winners and completed weeks</span>
+                  </span>
+                  <span className="text-[10px] font-semibold rounded-full px-2 py-0.5" style={{ background:"rgba(16,24,40,.05)",color:"rgba(27,33,41,.48)" }}>{challengeHistory.length}</span>
+                  <ChevronDown size={15} className="transition-transform group-open:rotate-180" style={{ opacity:.35 }}/>
+                </summary>
+                <div className="space-y-2 mt-3">
+                  {challengeHistory.map((item) => {
+                    const winnerLabel = item.winner_id
+                      ? item.winner_id === userId
+                        ? "🏆 You won"
+                        : `🏆 ${item.winner_name || "A teammate"} won`
+                      : "Closed · no finisher";
+                    return <div key={item.challenge_id} className="rounded-2xl p-3 flex items-center gap-3" style={{ background:"#F7F8FB",border:"1px solid rgba(16,24,40,.06)" }}>
+                      <span className="grid place-items-center rounded-xl text-lg shrink-0" style={{ width:38,height:38,background:"#fff" }}>{item.team_emoji || "⭐"}</span>
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-xs font-semibold truncate">{item.challenge_title || item.team_name}</span>
+                        <span className="block text-[9px] mt-0.5 truncate" style={{ color:"rgba(27,33,41,.45)" }}>{item.team_name} · {challengeWeekLabel(item.week_start)}</span>
+                        <span className="block text-[9px] mt-1" style={{ color:item.winner_id ? "#7A5711" : "rgba(27,33,41,.48)" }}>{winnerLabel}</span>
+                      </span>
+                      <span className="text-right shrink-0">
+                        <span className="block text-[9px] font-semibold">{item.finisher_count || 0} finished</span>
+                        <span className="block text-[9px] mt-0.5" style={{ color:"rgba(27,33,41,.40)" }}>{item.entry_count || 0} entered</span>
+                      </span>
+                    </div>;
+                  })}
+                </div>
+              </details>
             )}
           </div>
         )}

@@ -31,7 +31,18 @@ function suggestEmoji(value) {
   return rules.find(([pattern]) => pattern.test(value.toLowerCase()))?.[1] || "⭐";
 }
 
-const defaultChallenge = () => ({ title:"Weekly challenge",games:[...DEFAULT_GAMES],days:[1,2,3,4,5,6,7],reward:100,rewardType:"points",rewardLabel:"",locked:false,challengeId:null });
+const defaultChallenge = () => ({
+  title:"Weekly challenge",
+  games:[...DEFAULT_GAMES],
+  days:[1,2,3,4,5,6,7],
+  reward:100,
+  rewardType:"points",
+  rewardLabel:"",
+  schedule:null,
+  durationWeeks:4,
+  locked:false,
+  challengeId:null,
+});
 
 export default function Teams({ onBack, initialTeamId = null, initialChallengeId = null }) {
   const { user, profile, createTeam, addPlayerToTeam, joinTeam, leaveTeam } = useAuth();
@@ -112,6 +123,8 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
             reward:Number(item.reward_points ?? 100),
             rewardType:item.reward_type || "points",
             rewardLabel:item.reward_label || "",
+            schedule:item.repeats_weekly ? "repeat" : "once",
+            durationWeeks:Number(item.series_weeks || 1),
             locked:!!item.is_locked,
             challengeId:item.challenge_id,
           };
@@ -318,17 +331,9 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
       reward_label_in:edit.rewardType === "prize" ? edit.rewardLabel?.trim() || null : null,
       target_challenge_id:edit.challengeId ? Number(edit.challengeId) : null,
       challenge_title_in:edit.title?.trim() || "Weekly challenge",
+      repeat_weekly_in:edit.schedule === "repeat",
+      duration_weeks_in:edit.schedule === "repeat" ? Number(edit.durationWeeks) : 1,
     });
-    if (error?.code === "PGRST202" && edit.challengeId) {
-      ({ error } = await supabase.rpc("set_team_weekly_challenge", {
-        target_team_id:Number(team.id),
-        selected_games:edit.games,
-        selected_days:edit.days.map(Number),
-        reward_points_in:edit.rewardType === "points" ? Number(edit.reward) || 0 : 0,
-        reward_type_in:edit.rewardType,
-        reward_label_in:edit.rewardType === "prize" ? edit.rewardLabel?.trim() || null : null,
-      }));
-    }
     setMsg(error?.message || (edit.challengeId ? "Challenge updated" : "Challenge created"));
     if (!error) {
       setExpandedChallengeId(null);
@@ -470,8 +475,31 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
                         <div className="text-[11px] font-semibold mt-4 mb-1">Playing days</div>
                         {challenge.isNew && <div className="text-[10px] opacity-45 mb-2">Choose every day this challenge can be played. No days are selected yet.</div>}
                         <div className="grid grid-cols-7 gap-1">{DAYS.map((day) => { const chosen=edit.days.includes(day.id);return <button className="gloss-button" disabled={!owner || edit.locked} type="button" key={day.id} onClick={() => toggleDay(challengeKey,day.id)} aria-pressed={chosen} className="rounded-lg py-2 text-[10px] font-semibold disabled:opacity-70" style={{ background:chosen ? "rgba(18,148,106,.12)" : "rgba(16,24,40,.05)",color:chosen ? "#0B7C58" : INK,border:chosen ? "1px solid rgba(18,148,106,.35)" : "1px solid transparent" }}>{chosen ? `✓ ${day.label}` : day.label}</button>; })}</div>
-                        <div className="mt-4"><span className="text-[11px] font-semibold flex items-center gap-1 mb-2"><Gift size={12}/>Reward</span>{owner && <div className="flex gap-2 mb-2">{["points","prize"].map((type) => <button className="gloss-button" key={type} type="button" disabled={edit.locked} onClick={() => patchChallenge(challengeKey,{ rewardType:type })} className="rounded-full px-3 py-1.5 text-xs font-semibold" style={{ background:edit.rewardType === type ? "rgba(47,111,237,.14)" : "rgba(16,24,40,.05)",color:edit.rewardType === type ? ACCENT : INK }}>{type === "points" ? "Points" : "Real prize"}</button>)}</div>}{owner ? edit.rewardType === "points" ? <div className="flex items-center rounded-xl border px-3 bg-white"><input disabled={edit.locked} type="number" min="0" max={MAX_CHALLENGE_REWARD_POINTS} value={edit.reward} onChange={(event) => patchChallenge(challengeKey,{ reward:Math.min(Number(event.target.value) || 0, MAX_CHALLENGE_REWARD_POINTS) })} className="w-full py-2 text-base bg-transparent outline-none"/><span className="text-xs opacity-45">points (max {MAX_CHALLENGE_REWARD_POINTS})</span></div> : <input disabled={edit.locked} value={edit.rewardLabel} onChange={(event) => patchChallenge(challengeKey,{ rewardLabel:event.target.value })} placeholder="e.g. Movie ticket" className="w-full rounded-xl border px-3 py-2 text-base bg-white"/> : <div className="text-xs">{edit.rewardType === "points" ? `${edit.reward} points` : edit.rewardLabel || "Prize"}</div>}</div>
-                        {owner && <button className="gloss-button" disabled={edit.locked || !edit.title.trim() || !edit.games.length || !edit.days.length} type="button" onClick={() => saveTeamChallenge(rosterTeam,challengeKey)} className="mt-3 w-full rounded-full py-2.5 text-xs font-semibold text-white disabled:opacity-35" style={{ background:ACCENT }}>{challenge.isNew ? "Create challenge" : "Save changes"}</button>}
+                        <fieldset className="mt-4" disabled={!owner || edit.locked}>
+                          <legend className="text-[11px] font-semibold">Schedule</legend>
+                          <div className="text-[10px] opacity-45 mt-0.5 mb-2">Choose one. Recurring challenges have fresh results and a new winner each week.</div>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[{id:"once",label:"One week only",hint:"Ends after this week"},{id:"repeat",label:"Repeat weekly",hint:"Choose a duration"}].map((option) => {
+                              const selected=edit.schedule === option.id;
+                              return <label key={option.id} className="rounded-2xl p-3 cursor-pointer" style={{ background:selected ? "rgba(47,111,237,.09)" : "#fff",border:selected ? "1px solid rgba(47,111,237,.35)" : "1px solid rgba(16,24,40,.10)" }}>
+                                <span className="flex items-center gap-2">
+                                  <input type="radio" name={`schedule-${challengeKey}`} value={option.id} checked={selected} onChange={() => patchChallenge(challengeKey,{ schedule:option.id })}/>
+                                  <span className="text-[11px] font-semibold">{option.label}</span>
+                                </span>
+                                <span className="block text-[9px] opacity-45 mt-1 ml-5">{option.hint}</span>
+                              </label>;
+                            })}
+                          </div>
+                          {edit.schedule === "repeat" && <label className="block mt-2 rounded-2xl p-3" style={{ background:"rgba(47,111,237,.05)" }}>
+                            <span className="text-[11px] font-semibold">How many weeks?</span>
+                            <span className="flex items-center gap-2 mt-1.5">
+                              <input type="number" min="2" max="52" value={edit.durationWeeks} onChange={(event) => patchChallenge(challengeKey,{ durationWeeks:Math.min(52,Math.max(2,Number(event.target.value) || 2)) })} className="w-20 rounded-xl border px-3 py-2 text-base bg-white"/>
+                              <span className="text-[10px] opacity-50">2–52 weeks, including this week</span>
+                            </span>
+                          </label>}
+                        </fieldset>
+                        <div className="mt-4"><span className="text-[11px] font-semibold flex items-center gap-1 mb-2"><Gift size={12}/>Winner’s prize</span>{owner && <div className="flex gap-2 mb-2">{["points","prize"].map((type) => <button className="gloss-button" key={type} type="button" disabled={edit.locked} onClick={() => patchChallenge(challengeKey,{ rewardType:type })} className="rounded-full px-3 py-1.5 text-xs font-semibold" style={{ background:edit.rewardType === type ? "rgba(47,111,237,.14)" : "rgba(16,24,40,.05)",color:edit.rewardType === type ? ACCENT : INK }}>{type === "points" ? "Points" : "Real prize"}</button>)}</div>}{owner ? edit.rewardType === "points" ? <div className="flex items-center rounded-xl border px-3 bg-white"><input disabled={edit.locked} type="number" min="0" max={MAX_CHALLENGE_REWARD_POINTS} value={edit.reward} onChange={(event) => patchChallenge(challengeKey,{ reward:Math.min(Number(event.target.value) || 0, MAX_CHALLENGE_REWARD_POINTS) })} className="w-full py-2 text-base bg-transparent outline-none"/><span className="text-xs opacity-45">points (max {MAX_CHALLENGE_REWARD_POINTS})</span></div> : <input disabled={edit.locked} value={edit.rewardLabel} onChange={(event) => patchChallenge(challengeKey,{ rewardLabel:event.target.value })} placeholder="e.g. Movie ticket" className="w-full rounded-xl border px-3 py-2 text-base bg-white"/> : <div className="text-xs">{edit.rewardType === "points" ? `${edit.reward} points` : edit.rewardLabel || "Prize"}</div>}</div>
+                        {owner && <button className="gloss-button" disabled={edit.locked || !edit.title.trim() || !edit.games.length || !edit.days.length || !edit.schedule || (edit.schedule === "repeat" && (edit.durationWeeks < 2 || edit.durationWeeks > 52))} type="button" onClick={() => saveTeamChallenge(rosterTeam,challengeKey)} className="mt-3 w-full rounded-full py-2.5 text-xs font-semibold text-white disabled:opacity-35" style={{ background:ACCENT }}>{challenge.isNew ? "Create challenge" : "Save changes"}</button>}
                       </div>}
                     </div>;
                   })}
