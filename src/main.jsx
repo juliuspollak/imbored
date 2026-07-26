@@ -4,6 +4,7 @@ import App from "./App.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import { I18nProvider } from "./lib/i18n.jsx";
 import "./index.css";
+import "./profile-glass.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
