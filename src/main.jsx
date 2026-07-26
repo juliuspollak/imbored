@@ -5,7 +5,6 @@ import ErrorBoundary from "./ErrorBoundary.jsx";
 import InvitedApprovalNotice from "./InvitedApprovalNotice.jsx";
 import { I18nProvider } from "./lib/i18n.jsx";
 import "./index.css";
-import "./profile-glass.css";
 import "./challenge-card-fix.css";
 import "./mode-switch-contrast.css";
 import "./theme.css";
@@ -22,5 +21,5 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <InvitedApprovalNotice />
       </ErrorBoundary>
     </I18nProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
