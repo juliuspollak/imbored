@@ -51,41 +51,52 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
 
   const playedCount = standings.filter((standing) => standing.completed > 0).length;
   const leader = standings.find((standing) => standing.rank === 1);
+  const challengeComplete = isTeam
+    && games.length > 0
+    && standings.length > 0
+    && standings.every((standing) => standing.completed === games.length);
+
+  const heading = challengeComplete ? "Final results" : t("standings.title");
+  const summary = challengeComplete
+    ? `${standings.length} of ${standings.length} finished · ${games.length} games`
+    : isTeam
+      ? t("standings.teamSummary", { played:playedCount, players:roster.length, games:games.length })
+      : t("standings.personalSummary", { players:playedCount, games:games.length });
 
   return (
     <div className={`${embedded ? "rounded-2xl" : "rounded-3xl"} mt-3 overflow-hidden`} style={{ background:"#fff",border:"1px solid rgba(16,24,40,.09)",boxShadow:embedded ? "none" : "0 10px 28px rgba(16,24,40,.06)" }}>
       <button type="button" onClick={() => setOpen((value) => !value)} className={`w-full flex items-center gap-3 text-left ${embedded ? "p-3" : "p-4"}`} aria-expanded={open}>
-        <span className="grid place-items-center rounded-2xl shrink-0" style={{ width:embedded ? 36 : 42,height:embedded ? 36 : 42,background:"rgba(217,174,88,.13)",color:"#9A721F" }}><Trophy size={embedded ? 16 : 19}/></span>
+        <span className="grid place-items-center rounded-2xl shrink-0" style={{ width:embedded ? 36 : 42,height:embedded ? 36 : 42,background:challengeComplete ? "rgba(22,163,74,.12)" : "rgba(217,174,88,.13)",color:challengeComplete ? "#137A3A" : "#9A721F" }}><Trophy size={embedded ? 16 : 19}/></span>
         <span className="flex-1 min-w-0">
-          <span className="flex items-center gap-2">
-            <span className="text-sm font-bold">{t("standings.title")}</span>
+          <span className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-bold">{heading}</span>
             {(loading || refreshing) && <span className="inline-flex items-center gap-1 text-[10px] font-semibold" style={{ color:"rgba(27,33,41,.42)" }}><span className="inline-block rounded-full animate-pulse" style={{ width:6,height:6,background:"#2F6FED" }}/>{t(refreshing ? "standings.updating" : "standings.loadingShort")}</span>}
-            {!loading && leader && <span className="truncate text-[10px] font-semibold rounded-full px-2 py-0.5" style={{ background:"rgba(217,174,88,.13)",color:"#80601D" }}>{leader.icon || "🙂"} {t("standings.leads", { name:leader.name })}</span>}
+            {!loading && leader && (
+              <span className="truncate text-[10px] font-semibold rounded-full px-2 py-0.5" style={{ background:challengeComplete ? "rgba(22,163,74,.11)" : "rgba(217,174,88,.13)",color:challengeComplete ? "#137A3A" : "#80601D" }}>
+                {leader.icon || "🙂"} {challengeComplete ? `${leader.name} won` : t("standings.leads", { name:leader.name })}
+              </span>
+            )}
           </span>
-          <span className="block text-[11px] mt-0.5" style={{ color:"rgba(27,33,41,.48)" }}>
-            {isTeam
-              ? t("standings.teamSummary", { played:playedCount, players:roster.length, games:games.length })
-              : t("standings.personalSummary", { players:playedCount, games:games.length })}
-          </span>
+          <span className="block text-[11px] mt-0.5" style={{ color:"rgba(27,33,41,.48)" }}>{summary}</span>
         </span>
         {open ? <ChevronUp size={16} style={{ opacity:.35 }}/> : <ChevronDown size={16} style={{ opacity:.35 }}/>} 
       </button>
 
       {open && (
         <div className="px-3 pb-3">
-          {!loading && standings.some((s) => s.completed === games.length) && isTeam && (
+          {!loading && challengeComplete && (
             <div className="challenge-complete-card rounded-2xl mb-3" role="status">
               <span className="challenge-complete-icon" aria-hidden="true">🏆</span>
               <span className="challenge-complete-copy">
-                <span className="challenge-complete-title">All games completed</span>
+                <span className="challenge-complete-title">Challenge complete</span>
                 {leader && (
                   <span className="challenge-complete-winner">
                     <span aria-hidden="true">{leader.icon || "🙂"}</span>
-                    <span><strong>{leader.name}</strong> finished first</span>
+                    <span><strong>{leader.name}</strong> won in {formatDuration(leader.totalSeconds)}</span>
                   </span>
                 )}
               </span>
-              {isTeam && rewardPoints > 0 && (
+              {rewardPoints > 0 && (
                 <span className="challenge-complete-points">+{rewardPoints}<small>Points</small></span>
               )}
             </div>
@@ -158,7 +169,9 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                   </button>
                 );
               })}
-              <div className="px-2 pt-1 text-[10px] text-center" style={{ color:"rgba(27,33,41,.38)" }}>{t("standings.rankingRule")}</div>
+              <div className="px-2 pt-1 text-[10px] text-center" style={{ color:"rgba(27,33,41,.38)" }}>
+                {challengeComplete ? "Final ranking by fastest total time." : t("standings.rankingRule")}
+              </div>
             </div>
           )}
         </div>
