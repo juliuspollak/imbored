@@ -5,6 +5,7 @@ import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import { Grid3x3, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Delete, Lock } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
+import DaySelector from "../DaySelector";
 
 /* ---------------- puzzle generation ---------------- */
 
