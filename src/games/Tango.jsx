@@ -468,8 +468,10 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
   function handleReset() {
     if (solved) return;
     setBoard(puzzle.givens.map((row) => row.slice()));
-    setMistakes(0);
-    setHintsUsed(0);
+    // Reset is still part of the same attempt. Keep the player's elapsed
+    // time and help already used, and count abandoning the board as one
+    // mistake so Reset cannot erase scoring penalties.
+    setMistakes((value) => value + 1);
     setDifficultyRating(null);
     setHintCell(null);
     setHistory([]);
