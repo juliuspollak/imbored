@@ -8,6 +8,7 @@ import "./index.css";
 import "./profile-glass.css";
 import "./challenge-card-fix.css";
 import "./mode-switch-contrast.css";
+import "./theme.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
