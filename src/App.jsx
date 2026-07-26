@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
-import { Home as HomeIcon, LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3, Star, Gift, MessagesSquare, VenetianMask } from "lucide-react";
+import { Home as HomeIcon, LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3, Star, Gift, MessagesSquare } from "lucide-react";
 import Home from "./Home.jsx";
 import Login from "./Login.jsx";
 import ProfileSetup from "./ProfileSetup.jsx";
@@ -54,6 +54,18 @@ const GAME_COMPONENTS = {
   geo: { Component: GeoGame, label: "Geo" },
   zoom: { Component: ZoomGame, label: "Zoom" },
 };
+
+function IncognitoIcon({ size = 24 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M8 13.5 11.2 5.8 16 8.2l4.8-2.4 3.2 7.7H8Z" fill="currentColor"/>
+      <path d="M5.5 16.5h21" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"/>
+      <circle cx="10.5" cy="23" r="4.5" stroke="currentColor" strokeWidth="2.3"/>
+      <circle cx="21.5" cy="23" r="4.5" stroke="currentColor" strokeWidth="2.3"/>
+      <path d="M15 22.3c.7-.8 1.3-.8 2 0" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"/>
+    </svg>
+  );
+}
 
 function AppShell() {
   const { t } = useI18n();
@@ -546,7 +558,7 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
         <button
           type="button"
           onClick={onToggleIncognito}
-          className="nav-btn grid place-items-center rounded-full"
+          className={`nav-btn incognito-button grid place-items-center rounded-full${incognito ? " is-active" : ""}`}
           aria-label={incognito ? "Turn off incognito mode" : "Turn on incognito mode"}
           aria-pressed={incognito}
           title={incognito ? "Incognito on — you appear offline" : "Go incognito"}
@@ -556,13 +568,13 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
             top:0,
             width:44,
             height:44,
-            color:incognito ? "#fff" : "#1B2129",
-            background:incognito ? "#1B2129" : "rgba(255,255,255,.94)",
-            border:incognito ? "2px solid rgba(139,92,246,.7)" : "1px solid rgba(16,24,40,.12)",
-            boxShadow:incognito ? "0 8px 24px rgba(27,33,41,.28)" : "0 8px 24px rgba(16,24,40,.12)",
+            color:"#303138",
+            background:incognito ? "#D9D9E0" : "rgba(255,255,255,.94)",
+            border:incognito ? "2px solid #303138" : "1px solid rgba(16,24,40,.12)",
+            boxShadow:incognito ? "0 8px 24px rgba(48,49,56,.22)" : "0 8px 24px rgba(16,24,40,.12)",
           }}
         >
-          <VenetianMask size={20}/>
+          <IncognitoIcon size={25}/>
         </button>
       )}
       <button
@@ -701,6 +713,16 @@ const NAV_BTN_STYLE = `
   .nav-btn:active {
     transform: scale(0.92);
     transition-duration: 0.08s;
+  }
+  .incognito-button:hover {
+    color: #303138 !important;
+    background: #ECECF1 !important;
+  }
+  .incognito-button.is-active,
+  .incognito-button.is-active:hover {
+    color: #303138 !important;
+    background: #D9D9E0 !important;
+    border-color: #303138 !important;
   }
 `;
 
