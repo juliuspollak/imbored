@@ -1,0 +1,256 @@
+/* Central application theme.
+ *
+ * The app follows the device appearance automatically through
+ * prefers-color-scheme. New shared surfaces should use these variables rather
+ * than introducing page-specific light/dark values.
+ */
+:root {
+  color-scheme: light dark;
+  --app-bg: #f1f3f7;
+  --app-bg-elevated: #f7f8fb;
+  --app-panel: rgba(255, 255, 255, 0.88);
+  --app-panel-solid: #ffffff;
+  --app-panel-soft: rgba(255, 255, 255, 0.62);
+  --app-glass: linear-gradient(145deg, rgba(255, 255, 255, 0.76), rgba(229, 236, 248, 0.48));
+  --app-glass-strong: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(236, 241, 249, 0.72));
+  --app-text: #1b2129;
+  --app-text-muted: rgba(27, 33, 41, 0.52);
+  --app-border: rgba(16, 24, 40, 0.09);
+  --app-border-highlight: rgba(255, 255, 255, 0.82);
+  --app-shadow: 0 12px 32px rgba(16, 24, 40, 0.08);
+  --app-shadow-strong: 0 18px 48px rgba(16, 24, 40, 0.14);
+  --app-control-track: rgba(16, 24, 40, 0.06);
+  --app-control-active: rgba(255, 255, 255, 0.5);
+  --app-input: rgba(255, 255, 255, 0.82);
+  --app-overlay: rgba(255, 255, 255, 0.94);
+  --app-accent: #2f6fed;
+  --app-success: #12946a;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+body {
+  margin: 0;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+input,
+textarea,
+select {
+  color-scheme: inherit;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --app-bg: #0d1118;
+    --app-bg-elevated: #151b25;
+    --app-panel: rgba(25, 32, 43, 0.82);
+    --app-panel-solid: #1a212c;
+    --app-panel-soft: rgba(33, 42, 56, 0.62);
+    --app-glass: linear-gradient(145deg, rgba(49, 61, 78, 0.68), rgba(21, 28, 39, 0.72));
+    --app-glass-strong: linear-gradient(145deg, rgba(58, 72, 92, 0.78), rgba(25, 33, 46, 0.88));
+    --app-text: #f4f7fb;
+    --app-text-muted: rgba(225, 232, 242, 0.58);
+    --app-border: rgba(255, 255, 255, 0.10);
+    --app-border-highlight: rgba(255, 255, 255, 0.16);
+    --app-shadow: 0 14px 36px rgba(0, 0, 0, 0.34);
+    --app-shadow-strong: 0 24px 64px rgba(0, 0, 0, 0.52);
+    --app-control-track: rgba(255, 255, 255, 0.07);
+    --app-control-active: rgba(255, 255, 255, 0.12);
+    --app-input: rgba(20, 27, 38, 0.86);
+    --app-overlay: rgba(22, 29, 40, 0.95);
+    --app-accent: #6d9cff;
+    --app-success: #45c99a;
+  }
+
+  html,
+  body,
+  #root {
+    background:
+      radial-gradient(circle at 50% -12%, rgba(74, 105, 156, 0.18), transparent 38%),
+      var(--app-bg) !important;
+    color: var(--app-text);
+  }
+
+  /* Most page roots still use the original inline light background. Override
+     that legacy value centrally while components are gradually migrated to
+     variables. */
+  [style*="background: rgb(241, 243, 247)"],
+  [style*="background: #F1F3F7"],
+  [style*="background:#F1F3F7"],
+  [style*="background: #f1f3f7"],
+  [style*="background:#f1f3f7"] {
+    background:
+      radial-gradient(circle at 50% -10%, rgba(77, 111, 170, 0.15), transparent 36%),
+      var(--app-bg) !important;
+    color: var(--app-text) !important;
+  }
+
+  /* Shared white and near-white panels. */
+  [style*="background: rgb(255, 255, 255)"],
+  [style*="background: #FFFFFF"],
+  [style*="background:#FFFFFF"],
+  [style*="background: #fff"],
+  [style*="background:#fff"],
+  [style*="background: white"] {
+    background: var(--app-panel) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+  }
+
+  [style*="background: #F7F8FB"],
+  [style*="background:#F7F8FB"],
+  [style*="background: #f7f8fb"],
+  [style*="background:#f7f8fb"] {
+    background: var(--app-bg-elevated) !important;
+    color: var(--app-text) !important;
+  }
+
+  /* Existing hard-coded ink text should become theme text. */
+  [style*="color: rgb(27, 33, 41)"],
+  [style*="color: #1B2129"],
+  [style*="color:#1B2129"],
+  [style*="color: #1b2129"],
+  [style*="color:#1b2129"],
+  [style*="color: #111827"],
+  [style*="color:#111827"] {
+    color: var(--app-text) !important;
+  }
+
+  input,
+  textarea,
+  select {
+    background: var(--app-input) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--app-text-muted) !important;
+  }
+
+  /* Shared liquid-glass controls. */
+  .gloss-button {
+    --gloss-text: var(--app-text);
+    --gloss-border: rgba(255, 255, 255, 0.12);
+    --gloss-top: rgba(66, 79, 98, 0.84);
+    --gloss-middle: rgba(42, 52, 68, 0.88);
+    --gloss-bottom: rgba(26, 34, 46, 0.94);
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.36),
+      0 7px 18px rgba(0, 0, 0, 0.26),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.42) !important;
+  }
+
+  .gloss-button::before {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.19), rgba(255, 255, 255, 0.04) 70%, transparent) !important;
+  }
+
+  .gloss-button::after {
+    opacity: 0.28;
+  }
+
+  .gloss-button:disabled {
+    opacity: 0.34;
+  }
+
+  .game-mode-switch,
+  .inline-flex.rounded-full.p-1:has(> button.gloss-button) {
+    background: rgba(8, 13, 21, 0.46) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow:
+      inset 0 1px 2px rgba(0, 0, 0, 0.48),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.06),
+      0 12px 28px rgba(0, 0, 0, 0.28) !important;
+  }
+
+  .game-mode-switch > button.gloss-button.is-active,
+  .inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button:not(.\!bg-transparent) {
+    color: var(--app-text) !important;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.16), rgba(132, 157, 194, 0.08)) !important;
+    border-color: rgba(255, 255, 255, 0.22) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.24),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.06),
+      0 6px 18px rgba(0, 0, 0, 0.28) !important;
+  }
+
+  .game-mode-switch > button.gloss-button:not(.is-active),
+  .inline-flex.rounded-full.p-1:has(> button.gloss-button) > button.gloss-button.\!bg-transparent {
+    color: rgba(228, 235, 244, 0.46) !important;
+  }
+
+  /* Shared challenge panels and completion surfaces. */
+  .gloss-button.rounded-2xl.overflow-hidden:has(> button[aria-expanded]) {
+    background: var(--app-glass) !important;
+    border-color: var(--app-border-highlight) !important;
+    box-shadow: var(--app-shadow) !important;
+  }
+
+  .challenge-complete-card {
+    background:
+      radial-gradient(circle at 10% 0%, rgba(255, 255, 255, 0.10), transparent 34%),
+      linear-gradient(145deg, rgba(24, 84, 69, 0.58), rgba(20, 55, 50, 0.62)) !important;
+    border-color: rgba(69, 201, 154, 0.28) !important;
+  }
+
+  .challenge-complete-title,
+  .challenge-complete-winner,
+  .challenge-complete-winner strong {
+    color: #a8f1d5 !important;
+  }
+
+  .challenge-complete-points {
+    color: #f5d583 !important;
+    background: rgba(108, 78, 17, 0.34) !important;
+    border-color: rgba(245, 213, 131, 0.22) !important;
+  }
+
+  /* Solved-game overlays and other full-board result layers. */
+  [style*="background: rgba(255,255,255,0.95)"],
+  [style*="background: rgba(255, 255, 255, 0.95)"],
+  [style*="background:rgba(255,255,255,0.95)"] {
+    background: var(--app-overlay) !important;
+    color: var(--app-text) !important;
+  }
+
+  /* Modals use a darker scrim and a graphite glass body. */
+  .fixed.inset-0[style*="rgba(16,24,40"],
+  .fixed.inset-0[style*="rgba(16, 24, 40"] {
+    background: rgba(0, 0, 0, 0.66) !important;
+  }
+
+  .fixed.inset-0 > [class*="rounded-3xl"],
+  .fixed.inset-0 > [class*="rounded-2xl"] {
+    background: var(--app-glass-strong) !important;
+    border: 1px solid var(--app-border-highlight) !important;
+    color: var(--app-text) !important;
+    box-shadow: var(--app-shadow-strong) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(135%);
+    backdrop-filter: blur(28px) saturate(135%);
+  }
+
+  hr,
+  [style*="border-top: 1px solid rgba(16,24,40"],
+  [style*="borderTop: 1px solid rgba(16,24,40"] {
+    border-color: var(--app-border) !important;
+  }
+
+  /* Keep game boards readable: individual puzzle colours remain unchanged,
+     while their surrounding cards use the shared dark surface. */
+  .qp-card,
+  [class*="game-card"],
+  [class*="rounded-2xl"][style*="boxShadow"],
+  [class*="rounded-3xl"][style*="boxShadow"] {
+    border-color: var(--app-border) !important;
+  }
+}
