@@ -35,6 +35,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
 
   const peerId = peer?.user_id || peer?.id || null;
   const peerProfile = peer?.profiles || peer || null;
+  const isSystemConversation = peerId === currentUser?.id;
 
   async function loadMessages({ quiet = false } = {}) {
     if (!supabaseReady || !currentUser?.id || !peerId) {
@@ -73,7 +74,11 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
       }
 
       const visibleMessages = (data || []).filter(
-        (message) => !(message.system_generated && message.sender_id === currentUser.id)
+        (message) => !(
+          message.system_generated
+          && message.sender_id === currentUser.id
+          && message.recipient_id !== currentUser.id
+        )
       );
       setMessages(visibleMessages);
       setError("");
@@ -249,11 +254,15 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
           <div className="chat-avatar">{peerProfile?.icon || "🙂"}</div>
           <div style={{ flex:1, minWidth:0 }}>
             <div style={{ fontWeight:800, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{peerProfile?.name || "Player"}</div>
-            <div style={{ fontSize:11, color:"rgba(27,33,41,.5)" }}>private chat · {peer?.is_online ? "online now" : "offline"}</div>
+            <div style={{ fontSize:11, color:"rgba(27,33,41,.5)" }}>
+              {isSystemConversation ? "challenge notifications" : `private chat · ${peer?.is_online ? "online now" : "offline"}`}
+            </div>
           </div>
-          <button type="button" disabled={!peerAvailable} onClick={handlePoke} className="gloss-button chat-poke" style={{ opacity:peerAvailable ? 1 : .4 }}>
-            {pokeState === "sending" ? "Poking…" : pokeState === "sent" ? "Poked! 👋" : pokeState === "error" ? "Try again" : "👋 Poke"}
-          </button>
+          {!isSystemConversation && (
+            <button type="button" disabled={!peerAvailable} onClick={handlePoke} className="gloss-button chat-poke" style={{ opacity:peerAvailable ? 1 : .4 }}>
+              {pokeState === "sending" ? "Poking…" : pokeState === "sent" ? "Poked! 👋" : pokeState === "error" ? "Try again" : "👋 Poke"}
+            </button>
+          )}
         </header>
 
         <main className="chat-body" ref={messagesRef}>
@@ -284,7 +293,13 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
           <div ref={bottomRef} />
         </main>
 
-        {!peerAvailable ? (
+        {isSystemConversation ? (
+          <div className="chat-composer-wrap">
+            <div style={{ padding:"11px 14px", borderRadius:18, background:"rgba(255,255,255,.9)", color:"rgba(27,33,41,.56)", fontSize:12, textAlign:"center", border:"1px solid rgba(27,33,41,.08)" }}>
+              Challenge results are posted here automatically.
+            </div>
+          </div>
+        ) : !peerAvailable ? (
           <div className="chat-composer-wrap">
             <div style={{ padding:"12px 14px", borderRadius:18, background:"#fff", color:"rgba(27,33,41,.62)", fontSize:13, textAlign:"center", border:"1px solid rgba(27,33,41,.08)" }}>
               This account is no longer available for messages.
