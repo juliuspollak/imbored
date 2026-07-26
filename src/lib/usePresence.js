@@ -14,7 +14,7 @@ import { useAuth } from "./AuthContext.jsx";
 // were last around, rather than vanishing the moment they close the tab.
 // A private profile is the one exception — going private clears any
 // existing row immediately, since privacy means not being tracked at all.
-export function usePresence(game, mode) {
+export function usePresence(game, mode, incognito = false) {
   const { user, profile } = useAuth();
   const presenceValueRef = useRef({ game, mode });
   presenceValueRef.current = { game, mode };
@@ -30,7 +30,7 @@ export function usePresence(game, mode) {
 
   // Immediately update presence when game changes
   useEffect(() => {
-    if (!supabaseReady || !userId || !canWritePresence || isPrivate) return;
+    if (!supabaseReady || !userId || !canWritePresence || isPrivate || incognito) return;
     const current = presenceValueRef.current;
     supabase
       .from("presence")
@@ -43,12 +43,12 @@ export function usePresence(game, mode) {
       .then(({ error }) => {
         if (error && error.code !== "42501") console.warn("Unable to update presence:", error.message);
       });
-  }, [game, mode, userId, canWritePresence, isPrivate]);
+  }, [game, mode, userId, canWritePresence, isPrivate, incognito]);
 
   useEffect(() => {
     if (!supabaseReady || !userId || !hasProfile) return;
 
-    if (isPrivate) {
+    if (isPrivate || incognito) {
       supabase.from("presence").delete().eq("user_id", userId).then();
       return;
     }
@@ -109,5 +109,5 @@ export function usePresence(game, mode) {
       document.removeEventListener("touchstart", noteActivity);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [userId, isPrivate, canWritePresence, hasProfile]);
+  }, [userId, isPrivate, incognito, canWritePresence, hasProfile]);
 }
