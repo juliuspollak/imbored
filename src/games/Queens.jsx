@@ -315,7 +315,7 @@ function findNextLogicalStepPure(board, regionGrid, n) {
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const SIZES = [4, 5, 6, 6, 7, 7, 8];
-const REGION_COLORS = ["#E4EEFF", "#FCECCF", "#E2F4E9", "#F5E3F1", "#E9E2F7", "#FCE1DC", "#E3F2F8", "#F2EBD9"];
+const REGION_COLORS = ["#96BEFF", "#DFDFDF", "#DFA0BF", "#FF7B60", "#FFC992", "#B9B29E", "#B3DFA0", "#BBA3E2"];
 const DARK_REGION_COLORS = ["#29466F", "#66502B", "#285841", "#633B59", "#4C3E70", "#704039", "#285967", "#5B5337"];
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
