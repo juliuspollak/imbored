@@ -154,4 +154,191 @@
     background: rgba(25, 33, 46, 0.95) !important;
     color: #f4f7fb !important;
   }
+
+  /* My Profile. This screen has several inline light-only segmented controls,
+     avatar cells and account-security rows. */
+  .w-full.max-w-sm.rounded-2xl.p-6.relative:has(form) {
+    background: linear-gradient(155deg, rgba(38, 48, 64, 0.96), rgba(22, 29, 40, 0.97)) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f4f7fb !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.46) !important;
+  }
+
+  .w-full.max-w-sm.rounded-2xl.p-6.relative:has(form) h1,
+  .w-full.max-w-sm.rounded-2xl.p-6.relative:has(form) label,
+  .w-full.max-w-sm.rounded-2xl.p-6.relative:has(form) [style*="color: #1B2129"],
+  .w-full.max-w-sm.rounded-2xl.p-6.relative:has(form) [style*="color:#1B2129"] {
+    color: #f4f7fb !important;
+  }
+
+  .w-full.max-w-sm.rounded-2xl.p-6.relative:has(form) .grid.grid-cols-6 {
+    background: rgba(255, 255, 255, 0.055) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+  }
+
+  .w-full.max-w-sm.rounded-2xl.p-6.relative:has(form) .grid.grid-cols-6 button {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+  }
+
+  .w-full.max-w-sm.rounded-2xl.p-6.relative:has(form) .flex.rounded-lg.p-1 {
+    background: rgba(0, 0, 0, 0.26) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .w-full.max-w-sm.rounded-2xl.p-6.relative:has(form) .flex.rounded-lg.p-1 button {
+    color: rgba(232, 238, 247, 0.56) !important;
+  }
+
+  .w-full.max-w-sm.rounded-2xl.p-6.relative:has(form) .flex.rounded-lg.p-1 button[style*="background: rgb(255"],
+  .w-full.max-w-sm.rounded-2xl.p-6.relative:has(form) .flex.rounded-lg.p-1 button[style*="background: #FFFFFF"],
+  .w-full.max-w-sm.rounded-2xl.p-6.relative:has(form) .flex.rounded-lg.p-1 button[style*="background:#FFFFFF"] {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #f4f7fb !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 4px 12px rgba(0, 0, 0, 0.22) !important;
+  }
+
+  .w-full.max-w-sm.rounded-2xl.p-6.relative:has(form) [style*="background: rgba(16,24,40,0.04)"],
+  .w-full.max-w-sm.rounded-2xl.p-6.relative:has(form) [style*="background: rgba(16,24,40,0.05)"],
+  .w-full.max-w-sm.rounded-2xl.p-6.relative:has(form) [style*="background:rgba(16,24,40,0.05)"] {
+    background: rgba(255, 255, 255, 0.065) !important;
+    border-color: rgba(255, 255, 255, 0.09) !important;
+  }
+
+  /* Chats list. */
+  .chats-page {
+    background: radial-gradient(circle at 20% -8%, rgba(86, 76, 156, 0.22), transparent 38%), #0d1118 !important;
+    color: #f4f7fb !important;
+  }
+
+  .chats-page .chats-title,
+  .chats-page strong,
+  .chats-page input {
+    color: #f4f7fb !important;
+  }
+
+  .chats-page .chat-search,
+  .chats-page .conversation,
+  .chats-page .person-card,
+  .chats-page [style*="background: rgba(255,255,255,.65)"] {
+    background: rgba(27, 35, 48, 0.88) !important;
+    border: 1px solid rgba(255, 255, 255, 0.09) !important;
+    color: #f4f7fb !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28) !important;
+  }
+
+  .chats-page .conversation-avatar,
+  .chats-page .person-avatar {
+    background: linear-gradient(145deg, rgba(83, 73, 146, 0.34), rgba(42, 52, 69, 0.92)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+  }
+
+  .chats-page .online-dot {
+    border-color: #1b2330 !important;
+  }
+
+  .chats-page .chat-section-title,
+  .chats-page [style*="rgba(27,33,41,.5)"],
+  .chats-page [style*="rgba(27, 33, 41, 0.5)"] {
+    color: rgba(232, 238, 247, 0.58) !important;
+  }
+
+  /* Individual conversation screen. */
+  .chat-screen {
+    background: radial-gradient(circle at 50% -8%, rgba(86, 76, 156, 0.20), transparent 40%), #0d1118 !important;
+    color: #f4f7fb !important;
+  }
+
+  .chat-screen .chat-shell {
+    background: rgba(19, 26, 37, 0.72) !important;
+  }
+
+  .chat-screen .chat-header {
+    background: rgba(24, 32, 44, 0.91) !important;
+    border-color: rgba(255, 255, 255, 0.09) !important;
+  }
+
+  .chat-screen .chat-avatar {
+    background: linear-gradient(145deg, rgba(92, 79, 157, 0.38), rgba(39, 49, 66, 0.96)) !important;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.30) !important;
+  }
+
+  .chat-screen .chat-day {
+    background: rgba(255, 255, 255, 0.075) !important;
+    color: rgba(232, 238, 247, 0.62) !important;
+  }
+
+  .chat-screen .chat-row.theirs .chat-bubble {
+    background: rgba(42, 53, 70, 0.96) !important;
+    color: #f4f7fb !important;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28) !important;
+  }
+
+  .chat-screen .chat-bubble.system {
+    background: linear-gradient(135deg, rgba(108, 78, 17, 0.66), rgba(77, 57, 18, 0.72)) !important;
+    color: #ffe39a !important;
+    border-color: rgba(245, 213, 131, 0.20) !important;
+  }
+
+  .chat-screen .chat-empty {
+    color: rgba(232, 238, 247, 0.58) !important;
+  }
+
+  .chat-screen .chat-composer-wrap {
+    background: rgba(16, 22, 31, 0.96) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .chat-screen .chat-reaction,
+  .chat-screen .chat-composer {
+    background: rgba(36, 46, 61, 0.96) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+    color: #f4f7fb !important;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.30) !important;
+  }
+
+  .chat-screen .chat-input {
+    color: #f4f7fb !important;
+    background: transparent !important;
+  }
+
+  /* Safe cross-page fallbacks for secondary screens. These only target the
+     app's known light surface colours, leaving semantic coloured badges alone. */
+  main [style*="background: rgba(255,255,255,.88)"],
+  main [style*="background: rgba(255,255,255,.9)"],
+  main [style*="background: rgba(255,255,255,.94)"],
+  main [style*="background: rgba(255,255,255,.96)"],
+  main [style*="background: rgba(255,255,255,.98)"],
+  #root > div [style*="background: rgba(255,255,255,.88)"],
+  #root > div [style*="background: rgba(255,255,255,.9)"],
+  #root > div [style*="background: rgba(255,255,255,.94)"],
+  #root > div [style*="background: rgba(255,255,255,.96)"],
+  #root > div [style*="background: rgba(255,255,255,.98)"] {
+    background: rgba(28, 36, 49, 0.91) !important;
+    border-color: rgba(255, 255, 255, 0.09) !important;
+    color: #f4f7fb !important;
+  }
+
+  #root [style*="color: rgba(27,33,41,.35)"],
+  #root [style*="color: rgba(27,33,41,.45)"],
+  #root [style*="color: rgba(27,33,41,.48)"],
+  #root [style*="color: rgba(27,33,41,.5)"],
+  #root [style*="color: rgba(27,33,41,.55)"],
+  #root [style*="color: rgba(27,33,41,.58)"],
+  #root [style*="color: rgba(27,33,41,.6)"],
+  #root [style*="color:rgba(27,33,41,.35)"],
+  #root [style*="color:rgba(27,33,41,.45)"],
+  #root [style*="color:rgba(27,33,41,.48)"],
+  #root [style*="color:rgba(27,33,41,.5)"],
+  #root [style*="color:rgba(27,33,41,.55)"],
+  #root [style*="color:rgba(27,33,41,.58)"],
+  #root [style*="color:rgba(27,33,41,.6)"] {
+    color: rgba(232, 238, 247, 0.62) !important;
+  }
+
+  #root [style*="borderColor: rgba(16,24,40"],
+  #root [style*="border-color: rgba(16,24,40"],
+  #root [style*="border: 1px solid rgba(16,24,40"] {
+    border-color: rgba(255, 255, 255, 0.10) !important;
+  }
 }
