@@ -482,15 +482,27 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
 
   function handleHint() {
     if (solved || hintCooldown.isLocked()) return;
-    // 1) flag one wrong symbol, if any — this is the only place a mistake
-    // gets counted, not every wrong tap, only a wrong tap hint catches you on
+    const applyHint = (r, c, type, countMistake = false) => {
+      pushHistory();
+      setBoard((previous) => {
+        const next = previous.map((row) => row.slice());
+        next[r][c] = puzzle.solution[r][c];
+        return next;
+      });
+      setHintCell({ r, c, type, symbol: puzzle.solution[r][c] });
+      setHintsUsed((value) => value + 1);
+      if (countMistake) setMistakes((value) => value + 1);
+      hintCooldown.startCooldown();
+    };
+
+    // A hint now performs a visible, useful action: it corrects the first
+    // wrong symbol, otherwise fills a forced cell, and finally reveals one
+    // blank cell. Previously it only drew a faint preview, which could be
+    // imperceptible on iOS and looked as though the button did nothing.
     for (let r = 0; r < SIZE; r++) {
       for (let c = 0; c < SIZE; c++) {
         if (board[r][c] !== 0 && board[r][c] !== puzzle.solution[r][c]) {
-          setHintCell({ r, c, type: "error", symbol: puzzle.solution[r][c] });
-          setHintsUsed((h) => h + 1);
-          setMistakes((m) => m + 1);
-          hintCooldown.startCooldown();
+          applyHint(r, c, "error", true);
           return;
         }
       }
@@ -498,18 +510,14 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     // 2) a cell whose symbol is already logically forced but not filled yet
     const forced = findForcedCell(board, puzzle.edgeMap);
     if (forced) {
-      setHintCell({ r: forced.r, c: forced.c, type: "forced", symbol: puzzle.solution[forced.r][forced.c] });
-      setHintsUsed((h) => h + 1);
-      hintCooldown.startCooldown();
+      applyHint(forced.r, forced.c, "forced");
       return;
     }
-    // 3) nothing forced — just point at one blank cell
+    // 3) nothing forced — reveal one blank cell
     for (let r = 0; r < SIZE; r++) {
       for (let c = 0; c < SIZE; c++) {
         if (board[r][c] === 0) {
-          setHintCell({ r, c, type: "next", symbol: puzzle.solution[r][c] });
-          setHintsUsed((h) => h + 1);
-          hintCooldown.startCooldown();
+          applyHint(r, c, "next");
           return;
         }
       }
