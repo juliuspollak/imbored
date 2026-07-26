@@ -3,7 +3,7 @@ import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx";
-import { Crown, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
+import { Crown, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock, X } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
 
@@ -380,7 +380,7 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
   const [rewardResult, setRewardResult] = useState(null);
   const [syncRetryTick, setSyncRetryTick] = useState(0);
   const [solvedAtMs, setSolvedAtMs] = useState(null);
-  const dragRef = useRef({ active: false, mode: null, visited: new Set(), lastCell: null });
+  const dragRef = useRef({ active: false, mode: null, visited: new Set(), startCell: null, moved: false });
   const boardRef = useRef(null);
   const pointerActiveRef = useRef(false);
   const lastHandledPointerRef = useRef(null);
@@ -522,13 +522,13 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
     pointerActiveRef.current = true;
     const initial = board[r][c];
     const mode = initial === 1 ? 0 : 1;
-    dragRef.current = { active: true, mode, visited: new Set([`${r},${c}`]), lastCell: `${r},${c}` };
-    pushHistory();
-    setBoard((prev) => {
-      const next = prev.map((row) => row.slice());
-      next[r][c] = mode;
-      return next;
-    });
+    dragRef.current = {
+      active: true,
+      mode,
+      visited: new Set([`${r},${c}`]),
+      startCell: { r, c },
+      moved: false,
+    };
   }
 
   useEffect(() => {
@@ -543,18 +543,33 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
       const r = Math.floor(idx / boardSize), c = idx % boardSize;
       const key = `${r},${c}`;
       if (dragRef.current.visited.has(key)) return;
+      const isFirstMove = !dragRef.current.moved;
+      dragRef.current.moved = true;
       dragRef.current.visited.add(key);
-      dragRef.current.lastCell = key;
       setBoard((prev) => {
+        if (isFirstMove) {
+          setHistory((h) => [...h, prev.map((row) => row.slice())]);
+        }
         const next = prev.map((row) => row.slice());
+        if (isFirstMove && dragRef.current.startCell) {
+          const start = dragRef.current.startCell;
+          next[start.r][start.c] = dragRef.current.mode;
+        }
         next[r][c] = dragRef.current.mode;
         return next;
       });
     }
     function onUp() {
       if (dragRef.current.active) {
+        const wasDrag = dragRef.current.moved;
         dragRef.current.active = false;
-        window.setTimeout(() => { pointerActiveRef.current = false; }, 0);
+        if (wasDrag) {
+          // Suppress the click emitted after a completed drag.
+          window.setTimeout(() => { pointerActiveRef.current = false; }, 0);
+        } else {
+          // A stationary press is a normal click: blank → × → queen → blank.
+          pointerActiveRef.current = false;
+        }
       }
     }
     window.addEventListener("mousemove", onMove);
@@ -624,11 +639,14 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
   }
 
   function edgeBorder(r, c, dr, dc) {
+    // Draw each shared edge once (from the lower/right cell) so widths do not
+    // visually double. The board container owns the outside edge.
+    if (dr > 0 || dc > 0) return "none";
     const nr = r + dr, nc = c + dc;
-    if (nr < 0 || nr >= boardSize || nc < 0 || nc >= boardSize) return `2px solid ${INK}`;
+    if (nr < 0 || nr >= boardSize || nc < 0 || nc >= boardSize) return "none";
     return puzzle.regionGrid[r][c] !== puzzle.regionGrid[nr][nc]
-      ? `2px solid ${INK}`
-      : `1px solid rgba(16,24,40,0.08)`;
+      ? `1.5px solid ${INK}`
+      : "1px solid rgba(16,24,40,0.20)";
   }
 
   if (isChallenge && !isIncluded) {
@@ -675,7 +693,8 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
         .qp-hint-queen { animation: qp-hint-queen 0.7s ease-in-out infinite; z-index: 2; }
         .qp-card { container-type: inline-size; }
         @container (min-width: 430px) {
-          .qp-cell svg { width: 30px; height: 30px; }
+          .qp-cell .qp-crown { width: 30px; height: 30px; }
+          .qp-cell .qp-cross { width: 20px; height: 20px; }
         }
         @media (hover: hover) and (pointer: fine) {
           .qp-cell:hover { filter: brightness(1.15); }
@@ -806,6 +825,7 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
             gridTemplateColumns: `repeat(${boardSize}, 1fr)`,
             gridTemplateRows: `repeat(${boardSize}, 1fr)`,
             touchAction: "none",
+            border: `1.5px solid ${INK}`,
           }}
         >
           {board.map((row, r) =>
@@ -834,20 +854,20 @@ export default function Queens({ mode = "practice", seed = null, onChallengeComp
                     <Crown
                       key={`crown-${r}-${c}`}
                       className="qp-crown"
-                      size={Math.max(14, 26 - boardSize)}
-                      style={{ color: isConflict ? RED : INK }}
-                      strokeWidth={2.25}
+                      size={Math.max(18, 29 - boardSize)}
+                      style={{
+                        color: isConflict ? RED : INK,
+                        fill: isConflict ? "rgba(217,105,92,0.22)" : "#F6C453",
+                      }}
+                      strokeWidth={2.6}
                     />
                   )}
                   {val === 1 && (
-                    <span
-                      style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: "50%",
-                        background: "rgba(18,24,31,0.42)",
-                        display: "block",
-                      }}
+                    <X
+                      className="qp-cross"
+                      size={Math.max(15, 24 - boardSize)}
+                      strokeWidth={2.6}
+                      style={{ color: "rgba(17,24,39,0.60)" }}
                     />
                   )}
                 </button>
