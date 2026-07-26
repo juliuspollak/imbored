@@ -6,6 +6,7 @@ import { I18nProvider } from "./lib/i18n.jsx";
 import "./index.css";
 import "./profile-glass.css";
 import "./challenge-card-fix.css";
+import "./mode-switch-contrast.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
