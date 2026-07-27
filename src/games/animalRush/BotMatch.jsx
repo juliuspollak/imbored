@@ -64,7 +64,7 @@ function ScoreChip({ player, isYou }) {
   );
 }
 
-export default function BotMatch({ userId, profile, onBack }) {
+export default function BotMatch({ userId, profile, reducedMotion = false, onBack }) {
   const [game, setGame] = useState(() => createGame(userId, profile));
   const [now, setNow] = useState(Date.now());
   const [feedback, setFeedback] = useState(null);
@@ -233,7 +233,10 @@ export default function BotMatch({ userId, profile, onBack }) {
           <button type="button" className="rush-quiet -ml-2" onClick={onBack}>
             <ChevronLeft size={16} /> Game modes
           </button>
-          <span className="rush-muted text-[11px] font-semibold">Test round {game.round.number}</span>
+          <span className="rush-muted flex items-center gap-2 text-[11px] font-semibold">
+            Test round {game.round.number}
+            {reducedMotion && <span className="rush-motion-badge">Motion reduced</span>}
+          </span>
           <span className="rush-muted text-[10px]">No points</span>
         </div>
 
