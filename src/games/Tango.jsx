@@ -539,18 +539,52 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
         @keyframes hintPulseNext { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(217,174,88,1); } 50% { box-shadow: inset 0 0 0 3px rgba(217,174,88,0.25); } }
         @keyframes lineSweep { 0% { opacity: 0; transform: scale(.92); } 28% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.025); } }
         @keyframes lineSpark { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.4) rotate(-20deg); } 35% { opacity: 1; transform: translate(-50%,-50%) scale(1.15) rotate(8deg); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(.85) rotate(18deg); } }
+        @keyframes tangoGlow { 0%, 100% { transform: translate3d(0,0,0); opacity: .55; } 50% { transform: translate3d(8px,-6px,0); opacity: .8; } }
         .tg-symbol { animation: popIn 0.22s ease-out; }
         .tg-card { animation: fadeUp 0.4s ease-out; }
+        .tg-board-shell::before, .tg-board-shell::after {
+          content: "";
+          position: absolute;
+          border-radius: 999px;
+          filter: blur(1px);
+          pointer-events: none;
+          animation: tangoGlow 7s ease-in-out infinite;
+        }
+        .tg-board-shell::before { width: 42%; height: 42%; left: -12%; top: -15%; background: rgba(246,196,83,.16); }
+        .tg-board-shell::after { width: 46%; height: 46%; right: -15%; bottom: -18%; background: rgba(74,111,165,.13); animation-delay: -3.5s; }
+        .tg-cell::after {
+          content: "";
+          position: absolute;
+          inset: 5px;
+          border-radius: 10px;
+          border: 1px solid transparent;
+          transition: border-color .18s ease, background .18s ease, transform .18s ease;
+          pointer-events: none;
+        }
+        .tg-cell:not(:disabled):hover::after { border-color: rgba(74,111,165,.18); background: rgba(255,255,255,.4); transform: scale(.96); }
+        .tg-symbol-disc {
+          width: clamp(31px, 10cqw, 46px);
+          height: clamp(31px, 10cqw, 46px);
+          display: grid;
+          place-items: center;
+          border-radius: 999px;
+          position: relative;
+          z-index: 1;
+        }
+        .tg-symbol-disc--sun { background: linear-gradient(145deg, rgba(255,249,219,.96), rgba(246,196,83,.19)); box-shadow: 0 3px 12px rgba(217,174,88,.14); }
+        .tg-symbol-disc--moon { background: linear-gradient(145deg, rgba(239,244,252,.98), rgba(74,111,165,.14)); box-shadow: 0 3px 12px rgba(74,111,165,.12); }
+        .tg-cell:disabled .tg-symbol-disc { box-shadow: inset 0 0 0 1px rgba(27,33,41,.07), 0 4px 12px rgba(16,24,40,.09); }
+        .tg-edge-token { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
         .tg-hint-error { animation: hintPulseError 1.1s ease-in-out infinite; }
         .tg-hint-forced { animation: hintPulseForced 1.1s ease-in-out infinite; }
         .tg-hint-next { animation: hintPulseNext 1.1s ease-in-out infinite; }
         .tg-line-complete { animation: lineSweep .85s ease-out both; }
         .tg-line-spark { animation: lineSpark .85s ease-out both; }
         @media (prefers-reduced-motion: reduce) {
-          .tg-symbol, .tg-card, .tg-hint-error, .tg-hint-forced, .tg-hint-next, .tg-line-complete, .tg-line-spark { animation: none !important; }
+          .tg-symbol, .tg-card, .tg-hint-error, .tg-hint-forced, .tg-hint-next, .tg-line-complete, .tg-line-spark, .tg-board-shell::before, .tg-board-shell::after { animation: none !important; }
         }
         @media (hover: hover) and (pointer: fine) {
-          .tg-cell:not(:disabled):hover { filter: brightness(1.2); }
+          .tg-cell:not(:disabled):hover { filter: brightness(1.03); }
           .tg-icon-btn:hover { opacity: 0.85; }
           .tg-play-again:hover { filter: brightness(1.08); }
           .tg-toolbar-btn:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.03); }
@@ -571,6 +605,15 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
 
         {/* header */}
         <div className="text-center mb-4">
+          <div
+            className="mx-auto mb-2 flex items-center justify-center gap-1.5 rounded-full"
+            style={{ width: 66, height: 30, background: "linear-gradient(135deg, rgba(246,196,83,.16), rgba(74,111,165,.13))", border: "1px solid rgba(16,24,40,.06)" }}
+            aria-hidden="true"
+          >
+            <SunBurstIcon size={14} style={{ color: SUN_COLOR }} />
+            <span style={{ width: 1, height: 12, background: "rgba(27,33,41,.12)" }} />
+            <Moon size={14} style={{ color: MOON_COLOR }} strokeWidth={2.4} />
+          </div>
           <h1
             style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }}
             className="text-4xl lg:text-5xl"
@@ -670,13 +713,16 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
 
         {/* board */}
         <div
-          className="relative w-full rounded-xl overflow-hidden"
+          className="tg-board-shell relative w-full rounded-2xl overflow-hidden"
           style={{
             aspectRatio: "1 / 1",
             display: "grid",
             gridTemplateColumns: `repeat(${SIZE}, 1fr)`,
             gridTemplateRows: `repeat(${SIZE}, 1fr)`,
-            background: BG,
+            background: "linear-gradient(145deg, #FBFCFE 0%, #F2F5F9 100%)",
+            border: "6px solid rgba(255,255,255,.92)",
+            boxShadow: "0 16px 34px rgba(16,24,40,.13), 0 2px 8px rgba(16,24,40,.08), inset 0 0 0 1px rgba(16,24,40,.08)",
+            containerType: "inline-size",
           }}
         >
           {board.map((row, r) =>
@@ -692,17 +738,17 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                   disabled={isGiven}
                   className={`tg-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`}
                   style={{
-                    background: isGiven ? "rgba(16,24,40,0.05)" : "transparent",
-                    border: "1px solid rgba(20,20,24,0.30)",
+                    background: isGiven ? "rgba(74,111,165,0.055)" : "rgba(255,255,255,.22)",
+                    border: "1px solid rgba(27,33,41,0.14)",
                     boxShadow: isConflict ? `inset 0 0 0 3px ${RED}` : "none",
                     cursor: isGiven ? "default" : "pointer",
                   }}
                 >
                   {val === SUN && (
-                    <SunBurstIcon key={`sun-${r}-${c}`} className="tg-symbol" size={Math.max(22, 32 - SIZE)} style={{ color: isConflict ? RED : SUN_COLOR }} />
+                    <span className="tg-symbol tg-symbol-disc tg-symbol-disc--sun"><SunBurstIcon key={`sun-${r}-${c}`} size={Math.max(22, 32 - SIZE)} style={{ color: isConflict ? RED : SUN_COLOR }} /></span>
                   )}
                   {val === MOON && (
-                    <Moon key={`moon-${r}-${c}`} className="tg-symbol" size={Math.max(20, 30 - SIZE)} style={{ color: isConflict ? RED : MOON_COLOR }} strokeWidth={2.25} />
+                    <span className="tg-symbol tg-symbol-disc tg-symbol-disc--moon"><Moon key={`moon-${r}-${c}`} size={Math.max(20, 30 - SIZE)} style={{ color: isConflict ? RED : MOON_COLOR }} strokeWidth={2.25} /></span>
                   )}
                   {/* The pulsing border alone doesn't say what belongs here —
                       show a faint preview of the actual symbol. For an empty
@@ -748,6 +794,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
             return (
               <span
                 key={`edge-${e.r1}-${e.c1}-${e.r2}-${e.c2}`}
+                className="tg-edge-token"
                 style={{
                   position: "absolute",
                   left: `${cx}%`,
@@ -756,14 +803,15 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                   width: 26,
                   height: 26,
                   borderRadius: "50%",
-                  background: PANEL,
-                  border: `1px solid rgba(16,24,40,0.25)`,
+                  background: "rgba(255,255,255,.92)",
+                  border: `1px solid rgba(16,24,40,0.14)`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: 700,
                   color: CREAM,
+                  boxShadow: "0 3px 9px rgba(16,24,40,.14)",
                   pointerEvents: "none",
                   zIndex: 2,
                 }}
