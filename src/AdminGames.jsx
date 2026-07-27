@@ -120,7 +120,7 @@ export default function AdminGames({ onBack }) {
   }
 
   async function resetMyChallengeForEveryone() {
-    if (!window.confirm("Restart today's My Challenge for every player? All six personal challenge results and ratings will be cleared. Replays will create fresh challenge scores, but account points already awarded today will be kept and will not be awarded twice.")) return;
+    if (!window.confirm("Hard reset today's My Challenge for every player? Results, ratings and points awarded for today's personal challenge will be removed so the complete flow can be tested again from scratch.")) return;
     setResetting("all");
     setMessage("");
     const { data, error } = await supabase.rpc("admin_reset_my_challenge");
@@ -130,7 +130,9 @@ export default function AdminGames({ onBack }) {
       return;
     }
     const removed = Number(data?.results_removed) || 0;
-    setMessage(`Today's My Challenge restarted for everyone. Removed ${removed} result${removed === 1 ? "" : "s"}. Replays create fresh challenge scores; previously awarded account points remain unchanged.`);
+    const reversedRewards = Number(data?.rewards_reversed) || 0;
+    const reversedPoints = Number(data?.points_reversed) || 0;
+    setMessage(`Hard reset complete. Removed ${removed} result${removed === 1 ? "" : "s"} and reversed ${reversedRewards} reward${reversedRewards === 1 ? "" : "s"} (${reversedPoints} points).`);
   }
 
   async function move(index, direction) {
@@ -187,8 +189,8 @@ export default function AdminGames({ onBack }) {
                 <RotateCcw size={16} className={resetting === "all" ? "animate-spin" : ""}/>
               </span>
               <span className="flex-1 min-w-0">
-                <span className="block text-sm font-semibold" style={{ color:INK }}>Restart today’s My Challenge</span>
-                <span className="block text-[10px] mt-0.5" style={{ color:"rgba(27,33,41,.48)" }}>Clears all personal results for every player. Existing rewards cannot be earned twice.</span>
+                <span className="block text-sm font-semibold" style={{ color:INK }}>Hard reset today’s My Challenge</span>
+                <span className="block text-[10px] mt-0.5" style={{ color:"rgba(27,33,41,.48)" }}>Clears personal results and reverses their point awards for complete end-to-end testing.</span>
               </span>
               <button
                 type="button"
