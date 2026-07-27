@@ -299,7 +299,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
       : `${playedCount} of ${roster.length} players started · ${games.length} games today`;
 
   return (
-    <div className={`${embedded ? "rounded-2xl" : "rounded-3xl"} mt-3 overflow-hidden`} style={{ background:"#fff",border:"1px solid rgba(16,24,40,.09)",boxShadow:embedded ? "none" : "0 10px 28px rgba(16,24,40,.06)" }}>
+    <div className={`challenge-standings-card ${embedded ? "rounded-2xl" : "rounded-3xl"} mt-3 overflow-hidden`} style={{ background:"#fff",border:"1px solid rgba(16,24,40,.09)",boxShadow:embedded ? "none" : "0 10px 28px rgba(16,24,40,.06)" }}>
       <button type="button" onClick={() => setOpen((value) => !value)} className={`w-full flex items-center gap-3 text-left ${embedded ? "p-3" : "p-4"}`} aria-expanded={open}>
         <span className="grid place-items-center rounded-2xl shrink-0" style={{ width:embedded ? 36 : 42,height:embedded ? 36 : 42,background:challengeComplete ? "rgba(22,163,74,.12)" : "rgba(217,174,88,.13)",color:challengeComplete ? "#137A3A" : "#9A721F" }}><Trophy size={embedded ? 16 : 19}/></span>
         <span className="flex-1 min-w-0">
@@ -337,24 +337,24 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
             </div>
           )}
           {!loading && myStanding && myStanding.completed > 0 && (
-            <div className="rounded-2xl px-3 py-3 mb-3" style={{ background:"linear-gradient(135deg,rgba(47,111,237,.10),rgba(124,58,237,.055))",border:"1px solid rgba(47,111,237,.14)" }}>
+            <div className="challenge-my-summary rounded-2xl px-3 py-3 mb-3" style={{ background:"linear-gradient(135deg,rgba(47,111,237,.10),rgba(124,58,237,.055))",border:"1px solid rgba(47,111,237,.14)" }}>
               <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="text-[9px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.42)" }}>{isTeam ? "Your week" : "Your result"}</div>
+                  <div className="challenge-summary-muted text-[9px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.42)" }}>{isTeam ? "Your week" : "Your result"}</div>
                   <div className="flex items-baseline gap-2 mt-0.5">
                     <span className="text-base font-bold">{myStanding.rank ? `#${myStanding.rank}` : "—"}</span>
-                    <span className="text-[10px]" style={{ color:"rgba(27,33,41,.46)" }}>
+                    <span className="challenge-summary-muted text-[10px]" style={{ color:"rgba(27,33,41,.46)" }}>
                       {isTeam
                         ? `of ${standings.filter((item) => item.rank).length}`
                         : `of ${playedCount} active today`}
                     </span>
                   </div>
-                  <div className="text-[10px] mt-1" style={{ color:"rgba(27,33,41,.50)" }}>
+                  <div className="challenge-summary-muted text-[10px] mt-1" style={{ color:"rgba(27,33,41,.50)" }}>
                     {myStanding.completed}/{rounds.length || games.length} played · {formatDuration(myStanding.adjustedSeconds)} adjusted
                     {isTeam && myStanding.missed ? ` · ${myStanding.missed} missed` : ""}
                   </div>
                 </div>
-                <div className="rounded-full px-3 py-1.5 text-sm font-bold shrink-0" style={{ background:"#fff",color:"#2F6FED",boxShadow:"0 4px 12px rgba(47,111,237,.10)" }}>
+                <div className="challenge-summary-points rounded-full px-3 py-1.5 text-sm font-bold shrink-0" style={{ background:"#fff",color:"#2F6FED",boxShadow:"0 4px 12px rgba(47,111,237,.10)" }}>
                   {myStanding.challengeScore} pts
                 </div>
               </div>
@@ -376,7 +376,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                     </span>
                   </>
                 ) : (
-                  <span className="text-[10px]" style={{ color:"rgba(27,33,41,.44)" }}>
+                  <span className="challenge-summary-muted text-[10px]" style={{ color:"rgba(27,33,41,.44)" }}>
                     {previousWeekLabel ? (isTeam ? "Comparison starts after your first scheduled round." : "No matching result from last week.") : "No previous result to compare."}
                   </span>
                 )}
@@ -410,13 +410,15 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                     type="button"
                     key={standing.id}
                     onClick={() => !standing.privateStats && setExpandedPlayerId(isExpanded ? null : standing.id)}
-                    className="w-full rounded-2xl p-3 text-left"
+                    className="challenge-standing-row w-full rounded-2xl p-3 text-left"
+                    data-current={standing.id === userId ? "true" : "false"}
+                    data-leading={standing.rank === 1 ? "true" : "false"}
                     style={{ background:standing.id === userId ? "rgba(47,111,237,.07)" : "#F7F8FB",border:standing.rank === 1 ? "1px solid rgba(217,174,88,.35)" : "1px solid transparent" }}
                     aria-expanded={isExpanded}
                   >
                     <span className="flex items-center gap-2.5">
                       <span className="w-5 text-center text-xs font-bold" style={{ color:standing.rank === 1 ? "#9A721F" : "rgba(27,33,41,.35)" }}>{standing.rank || "—"}</span>
-                      <span className="grid place-items-center rounded-full text-sm shrink-0" style={{ width:32,height:32,background:"#fff" }}>{standing.icon || "🙂"}</span>
+                      <span className="challenge-standing-avatar grid place-items-center rounded-full text-sm shrink-0" style={{ width:32,height:32,background:"#fff" }}>{standing.icon || "🙂"}</span>
                       <span className="flex-1 min-w-0">
                         <span className="flex items-center gap-1.5">
                           <span className="text-xs font-semibold truncate">{standing.name || t("common.player")}{standing.id === userId ? ` · ${t("standings.you")}` : ""}</span>
@@ -459,7 +461,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                           const result = isTeam ? item.result : standing.rows.find((row) => row.game === game.id);
                           const GameIcon = game.icon;
                           return (
-                            <span key={isTeam ? item.date : game.id} className="flex items-center gap-2 rounded-xl px-2.5 py-2" style={{ background:"#fff" }}>
+                            <span key={isTeam ? item.date : game.id} className="challenge-round-result flex items-center gap-2 rounded-xl px-2.5 py-2" style={{ background:"#fff" }}>
                               <GameIcon size={13} style={{ color:game.accent }}/>
                               <span className="text-[11px] font-medium flex-1">
                                 {isTeam ? `${new Date(`${item.date}T12:00:00`).toLocaleDateString(undefined,{ weekday:"short" })} · ` : ""}{game.label}

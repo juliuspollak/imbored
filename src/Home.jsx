@@ -755,7 +755,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                   </span>
                   <ChevronDown size={15} className="transition-transform group-open:rotate-180" style={{ opacity:.32 }}/>
                 </summary>
-                <div className="mt-2 overflow-hidden rounded-2xl" style={{ background:"rgba(16,24,40,.025)",border:"1px solid rgba(16,24,40,.07)" }}>
+                <div className="challenge-history-list mt-2 overflow-hidden rounded-2xl" style={{ background:"rgba(16,24,40,.025)",border:"1px solid rgba(16,24,40,.07)" }}>
                   {challengeHistory.slice(0, 5).map((item, index) => {
                     const isWinner = item.winner_id === userId;
                     const hasWinner = !!item.winner_id;
@@ -769,18 +769,19 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                     return (
                       <div
                         key={item.challenge_id}
-                        className="flex items-center gap-3 px-3 py-2.5"
+                        className="challenge-history-row flex items-center gap-3 px-3 py-2.5"
                         style={{ borderTop:index ? "1px solid rgba(16,24,40,.06)" : "none" }}
                       >
                         <span className="flex-1 min-w-0">
                           <span className="block text-[11px] font-semibold truncate">{item.challenge_title || item.team_name}</span>
-                          <span className="block text-[9px] mt-0.5 truncate" style={{ color:"rgba(27,33,41,.44)" }}>
+                          <span className="challenge-history-muted block text-[9px] mt-0.5 truncate" style={{ color:"rgba(27,33,41,.44)" }}>
                             {item.team_name} · {challengeWeekLabel(item.week_start)}
                           </span>
                         </span>
                         <span className="text-right shrink-0">
                           <span
-                            className="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold"
+                            className="challenge-history-result inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold"
+                            data-result={isWinner ? "won" : hasWinner ? "winner" : "none"}
                             style={{
                               background:isWinner ? "rgba(22,163,74,.10)" : hasWinner ? "rgba(47,111,237,.08)" : "rgba(16,24,40,.05)",
                               color:isWinner ? "#15803D" : hasWinner ? "#2F6FED" : "rgba(27,33,41,.50)",
@@ -788,7 +789,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                           >
                             {resultLabel}
                           </span>
-                          <span className="block text-[8px] mt-1" style={{ color:"rgba(27,33,41,.38)" }}>
+                          <span className="challenge-history-muted block text-[8px] mt-1" style={{ color:"rgba(27,33,41,.38)" }}>
                             {entries > 0 ? `${finishers}/${entries} finished` : "No entries"}
                           </span>
                         </span>
