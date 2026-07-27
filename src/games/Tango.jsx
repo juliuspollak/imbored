@@ -4,7 +4,7 @@ import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
 import { rateDifficulty } from "../lib/saveStats.js";
 import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx";
-import { Moon, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
+import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
 import { rewardStatusText } from "../lib/rewardStatus.js";
@@ -18,20 +18,28 @@ function SunBurstIcon({ size = 24, className = "", style, ...props }) {
       className={className}
       style={style}
       fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
       aria-hidden="true"
       {...props}
     >
-      <circle cx="12" cy="12" r="4.15" fill="currentColor" />
-      <g fill="currentColor">
-        <rect x="10" y="0.5" width="4" height="3.5" rx="2" />
-        <rect x="10" y="20" width="4" height="3.5" rx="2" />
-        <rect x="0.5" y="10" width="3.5" height="4" rx="2" />
-        <rect x="20" y="10" width="3.5" height="4" rx="2" />
-        <rect x="3" y="3" width="2.8" height="2.8" rx="1" transform="rotate(45 4.4 4.4)" />
-        <rect x="18.2" y="18.2" width="2.8" height="2.8" rx="1" transform="rotate(45 19.6 19.6)" />
-        <rect x="18.2" y="3" width="2.8" height="2.8" rx="1" transform="rotate(-45 19.6 4.4)" />
-        <rect x="3" y="18.2" width="2.8" height="2.8" rx="1" transform="rotate(-45 4.4 19.6)" />
+      <circle cx="12" cy="12" r="4.35" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="6.15" opacity=".22" />
+      <g>
+        <path d="M12 1.75v2.4M12 19.85v2.4M1.75 12h2.4M19.85 12h2.4" />
+        <path d="m4.75 4.75 1.7 1.7m11.1 11.1 1.7 1.7m0-14.5-1.7 1.7M6.45 17.55l-1.7 1.7" />
       </g>
+    </svg>
+  );
+}
+
+function ModernMoonIcon({ size = 24, className = "", style, ...props }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
+      <path d="M20.4 15.35A8.65 8.65 0 0 1 8.65 3.6 9.1 9.1 0 1 0 20.4 15.35Z" fill="currentColor" />
+      <circle cx="16.9" cy="5.25" r="1" fill="currentColor" opacity=".52" />
+      <circle cx="20.15" cy="8.3" r=".55" fill="currentColor" opacity=".34" />
     </svg>
   );
 }
@@ -309,7 +317,6 @@ const GOLD = "#2F6FED";
 const RED = "#E5484D";
 const TEAL = "#5FA8A3";
 const SUN_COLOR = "#F2A43A";
-const MOON_COLOR = "#6F82C8";
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const GIVEN_TARGETS = [16, 14, 12, 10, 9, 8, 7];
 const EDGE_TARGETS = [6, 5, 5, 4, 4, 3, 3];
@@ -762,7 +769,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                         {hintCell.symbol === SUN ? (
                           <SunBurstIcon size={Math.max(22, 32 - SIZE)} style={{ color: SUN_COLOR, opacity: 0.4 }} />
                         ) : (
-                          <Moon size={Math.max(20, 30 - SIZE)} style={{ color: MOON_COLOR, opacity: 0.4 }} strokeWidth={2.25} />
+                          <ModernMoonIcon size={Math.max(20, 30 - SIZE)} style={{ color: "#40557D", opacity: 0.4 }} />
                         )}
                       </span>
                     ) : (
@@ -777,7 +784,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                         {hintCell.symbol === SUN ? (
                           <SunBurstIcon size={10} style={{ color: SUN_COLOR }} />
                         ) : (
-                          <Moon size={9} style={{ color: MOON_COLOR }} strokeWidth={2.5} />
+                          <ModernMoonIcon size={9} style={{ color: "#40557D" }} />
                         )}
                       </span>
                     )
@@ -866,7 +873,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
             >
               <div className="flex items-center gap-1">
                 <SunBurstIcon size={27} style={{ color: SUN_COLOR }} />
-                <Moon size={26} style={{ color: MOON_COLOR }} />
+                <ModernMoonIcon size={26} style={{ color: "#40557D" }} />
               </div>
               <p style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 600, color: CREAM }} className="text-2xl">
                 Solved
