@@ -7,6 +7,7 @@ import { challengeProgress, groupChallengeCompletions } from "./lib/challengePro
 import ChallengeStandings from "./ChallengeStandings.jsx";
 import ChallengeStreakBadge from "./ChallengeStreakBadge.jsx";
 import { buildTeamChallengeRounds, localDateString } from "./lib/teamChallengeRounds.js";
+import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -85,6 +86,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   const [challengeProfiles, setChallengeProfiles] = useState({});
   const [standingsLoading, setStandingsLoading] = useState(false);
   const [standingsRefreshing, setStandingsRefreshing] = useState(false);
+  const [standingsRefreshKey, setStandingsRefreshKey] = useState(0);
   const standingsCacheRef = useRef({});
 
   useEffect(() => {
@@ -166,6 +168,16 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
     loadTeamChallenges();
     return () => { cancelled = true; };
   }, [userId]);
+
+  useEffect(() => {
+    if (!supabaseReady || !userId || playMode !== "challenge") return undefined;
+    return attachRealtimeRefresh({
+      channelName:`home-standings-${userId}`,
+      tables:[{ name:"game_stats" },{ name:"profiles" }],
+      refresh:() => setStandingsRefreshKey((value) => value+1),
+      fallbackMs:45000,
+    });
+  },[playMode,userId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -326,7 +338,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
     }
     loadChallengeStandings();
     return () => { cancelled = true; };
-  }, [userId, playMode, challengeScope?.type, challengeScope?.id, challengeHistory, teamChallenges]);
+  }, [userId, playMode, challengeScope?.type, challengeScope?.id, challengeHistory, teamChallenges, standingsRefreshKey]);
 
   useEffect(() => {
     let cancelled = false;
