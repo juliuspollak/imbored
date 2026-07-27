@@ -115,29 +115,35 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
         rank:standing.completed > 0 || standing.missed > 0 ? ++competitionRank : null,
       }));
     }
+    const benchmarkMap = Object.fromEntries(
+      benchmarks.map((item) => [`${item.game}:${item.day_index}`,Number(item.effective_seconds) || 100])
+    );
     const ranked = roster
       .map((member) => {
         const privateStats = isTeam && member.id !== userId && member.show_stats_to_others === false;
         const playerRows = (rowsByPlayer[member.id] || []).filter((row) => gameIds.includes(row.game));
         return {
           ...member,
-          rows: playerRows,
+          rows:playerRows,
           privateStats,
-          completed: playerRows.length,
-          totalSeconds: playerRows.reduce((total, row) => total + (Number(row.seconds) || 0), 0),
-          hints: playerRows.reduce((total, row) => total + (Number(row.hints) || 0), 0),
-          mistakes: playerRows.reduce((total, row) => total + (Number(row.mistakes) || 0), 0),
+          completed:playerRows.length,
+          totalSeconds:playerRows.reduce((total,row) => total + (Number(row.seconds) || 0),0),
+          adjustedSeconds:playerRows.reduce((total,row) => total + dailyChallengeScore(
+            row,
+            benchmarkMap[`${row.game}:${isoDayIndex(row.challenge_date)}`]
+          ).adjusted,0),
+          challengeScore:playerRows.reduce((total,row) => total + dailyChallengeScore(
+            row,
+            benchmarkMap[`${row.game}:${isoDayIndex(row.challenge_date)}`]
+          ).score,0),
+          hints:playerRows.reduce((total,row) => total + (Number(row.hints) || 0),0),
+          mistakes:playerRows.reduce((total,row) => total + (Number(row.mistakes) || 0),0),
         };
       })
-      .map((standing) => ({
-        ...standing,
-        adjustedSeconds: standing.totalSeconds
-          + standing.hints * HINT_PENALTY_SECONDS
-          + standing.mistakes * MISTAKE_PENALTY_SECONDS,
-      }))
-      .sort((a, b) => {
+      .sort((a,b) => {
         if (a.privateStats !== b.privateStats) return a.privateStats ? 1 : -1;
         if (a.completed !== b.completed) return b.completed - a.completed;
+        if (a.challengeScore !== b.challengeScore) return b.challengeScore - a.challengeScore;
         if (a.adjustedSeconds !== b.adjustedSeconds) return a.adjustedSeconds - b.adjustedSeconds;
         if (a.hints !== b.hints) return a.hints - b.hints;
         if (a.mistakes !== b.mistakes) return a.mistakes - b.mistakes;
@@ -152,31 +158,47 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
 
   const myStanding = standings.find((standing) => standing.id === userId) || null;
   const previousComparison = useMemo(() => {
-    if (!isTeam || !myStanding || previousRounds.length === 0) return null;
-    const comparableCount = closed
-      ? rounds.length
-      : myStanding.dailyResults.filter((round) => !round.upcoming).length;
-    if (comparableCount <= 0) return null;
-
+    if (!myStanding) return null;
     const benchmarkMap = Object.fromEntries(
       benchmarks.map((item) => [`${item.game}:${item.day_index}`,Number(item.effective_seconds) || 100])
     );
     const myPreviousRows = previousRows.filter((row) => row.user_id === userId);
-    const priorScore = previousRounds.slice(0,comparableCount).reduce((sum,round) => {
-      const result = myPreviousRows.find((row) =>
-        row.challenge_date === round.date && row.game === round.game
-      );
-      if (!result) return sum + MISSED_ROUND_SCORE;
+
+    if (isTeam) {
+      if (previousRounds.length === 0) return null;
+      const comparableCount = closed
+        ? rounds.length
+        : myStanding.dailyResults.filter((round) => !round.upcoming).length;
+      if (comparableCount <= 0) return null;
+      const priorScore = previousRounds.slice(0,comparableCount).reduce((sum,round) => {
+        const result = myPreviousRows.find((row) =>
+          row.challenge_date === round.date && row.game === round.game
+        );
+        if (!result) return sum + MISSED_ROUND_SCORE;
+        return sum + dailyChallengeScore(
+          result,
+          benchmarkMap[`${round.game}:${isoDayIndex(round.date)}`]
+        ).score;
+      },0);
+      const currentScore = myStanding.dailyResults
+        .slice(0,comparableCount)
+        .reduce((sum,round) => sum + round.score,0);
+      return { rounds:comparableCount,previousScore:priorScore,currentScore,delta:currentScore-priorScore };
+    }
+
+    const currentGames = myStanding.rows.map((row) => row.game);
+    if (currentGames.length === 0 || myPreviousRows.length === 0) return null;
+    const priorScore = currentGames.reduce((sum,gameId) => {
+      const result = myPreviousRows.find((row) => row.game === gameId);
+      if (!result) return sum;
       return sum + dailyChallengeScore(
         result,
-        benchmarkMap[`${round.game}:${isoDayIndex(round.date)}`]
+        benchmarkMap[`${result.game}:${isoDayIndex(result.challenge_date)}`]
       ).score;
     },0);
-    const currentScore = myStanding.dailyResults
-      .slice(0,comparableCount)
-      .reduce((sum,round) => sum + round.score,0);
+    const currentScore = myStanding.challengeScore;
     return {
-      rounds:comparableCount,
+      rounds:currentGames.length,
       previousScore:priorScore,
       currentScore,
       delta:currentScore-priorScore,
@@ -236,11 +258,11 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
               )}
             </div>
           )}
-          {!loading && isTeam && myStanding && (
+          {!loading && myStanding && (
             <div className="rounded-2xl p-3 mb-3" style={{ background:"linear-gradient(135deg,rgba(47,111,237,.10),rgba(124,58,237,.055))",border:"1px solid rgba(47,111,237,.14)" }}>
               <div className="flex items-center justify-between gap-2 mb-3">
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.42)" }}>Your week</div>
+                  <div className="text-[10px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.42)" }}>{isTeam ? "Your week" : "Your challenge"}</div>
                   <div className="text-sm font-bold mt-0.5">
                     {myStanding.rank ? `#${myStanding.rank} of ${standings.filter((item) => item.rank).length}` : "Not ranked yet"}
                   </div>
@@ -255,8 +277,8 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                   <div className="text-sm font-bold mt-0.5">{myStanding.completed}/{rounds.length || games.length}</div>
                 </div>
                 <div className="rounded-xl p-2.5" style={{ background:"rgba(255,255,255,.72)" }}>
-                  <div className="text-[9px] font-semibold" style={{ color:"rgba(27,33,41,.42)" }}>Missed</div>
-                  <div className="text-sm font-bold mt-0.5" style={{ color:myStanding.missed ? "#B5433A" : INK }}>{myStanding.missed}</div>
+                  <div className="text-[9px] font-semibold" style={{ color:"rgba(27,33,41,.42)" }}>{isTeam ? "Missed" : "Adjusted"}</div>
+                  <div className="text-sm font-bold mt-0.5" style={{ color:isTeam && myStanding.missed ? "#B5433A" : INK }}>{isTeam ? myStanding.missed : formatDuration(myStanding.adjustedSeconds)}</div>
                 </div>
                 <div className="rounded-xl p-2.5" style={{ background:"rgba(255,255,255,.72)" }}>
                   <div className="text-[9px] font-semibold" style={{ color:"rgba(27,33,41,.42)" }}>Last week</div>
@@ -276,17 +298,17 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                           ? `${Math.abs(previousComparison.delta)} points behind last week`
                           : "Level with last week"}
                     </span>
-                    <span className="ml-auto text-[9px]" style={{ color:"rgba(27,33,41,.42)" }}>after {previousComparison.rounds} round{previousComparison.rounds === 1 ? "" : "s"}</span>
+                    <span className="ml-auto text-[9px]" style={{ color:"rgba(27,33,41,.42)" }}>after {previousComparison.rounds} {isTeam ? `round${previousComparison.rounds === 1 ? "" : "s"}` : `game${previousComparison.rounds === 1 ? "" : "s"}`}</span>
                   </>
                 ) : (
-                  <span className="text-[10px]" style={{ color:"rgba(27,33,41,.45)" }}>{previousWeekLabel ? "Comparison starts after your first scheduled round." : "No previous matching challenge to compare yet."}</span>
+                  <span className="text-[10px]" style={{ color:"rgba(27,33,41,.45)" }}>{previousWeekLabel ? (isTeam ? "Comparison starts after your first scheduled round." : "No matching games from the same day last week yet.") : "No previous matching challenge to compare yet."}</span>
                 )}
               </div>
             </div>
           )}
-          {!loading && isTeam && standings.length > 0 && (
+          {!loading && standings.length > 0 && (
             <div className="flex items-center justify-between px-1 mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.38)" }}>Team standings</span>
+              <span className="text-[10px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.38)" }}>{isTeam ? "Team standings" : "Challenge standings"}</span>
               <span className="text-[9px]" style={{ color:"rgba(27,33,41,.38)" }}>Highest score first</span>
             </div>
           )}
@@ -334,13 +356,13 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                       {!standing.privateStats && (
                         <span className="text-right shrink-0">
                           <span className="block text-xs font-bold">
-                            {isTeam ? `${standing.challengeScore} pts` : `${standing.completed}/${requiredCount}`}
+                            {`${standing.challengeScore} pts`}
                           </span>
                           <span className="flex items-center justify-end gap-1 text-[10px] mt-0.5" style={{ color:"rgba(27,33,41,.48)" }}>
                             {isTeam
                               ? `${standing.completed}/${requiredCount} played${standing.missed ? ` · ${standing.missed} missed` : ""}`
                               : standing.completed > 0
-                                ? <><Clock3 size={10}/>{formatDuration(standing.adjustedSeconds)} adjusted</>
+                                ? `${standing.completed}/${requiredCount} played · ${formatDuration(standing.adjustedSeconds)} adjusted`
                                 : t("standings.notStarted")}
                           </span>
                         </span>
@@ -384,7 +406,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
               <div className="px-2 pt-1 text-[10px] text-center" style={{ color:"rgba(27,33,41,.38)" }}>
                 {isTeam
                   ? "Highest total wins · missed round −100 · hint +30s · mistake/reset +15s"
-                  : "Ranked by games completed, then adjusted time · hint +30s · mistake/reset +15s"}
+                  : "Ranked by games completed, then challenge score · hint +30s · mistake/reset +15s"}
               </div>
             </div>
           )}
