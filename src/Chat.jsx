@@ -40,10 +40,10 @@ const FLUENT_EMOJI_PATHS = {
 };
 const FLUENT_EMOJI_ROOT = "https://media.githubusercontent.com/media/microsoft/fluentui-emoji-animated/main/assets/";
 
-function FluentEmoji({ emoji,size = 28,animated = false,reducedMotion = false }) {
+function FluentEmoji({ emoji,size = 28,animated = false }) {
   const [preview,setPreview] = useState(false);
   const path = FLUENT_EMOJI_PATHS[emoji];
-  const showAnimation = path && !reducedMotion && (animated || preview);
+  const showAnimation = path && (animated || preview);
   if (!showAnimation) {
     return (
       <span
@@ -95,7 +95,6 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [quickPickerOpen, setQuickPickerOpen] = useState(false);
   const [reactingMessageId, setReactingMessageId] = useState(null);
-  const [reducedMotion, setReducedMotion] = useState(false);
   const messagesRef = useRef(null);
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
@@ -187,15 +186,6 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
       setLoading(false);
     }
   }
-
-  useEffect(() => {
-    const media = window.matchMedia?.("(prefers-reduced-motion: reduce)");
-    if (!media) return undefined;
-    const update = () => setReducedMotion(media.matches);
-    update();
-    media.addEventListener?.("change",update);
-    return () => media.removeEventListener?.("change",update);
-  },[]);
 
   useEffect(() => {
     loadMessages();
@@ -500,14 +490,14 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
                           onClick={() => toggleMessageReaction(item.id,reaction.id)}
                           aria-label={myReaction === reaction.id ? `Remove ${reaction.label}` : reaction.label}
                         >
-                          <FluentEmoji emoji={reaction.emoji} size={27} reducedMotion={reducedMotion}/>
+                          <FluentEmoji emoji={reaction.emoji} size={27}/>
                         </button>
                       ))}
                     </div>
                   )}
                   {FLUENT_EMOJI_PATHS[item.body] && !item.system_generated ? (
                     <div className="chat-text emoji-only">
-                      <FluentEmoji emoji={item.body} size={58} animated reducedMotion={reducedMotion}/>
+                      <FluentEmoji emoji={item.body} size={58} animated/>
                     </div>
                   ) : (
                     <div className="chat-text">{item.body}</div>
@@ -550,7 +540,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
             <div className="chat-picker chat-emoji-picker" role="dialog" aria-label="Choose an emoji">
               {EMOJI_PICKER.map((emoji) => (
                 <button type="button" className="chat-picker-button" onClick={() => addEmoji(emoji)} key={emoji} aria-label={`Add ${emoji}`}>
-                  <FluentEmoji emoji={emoji} size={28} reducedMotion={reducedMotion}/>
+                  <FluentEmoji emoji={emoji} size={28}/>
                 </button>
               ))}
             </div>
@@ -559,7 +549,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
             <div className="chat-picker chat-quick-picker" role="dialog" aria-label="Choose a quick reaction">
               {QUICK_REACTIONS.map((emoji) => (
                 <button type="button" className="chat-picker-button" onClick={() => sendQuickReaction(emoji)} key={emoji} aria-label={`Send ${emoji}`}>
-                  <FluentEmoji emoji={emoji} size={28} reducedMotion={reducedMotion}/>
+                  <FluentEmoji emoji={emoji} size={28}/>
                 </button>
               ))}
             </div>
@@ -612,7 +602,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
               aria-label="Send thumbs up. Press and hold for more reactions."
               aria-expanded={quickPickerOpen}
             >
-              <FluentEmoji emoji="👍" size={27} reducedMotion={reducedMotion}/>
+              <FluentEmoji emoji="👍" size={27}/>
             </button>
           </form>
         </div>}
