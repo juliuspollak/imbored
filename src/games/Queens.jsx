@@ -711,9 +711,9 @@ export default function Queens({
     if (solved) return;
     setBoard(initialBoard(boardSize));
     setHistory([]);
-    setMistakes(0);
-    setHintsUsed(0);
-    setSeconds(0);
+    // Reset clears only the board. It remains the same timed attempt, and
+    // abandoning the current board counts as one scoring mistake.
+    setMistakes((value) => value + 1);
     setRunning(true);
     setHintCells([]);
   }

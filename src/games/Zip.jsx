@@ -337,6 +337,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
   const [running, setRunning] = useState(false);
   const [solved, setSolved] = useState(false);
   const [mistakes, setMistakes] = useState(0); // ZIP: cells deliberately backtracked
+  const [resets, setResets] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
   const [difficultyRating, setDifficultyRating] = useState(null);
   const [hintCell, setHintCell] = useState(null);
@@ -363,6 +364,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
     setRunning(true);
     setSolved(false);
     setMistakes(0);
+    setResets(0);
     setHintsUsed(0);
     setDifficultyRating(null);
     setHintCell(null);
@@ -397,7 +399,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
         game:"zip",
         dayIndex:dayIdx,
         seconds,
-        mistakes:zipEfficiencyPenaltyUnits(mistakes),
+        mistakes:zipEfficiencyPenaltyUnits(mistakes) + resets,
         hints:hintsUsed,
         zipBacktrackedCells:mistakes,
         zipRequiredMoves:requiredMoves,
@@ -406,7 +408,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
         challengeDate:isChallenge ? challengeDate : undefined,
       });
     }
-  }, [path, puzzle]);
+  }, [hintsUsed, isChallenge, mistakes, mode, onSolved, path, puzzle, resets, seconds, userId, challengeDate, dayIdx]);
 
   useEffect(() => {
     const el = boardRef.current;
@@ -620,20 +622,12 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
 
   function handleReset() {
     if (solved) return;
-    if (isChallenge) {
-      setMistakes((value) => value + Math.max(0,path.length-1));
-      setPath([puzzle.path[0]]);
-      setHintCell(null);
-      setHistory([]);
-      return;
-    }
+    // Reset is part of the current attempt in both modes. Keep its timer,
+    // hints and path-efficiency history, and add one scoring mistake.
     setPath([puzzle.path[0]]);
-    setMistakes(0);
-    setHintsUsed(0);
-    setDifficultyRating(null);
+    setResets((value) => value + 1);
     setHintCell(null);
     setHistory([]);
-    setSeconds(0);
     setSolved(false);
     setRunning(true);
   }
@@ -755,6 +749,9 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
           <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
             hints: <span style={{ color: hintsUsed > 0 ? GOLD : CREAM }}>{hintsUsed}</span>
           </div>
+          {resets > 0 && <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
+            resets: <span style={{ color: RED }}>{resets}</span>
+          </div>}
         </div>
 
         {/* toolbar - text labels, spread at top */}
@@ -1033,7 +1030,9 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
               <Flag size={28} style={{ color: ZIP_GREEN }} />
               <p style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 600, color: CREAM }} className="text-2xl">{t("common.solved")}</p>
               <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs mb-1">
-                {fmtTime(seconds)} &middot; {efficiency}% efficient &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
+                {fmtTime(seconds)} &middot; {efficiency}% efficient
+                {resets > 0 ? ` · ${resets} reset${resets === 1 ? "" : "s"}` : ""}
+                {" · "}{hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
               </p>
               {rewardResult?.completed && (
                 <div

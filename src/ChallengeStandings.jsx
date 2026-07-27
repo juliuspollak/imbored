@@ -469,7 +469,10 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                                   <Clock3 size={10}/>{formatDuration(result.seconds)}
                                   {(Number(result.hints) || 0) > 0 && <><Lightbulb size={10}/>{result.hints}</>}
                                   {game.id === "zip" && result.zip_required_moves
-                                    ? <span style={{ color:zipEfficiency(result) >= 85 ? "#137A3A" : "#9A721F" }}>{zipEfficiency(result)}% efficient</span>
+                                    ? <>
+                                      <span style={{ color:zipEfficiency(result) >= 85 ? "#137A3A" : "#9A721F" }}>{zipEfficiency(result)}% efficient</span>
+                                      {(Number(result.mistakes) || 0) > 0 && <><TriangleAlert size={10}/>{result.mistakes}</>}
+                                    </>
                                     : (Number(result.mistakes) || 0) > 0 && <><TriangleAlert size={10}/>{result.mistakes}</>}
                                   {isTeam && <strong style={{ color:item.score >= 100 ? "#137A3A" : "#9F2F2A" }}>{item.score > 0 ? "+" : ""}{item.score}</strong>}
                                 </span>

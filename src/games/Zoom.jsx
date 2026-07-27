@@ -166,8 +166,14 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
 
   function handleReset() {
     if (solved) return;
-    sessionStorage.removeItem(stateKey);
-    newQuiz(dayIdx, true);
+    // Restart the same set without erasing elapsed time or prior mistakes.
+    // The reset itself is an additional scoring mistake.
+    setQIdx(0);
+    setSelected(null);
+    setAnswered(false);
+    setCorrectLog([]);
+    setMistakes((value) => value + 1);
+    setRunning(true);
   }
 
   const roundsNailed = Array.from({ length: totalRounds }, (_, r) => {

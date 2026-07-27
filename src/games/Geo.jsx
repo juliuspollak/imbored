@@ -162,8 +162,14 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
 
   function handleReset() {
     if (solved) return;
-    sessionStorage.removeItem(stateKey);
-    newQuiz(dayIdx, true);
+    // Restart the same quiz without erasing elapsed time, mistakes or hints.
+    // The reset itself is an additional scoring mistake.
+    setQIdx(0);
+    setSelected(null);
+    setAnswered(false);
+    setEliminated([]);
+    setMistakes((value) => value + 1);
+    setRunning(true);
   }
 
   return (
