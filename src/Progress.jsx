@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Star, Flame, Trophy, Gift, Send, Plus, ShieldCheck, ExternalLink, PartyPopper, X, Pencil, Save, Sparkles, Lock } from "lucide-react";
+import { Star, Flame, Trophy, Gift, Send, Plus, ShieldCheck, ExternalLink, PartyPopper, X, Pencil, Save, Sparkles, Lock, Gamepad2, ArrowDownLeft, ArrowUpRight, RotateCcw, Info, ChevronDown } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
@@ -7,6 +7,7 @@ import { markTransfersSeen } from "./lib/useNewTransfers.js";
 
 const BG="#F1F3F7", PANEL="#fff", INK="#1B2129", ACCENT="#2F6FED", CREAM="#1B2129";
 const card={background:PANEL,border:"1px solid rgba(16,24,40,.09)",borderRadius:16};
+const GAME_LABELS={queens:"Queens",tango:"Tango",zip:"Zip",minisudoku:"Mini Sudoku",geo:"Geo",zoom:"Zoom"};
 const WISH_EMOJIS=["🎁","🚲","🚗","🎮","📱","💻","🎧","⌚","📚","👟","🧸","🎨","✈️","🏕️","🎸","⚽","🏀","🛴","🛹","🐶"];
 function suggestWishEmoji(value){
   const s=value.toLowerCase();
@@ -21,6 +22,37 @@ function suggestWishEmoji(value){
   return rules.find(([re])=>re.test(s))?.[1]||"🎁";
 }
 function nextLevelThreshold(level){ return 500 * level * level; }
+function activityDetails(item){
+  const game=item.gameStat?.game;
+  const mode=item.gameStat?.mode;
+  if(item.reason_code==="GAME_COMPLETED") return {
+    title:`${GAME_LABELS[game]||"Game"} completed`,
+    subtitle:mode==="challenge"?"Challenge":"Practice",
+    Icon:Gamepad2,color:"#2F6FED",background:"rgba(47,111,237,.10)"
+  };
+  if(item.reason_code==="TEAM_CHALLENGE_WINNER") return {title:"Team challenge won",subtitle:"Winner’s prize",Icon:Trophy,color:"#9A721F",background:"rgba(217,174,88,.14)"};
+  if(item.reason_code==="TEAM_CHALLENGE_COMPLETED") return {title:"Team challenge completed",subtitle:"Challenge reward",Icon:Trophy,color:"#0B7C58",background:"rgba(18,148,106,.10)"};
+  if(item.reason_code==="TRANSFER_RECEIVED") return {title:`Received from ${item.other?.name||"a player"}`,subtitle:"Points transfer",Icon:ArrowDownLeft,color:"#15803D",background:"rgba(22,163,74,.10)"};
+  if(item.reason_code==="TRANSFER_SENT") return {title:`Sent to ${item.other?.name||"a player"}`,subtitle:"Points transfer",Icon:ArrowUpRight,color:"#B45309",background:"rgba(234,88,12,.09)"};
+  if(item.reason_code==="REWARD_REDEEMED") return {title:item.metadata?.reward_name||"Reward redeemed",subtitle:"Spent from your balance",Icon:Gift,color:"#7C3AED",background:"rgba(124,58,237,.09)"};
+  if(item.reason_code==="REWARD_REFUND") return {title:"Reward refunded",subtitle:"Returned to your balance",Icon:RotateCcw,color:"#15803D",background:"rgba(22,163,74,.10)"};
+  if(item.reason_code==="STREAK_PROTECTION") return {title:"Streak protected",subtitle:"Protection used",Icon:ShieldCheck,color:"#2F6FED",background:"rgba(47,111,237,.10)"};
+  if(item.reason_code==="CHALLENGE_STREAK_BROKEN") return {title:"Challenge streak ended",subtitle:"Missed-day adjustment",Icon:Flame,color:"#B5433A",background:"rgba(181,67,58,.09)"};
+  if(item.reason_code==="ADMIN_ADJUSTMENT") return {title:item.metadata?.reason||"Points adjustment",subtitle:"Account adjustment",Icon:Star,color:"#9A721F",background:"rgba(217,174,88,.14)"};
+  return {title:"Points updated",subtitle:"Account activity",Icon:Star,color:"#2F6FED",background:"rgba(47,111,237,.10)"};
+}
+function gameBreakdown(item){
+  if(item.reason_code!=="GAME_COMPLETED") return [];
+  const metadata=item.metadata||{};
+  return [
+    ["Base",metadata.base],
+    ["Speed",metadata.time],
+    ["Hints",metadata.hints],
+    ["Mistakes",metadata.mistakes],
+    ["Weekly streak",metadata.weekly_streak],
+    ["Adjustment",metadata.limit_adjustment],
+  ].filter(([,value])=>Number(value)!==0);
+}
 
 export default function Progress({ onBack }) {
   const { user, profile } = useAuth();
@@ -32,6 +64,8 @@ export default function Progress({ onBack }) {
   const [transfer,setTransfer]=useState({player:"",amount:""});
   const [newTransfers,setNewTransfers]=useState([]);
   const [transferLog,setTransferLog]=useState([]);
+  const [activity,setActivity]=useState([]);
+  const [expandedActivityId,setExpandedActivityId]=useState(null);
 
   const refresh=useCallback(async()=>{
     setLoading(true);
@@ -43,22 +77,40 @@ export default function Progress({ onBack }) {
       supabase.from("rewards").select("*").eq("is_active",true).order("points_cost"),
       supabase.from("reward_wishes").select("*").eq("player_id",user.id).order("created_at",{ascending:false}),
       supabase.from("profiles").select("id,name,icon,is_admin,is_approved,is_blocked,account_deleted_at").neq("id",user.id).order("name"),
-      supabase.from("points_transactions").select("id,points,reason_code,related_player_id,created_at,seen_at")
-        .eq("player_id",user.id).in("reason_code",["TRANSFER_RECEIVED","TRANSFER_SENT"]).order("id",{ascending:false}).limit(50),
+      supabase.from("points_transactions").select("id,points,reason_code,game_stat_id,related_player_id,reward_id,metadata,created_at,seen_at")
+        .eq("player_id",user.id).order("id",{ascending:false}).limit(100),
     ]);
+    const transactionRows=tx||[];
+    const gameStatIds=[...new Set(transactionRows.map(item=>item.game_stat_id).filter(Boolean))];
+    const {data:gameStats}=gameStatIds.length
+      ? await supabase.from("game_stats").select("id,game,mode,seconds,mistakes,hints").in("id",gameStatIds)
+      : {data:[]};
     const availablePlayers = (ps || []).filter((item) => !item.account_deleted_at && !item.is_blocked && (item.is_admin || item.is_approved !== false));
     setProgress(p); setRules(r); setRewards(rw||[]); setWishes(w||[]); setPlayers(availablePlayers); setLoading(false);
 
     const playerById = Object.fromEntries(availablePlayers.map(pl=>[pl.id,pl]));
-    setNewTransfers((tx||[]).filter(t=>t.reason_code==="TRANSFER_RECEIVED"&&!t.seen_at).map(t=>({id:t.id,points:t.points,sender:playerById[t.related_player_id]||null})));
-    setTransferLog((tx||[]).map(t=>({...t,other:playerById[t.related_player_id]||null})));
-    if ((tx||[]).some(t=>t.reason_code==="TRANSFER_RECEIVED"&&!t.seen_at)) await markTransfersSeen();
+    const gameStatById=Object.fromEntries((gameStats||[]).map(item=>[item.id,item]));
+    const enrichedTransactions=transactionRows.map(item=>({
+      ...item,
+      metadata:item.metadata||{},
+      other:playerById[item.related_player_id]||null,
+      gameStat:gameStatById[item.game_stat_id]||null,
+    }));
+    setActivity(enrichedTransactions);
+    setNewTransfers(enrichedTransactions.filter(t=>t.reason_code==="TRANSFER_RECEIVED"&&!t.seen_at).map(t=>({id:t.id,points:t.points,sender:t.other})));
+    setTransferLog(enrichedTransactions.filter(t=>["TRANSFER_RECEIVED","TRANSFER_SENT"].includes(t.reason_code)));
+    if (enrichedTransactions.some(t=>t.reason_code==="TRANSFER_RECEIVED"&&!t.seen_at)) await markTransfersSeen();
   },[user.id]);
   useEffect(()=>{refresh()},[refresh]);
 
   function dismissTransferNotice(id){ setNewTransfers(list=>list.filter(n=>n.id!==id)); }
 
-  const pct=useMemo(()=>{if(!progress)return 0; const prev=500*(progress.current_level-1)*(progress.current_level-1); const next=nextLevelThreshold(progress.current_level); return Math.max(0,Math.min(100,((progress.lifetime_points-prev)/(next-prev))*100));},[progress]);
+  const level=Number(progress?.current_level||1);
+  const lifetimePoints=Number(progress?.lifetime_points||0);
+  const levelStart=500*(level-1)*(level-1);
+  const levelTarget=nextLevelThreshold(level);
+  const pointsToNext=Math.max(0,levelTarget-lifetimePoints);
+  const pct=useMemo(()=>Math.max(0,Math.min(100,((lifetimePoints-levelStart)/Math.max(1,levelTarget-levelStart))*100)),[levelStart,levelTarget,lifetimePoints]);
   const today=new Date(); today.setHours(0,0,0,0); const last=progress?.last_completed_date ? new Date(progress.last_completed_date+"T00:00:00") : null;
   const canProtect=last && Math.round((today-last)/86400000)===2 && !(progress?.streak_protected_through);
   const socialUnlocked=!!profile?.is_admin || Number(progress?.current_level || 1)>=2 || Number(progress?.lifetime_points || 0)>=500;
@@ -90,12 +142,90 @@ export default function Progress({ onBack }) {
     <div className="flex items-center gap-3 mb-5"><BackButton onClick={onBack}/><h1 className="text-2xl" style={{fontFamily:"'Fredoka',sans-serif",fontWeight:700,color:INK}}>My Progress</h1></div>
     {loading?<p className="text-center text-sm opacity-40">Loading…</p>:<>
       {newTransfers.length>0&&<div className="flex flex-col gap-2 mb-3">{newTransfers.map(n=><div key={n.id} className="rounded-xl p-3 flex items-center gap-2.5" style={{background:"rgba(139,92,246,.10)",border:"1px solid rgba(139,92,246,.28)"}}><PartyPopper size={18} style={{color:"#8B5CF6",flexShrink:0}}/><div className="flex-1 text-xs" style={{color:INK}}><span className="font-semibold">{n.sender?.icon||"🙂"} {n.sender?.name||"Someone"}</span> sent you <span className="font-semibold">{n.points.toLocaleString()} points</span>!</div><button onClick={()=>dismissTransferNotice(n.id)} aria-label="Dismiss" style={{color:INK,opacity:.4}}><X size={14}/></button></div>)}</div>}
-      <div className="grid grid-cols-3 gap-2 mb-3">
-        <div className="p-3 text-center" style={card}><Star size={20} fill="currentColor" className="mx-auto mb-1" style={{color:"#D9AE58"}}/><div className="text-xl font-bold" style={{color:INK}}>{progress?.available_points?.toLocaleString()}</div><div className="text-[10px] opacity-45">Points</div></div>
-        <div className="p-3 text-center" style={card}><Flame size={20} className="mx-auto mb-1" style={{color:"#E05A47"}}/><div className="text-xl font-bold" style={{color:INK}}>{progress?.current_streak||0}</div><div className="text-[10px] opacity-45">Day streak</div></div>
-        <div className="p-3 text-center" style={card}><Trophy size={20} className="mx-auto mb-1" style={{color:ACCENT}}/><div className="text-xl font-bold" style={{color:INK}}>{progress?.current_level||1}</div><div className="text-[10px] opacity-45">Level</div></div>
+      <section className="rounded-3xl p-4 mb-3 overflow-hidden relative" style={{background:"linear-gradient(145deg,#17233E 0%,#243B73 100%)",color:"#fff",boxShadow:"0 14px 34px rgba(31,52,102,.18)"}}>
+        <div className="absolute rounded-full" style={{width:150,height:150,right:-55,top:-70,background:"rgba(255,255,255,.07)"}}/>
+        <div className="relative flex items-start gap-3">
+          <div className="grid place-items-center rounded-2xl shrink-0" style={{width:52,height:52,background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.14)"}}>
+            <Trophy size={23}/>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[10px] font-semibold uppercase tracking-[.16em]" style={{opacity:.62}}>Your level</div>
+            <div className="text-2xl font-bold mt-0.5">Level {level}</div>
+            <div className="text-[11px] mt-0.5" style={{opacity:.72}}>{pointsToNext.toLocaleString()} lifetime points to Level {level+1}</div>
+          </div>
+        </div>
+        <div className="relative mt-4">
+          <div className="h-2.5 rounded-full overflow-hidden" style={{background:"rgba(255,255,255,.14)"}}>
+            <div className="h-full rounded-full" style={{width:`${pct}%`,background:"linear-gradient(90deg,#7EA8FF,#FFFFFF)",boxShadow:"0 0 14px rgba(255,255,255,.28)"}}/>
+          </div>
+          <div className="flex justify-between mt-1.5 text-[9px]" style={{opacity:.62}}>
+            <span>{lifetimePoints.toLocaleString()} lifetime</span>
+            <span>{levelTarget.toLocaleString()} needed</span>
+          </div>
+        </div>
+        <div className="relative grid grid-cols-2 gap-2 mt-4">
+          <div className="rounded-2xl px-3 py-2.5" style={{background:"rgba(255,255,255,.09)"}}>
+            <div className="text-lg font-bold">{Number(progress?.available_points||0).toLocaleString()}</div>
+            <div className="text-[9px]" style={{opacity:.62}}>Available to spend</div>
+          </div>
+          <div className="rounded-2xl px-3 py-2.5" style={{background:"rgba(255,255,255,.09)"}}>
+            <div className="flex items-center gap-1.5 text-lg font-bold"><Flame size={16} style={{color:"#FF9D83"}}/>{progress?.current_streak||0}</div>
+            <div className="text-[9px]" style={{opacity:.62}}>Day streak</div>
+          </div>
+        </div>
+      </section>
+
+      <div className="rounded-2xl px-3 py-2.5 mb-3 flex items-start gap-2" style={{background:"rgba(47,111,237,.07)",color:INK}}>
+        <Info size={14} className="shrink-0 mt-0.5" style={{color:ACCENT}}/>
+        <span className="text-[10px] leading-relaxed" style={{opacity:.62}}>
+          Lifetime points raise your level and never decrease when you spend or send points. Your available balance is what you can use now.
+        </span>
       </div>
-      <div className="p-3 mb-3" style={card}><div className="flex justify-between text-[11px] mb-2" style={{color:INK,opacity:.55}}><span>Level {progress.current_level}</span><span>{progress.lifetime_points.toLocaleString()} lifetime Points</span></div><div className="h-2 rounded-full" style={{background:"rgba(47,111,237,.12)"}}><div className="h-2 rounded-full" style={{width:`${pct}%`,background:ACCENT}}/></div></div>
+
+      <section className="mb-3 overflow-hidden" style={{...card,borderRadius:20}}>
+        <div className="px-4 pt-3.5 pb-2">
+          <div className="text-sm font-bold" style={{color:INK}}>How you earned your points</div>
+          <div className="text-[10px] mt-0.5" style={{color:INK,opacity:.43}}>Recent rewards, bonuses and spending</div>
+        </div>
+        {activity.length===0
+          ? <div className="px-4 py-5 text-xs text-center" style={{color:INK,opacity:.4}}>Play a game to start earning points.</div>
+          : <div>
+            {activity.slice(0,8).map((item,index)=>{
+              const details=activityDetails(item);
+              const Icon=details.Icon;
+              const breakdown=gameBreakdown(item);
+              const expanded=expandedActivityId===item.id;
+              const canExpand=breakdown.length>0;
+              return <div key={item.id} style={{borderTop:index===0?"none":"1px solid rgba(16,24,40,.06)"}}>
+                <button
+                  type="button"
+                  onClick={()=>canExpand&&setExpandedActivityId(expanded?null:item.id)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left"
+                  aria-expanded={canExpand?expanded:undefined}
+                  style={{cursor:canExpand?"pointer":"default"}}
+                >
+                  <span className="grid place-items-center rounded-xl shrink-0" style={{width:34,height:34,background:details.background,color:details.color}}><Icon size={15}/></span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-[11px] font-semibold truncate" style={{color:INK}}>{details.title}</span>
+                    <span className="block text-[9px] mt-0.5 truncate" style={{color:INK,opacity:.42}}>
+                      {details.subtitle} · {new Date(item.created_at).toLocaleDateString(undefined,{day:"numeric",month:"short"})}
+                    </span>
+                  </span>
+                  <span className="text-right shrink-0">
+                    <span className="block text-xs font-bold" style={{color:Number(item.points)>=0?"#15803D":"#B5433A"}}>{Number(item.points)>=0?"+":""}{Number(item.points).toLocaleString()}</span>
+                    <span className="block text-[8px] mt-0.5" style={{color:INK,opacity:.36}}>points</span>
+                  </span>
+                  {canExpand&&<ChevronDown size={14} style={{color:INK,opacity:.3,transform:expanded?"rotate(180deg)":"none",transition:"transform .15s"}}/>}
+                </button>
+                {expanded&&<div className="flex flex-wrap gap-1.5 px-4 pb-3 pl-[62px]">
+                  {breakdown.map(([label,value])=><span key={label} className="rounded-full px-2 py-1 text-[9px] font-semibold" style={{background:Number(value)>0?"rgba(22,163,74,.08)":"rgba(181,67,58,.07)",color:Number(value)>0?"#15803D":"#9F2F2A"}}>
+                    {label} {Number(value)>0?"+":""}{Number(value)}
+                  </span>)}
+                </div>}
+              </div>;
+            })}
+          </div>}
+      </section>
       {canProtect&&<button onClick={protect} className="gloss-button w-full p-3 mb-3 flex items-center justify-between rounded-lg" style={{color:INK}}><span className="flex items-center gap-2"><ShieldCheck size={18} style={{color:ACCENT}}/><span className="text-sm font-semibold">Protect your streak</span></span><span className="text-xs">{rules?.streak_protection_cost||250} Points</span></button>}
       {message&&<div className="rounded-xl p-3 mb-3 text-xs" style={{background:"rgba(47,111,237,.08)",color:INK}}>{message}</div>}
       <div className="game-mode-switch mb-3" style={{width:"100%",justifyContent:"flex-start"}}>{[["rewards","Rewards",Gift],["wish","Wish",Plus],["transfer","Transfer",Send]].map(([id,label,Icon])=>{const locked=id!=="rewards"&&!socialUnlocked;return <button key={id} disabled={locked} onClick={()=>setTab(id)} className={`gloss-button ${tab===id?"is-active":""}`} style={{flex:1}}>{locked?<Lock size={12}/>:<Icon size={14}/>} {label}</button>})}</div>
