@@ -276,10 +276,44 @@
 .rush-die__cube {
   position: absolute;
   inset: 0;
-  transform: var(--rush-die-end);
+  opacity: 0;
+  transform: rotateX(-18deg) rotateY(22deg);
   transform-style: preserve-3d;
   animation: rush-die-roll var(--rush-die-duration, 2850ms) cubic-bezier(0.18, 0.72, 0.18, 1) both;
   will-change: transform;
+}
+
+.rush-die[data-revealed="true"] .rush-die__cube {
+  opacity: 1;
+  transform: var(--rush-die-end);
+}
+
+.rush-die[data-spinning="true"] .rush-die__cube {
+  opacity: 1;
+}
+
+.rush-die__still {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  border-radius: 18px;
+  color: var(--rush-gold);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(237, 242, 247, 0.86));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    inset 0 -1px 0 rgba(16, 24, 40, 0.08),
+    0 8px 18px rgba(16, 24, 40, 0.12);
+  font-family: "Fredoka", sans-serif;
+  font-size: calc(var(--rush-die-size) * 0.48);
+  font-weight: 700;
+}
+
+.rush-die[data-revealed="true"] .rush-die__still,
+.rush-die[data-spinning="true"] .rush-die__still {
+  display: none;
 }
 
 .rush-die__face {
@@ -653,5 +687,13 @@
   .rush-die__cube {
     animation: none;
     transform: var(--rush-die-end);
+  }
+
+  .rush-die[data-revealed="false"] .rush-die__cube {
+    display: none;
+  }
+
+  .rush-die[data-revealed="false"] .rush-die__still {
+    display: grid;
   }
 }
