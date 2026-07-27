@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
+  Bot,
   Copy,
   Home,
   Loader2,
@@ -19,6 +20,7 @@ import {
 import { useAuth } from "../lib/AuthContext.jsx";
 import { supabase, supabaseReady } from "../lib/supabase.js";
 import AnimalFace from "./animalRush/AnimalFace.jsx";
+import BotMatch from "./animalRush/BotMatch.jsx";
 import {
   ANIMAL_IDS,
   animalById,
@@ -111,6 +113,7 @@ export default function AnimalRush({ onExit }) {
   const [now, setNow] = useState(Date.now());
   const [serverOffset, setServerOffset] = useState(0);
   const [attemptFeedback, setAttemptFeedback] = useState(null);
+  const [botMode, setBotMode] = useState(false);
   const attemptRef = useRef(false);
   const roundRef = useRef(null);
   const advanceRef = useRef(null);
@@ -379,6 +382,10 @@ export default function AnimalRush({ onExit }) {
 
   if (!supported) return <PhoneOnly onExit={onExit} />;
 
+  if (botMode) {
+    return <BotMatch userId={user?.id || "local-player"} profile={profile} onBack={() => setBotMode(false)} />;
+  }
+
   if (loading) {
     return (
       <div className="animal-rush rush-phone-only">
@@ -408,12 +415,24 @@ export default function AnimalRush({ onExit }) {
               Roll the animal, find it first and protect your two safety cards. A wrong touch costs a safety card, then one you have won.
             </p>
 
-            <button type="button" className="rush-primary mt-6 w-full" onClick={createRoom} disabled={!!working}>
+            <button type="button" className="rush-primary mt-6 w-full" onClick={() => setBotMode(true)} disabled={!!working}>
+              <Bot size={18} />
+              Play against computer
+            </button>
+            <p className="rush-muted mt-2 text-center text-[10px]">Solo testing · full rules · no points awarded</p>
+
+            <div className="my-5 flex items-center gap-3">
+              <span className="h-px flex-1 bg-white/10" />
+              <span className="rush-muted text-[10px] font-bold uppercase tracking-[.18em]">or play live</span>
+              <span className="h-px flex-1 bg-white/10" />
+            </div>
+
+            <button type="button" className="rush-secondary w-full" onClick={createRoom} disabled={!!working}>
               {working === "create" ? <Loader2 className="animate-spin" size={17} /> : <Wifi size={17} />}
               Create live room
             </button>
 
-            <div className="my-6 flex items-center gap-3">
+            <div className="my-5 flex items-center gap-3">
               <span className="h-px flex-1 bg-white/10" />
               <span className="rush-muted text-[10px] font-bold uppercase tracking-[.18em]">or join</span>
               <span className="h-px flex-1 bg-white/10" />

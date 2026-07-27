@@ -73,6 +73,16 @@ export function matchWinner(players = [], winningCards = 7) {
   return active.length === 1 ? active[0] : null;
 }
 
+export function botAnimalChoice(targetAnimal, randomValue = Math.random(), accuracy = 0.84) {
+  if (randomValue < accuracy) return targetAnimal;
+  const alternatives = ANIMAL_IDS.filter((animalId) => animalId !== targetAnimal);
+  const missPosition = Math.min(
+    alternatives.length - 1,
+    Math.floor(((randomValue - accuracy) / Math.max(1 - accuracy, Number.EPSILON)) * alternatives.length),
+  );
+  return alternatives[Math.max(0, missPosition)];
+}
+
 export function inviteUrl(roomCode, locationLike = {}) {
   const origin = locationLike.origin || "https://imbored.au";
   const pathname = locationLike.pathname || "/";

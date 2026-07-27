@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  ANIMAL_IDS,
   applyWrongTap,
+  botAnimalChoice,
   countdownNumber,
   inviteUrl,
   isPhoneDevice,
@@ -26,6 +28,12 @@ test("accepts touch phones and rejects desktop or tablet-style devices", () => {
     maxTouchPoints: 5,
     coarsePointer: true,
   }), false);
+});
+
+test("bot can react correctly or choose a genuine wrong animal", () => {
+  assert.equal(botAnimalChoice("fox", 0.4), "fox");
+  assert.notEqual(botAnimalChoice("fox", 0.95), "fox");
+  assert.ok(ANIMAL_IDS.includes(botAnimalChoice("fox", 0.95)));
 });
 
 test("opens a round only after the shared reveal time", () => {
