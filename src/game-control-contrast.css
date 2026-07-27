@@ -1,5 +1,28 @@
 /* Shared game-control contrast. */
 @media (prefers-color-scheme: dark) {
+  .ms-board {
+    background: #18212d !important;
+    border-color: rgba(255, 255, 255, 0.42) !important;
+  }
+
+  .ms-board .ms-cell {
+    background: rgba(255, 255, 255, 0.045) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
+
+  .ms-board .ms-cell-value[data-given="true"] {
+    color: #f4f7fb !important;
+  }
+
+  .ms-board .ms-cell-value[data-given="false"] {
+    color: #8eb2ff !important;
+    font-weight: 650 !important;
+  }
+
+  .ms-board .ms-cell-value[data-conflict="true"] {
+    color: #ff8d91 !important;
+  }
+
   .zoom-option {
     background: rgba(255, 255, 255, 0.075) !important;
     color: #f4f7fb !important;

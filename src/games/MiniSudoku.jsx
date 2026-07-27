@@ -602,7 +602,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
 
         {/* board */}
         <div
-          className="relative w-full rounded-xl overflow-hidden"
+          className="ms-board relative w-full rounded-xl overflow-hidden"
           style={{
             aspectRatio: "1 / 1",
             display: "grid",
@@ -643,6 +643,9 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
                 >
                   {val !== 0 && (
                     <span
+                      className="ms-cell-value"
+                      data-given={isGiven ? "true" : "false"}
+                      data-conflict={isConflict ? "true" : "false"}
                       style={{
                         fontSize: "clamp(16px, 5vw, 26px)",
                         fontWeight: isGiven ? 700 : 500,
