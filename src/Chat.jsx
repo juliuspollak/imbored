@@ -12,6 +12,62 @@ const MESSAGE_REACTIONS = [
 ];
 const MESSAGE_REACTION_EMOJI = Object.fromEntries(MESSAGE_REACTIONS.map((item) => [item.id,item.emoji]));
 const EMOJI_PICKER = ["😀","😂","🥰","😍","🤩","😎","🥳","😊","😉","🤔","😮","😢","😭","😡","👍","👎","❤️","🔥","👏","🎉","💯","🙌","🤝","👀","🎮","🏆","⭐","✨"];
+const FLUENT_EMOJI_PATHS = {
+  "😀":"Grinning face/animated/grinning_face_animated.png",
+  "😂":"Face with tears of joy/animated/face_with_tears_of_joy_animated.png",
+  "🥰":"Smiling face with hearts/animated/smiling_face_with_hearts_animated.png",
+  "😍":"Smiling face with heart-eyes/animated/smiling_face_with_heart-eyes_animated.png",
+  "🤩":"Star-struck/animated/star-struck_animated.png",
+  "😎":"Smiling face with sunglasses/animated/smiling_face_with_sunglasses_animated.png",
+  "🥳":"Partying face/animated/partying_face_animated.png",
+  "😊":"Smiling face with smiling eyes/animated/smiling_face_with_smiling_eyes_animated.png",
+  "😉":"Winking face/animated/winking_face_animated.png",
+  "🤔":"Thinking face/animated/thinking_face_animated.png",
+  "😮":"Face with open mouth/animated/face_with_open_mouth_animated.png",
+  "😢":"Crying face/animated/crying_face_animated.png",
+  "😭":"Loudly crying face/animated/loudly_crying_face_animated.png",
+  "😡":"Angry face/animated/angry_face_animated.png",
+  "👍":"Thumbs up/Default/animated/thumbs_up_animated_default.png",
+  "👎":"Thumbs down/Default/animated/thumbs_down_animated_default.png",
+  "❤️":"Red heart/animated/red_heart_animated.png",
+  "🔥":"Fire/animated/fire_animated.png",
+  "👏":"Clapping hands/Default/animated/clapping_hands_animated_default.png",
+  "🎉":"Party popper/animated/party_popper_animated.png",
+  "💯":"Hundred points/animated/hundred_points_animated.png",
+  "🙌":"Raising hands/Default/animated/raising_hands_animated_default.png",
+  "🤝":"Handshake/Default/animated/handshake_animated_default.png",
+  "👀":"Eyes/animated/eyes_animated.png",
+};
+const FLUENT_EMOJI_ROOT = "https://media.githubusercontent.com/media/microsoft/fluentui-emoji-animated/main/assets/";
+
+function FluentEmoji({ emoji,size = 28,animated = false,reducedMotion = false }) {
+  const [preview,setPreview] = useState(false);
+  const path = FLUENT_EMOJI_PATHS[emoji];
+  const showAnimation = path && !reducedMotion && (animated || preview);
+  if (!showAnimation) {
+    return (
+      <span
+        className="fluent-emoji-fallback"
+        style={{ width:size,height:size,fontSize:Math.round(size*.68) }}
+        onMouseEnter={() => setPreview(true)}
+        onFocus={() => setPreview(true)}
+      >
+        {emoji}
+      </span>
+    );
+  }
+  return (
+    <img
+      className="fluent-emoji"
+      src={`${FLUENT_EMOJI_ROOT}${path.split("/").map(encodeURIComponent).join("/")}`}
+      width={size}
+      height={size}
+      alt={emoji}
+      onMouseLeave={() => !animated && setPreview(false)}
+      draggable="false"
+    />
+  );
+}
 
 function formatMessageTime(value) {
   if (!value) return "";
@@ -39,6 +95,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [quickPickerOpen, setQuickPickerOpen] = useState(false);
   const [reactingMessageId, setReactingMessageId] = useState(null);
+  const [reducedMotion, setReducedMotion] = useState(false);
   const messagesRef = useRef(null);
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
@@ -128,6 +185,15 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    const media = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    if (!media) return undefined;
+    const update = () => setReducedMotion(media.matches);
+    update();
+    media.addEventListener?.("change",update);
+    return () => media.removeEventListener?.("change",update);
+  },[]);
 
   useEffect(() => {
     loadMessages();
@@ -323,6 +389,9 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
         .chat-row.theirs .chat-bubble { background:rgba(255,255,255,.95); color:#1b2129; border-bottom-left-radius:6px; }
         .chat-bubble.system { max-width:min(90%,620px); background:linear-gradient(135deg,#fff7d6,#fff1b5)!important; color:#6f5200!important; border:1px solid rgba(174,128,0,.18); border-radius:18px!important; box-shadow:0 9px 24px rgba(128,91,0,.12); }
         .chat-text { white-space:pre-wrap; overflow-wrap:anywhere; font-size:15px; line-height:1.42; }
+        .chat-text.emoji-only { min-width:62px; display:grid; place-items:center; padding:3px 0; }
+        .fluent-emoji,.fluent-emoji-fallback { display:inline-grid; place-items:center; object-fit:contain; vertical-align:middle; flex:0 0 auto; }
+        .fluent-emoji { max-width:none; }
         .chat-meta { margin-top:4px; display:flex; gap:5px; justify-content:flex-end; font-size:9px; opacity:.62; }
         .chat-empty { text-align:center; margin:54px auto; max-width:300px; color:rgba(27,33,41,.56); }
         .chat-composer-wrap { position:relative; flex:0 0 auto; z-index:25; width:100%; padding:8px 12px max(12px,env(safe-area-inset-bottom)); background:rgba(245,247,251,.97); border-top:1px solid rgba(27,33,41,.07); backdrop-filter:blur(18px); }
@@ -414,12 +483,18 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
                           onClick={() => toggleMessageReaction(item.id,reaction.id)}
                           aria-label={myReaction === reaction.id ? `Remove ${reaction.label}` : reaction.label}
                         >
-                          {reaction.emoji}
+                          <FluentEmoji emoji={reaction.emoji} size={27} reducedMotion={reducedMotion}/>
                         </button>
                       ))}
                     </div>
                   )}
-                  <div className="chat-text">{item.body}</div>
+                  {FLUENT_EMOJI_PATHS[item.body] && !item.system_generated ? (
+                    <div className="chat-text emoji-only">
+                      <FluentEmoji emoji={item.body} size={58} animated reducedMotion={reducedMotion}/>
+                    </div>
+                  ) : (
+                    <div className="chat-text">{item.body}</div>
+                  )}
                   <div className="chat-meta">
                     <span>{formatMessageTime(item.created_at)}</span>
                     {mine && <span>{item.read_at ? "Seen" : "Sent"}</span>}
@@ -458,7 +533,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
             <div className="chat-picker chat-emoji-picker" role="dialog" aria-label="Choose an emoji">
               {EMOJI_PICKER.map((emoji) => (
                 <button type="button" className="chat-picker-button" onClick={() => addEmoji(emoji)} key={emoji} aria-label={`Add ${emoji}`}>
-                  {emoji}
+                  <FluentEmoji emoji={emoji} size={28} reducedMotion={reducedMotion}/>
                 </button>
               ))}
             </div>
@@ -467,7 +542,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
             <div className="chat-picker chat-quick-picker" role="dialog" aria-label="Choose a quick reaction">
               {QUICK_REACTIONS.map((emoji) => (
                 <button type="button" className="chat-picker-button" onClick={() => sendQuickReaction(emoji)} key={emoji} aria-label={`Send ${emoji}`}>
-                  {emoji}
+                  <FluentEmoji emoji={emoji} size={28} reducedMotion={reducedMotion}/>
                 </button>
               ))}
             </div>
@@ -520,7 +595,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
               aria-label="Send thumbs up. Press and hold for more reactions."
               aria-expanded={quickPickerOpen}
             >
-              👍
+              <FluentEmoji emoji="👍" size={27} reducedMotion={reducedMotion}/>
             </button>
           </form>
         </div>}
