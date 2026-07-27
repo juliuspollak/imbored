@@ -456,9 +456,16 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
     const res = await saveStats(stats);
     if (res?.data) {
       setSavedStatId(res.data.id);
-      setRewardResult(res.rewardError
-        ? { completed:true,error:true,message:res.rewardError.message || "Your result was saved, but points could not be awarded.",eventId:Date.now() }
-        : { ...(res.reward || {}),completed:true,eventId:Date.now() });
+      let reward = res.reward || null;
+      let rewardError = res.rewardError || null;
+      if (rewardError || !reward) {
+        const retry = await supabase.rpc("award_game_points", { target_stat_id:res.data.id });
+        reward = retry.data || reward;
+        rewardError = retry.error || (reward ? null : rewardError);
+      }
+      setRewardResult(rewardError || !reward
+        ? { completed:true,error:true,message:rewardError?.message || "Your result was saved, but its points status could not be confirmed.",eventId:Date.now() }
+        : { ...reward,completed:true,eventId:Date.now() });
     } else {
       setRewardResult({
         completed:true,

@@ -1022,14 +1022,21 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
               <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs mb-1">
                 {fmtTime(seconds)} &middot; {efficiency}% efficient &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
               </p>
-              {rewardResult?.points_awarded != null && (
+              {rewardResult?.completed && (
                 <div
                   className="rounded-full px-3 py-1 text-sm font-bold"
-                  style={{ background: "rgba(217,174,88,0.14)", color: "#B88724" }}
+                  style={{
+                    background:rewardResult.error ? "rgba(181,67,58,.10)" : "rgba(217,174,88,0.14)",
+                    color:rewardResult.error ? "#B5433A" : "#B88724",
+                  }}
                 >
-                  {rewardResult.points_awarded > 0
+                  {rewardResult.error
+                    ? "Points could not be saved"
+                    : rewardResult.points_awarded > 0
                     ? `★ +${rewardResult.points_awarded} Points`
-                    : t("common.noPoints")}
+                    : rewardResult.daily_limit_reached
+                      ? "Daily practice points limit reached"
+                      : t("common.noPoints")}
                 </div>
               )}
               {savedStatId ? (
