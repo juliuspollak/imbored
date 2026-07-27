@@ -837,7 +837,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
               >
                 {challengesLoaded && (challengeScope?.type === "team" ? todayRoundDone : todayCompletions.has(g.id)) && (
                   <span
-                    className="absolute top-3 left-3 flex items-center justify-center rounded-full"
+                    className={`home-tile-check home-tile-check--${g.id} absolute top-3 left-3 flex items-center justify-center rounded-full`}
                     style={{ width: 18, height: 18, background: "rgba(47,111,237,0.12)" }}
                     title={t("home.alreadyPlayed")}
                   >
@@ -854,7 +854,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                   </span>
                 )}
                 <div
-                  className="flex items-center justify-center rounded-xl"
+                  className={`home-tile-icon home-tile-icon--${g.id} flex items-center justify-center rounded-xl`}
                   style={{ width: 40, height: 40, background: `${g.accent}22` }}
                 >
                   <Icon size={20} style={{ color: g.accent }} />
