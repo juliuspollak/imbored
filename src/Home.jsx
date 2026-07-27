@@ -30,6 +30,12 @@ function todayString() {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+function previousWeekDate() {
+  const date = new Date();
+  date.setDate(date.getDate()-7);
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+}
+
 function currentWeekRange() {
   const date = new Date();
   const isoDay = date.getDay() || 7;
@@ -182,7 +188,13 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
       setChallengeBenchmarks([]);
       setPreviousChallengeRows([]);
       setPreviousChallengeRounds([]);
-      setPreviousChallengeLabel(previousChallenge ? challengeWeekLabel(previousChallenge.week_start) : null);
+      setPreviousChallengeLabel(
+        previousChallenge
+          ? challengeWeekLabel(previousChallenge.week_start)
+          : challengeScope?.type !== "team"
+            ? "Same day last week"
+            : null
+      );
       const cached = standingsCacheRef.current[cacheKey];
       if (cached) {
         setChallengeRows(cached.rows);
@@ -234,6 +246,15 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         if (cancelled) return;
         previousRows = priorResults || [];
         previousRoundRows = priorRounds || [];
+      } else if (challengeScope?.type !== "team") {
+        const { data:priorResults } = await supabase.from("game_stats")
+          .select("user_id,game,challenge_date,seconds,mistakes,hints,completed_at")
+          .eq("user_id",userId)
+          .eq("mode","challenge")
+          .is("team_challenge_id",null)
+          .eq("challenge_date",previousWeekDate());
+        if (cancelled) return;
+        previousRows = priorResults || [];
       }
 
       let rows = resultRows || [];
@@ -529,6 +550,22 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                 {personalStatus.done ? t("home.done") : t("home.gamesLeft", { count:personalStatus.remaining })}
               </span>
             </button>
+
+            {challengeScope?.type !== "team" && (
+              <ChallengeStandings
+                rows={challengeRows}
+                roster={standingsRoster}
+                games={selectedChallengeGames}
+                benchmarks={challengeBenchmarks}
+                previousRows={previousChallengeRows}
+                previousWeekLabel={previousChallengeLabel}
+                userId={userId}
+                loading={standingsLoading}
+                refreshing={standingsRefreshing}
+                defaultOpen
+                embedded
+              />
+            )}
 
             {teamChallenges.length > 0 && (
               <div className="mt-3 pt-3" style={{ borderTop:"1px solid rgba(16,24,40,.07)" }}>
