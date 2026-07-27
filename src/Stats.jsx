@@ -9,7 +9,7 @@ import { useAuth } from "./lib/AuthContext.jsx";
 const BG = "#F1F3F7", PANEL = "#FFFFFF", INK = "#1B2129", ACCENT = "#2F6FED";
 const GAME_LABELS = {
   queens: "Queens", tango: "Tango", zip: "Zip",
-  minisudoku: "Sudoku", geo: "Geo", zoom: "Zoom",
+  minisudoku: "Sudoku", geo: "Geo", zoom: "Zoom", animalrush: "Animal Rush",
 };
 
 function rankStyle(rank) {
@@ -32,14 +32,30 @@ export default function Stats({ onBack }) {
   const refresh = useCallback(async () => {
     if (!supabaseReady) { setLoading(false); return; }
     setLoading(true);
-    const [statsResult, profilesResult, progressResult] = await Promise.all([
+    const [statsResult, liveResult, profilesResult, progressResult] = await Promise.all([
       // Server-side aggregates exclude unrewarded rapid Practice replays.
       // Individual attempts, times, mistakes and hints never leave the RPC.
       supabase.rpc("get_public_player_game_summary"),
+      supabase.from("animal_rush_match_results").select("user_id"),
       supabase.from("profiles").select("id, name, icon, mood, hidden_from_others, show_stats_to_others, account_deleted_at").is("account_deleted_at", null),
       supabase.rpc("get_public_player_progress"),
     ]);
-    setRows(statsResult.data || []);
+    const liveCounts = (liveResult.data || []).reduce((counts, item) => {
+      counts[item.user_id] = (counts[item.user_id] || 0) + 1;
+      return counts;
+    }, {});
+    const summaries = new Map((statsResult.data || []).map((item) => [item.player_id, item]));
+    Object.entries(liveCounts).forEach(([playerId, games]) => {
+      const current = summaries.get(playerId);
+      summaries.set(playerId, {
+        player_id: playerId,
+        games_played: Number(current?.games_played || 0) + games,
+        challenge_games: Number(current?.challenge_games || 0),
+        practice_games: Number(current?.practice_games || 0),
+        favourite_game: current?.favourite_game || "animalrush",
+      });
+    });
+    setRows([...summaries.values()]);
     setProfiles(Object.fromEntries((profilesResult.data || []).map((item) => [item.id, item])));
     setProgress(Object.fromEntries((progressResult.data || []).map((item) => [item.player_id, item])));
     setProgressError(progressResult.error?.message || "");

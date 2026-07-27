@@ -1,5 +1,12 @@
 [
   {
+    "id": "v137-animal-rush-live-game",
+    "version": "v137",
+    "date": "2026-07-27",
+    "title": "Animal Rush live phone game",
+    "body": "Added Animal Rush, a phone-only live reaction game for 2–6 players. Players join with a room code, race for the animal shown by the shared die, protect two safety cards and lose won cards after their protection is gone. First touches, penalties, elimination and winners are resolved centrally for consistent play across phones."
+  },
+  {
     "id": "v109-release-notes-and-email-invites",
     "version": "v109",
     "date": "2026-07-25",

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Crown, Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle, Check, Star, Flame, ChevronRight, ChevronDown, Globe2, Users, ZoomIn } from "lucide-react";
+import { Crown, Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle, Check, Star, Flame, ChevronRight, ChevronDown, Globe2, Users, ZoomIn, PawPrint } from "lucide-react";
 import { useGameConfig } from "./lib/useGameConfig.js";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useI18n } from "./lib/i18n.jsx";
@@ -24,6 +24,7 @@ export const GAME_META = [
   { id: "wend", label: "Wend", desc: "Weave hidden words through the grid", icon: Waves, accent: "#0EA5E9", available: false },
   { id: "geo", label: "Geo", desc: "Capitals, landmarks & wildlife by continent", icon: Globe2, accent: "#DB2777", available: true },
   { id: "zoom", label: "Zoom", desc: "Narrow it down: continent, region, country", icon: ZoomIn, accent: "#7C3AED", available: true },
+  { id: "animalrush", label: "Animal Rush", desc: "Live animal race for 2–6 phones", icon: PawPrint, accent: "#15966F", available: false, live: true, requiresConfig: true },
 ];
 
 function todayString() {
@@ -382,15 +383,15 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
           return {
             ...g,
             available: cfg ? cfg.available : g.available,
-            visible: cfg ? cfg.visible : true,
+            visible: cfg ? cfg.visible : !g.requiresConfig,
             sortOrder: cfg ? cfg.sort_order : i,
           };
         })
         .filter((g) => g.visible)
         .sort((a, b) => a.sortOrder - b.sortOrder);
   const visibleGames = configuredGames
-    .filter((g) => playMode !== "challenge" || challengeScope?.type !== "team" || (challengeScope.gameIds || []).includes(g.id));
-  const personalGameIds = configuredGames.filter((game) => game.available).map((game) => game.id);
+    .filter((g) => g.live || playMode !== "challenge" || challengeScope?.type !== "team" || (challengeScope.gameIds || []).includes(g.id));
+  const personalGameIds = configuredGames.filter((game) => game.available && !game.live).map((game) => game.id);
   const personalCompleted = challengeCompletions.personal || new Set();
   const challengeStatus = (teamChallenge) => {
     const requiredItems = teamChallenge
@@ -819,11 +820,11 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {visibleGames
-            .filter((g) => !teamChallengeIsActive || (!!todayRound && g.id === todayRound.game))
+            .filter((g) => g.live || !teamChallengeIsActive || (!!todayRound && g.id === todayRound.game))
             .map((g) => {
             const Icon = g.icon;
-            const playingCount = players.filter((p) => p.game === g.id && p.mode === playMode).length;
-            const canOpenGame = g.available && selectedChallengePlayable;
+            const playingCount = players.filter((p) => p.game === g.id && p.mode === (g.live ? "live" : playMode)).length;
+            const canOpenGame = g.available && (g.live || selectedChallengePlayable);
             return (
               <button
                 key={g.id}
@@ -835,7 +836,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                   cursor: canOpenGame ? "pointer" : "default",
                 }}
               >
-                {challengesLoaded && (challengeScope?.type === "team" ? todayRoundDone : todayCompletions.has(g.id)) && (
+                {!g.live && challengesLoaded && (challengeScope?.type === "team" ? todayRoundDone : todayCompletions.has(g.id)) && (
                   <span
                     className={`home-tile-check home-tile-check--${g.id} absolute top-3 left-3 flex items-center justify-center rounded-full`}
                     style={{ width: 18, height: 18, background: "rgba(47,111,237,0.12)" }}
@@ -860,7 +861,14 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                   <Icon size={20} style={{ color: g.accent }} />
                 </div>
                 <div>
-                  <div style={{ color: CREAM, fontWeight: 600 }} className="text-sm">{g.label}</div>
+                  <div className="flex items-center gap-1.5">
+                    <div style={{ color: CREAM, fontWeight: 600 }} className="text-sm">{g.label}</div>
+                    {g.live && (
+                      <span className="rounded-full px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wide" style={{ color:"#087A58",background:"rgba(21,150,111,.12)" }}>
+                        Live
+                      </span>
+                    )}
+                  </div>
                   <div style={{ color: CREAM, opacity: 0.5 }} className="text-xs mt-0.5 leading-snug">{t(`game.${g.id}.desc`)}</div>
                 </div>
                 {!g.available && (
