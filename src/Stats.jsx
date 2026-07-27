@@ -35,7 +35,7 @@ export default function Stats({ onBack }) {
       // Only aggregate-friendly fields are loaded. Individual attempts, times,
       // mistakes and hints do not belong on the community leaderboard.
       supabase.from("game_stats").select("user_id, game, mode"),
-      supabase.from("profiles").select("id, name, icon, mood, hidden_from_others, show_stats_to_others"),
+      supabase.from("profiles").select("id, name, icon, mood, hidden_from_others, show_stats_to_others, account_deleted_at").is("account_deleted_at", null),
       supabase.rpc("get_public_player_progress"),
     ]);
     setRows(statsResult.data || []);
