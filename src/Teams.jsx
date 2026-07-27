@@ -18,9 +18,18 @@ const CREAM = "#1B2129";
 const TEAM_EMOJIS = ["🎮","🧩","🚀","🔥","⭐","🏆","🦄","🐉","🦊","🐼","🌈","⚡","💎","👑","🎯","🛸"];
 const DAYS = [{id:1,label:"Mon"},{id:2,label:"Tue"},{id:3,label:"Wed"},{id:4,label:"Thu"},{id:5,label:"Fri"},{id:6,label:"Sat"},{id:7,label:"Sun"}];
 const DEFAULT_GAMES = ["queens","tango","zip","minisudoku","geo","zoom"];
+const GAME_LABELS = { queens:"Queens",tango:"Tango",zip:"Zip",minisudoku:"Mini Sudoku",geo:"Geo",zoom:"Zoom" };
 // The configured amount is the winner's prize, separate from daily challenge
 // score and from the wallet points earned for completing a puzzle.
 const MAX_CHALLENGE_REWARD_POINTS = 500;
+
+function challengeChoiceStyle(selected) {
+  return {
+    background:selected ? "rgba(47,111,237,.10)" : "rgba(16,24,40,.05)",
+    color:selected ? ACCENT : INK,
+    border:selected ? "1px solid rgba(47,111,237,.32)" : "1px solid transparent",
+  };
+}
 
 function suggestEmoji(value) {
   const rules = [[/(space|star|galaxy|moon|astro)/,"🚀"],[/(fire|hot|flame)/,"🔥"],[/(king|queen|royal|crown)/,"👑"],[/(dragon)/,"🐉"],[/(fox)/,"🦊"],[/(panda)/,"🐼"],[/(rainbow|colour|color)/,"🌈"],[/(winner|champ|trophy)/,"🏆"],[/(target|aim|bull)/,"🎯"],[/(gem|diamond)/,"💎"],[/(magic|unicorn)/,"🦄"],[/(fast|bolt|lightning)/,"⚡"],[/(game|play)/,"🎮"],[/(puzzle|quiz|brain)/,"🧩"]];
@@ -29,8 +38,8 @@ function suggestEmoji(value) {
 
 const defaultChallenge = () => ({
   title:"Weekly challenge",
-  games:[...DEFAULT_GAMES],
-  days:[1,2,3,4,5,6,7],
+  games:[],
+  days:[],
   reward:100,
   rewardType:"points",
   rewardLabel:"",
@@ -313,7 +322,7 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
   }
   function startNewChallenge(teamId) {
     const key = `new:${teamId}`;
-    patchChallenge(key, { ...defaultChallenge(), days:[] });
+    patchChallenge(key, defaultChallenge());
     setExpandedChallengeId(key);
   }
   async function saveTeamChallenge(team, challengeKey) {
@@ -488,10 +497,43 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
                       {challengeOpen && <div className="px-3 pb-3" style={{ borderTop:"1px solid rgba(16,24,40,.06)" }}>
                         {edit.locked && <div className="rounded-xl p-2.5 text-[11px] mt-3" style={{ background:"rgba(217,174,88,.10)",color:"#775B1D" }}>Locked because a member started this challenge.</div>}
                         {owner && <label className="block mt-3"><span className="text-[11px] font-semibold">Challenge name</span><input disabled={edit.locked} value={edit.title} onChange={(event) => patchChallenge(challengeKey,{ title:event.target.value })} placeholder="e.g. Weekend sprint" className="w-full rounded-xl border px-3 py-2 text-base mt-1 bg-white disabled:opacity-55"/></label>}
-                        <div className="text-[11px] font-semibold mt-3 mb-2">Games</div><div className="flex flex-wrap gap-2">{DEFAULT_GAMES.map((game) => { const chosen=edit.games.includes(game);return <button className="gloss-button" disabled={!owner || edit.locked} type="button" key={game} onClick={() => toggleChallengeGame(challengeKey,game)} className="rounded-full px-3 py-1.5 text-xs capitalize disabled:opacity-70" style={{ background:chosen ? "rgba(47,111,237,.12)" : "rgba(16,24,40,.05)",color:chosen ? ACCENT : INK }}>{game}</button>; })}</div>
+                        <div className="text-[11px] font-semibold mt-3 mb-2">Games</div>
+                        <div className="flex flex-wrap gap-2">
+                          {DEFAULT_GAMES.map((game) => {
+                            const chosen=edit.games.includes(game);
+                            return <button
+                              disabled={!owner || edit.locked}
+                              type="button"
+                              key={game}
+                              onClick={() => toggleChallengeGame(challengeKey,game)}
+                              aria-pressed={chosen}
+                              className="gloss-button inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold disabled:opacity-70"
+                              style={challengeChoiceStyle(chosen)}
+                            >
+                              {chosen && <Check size={12} strokeWidth={3}/>}
+                              {GAME_LABELS[game] || game}
+                            </button>;
+                          })}
+                        </div>
                         <div className="text-[11px] font-semibold mt-4 mb-1">Playing days</div>
                         {challenge.isNew && <div className="text-[10px] opacity-45 mb-2">Choose every day this challenge can be played. No days are selected yet.</div>}
-                        <div className="grid grid-cols-7 gap-1">{DAYS.map((day) => { const chosen=edit.days.includes(day.id);return <button className="gloss-button" disabled={!owner || edit.locked} type="button" key={day.id} onClick={() => toggleDay(challengeKey,day.id)} aria-pressed={chosen} className="rounded-lg py-2 text-[10px] font-semibold disabled:opacity-70" style={{ background:chosen ? "rgba(18,148,106,.12)" : "rgba(16,24,40,.05)",color:chosen ? "#0B7C58" : INK,border:chosen ? "1px solid rgba(18,148,106,.35)" : "1px solid transparent" }}>{chosen ? `✓ ${day.label}` : day.label}</button>; })}</div>
+                        <div className="grid grid-cols-7 gap-1">
+                          {DAYS.map((day) => {
+                            const chosen=edit.days.includes(day.id);
+                            return <button
+                              disabled={!owner || edit.locked}
+                              type="button"
+                              key={day.id}
+                              onClick={() => toggleDay(challengeKey,day.id)}
+                              aria-pressed={chosen}
+                              className="gloss-button inline-flex items-center justify-center gap-1 rounded-xl px-1 py-2 text-xs font-semibold disabled:opacity-70"
+                              style={challengeChoiceStyle(chosen)}
+                            >
+                              {chosen && <Check size={11} strokeWidth={3}/>}
+                              {day.label}
+                            </button>;
+                          })}
+                        </div>
                         {!!edit.games.length && !!edit.days.length && <div className="rounded-2xl p-3 mt-3" style={{ background:"rgba(47,111,237,.055)",border:"1px solid rgba(47,111,237,.10)" }}>
                           <div className="text-[10px] font-semibold mb-2">Daily game schedule</div>
                           <div className="flex flex-wrap gap-1.5">{buildTeamChallengeRounds({ activeDays:edit.days,gameIds:edit.games }).map((round) => <span key={round.date} className="rounded-full px-2.5 py-1 text-[10px] font-semibold capitalize" style={{ background:"#fff",color:INK }}>{DAYS[round.isoDay-1]?.label} · {round.game}</span>)}</div>
