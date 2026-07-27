@@ -70,6 +70,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   const [progress, setProgress] = useState(null);
   const [teamChallenges, setTeamChallenges] = useState([]);
   const [challengeHistory, setChallengeHistory] = useState([]);
+  const [showAllChallengeHistory, setShowAllChallengeHistory] = useState(false);
   const [teamRosters, setTeamRosters] = useState({});
   const [challengeLifecycle, setChallengeLifecycle] = useState({});
   const [challengeCompletions, setChallengeCompletions] = useState({ personal: new Set() });
@@ -743,31 +744,64 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                   <span className="grid place-items-center rounded-lg text-sm" style={{ width:28,height:28,background:"rgba(16,24,40,.05)" }}>🕘</span>
                   <span className="flex-1">
                     <span className="block text-xs font-bold">Past team challenges</span>
-                    <span className="block text-[9px] mt-0.5" style={{ color:"rgba(27,33,41,.43)" }}>Winners and completed weeks</span>
+                    <span className="block text-[9px] mt-0.5" style={{ color:"rgba(27,33,41,.43)" }}>Recent results</span>
                   </span>
                   <span className="text-[10px] font-semibold rounded-full px-2 py-0.5" style={{ background:"rgba(16,24,40,.05)",color:"rgba(27,33,41,.48)" }}>{challengeHistory.length}</span>
                   <ChevronDown size={15} className="transition-transform group-open:rotate-180" style={{ opacity:.35 }}/>
                 </summary>
-                <div className="space-y-2 mt-3">
-                  {challengeHistory.map((item) => {
-                    const winnerLabel = item.winner_id
-                      ? item.winner_id === userId
-                        ? "🏆 You won"
-                        : `🏆 ${item.winner_name || "A teammate"} won`
-                      : "Closed · no finisher";
-                    return <div key={item.challenge_id} className="rounded-2xl p-3 flex items-center gap-3" style={{ background:"#F7F8FB",border:"1px solid rgba(16,24,40,.06)" }}>
-                      <span className="grid place-items-center rounded-xl text-lg shrink-0" style={{ width:38,height:38,background:"#fff" }}>{item.team_emoji || "⭐"}</span>
-                      <span className="flex-1 min-w-0">
-                        <span className="block text-xs font-semibold truncate">{item.challenge_title || item.team_name}</span>
-                        <span className="block text-[9px] mt-0.5 truncate" style={{ color:"rgba(27,33,41,.45)" }}>{item.team_name} · {challengeWeekLabel(item.week_start)}</span>
-                        <span className="block text-[9px] mt-1" style={{ color:item.winner_id ? "#7A5711" : "rgba(27,33,41,.48)" }}>{winnerLabel}</span>
-                      </span>
-                      <span className="text-right shrink-0">
-                        <span className="block text-[9px] font-semibold">{item.finisher_count || 0} finished</span>
-                        <span className="block text-[9px] mt-0.5" style={{ color:"rgba(27,33,41,.40)" }}>{item.entry_count || 0} entered</span>
-                      </span>
-                    </div>;
+                <div className="mt-3 overflow-hidden rounded-2xl" style={{ background:"rgba(16,24,40,.025)",border:"1px solid rgba(16,24,40,.07)" }}>
+                  {challengeHistory.slice(0, showAllChallengeHistory ? challengeHistory.length : 3).map((item, index) => {
+                    const isWinner = item.winner_id === userId;
+                    const hasWinner = !!item.winner_id;
+                    const entries = Number(item.entry_count) || 0;
+                    const finishers = Number(item.finisher_count) || 0;
+                    const resultLabel = isWinner
+                      ? "You won"
+                      : hasWinner
+                        ? `${item.winner_name || "Teammate"} won`
+                        : "No winner";
+                    return (
+                      <div
+                        key={item.challenge_id}
+                        className="flex items-center gap-2.5 px-3 py-2.5"
+                        style={{ borderTop:index ? "1px solid rgba(16,24,40,.06)" : "none" }}
+                      >
+                        <span className="grid place-items-center rounded-full text-sm shrink-0" style={{ width:30,height:30,background:"rgba(255,255,255,.78)" }}>
+                          {item.team_emoji || "⭐"}
+                        </span>
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-[11px] font-semibold truncate">{item.challenge_title || item.team_name}</span>
+                          <span className="block text-[9px] mt-0.5 truncate" style={{ color:"rgba(27,33,41,.44)" }}>
+                            {item.team_name} · {challengeWeekLabel(item.week_start)}
+                          </span>
+                        </span>
+                        <span className="text-right shrink-0">
+                          <span
+                            className="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold"
+                            style={{
+                              background:isWinner ? "rgba(22,163,74,.10)" : "rgba(16,24,40,.05)",
+                              color:isWinner ? "#15803D" : "rgba(27,33,41,.58)",
+                            }}
+                          >
+                            {isWinner ? "🏆 " : ""}{resultLabel}
+                          </span>
+                          <span className="block text-[8px] mt-1" style={{ color:"rgba(27,33,41,.38)" }}>
+                            {entries > 0 ? `${finishers}/${entries} finished` : "No entries"}
+                          </span>
+                        </span>
+                      </div>
+                    );
                   })}
+                  {challengeHistory.length > 3 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllChallengeHistory((visible) => !visible)}
+                      className="w-full py-2 text-[9px] font-semibold"
+                      style={{ borderTop:"1px solid rgba(16,24,40,.06)",color:"#2F6FED",background:"rgba(255,255,255,.36)" }}
+                    >
+                      {showAllChallengeHistory ? "Show recent only" : `Show all ${challengeHistory.length}`}
+                    </button>
+                  )}
                 </div>
               </details>
             )}
