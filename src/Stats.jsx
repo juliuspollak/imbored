@@ -26,6 +26,7 @@ export default function Stats({ onBack }) {
   const [profiles, setProfiles] = useState({});
   const [progress, setProgress] = useState({});
   const [loading, setLoading] = useState(true);
+  const [progressError, setProgressError] = useState("");
 
   const refresh = useCallback(async () => {
     if (!supabaseReady) { setLoading(false); return; }
@@ -40,6 +41,7 @@ export default function Stats({ onBack }) {
     setRows(statsResult.data || []);
     setProfiles(Object.fromEntries((profilesResult.data || []).map((item) => [item.id, item])));
     setProgress(Object.fromEntries((progressResult.data || []).map((item) => [item.player_id, item])));
+    setProgressError(progressResult.error?.message || "");
     setLoading(false);
   }, []);
 
@@ -129,6 +131,8 @@ export default function Stats({ onBack }) {
             </div>
           </div>
         </section>
+
+        {progressError && <div className="rounded-2xl px-3 py-2.5 mb-3 text-[10px] leading-relaxed" role="alert" style={{ background: "rgba(229,72,77,.08)", color: "#A62F34", border: "1px solid rgba(229,72,77,.16)" }}><strong>Player totals could not be loaded.</strong> Apply the latest Player Stats database migration, then refresh this page.</div>}
 
         {loading ? <p style={{ color: INK, opacity: .4 }} className="text-sm text-center py-10">Loading standings…</p> : players.length === 0 ? <div className="rounded-2xl text-center py-10 px-4" style={{ background: PANEL, border: "1px solid rgba(16,24,40,.08)" }}><Sparkles size={24} style={{ color: ACCENT, margin: "0 auto 8px" }}/><div className="text-sm font-semibold" style={{ color: INK }}>No player activity yet</div></div> : <>
           <div className="flex items-end justify-between mb-2 px-1">
