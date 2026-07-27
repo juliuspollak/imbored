@@ -14,6 +14,7 @@ export default function HintCooldownButton({ cooldown, label = "Hint", onClick, 
       disabled={unavailable}
       aria-label={accessibleLabel}
       aria-disabled={unavailable}
+      data-disabled-by-game={disabled ? "true" : "false"}
       className={`hint-liquid-button gloss-button flex-1 rounded-lg py-2 text-xs font-semibold${cooling ? " is-filling" : ""}`}
       style={{ "--hint-fill": `${percent}%` }}
     >
@@ -79,6 +80,15 @@ export default function HintCooldownButton({ cooldown, label = "Hint", onClick, 
             color: rgba(238,243,251,.88) !important;
             background: rgba(255,255,255,.07) !important;
             border-color: rgba(255,255,255,.12) !important;
+          }
+          .game-toolbar .hint-liquid-button[data-disabled-by-game="true"] {
+            color: rgba(232,238,247,.34) !important;
+            background: rgba(255,255,255,.035) !important;
+            border-color: rgba(255,255,255,.07) !important;
+            box-shadow: none !important;
+          }
+          .game-toolbar .hint-liquid-button[data-disabled-by-game="true"] .hint-liquid-fill {
+            display: none;
           }
           .hint-liquid-label { text-shadow: 0 1px 1px rgba(0,0,0,.32); }
         }
