@@ -246,6 +246,16 @@ export default function BotMatch({ userId, profile, reducedMotion = false, onBac
             <ScoreChip player={bot} />
           </div>
 
+          {game.round.number === 1 && game.round.status === "playing" && !revealed && (
+            <div className="rush-start-countdown" role="status" aria-live="polite">
+              <div>
+                <span>Match starts in</span>
+                <strong key={countdown}>{countdown || 1}</strong>
+                <small>Get ready to find the animal</small>
+              </div>
+            </div>
+          )}
+
           <div className="rush-round-info">
             {game.round.status === "result" && (
               <div className="rush-round-result mb-3">

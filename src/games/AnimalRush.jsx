@@ -607,6 +607,16 @@ export default function AnimalRush({ onExit }) {
             ))}
           </div>
 
+          {room.round_number === 1 && phase === "countdown" && (
+            <div className="rush-start-countdown" role="status" aria-live="polite">
+              <div>
+                <span>Match starts in</span>
+                <strong key={countdown}>{countdown || 1}</strong>
+                <small>Get ready to find the animal</small>
+              </div>
+            </div>
+          )}
+
           <div className="rush-round-info">
             {room.status === "round_result" && (
               <div className="rush-round-result mb-3">
