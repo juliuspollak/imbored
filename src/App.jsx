@@ -784,6 +784,20 @@ const NAV_BTN_STYLE = `
     border-color: rgba(255,255,255,.88) !important;
     box-shadow: inset 0 1px 0 rgba(255,255,255,.98),0 0 0 1px rgba(47,111,237,.26),0 9px 24px rgba(47,111,237,.22) !important;
   }
+  @media (prefers-color-scheme: dark) and (hover: hover) and (pointer: fine) {
+    .nav-btn:hover {
+      color: #f4f7fb !important;
+      background: linear-gradient(160deg, rgba(78,94,118,.98), rgba(31,41,56,.98)) !important;
+      border-color: rgba(255,255,255,.22) !important;
+    }
+    .incognito-button:hover,
+    .incognito-button.is-active,
+    .incognito-button.is-active:hover {
+      color: #dce8ff !important;
+      background: linear-gradient(145deg,rgba(72,91,122,.94),rgba(31,42,58,.98)) !important;
+      border-color: rgba(142,178,255,.34) !important;
+    }
+  }
 `;
 
 function PokeLayer() {
