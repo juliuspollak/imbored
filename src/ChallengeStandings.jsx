@@ -265,6 +265,19 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
   },[benchmarks,historyRows,isTeam,userId]);
 
   const playedCount = standings.filter((standing) => standing.completed > 0).length;
+  const displayedStandings = useMemo(() => {
+    if (isTeam) return standings;
+    const active = standings.filter((standing) => standing.completed > 0 && !standing.privateStats);
+    const top = active.slice(0,3);
+    const mine = active.find((standing) => standing.id === userId);
+    return mine && !top.some((standing) => standing.id === userId) ? [...top,mine] : top;
+  },[isTeam,standings,userId]);
+  const displayedHistoryStandings = useMemo(() => {
+    const visible = historyStandings.filter((standing) => !standing.privateStats);
+    const top = visible.slice(0,3);
+    const mine = visible.find((standing) => standing.id === userId);
+    return mine && !top.some((standing) => standing.id === userId) ? [...top,mine] : top;
+  },[historyStandings,userId]);
   const leader = (closed && winnerId
     ? standings.find((standing) => standing.id === winnerId)
     : null) || standings.find((standing) => standing.rank === 1);
@@ -315,55 +328,54 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
               )}
             </div>
           )}
-          {!loading && myStanding && (
-            <div className="rounded-2xl p-3 mb-3" style={{ background:"linear-gradient(135deg,rgba(47,111,237,.10),rgba(124,58,237,.055))",border:"1px solid rgba(47,111,237,.14)" }}>
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.42)" }}>{isTeam ? "Your week" : "Your challenge"}</div>
-                  <div className="text-sm font-bold mt-0.5">
-                    {myStanding.rank ? `#${myStanding.rank} of ${isTeam ? standings.filter((item) => item.rank).length : standings.length}` : "Not ranked yet"}
+          {!loading && myStanding && myStanding.completed > 0 && (
+            <div className="rounded-2xl px-3 py-3 mb-3" style={{ background:"linear-gradient(135deg,rgba(47,111,237,.10),rgba(124,58,237,.055))",border:"1px solid rgba(47,111,237,.14)" }}>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="text-[9px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.42)" }}>{isTeam ? "Your week" : "Your result"}</div>
+                  <div className="flex items-baseline gap-2 mt-0.5">
+                    <span className="text-base font-bold">{myStanding.rank ? `#${myStanding.rank}` : "—"}</span>
+                    <span className="text-[10px]" style={{ color:"rgba(27,33,41,.46)" }}>
+                      {isTeam
+                        ? `of ${standings.filter((item) => item.rank).length}`
+                        : `of ${playedCount} active today`}
+                    </span>
+                  </div>
+                  <div className="text-[10px] mt-1" style={{ color:"rgba(27,33,41,.50)" }}>
+                    {myStanding.completed}/{rounds.length || games.length} played · {formatDuration(myStanding.adjustedSeconds)} adjusted
+                    {isTeam && myStanding.missed ? ` · ${myStanding.missed} missed` : ""}
                   </div>
                 </div>
-                <div className="rounded-full px-3 py-1.5 text-sm font-bold" style={{ background:"#fff",color:"#2F6FED",boxShadow:"0 4px 12px rgba(47,111,237,.10)" }}>
+                <div className="rounded-full px-3 py-1.5 text-sm font-bold shrink-0" style={{ background:"#fff",color:"#2F6FED",boxShadow:"0 4px 12px rgba(47,111,237,.10)" }}>
                   {myStanding.challengeScore} pts
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-xl p-2.5" style={{ background:"rgba(255,255,255,.72)" }}>
-                  <div className="text-[9px] font-semibold" style={{ color:"rgba(27,33,41,.42)" }}>Played</div>
-                  <div className="text-sm font-bold mt-0.5">{myStanding.completed}/{rounds.length || games.length}</div>
-                </div>
-                <div className="rounded-xl p-2.5" style={{ background:"rgba(255,255,255,.72)" }}>
-                  <div className="text-[9px] font-semibold" style={{ color:"rgba(27,33,41,.42)" }}>{isTeam ? "Missed" : "Adjusted"}</div>
-                  <div className="text-sm font-bold mt-0.5" style={{ color:isTeam && myStanding.missed ? "#B5433A" : INK }}>{isTeam ? myStanding.missed : formatDuration(myStanding.adjustedSeconds)}</div>
-                </div>
-                <div className="rounded-xl p-2.5" style={{ background:"rgba(255,255,255,.72)" }}>
-                  <div className="text-[9px] font-semibold" style={{ color:"rgba(27,33,41,.42)" }}>Last week</div>
-                  <div className="text-sm font-bold mt-0.5">{previousComparison ? previousComparison.previousScore : "—"}</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 mt-2.5 rounded-xl px-3 py-2" style={{ background:"rgba(255,255,255,.66)" }}>
+              <div className="flex items-center gap-2 mt-2.5 pt-2.5" style={{ borderTop:"1px solid rgba(47,111,237,.10)" }}>
                 {previousComparison ? (
                   <>
-                    <span className="grid place-items-center rounded-full" style={{ width:24,height:24,background:previousComparison.delta > 0 ? "rgba(18,148,106,.12)" : previousComparison.delta < 0 ? "rgba(181,67,58,.10)" : "rgba(16,24,40,.06)",color:previousComparison.delta > 0 ? "#0B7C58" : previousComparison.delta < 0 ? "#B5433A" : "rgba(27,33,41,.55)" }}>
-                      {previousComparison.delta > 0 ? <ArrowUp size={13}/> : previousComparison.delta < 0 ? <ArrowDown size={13}/> : <Minus size={13}/>}
+                    <span className="grid place-items-center rounded-full" style={{ width:22,height:22,background:previousComparison.delta > 0 ? "rgba(18,148,106,.12)" : previousComparison.delta < 0 ? "rgba(181,67,58,.10)" : "rgba(16,24,40,.06)",color:previousComparison.delta > 0 ? "#0B7C58" : previousComparison.delta < 0 ? "#B5433A" : "rgba(27,33,41,.55)" }}>
+                      {previousComparison.delta > 0 ? <ArrowUp size={12}/> : previousComparison.delta < 0 ? <ArrowDown size={12}/> : <Minus size={12}/>}
                     </span>
-                    <span className="text-[11px] font-semibold">
+                    <span className="text-[10px] font-semibold">
                       {previousComparison.delta > 0
-                        ? `${previousComparison.delta} points better than last week`
+                        ? `${previousComparison.delta} points ahead of last week`
                         : previousComparison.delta < 0
                           ? `${Math.abs(previousComparison.delta)} points behind last week`
                           : "Level with last week"}
                     </span>
-                    <span className="ml-auto text-[9px]" style={{ color:"rgba(27,33,41,.42)" }}>after {previousComparison.rounds} {isTeam ? `round${previousComparison.rounds === 1 ? "" : "s"}` : `game${previousComparison.rounds === 1 ? "" : "s"}`}</span>
+                    <span className="ml-auto text-[9px]" style={{ color:"rgba(27,33,41,.38)" }}>
+                      same {previousComparison.rounds} {isTeam ? `round${previousComparison.rounds === 1 ? "" : "s"}` : `game${previousComparison.rounds === 1 ? "" : "s"}`}
+                    </span>
                   </>
                 ) : (
-                  <span className="text-[10px]" style={{ color:"rgba(27,33,41,.45)" }}>{previousWeekLabel ? (isTeam ? "Comparison starts after your first scheduled round." : "No matching games from the same day last week yet.") : "No previous matching challenge to compare yet."}</span>
+                  <span className="text-[10px]" style={{ color:"rgba(27,33,41,.44)" }}>
+                    {previousWeekLabel ? (isTeam ? "Comparison starts after your first scheduled round." : "No matching result from last week.") : "No previous result to compare."}
+                  </span>
                 )}
               </div>
             </div>
           )}
-          {!loading && standings.length > 0 && (
+          {!loading && displayedStandings.length > 0 && (
             <div className="flex items-center justify-between px-1 mb-2">
               <span className="text-[10px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.38)" }}>{isTeam ? "Team standings" : "Challenge standings"}</span>
               <span className="text-[9px]" style={{ color:"rgba(27,33,41,.38)" }}>{isTeam ? "Highest score first" : "Played, then score"}</span>
@@ -380,7 +392,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
             </div>
           ) : (
             <div className="flex flex-col gap-2">
-              {standings.map((standing) => {
+              {displayedStandings.map((standing) => {
                 const isExpanded = expandedPlayerId === standing.id;
                 const requiredCount = isTeam && rounds.length ? rounds.length : games.length;
                 const progress = requiredCount ? Math.round((standing.completed / requiredCount) * 100) : 0;
@@ -460,49 +472,54 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                   </button>
                 );
               })}
-              <div className="px-2 pt-1 text-[10px] text-center" style={{ color:"rgba(27,33,41,.38)" }}>
+              <div className="px-2 pt-1 text-[9px] text-center" style={{ color:"rgba(27,33,41,.34)" }}>
                 {isTeam
                   ? "Highest total wins · missed round −100 · hint +30s · mistake/reset +15s"
-                  : "Ranked by games completed, then challenge score · hint +30s · mistake/reset +15s"}
+                  : displayedStandings.length < playedCount
+                    ? `Top 3 + your position · ${playedCount} active today`
+                    : "Games played first, then challenge score"}
               </div>
               {!isTeam && (
-                <div className="mt-3 pt-3" style={{ borderTop:"1px solid rgba(16,24,40,.08)" }}>
-                  <div className="flex items-end justify-between gap-2 px-1 mb-2">
-                    <div>
-                      <div className="text-[10px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.40)" }}>Last 7 days overall</div>
-                      <div className="text-[9px] mt-0.5" style={{ color:"rgba(27,33,41,.38)" }}>Combined personal challenge points</div>
-                    </div>
-                    {myHistory && <div className="text-[10px] font-bold" style={{ color:"#2F6FED" }}>You: #{myHistory.rank} · {myHistory.challengeScore} pts</div>}
-                  </div>
-                  {historyStandings.length > 0 ? (
-                    <div className="rounded-2xl overflow-hidden" style={{ background:"#F7F8FB" }}>
-                      {historyStandings.slice(0,5).map((item) => (
-                        <div key={item.id} className="flex items-center gap-2 px-3 py-2 text-[10px]" style={{ borderTop:item.rank === 1 ? "none" : "1px solid rgba(16,24,40,.06)" }}>
-                          <span className="w-4 text-center font-bold" style={{ color:item.rank === 1 ? "#9A721F" : "rgba(27,33,41,.40)" }}>{item.rank || "—"}</span>
-                          <span aria-hidden="true">{item.icon || "🙂"}</span>
-                          <span className="flex-1 font-semibold truncate">{item.name}{item.id === userId ? " · You" : ""}</span>
-                          {item.privateStats ? <span style={{ color:"rgba(27,33,41,.40)" }}>Private</span> : <span className="font-bold">{item.challengeScore} pts · {item.days}d</span>}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-xl px-3 py-3 text-[10px] text-center" style={{ background:"#F7F8FB",color:"rgba(27,33,41,.45)" }}>No personal challenge results in the last 7 days.</div>
-                  )}
-                  {personalHistoryByDate.length > 0 && (
-                    <div className="mt-2">
-                      <div className="text-[9px] font-bold uppercase tracking-[.1em] px-1 mb-1.5" style={{ color:"rgba(27,33,41,.36)" }}>Your past challenges</div>
-                      <div className="flex gap-1.5 overflow-x-auto pb-1">
-                        {personalHistoryByDate.map((item) => (
-                          <div key={item.date} className="rounded-xl px-2.5 py-2 shrink-0" style={{ background:"rgba(47,111,237,.06)",border:"1px solid rgba(47,111,237,.10)" }}>
-                            <div className="text-[9px] font-semibold" style={{ color:"rgba(27,33,41,.46)" }}>{new Date(`${item.date}T12:00:00`).toLocaleDateString(undefined,{ weekday:"short",day:"numeric" })}</div>
-                            <div className="text-[11px] font-bold mt-0.5">{item.score} pts</div>
-                            <div className="text-[8px]" style={{ color:"rgba(27,33,41,.38)" }}>{item.games} game{item.games === 1 ? "" : "s"}</div>
+                <details className="mt-3 pt-3" style={{ borderTop:"1px solid rgba(16,24,40,.08)" }}>
+                  <summary className="flex items-center gap-3 px-1 py-1 cursor-pointer list-none">
+                    <span className="flex-1">
+                      <span className="block text-[10px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.42)" }}>7-day overview</span>
+                      <span className="block text-[9px] mt-0.5" style={{ color:"rgba(27,33,41,.40)" }}>Weekly leaders and your recent results</span>
+                    </span>
+                    {myHistory && <span className="text-[10px] font-bold" style={{ color:"#2F6FED" }}>#{myHistory.rank} · {myHistory.challengeScore} pts</span>}
+                    <ChevronDown size={14} style={{ opacity:.36 }}/>
+                  </summary>
+                  <div className="pt-2">
+                    {displayedHistoryStandings.length > 0 ? (
+                      <div className="rounded-2xl overflow-hidden" style={{ background:"#F7F8FB" }}>
+                        {displayedHistoryStandings.map((item,index) => (
+                          <div key={item.id} className="flex items-center gap-2 px-3 py-2 text-[10px]" style={{ borderTop:index ? "1px solid rgba(16,24,40,.06)" : "none" }}>
+                            <span className="w-4 text-center font-bold" style={{ color:item.rank === 1 ? "#9A721F" : "rgba(27,33,41,.40)" }}>{item.rank}</span>
+                            <span aria-hidden="true">{item.icon || "🙂"}</span>
+                            <span className="flex-1 font-semibold truncate">{item.name}{item.id === userId ? " · You" : ""}</span>
+                            <span className="font-bold">{item.challengeScore} pts · {item.days}d</span>
                           </div>
                         ))}
                       </div>
-                    </div>
-                  )}
-                </div>
+                    ) : (
+                      <div className="rounded-xl px-3 py-3 text-[10px] text-center" style={{ background:"#F7F8FB",color:"rgba(27,33,41,.45)" }}>No results in the last 7 days.</div>
+                    )}
+                    {personalHistoryByDate.length > 0 && (
+                      <div className="mt-2">
+                        <div className="text-[9px] font-bold uppercase tracking-[.1em] px-1 mb-1.5" style={{ color:"rgba(27,33,41,.36)" }}>Your recent days</div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                          {personalHistoryByDate.slice(0,4).map((item) => (
+                            <div key={item.date} className="rounded-xl px-2.5 py-2" style={{ background:"rgba(47,111,237,.06)",border:"1px solid rgba(47,111,237,.10)" }}>
+                              <div className="text-[9px] font-semibold" style={{ color:"rgba(27,33,41,.46)" }}>{new Date(`${item.date}T12:00:00`).toLocaleDateString(undefined,{ weekday:"short",day:"numeric" })}</div>
+                              <div className="text-[11px] font-bold mt-0.5">{item.score} pts</div>
+                              <div className="text-[8px]" style={{ color:"rgba(27,33,41,.38)" }}>{item.games} game{item.games === 1 ? "" : "s"}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </details>
               )}
             </div>
           )}
