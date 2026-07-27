@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import AnimalFace from "./AnimalFace.jsx";
+import { animalById } from "./engine.js";
 
 const DIE_FACES = [
   ["fox", "front"],
@@ -38,7 +39,7 @@ export default function AnimalDie({
     <div
       className="rush-die"
       role="img"
-      aria-label={revealed ? `${targetId} animal die` : "Rolling animal die"}
+      aria-label={revealed ? `${animalById(targetId).label} animal die` : "Rolling animal die"}
       data-revealed={revealed}
     >
       <div
