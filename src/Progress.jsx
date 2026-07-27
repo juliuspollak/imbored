@@ -7,6 +7,8 @@ import { markTransfersSeen } from "./lib/useNewTransfers.js";
 
 const BG="#F1F3F7", PANEL="#fff", INK="#1B2129", ACCENT="#2F6FED", CREAM="#1B2129";
 const card={background:PANEL,border:"1px solid rgba(16,24,40,.09)",borderRadius:16};
+const ACTIVITY_LIMIT=8;
+const TRANSFER_HISTORY_LIMIT=100;
 const GAME_LABELS={queens:"Queens",tango:"Tango",zip:"Zip",minisudoku:"Mini Sudoku",geo:"Geo",zoom:"Zoom"};
 const WISH_EMOJIS=["🎁","🚲","🚗","🎮","📱","💻","🎧","⌚","📚","👟","🧸","🎨","✈️","🏕️","🎸","⚽","🏀","🛴","🛹","🐶"];
 function suggestWishEmoji(value){
@@ -73,14 +75,17 @@ export default function Progress({ onBack }) {
     setLoading(true);
     await supabase.rpc("ensure_player_progress",{uid:user.id});
 
-    const [{data:p},{data:r},{data:rw},{data:w},{data:ps},{data:tx}] = await Promise.all([
+    const [{data:p},{data:r},{data:rw},{data:w},{data:ps},{data:tx},{data:transfers}] = await Promise.all([
       supabase.from("player_progress").select("*").eq("player_id",user.id).single(),
       supabase.from("reward_rules").select("*").eq("is_active",true).maybeSingle(),
       supabase.from("rewards").select("*").eq("is_active",true).order("points_cost"),
       supabase.from("reward_wishes").select("*").eq("player_id",user.id).order("created_at",{ascending:false}),
       supabase.from("profiles").select("id,name,icon,is_admin,is_approved,is_blocked,account_deleted_at").neq("id",user.id).order("name"),
       supabase.from("points_transactions").select("id,points,reason_code,game_stat_id,related_player_id,reward_id,metadata,created_at,seen_at")
-        .eq("player_id",user.id).order("id",{ascending:false}).limit(100),
+        .eq("player_id",user.id).order("created_at",{ascending:false}).order("id",{ascending:false}).limit(ACTIVITY_LIMIT),
+      supabase.from("points_transactions").select("id,points,reason_code,related_player_id,created_at,seen_at")
+        .eq("player_id",user.id).in("reason_code",["TRANSFER_RECEIVED","TRANSFER_SENT"])
+        .order("created_at",{ascending:false}).order("id",{ascending:false}).limit(TRANSFER_HISTORY_LIMIT),
     ]);
     const transactionRows=tx||[];
     const gameStatIds=[...new Set(transactionRows.map(item=>item.game_stat_id).filter(Boolean))];
@@ -92,16 +97,18 @@ export default function Progress({ onBack }) {
 
     const playerById = Object.fromEntries(availablePlayers.map(pl=>[pl.id,pl]));
     const gameStatById=Object.fromEntries((gameStats||[]).map(item=>[item.id,item]));
-    const enrichedTransactions=transactionRows.map(item=>({
+    const enrichTransaction=item=>({
       ...item,
       metadata:item.metadata||{},
       other:playerById[item.related_player_id]||null,
       gameStat:gameStatById[item.game_stat_id]||null,
-    }));
+    });
+    const enrichedTransactions=transactionRows.map(enrichTransaction);
+    const enrichedTransfers=(transfers||[]).map(enrichTransaction);
     setActivity(enrichedTransactions);
-    setNewTransfers(enrichedTransactions.filter(t=>t.reason_code==="TRANSFER_RECEIVED"&&!t.seen_at).map(t=>({id:t.id,points:t.points,sender:t.other})));
-    setTransferLog(enrichedTransactions.filter(t=>["TRANSFER_RECEIVED","TRANSFER_SENT"].includes(t.reason_code)));
-    if (enrichedTransactions.some(t=>t.reason_code==="TRANSFER_RECEIVED"&&!t.seen_at)) await markTransfersSeen();
+    setNewTransfers(enrichedTransfers.filter(t=>t.reason_code==="TRANSFER_RECEIVED"&&!t.seen_at).map(t=>({id:t.id,points:t.points,sender:t.other})));
+    setTransferLog(enrichedTransfers);
+    if (enrichedTransfers.some(t=>t.reason_code==="TRANSFER_RECEIVED"&&!t.seen_at)) await markTransfersSeen();
   },[user.id]);
   useEffect(()=>{refresh()},[refresh]);
 
@@ -187,12 +194,12 @@ export default function Progress({ onBack }) {
       <section className="mb-3 overflow-hidden" style={{...card,borderRadius:20}}>
         <div className="px-4 pt-3.5 pb-2">
           <div className="text-sm font-bold" style={{color:INK}}>How you earned your points</div>
-          <div className="text-[10px] mt-0.5" style={{color:INK,opacity:.43}}>Recent rewards, bonuses and spending</div>
+          <div className="text-[10px] mt-0.5" style={{color:INK,opacity:.43}}>Your latest {ACTIVITY_LIMIT} rewards, bonuses and spending</div>
         </div>
         {activity.length===0
           ? <div className="px-4 py-5 text-xs text-center" style={{color:INK,opacity:.4}}>Play a game to start earning points.</div>
           : <div>
-            {activity.slice(0,8).map((item,index)=>{
+            {activity.map((item,index)=>{
               const details=activityDetails(item);
               const Icon=details.Icon;
               const breakdown=gameBreakdown(item);

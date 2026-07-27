@@ -578,8 +578,8 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           position: relative;
           z-index: 1;
         }
-        .tg-symbol-disc--sun { background: linear-gradient(145deg, #FFF9E8, #FBE3A8); box-shadow: 0 4px 14px rgba(217,154,48,.18), inset 0 0 0 1px rgba(255,255,255,.72); }
-        .tg-symbol-disc--moon { background: linear-gradient(145deg, #1D2942, #526B9A); box-shadow: 0 5px 16px rgba(36,52,82,.28), inset 0 0 0 1px rgba(255,255,255,.12); }
+        .tg-symbol-disc--sun { background: linear-gradient(145deg, rgba(255,249,219,.96), rgba(246,196,83,.19)); box-shadow: 0 3px 12px rgba(217,174,88,.14); }
+        .tg-symbol-disc--moon { background: linear-gradient(145deg, rgba(239,244,252,.98), rgba(74,111,165,.14)); box-shadow: 0 3px 12px rgba(74,111,165,.12); }
         .tg-cell:disabled .tg-symbol-disc { box-shadow: inset 0 0 0 1px rgba(27,33,41,.07), 0 4px 12px rgba(16,24,40,.09); }
         .tg-edge-token { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
         .tg-hint-error { animation: hintPulseError 1.1s ease-in-out infinite; }
@@ -619,7 +619,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           >
             <SunBurstIcon size={14} style={{ color: SUN_COLOR }} />
             <span style={{ width: 1, height: 12, background: "rgba(27,33,41,.12)" }} />
-            <ModernMoonIcon size={14} style={{ color: "#40557D" }} />
+            <Moon size={14} style={{ color: MOON_COLOR }} strokeWidth={2.4} />
           </div>
           <h1
             style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }}
@@ -755,7 +755,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                     <span className="tg-symbol tg-symbol-disc tg-symbol-disc--sun"><SunBurstIcon key={`sun-${r}-${c}`} size={Math.max(22, 32 - SIZE)} style={{ color: isConflict ? RED : SUN_COLOR }} /></span>
                   )}
                   {val === MOON && (
-                    <span className="tg-symbol tg-symbol-disc tg-symbol-disc--moon"><ModernMoonIcon key={`moon-${r}-${c}`} size={Math.max(20, 30 - SIZE)} style={{ color: isConflict ? "#FFD9D5" : "#F5F7FF" }} /></span>
+                    <span className="tg-symbol tg-symbol-disc tg-symbol-disc--moon"><Moon key={`moon-${r}-${c}`} size={Math.max(20, 30 - SIZE)} style={{ color: isConflict ? RED : MOON_COLOR }} strokeWidth={2.25} /></span>
                   )}
                   {/* The pulsing border alone doesn't say what belongs here —
                       show a faint preview of the actual symbol. For an empty
