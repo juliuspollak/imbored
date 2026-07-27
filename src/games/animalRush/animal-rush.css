@@ -352,6 +352,19 @@
   animation: rush-target-reveal 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+.rush-target-label {
+  display: block;
+  min-height: 20px;
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 20px;
+  visibility: hidden;
+}
+
+.rush-target-label[data-visible="true"] {
+  visibility: visible;
+}
+
 .rush-die {
   --rush-die-size: 66px;
   position: relative;
@@ -775,6 +788,13 @@
   .rush-target svg {
     width: min(72%, 66px);
     height: auto;
+  }
+
+  .rush-target-label {
+    min-height: 16px;
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 16px;
   }
 
   .rush-die {

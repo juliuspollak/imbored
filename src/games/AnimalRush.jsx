@@ -652,9 +652,13 @@ export default function AnimalRush({ onExit }) {
                   rollDurationMs={new Date(room.reveal_at).getTime() - serverNow}
                 />
               </div>
-              {(phase === "open" || room.status === "round_result") && (
-                <strong className="mt-1 block text-sm">{targetAnimal.label}</strong>
-              )}
+              <strong
+                className="rush-target-label"
+                data-visible={phase === "open" || room.status === "round_result"}
+                aria-hidden={phase !== "open" && room.status !== "round_result"}
+              >
+                {phase === "open" || room.status === "round_result" ? targetAnimal.label : "\u00a0"}
+              </strong>
             </div>
           </div>
 

@@ -1,5 +1,12 @@
 [
   {
+    "id": "v148-animal-rush-stable-target-label",
+    "version": "v148",
+    "date": "2026-07-28",
+    "title": "Stopped the Animal Rush target label moving the board",
+    "body": "The target animal name now uses a permanently reserved label slot in both bot and live matches. Revealing or hiding the name no longer changes the board height, so the six animal cards stay fixed under players' fingers in portrait and landscape."
+  },
+  {
     "id": "v147-animal-rush-stable-results-countdown",
     "version": "v147",
     "date": "2026-07-28",
