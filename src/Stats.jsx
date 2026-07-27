@@ -27,14 +27,15 @@ export default function Stats({ onBack }) {
   const [progress, setProgress] = useState({});
   const [loading, setLoading] = useState(true);
   const [progressError, setProgressError] = useState("");
+  const [summaryError, setSummaryError] = useState("");
 
   const refresh = useCallback(async () => {
     if (!supabaseReady) { setLoading(false); return; }
     setLoading(true);
     const [statsResult, profilesResult, progressResult] = await Promise.all([
-      // Only aggregate-friendly fields are loaded. Individual attempts, times,
-      // mistakes and hints do not belong on the community leaderboard.
-      supabase.from("game_stats").select("user_id, game, mode"),
+      // Server-side aggregates exclude unrewarded rapid Practice replays.
+      // Individual attempts, times, mistakes and hints never leave the RPC.
+      supabase.rpc("get_public_player_game_summary"),
       supabase.from("profiles").select("id, name, icon, mood, hidden_from_others, show_stats_to_others, account_deleted_at").is("account_deleted_at", null),
       supabase.rpc("get_public_player_progress"),
     ]);
@@ -42,6 +43,7 @@ export default function Stats({ onBack }) {
     setProfiles(Object.fromEntries((profilesResult.data || []).map((item) => [item.id, item])));
     setProgress(Object.fromEntries((progressResult.data || []).map((item) => [item.player_id, item])));
     setProgressError(progressResult.error?.message || "");
+    setSummaryError(statsResult.error?.message || "");
     setLoading(false);
   }, []);
 
@@ -55,23 +57,21 @@ export default function Stats({ onBack }) {
   const players = useMemo(() => {
     const activity = {};
     rows.forEach((row) => {
-      activity[row.user_id] ||= { games: 0, challenge: 0, practice: 0, byGame: {} };
-      const item = activity[row.user_id];
-      item.games += 1;
-      if (row.mode === "challenge") item.challenge += 1;
-      if (row.mode === "practice") item.practice += 1;
-      item.byGame[row.game] = (item.byGame[row.game] || 0) + 1;
+      activity[row.player_id] = {
+        games: Number(row.games_played || 0),
+        challenge: Number(row.challenge_games || 0),
+        practice: Number(row.practice_games || 0),
+        favourite: row.favourite_game || null,
+      };
     });
 
     return Object.values(profiles).map((profile) => {
-      const stats = activity[profile.id] || { games: 0, challenge: 0, practice: 0, byGame: {} };
-      const favourite = Object.entries(stats.byGame).sort((a, b) => b[1] - a[1])[0]?.[0];
+      const stats = activity[profile.id] || { games: 0, challenge: 0, practice: 0, favourite: null };
       return {
         userId: profile.id,
         profile,
         progress: progress[profile.id],
         ...stats,
-        favourite,
       };
     }).sort((a, b) =>
       Number(b.progress?.lifetime_points || -1) - Number(a.progress?.lifetime_points || -1)
@@ -119,7 +119,7 @@ export default function Stats({ onBack }) {
           <div className="relative grid grid-cols-3 gap-2 mt-4">
             <div className="rounded-2xl px-3 py-2.5" style={{ background: "rgba(255,255,255,.09)" }}>
               <div className="text-base font-bold">{totalGames.toLocaleString()}</div>
-              <div className="text-[9px]" style={{ opacity: .62 }}>Games played</div>
+              <div className="text-[9px]" style={{ opacity: .62 }}>Scored games</div>
             </div>
             <div className="rounded-2xl px-3 py-2.5" style={{ background: "rgba(255,255,255,.09)" }}>
               <div className="text-base font-bold">{averageLevel || "—"}</div>
@@ -133,6 +133,7 @@ export default function Stats({ onBack }) {
         </section>
 
         {progressError && <div className="rounded-2xl px-3 py-2.5 mb-3 text-[10px] leading-relaxed" role="alert" style={{ background: "rgba(229,72,77,.08)", color: "#A62F34", border: "1px solid rgba(229,72,77,.16)" }}><strong>Player totals could not be loaded.</strong> Apply the latest Player Stats database migration, then refresh this page.</div>}
+        {summaryError && <div className="rounded-2xl px-3 py-2.5 mb-3 text-[10px] leading-relaxed" role="alert" style={{ background:"rgba(229,72,77,.08)",color:"#A62F34",border:"1px solid rgba(229,72,77,.16)" }}><strong>Scored-game totals could not be loaded.</strong> Apply the latest points-economy migration, then refresh this page.</div>}
 
         {loading ? <p style={{ color: INK, opacity: .4 }} className="text-sm text-center py-10">Loading standings…</p> : players.length === 0 ? <div className="rounded-2xl text-center py-10 px-4" style={{ background: PANEL, border: "1px solid rgba(16,24,40,.08)" }}><Sparkles size={24} style={{ color: ACCENT, margin: "0 auto 8px" }}/><div className="text-sm font-semibold" style={{ color: INK }}>No player activity yet</div></div> : <>
           <div className="flex items-end justify-between mb-2 px-1">
@@ -187,7 +188,7 @@ export default function Stats({ onBack }) {
                 <div className="grid grid-cols-3 gap-1.5 mt-2.5 pt-2.5" style={{ borderTop: "1px solid rgba(16,24,40,.055)" }}>
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="grid place-items-center rounded-lg shrink-0" style={{ width: 24, height: 24, color: ACCENT, background: "rgba(47,111,237,.07)" }}><Gamepad2 size={11}/></span>
-                    <span><span className="block text-[10px] font-bold" style={{ color: INK }}>{player.games}</span><span className="block text-[8px]" style={{ color: INK, opacity: .4 }}>games</span></span>
+                    <span><span className="block text-[10px] font-bold" style={{ color: INK }}>{player.games}</span><span className="block text-[8px]" style={{ color: INK, opacity: .4 }}>scored</span></span>
                   </div>
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="grid place-items-center rounded-lg shrink-0" style={{ width: 24, height: 24, color: "#E86A33", background: "rgba(234,88,12,.07)" }}><Flame size={11}/></span>
@@ -204,7 +205,7 @@ export default function Stats({ onBack }) {
 
           <div className="flex items-start gap-2 rounded-2xl px-3 py-2.5 mt-3" style={{ background: "rgba(47,111,237,.06)", color: INK }}>
             <Users size={13} className="shrink-0 mt-0.5" style={{ color: ACCENT }}/>
-            <p className="text-[9px] leading-relaxed" style={{ opacity: .52 }}>Standings use lifetime points. Available wallet points remain private. Players who hide their progress appear without points or level.</p>
+            <p className="text-[9px] leading-relaxed" style={{ opacity: .52 }}>Standings use lifetime points. Scored games include every Challenge and only Practice completions that earned points, so rapid unrewarded replays do not inflate the count. Available wallet points remain private.</p>
           </div>
         </>}
       </>}

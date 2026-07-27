@@ -46,6 +46,10 @@ function activityDetails(item){
 function gameBreakdown(item){
   if(item.reason_code!=="GAME_COMPLETED") return [];
   const metadata=item.metadata||{};
+  if(metadata.economy_rebased) return [
+    ["Previous scale",metadata.pre_v137_points],
+    ["Rebalanced",metadata.rebased_points],
+  ].filter(([,value])=>Number(value)!==0);
   return [
     ["Base",metadata.base],
     ["Day difficulty",metadata.day_bonus],
@@ -55,6 +59,7 @@ function gameBreakdown(item){
     ["Weekly streak",metadata.weekly_streak],
     ["Practice rate",metadata.mode_adjustment],
     ["Adjustment",metadata.limit_adjustment],
+    ["Daily cap",metadata.daily_cap_adjustment],
   ].filter(([,value])=>Number(value)!==0);
 }
 
@@ -178,7 +183,7 @@ export default function Progress({ onBack }) {
             <div className="text-[9px]" style={{opacity:.62}}>Available to spend</div>
           </div>
           <div className="rounded-2xl px-3 py-2.5" style={{background:"rgba(255,255,255,.09)"}}>
-            <div className="flex items-center gap-1.5 text-lg font-bold"><Flame size={16} style={{color:"#FF9D83"}}/>{progress?.current_streak||0}</div>
+            <div className="flex items-center gap-1.5 text-lg font-bold"><Flame size={16} style={{color:"#FF9D83"}}/>{progress?.challenge_current_streak||0}</div>
             <div className="text-[9px]" style={{opacity:.62}}>Day streak</div>
           </div>
         </div>
@@ -187,7 +192,7 @@ export default function Progress({ onBack }) {
       <div className="rounded-2xl px-3 py-2.5 mb-3 flex items-start gap-2" style={{background:"rgba(47,111,237,.07)",color:INK}}>
         <Info size={14} className="shrink-0 mt-0.5" style={{color:ACCENT}}/>
         <span className="text-[10px] leading-relaxed" style={{opacity:.62}}>
-          Lifetime points raise your level and never decrease when you spend or send points. Your available balance is what you can use now.
+          Lifetime points raise your level and never decrease when you spend or send points. Gameplay can earn up to {rules?.daily_points_cap||40} points per Sydney day; only the first {rules?.practice_daily_limit||3} Practice games score, at {rules?.practice_points_percent||50}% of Challenge points.
         </span>
       </div>
 
