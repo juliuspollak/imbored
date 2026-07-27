@@ -1,5 +1,12 @@
 [
   {
+    "id": "v142-animal-rush-landscape-result-fit",
+    "version": "v142",
+    "date": "2026-07-28",
+    "title": "Kept Animal Rush results inside the landscape board",
+    "body": "Compacted the between-round result message in Animal Rush landscape mode so the target animal and its name always remain inside the left panel on phone screens."
+  },
+  {
     "id": "v141-animal-rush-landscape-board",
     "version": "v141",
     "date": "2026-07-28",

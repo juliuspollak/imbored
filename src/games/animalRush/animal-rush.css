@@ -520,8 +520,13 @@
 
   .rush-round-result,
   .rush-feedback {
-    margin-bottom: 7px !important;
-    padding: 7px 9px;
+    margin-bottom: 5px !important;
+    padding: 5px 7px;
+    line-height: 1.2;
+  }
+
+  .rush-round-result small {
+    display: none;
   }
 
   .rush-stage-message {
