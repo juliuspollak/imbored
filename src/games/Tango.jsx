@@ -9,37 +9,47 @@ import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
 import { rewardStatusText } from "../lib/rewardStatus.js";
 
-function SunBurstIcon({ size = 24, className = "", style, ...props }) {
+function SunIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
+  const ray = isConflict ? "#E5484D" : "#F5A524";
   return (
-    <svg
-      viewBox="0 0 24 24"
-      width={size}
-      height={size}
-      className={className}
-      style={style}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      aria-hidden="true"
-      {...props}
-    >
-      <circle cx="12" cy="12" r="4.35" fill="currentColor" stroke="none" />
-      <circle cx="12" cy="12" r="6.15" opacity=".22" />
-      <g>
-        <path d="M12 1.75v2.4M12 19.85v2.4M1.75 12h2.4M19.85 12h2.4" />
-        <path d="m4.75 4.75 1.7 1.7m11.1 11.1 1.7 1.7m0-14.5-1.7 1.7M6.45 17.55l-1.7 1.7" />
+    <svg viewBox="0 0 24 24" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
+      <defs>
+        <radialGradient id="tango-sun-core" cx="35%" cy="28%" r="72%">
+          <stop offset="0%" stopColor="#FFF6A8" />
+          <stop offset="48%" stopColor="#FFD45C" />
+          <stop offset="100%" stopColor={isConflict ? "#E5484D" : "#F08A18"} />
+        </radialGradient>
+      </defs>
+      <g fill="none" stroke={ray} strokeWidth="2" strokeLinecap="round">
+        <path d="M12 1.7v2.15M12 20.15v2.15M1.7 12h2.15M20.15 12h2.15" />
+        <path d="m4.72 4.72 1.52 1.52m11.52 11.52 1.52 1.52m0-14.56-1.52 1.52M6.24 17.76l-1.52 1.52" />
       </g>
+      <circle cx="12" cy="12" r="5.35" fill={isConflict ? "#E5484D" : "url(#tango-sun-core)"} />
+      {!isConflict && <ellipse cx="10.4" cy="9.75" rx="2.25" ry="1.25" fill="#FFFFFF" opacity=".32" transform="rotate(-24 10.4 9.75)" />}
     </svg>
   );
 }
 
-function ModernMoonIcon({ size = 24, className = "", style, ...props }) {
+function ModernMoonIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
-      <path d="M20.4 15.35A8.65 8.65 0 0 1 8.65 3.6 9.1 9.1 0 1 0 20.4 15.35Z" fill="currentColor" />
-      <circle cx="16.9" cy="5.25" r="1" fill="currentColor" opacity=".52" />
-      <circle cx="20.15" cy="8.3" r=".55" fill="currentColor" opacity=".34" />
+      <defs>
+        <linearGradient id="tango-moon-face" x1="4" y1="3" x2="19" y2="21" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#667085" />
+          <stop offset="45%" stopColor="#303746" />
+          <stop offset="100%" stopColor="#10131A" />
+        </linearGradient>
+      </defs>
+      <circle cx="12" cy="12" r="9" fill={isConflict ? "#E5484D" : "url(#tango-moon-face)"} />
+      {!isConflict && (
+        <g fill="#FFFFFF">
+          <circle cx="8.35" cy="8.1" r="1.25" opacity=".12" />
+          <circle cx="15.55" cy="7.15" r=".72" opacity=".16" />
+          <circle cx="14.9" cy="14.4" r="1.55" opacity=".09" />
+          <circle cx="7.35" cy="15.4" r=".78" opacity=".1" />
+          <path d="M6.5 5.9c2.2-2.05 5.5-2.82 8.42-1.66" fill="none" stroke="#FFFFFF" strokeWidth=".9" strokeLinecap="round" opacity=".18" />
+        </g>
+      )}
     </svg>
   );
 }
@@ -578,8 +588,8 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           position: relative;
           z-index: 1;
         }
-        .tg-symbol-disc--sun { background: linear-gradient(145deg, rgba(255,249,219,.96), rgba(246,196,83,.19)); box-shadow: 0 3px 12px rgba(217,174,88,.14); }
-        .tg-symbol-disc--moon { background: linear-gradient(145deg, rgba(239,244,252,.98), rgba(74,111,165,.14)); box-shadow: 0 3px 12px rgba(74,111,165,.12); }
+        .tg-symbol-disc--sun { background: radial-gradient(circle, rgba(255,248,214,.82) 0%, rgba(255,255,255,0) 70%); filter: drop-shadow(0 4px 7px rgba(240,138,24,.2)); }
+        .tg-symbol-disc--moon { background: radial-gradient(circle at 38% 30%, rgba(148,163,184,.18), rgba(30,41,59,.05) 68%, transparent 72%); filter: drop-shadow(0 4px 7px rgba(15,23,42,.24)); }
         .tg-cell:disabled .tg-symbol-disc { box-shadow: inset 0 0 0 1px rgba(27,33,41,.07), 0 4px 12px rgba(16,24,40,.09); }
         .tg-edge-token { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
         .tg-hint-error { animation: hintPulseError 1.1s ease-in-out infinite; }
@@ -617,9 +627,9 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
             style={{ width: 66, height: 30, background: "linear-gradient(135deg, rgba(246,196,83,.16), rgba(74,111,165,.13))", border: "1px solid rgba(16,24,40,.06)" }}
             aria-hidden="true"
           >
-            <SunBurstIcon size={14} style={{ color: SUN_COLOR }} />
+            <SunIcon size={14} style={{ color: SUN_COLOR }} />
             <span style={{ width: 1, height: 12, background: "rgba(27,33,41,.12)" }} />
-            <Moon size={14} style={{ color: MOON_COLOR }} strokeWidth={2.4} />
+            <ModernMoonIcon size={14} />
           </div>
           <h1
             style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }}
@@ -752,10 +762,10 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                   }}
                 >
                   {val === SUN && (
-                    <span className="tg-symbol tg-symbol-disc tg-symbol-disc--sun"><SunBurstIcon key={`sun-${r}-${c}`} size={Math.max(22, 32 - SIZE)} style={{ color: isConflict ? RED : SUN_COLOR }} /></span>
+                    <span className="tg-symbol tg-symbol-disc tg-symbol-disc--sun"><SunIcon key={`sun-${r}-${c}`} size={Math.max(22, 32 - SIZE)} isConflict={isConflict} /></span>
                   )}
                   {val === MOON && (
-                    <span className="tg-symbol tg-symbol-disc tg-symbol-disc--moon"><Moon key={`moon-${r}-${c}`} size={Math.max(20, 30 - SIZE)} style={{ color: isConflict ? RED : MOON_COLOR }} strokeWidth={2.25} /></span>
+                    <span className="tg-symbol tg-symbol-disc tg-symbol-disc--moon"><ModernMoonIcon key={`moon-${r}-${c}`} size={Math.max(22, 32 - SIZE)} isConflict={isConflict} /></span>
                   )}
                   {/* The pulsing border alone doesn't say what belongs here —
                       show a faint preview of the actual symbol. For an empty
@@ -767,7 +777,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                     val === EMPTY ? (
                       <span className="tg-hint-ghost" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
                         {hintCell.symbol === SUN ? (
-                          <SunBurstIcon size={Math.max(22, 32 - SIZE)} style={{ color: SUN_COLOR, opacity: 0.4 }} />
+                          <SunIcon size={Math.max(22, 32 - SIZE)} style={{ color: SUN_COLOR, opacity: 0.4 }} />
                         ) : (
                           <ModernMoonIcon size={Math.max(20, 30 - SIZE)} style={{ color: "#40557D", opacity: 0.4 }} />
                         )}
@@ -782,7 +792,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                         }}
                       >
                         {hintCell.symbol === SUN ? (
-                          <SunBurstIcon size={10} style={{ color: SUN_COLOR }} />
+                          <SunIcon size={10} style={{ color: SUN_COLOR }} />
                         ) : (
                           <ModernMoonIcon size={9} style={{ color: "#40557D" }} />
                         )}
@@ -872,7 +882,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
               style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(3px)", zIndex: 3 }}
             >
               <div className="flex items-center gap-1">
-                <SunBurstIcon size={27} style={{ color: SUN_COLOR }} />
+                <SunIcon size={27} style={{ color: SUN_COLOR }} />
                 <ModernMoonIcon size={26} style={{ color: "#40557D" }} />
               </div>
               <p style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 600, color: CREAM }} className="text-2xl">
