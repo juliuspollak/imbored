@@ -665,7 +665,11 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                             <span className="block text-[10px] mt-0.5 truncate" style={{ color:"rgba(27,33,41,.45)" }}>{item.team_name}</span>
                           </span>
                           <span className="text-right shrink-0">
-                            <span className="block text-[10px] font-bold" style={{ color:challengeFinished ? "#7A5711" : playerFinished ? "#137A3A" : status.completed === 0 ? "#6B7280" : "#A9363B" }}>
+                            <span
+                              className="team-challenge-status block text-[10px] font-bold"
+                              data-status={challengeFinished ? "finished" : playerFinished ? "complete" : status.completed === 0 ? "idle" : "remaining"}
+                              style={{ color:challengeFinished ? "#7A5711" : playerFinished ? "#137A3A" : status.completed === 0 ? "#6B7280" : "#A9363B" }}
+                            >
                               {lifecycleLabel}
                             </span>
                             {!item.active_today && <span className="block text-[9px] mt-0.5" style={{ color:"rgba(27,33,41,.40)" }}>Not scheduled today</span>}

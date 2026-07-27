@@ -5,6 +5,22 @@
  * for. Surrounding chrome follows the graphite app theme.
  */
 @media (prefers-color-scheme: dark) {
+  .team-challenge-status[data-status="remaining"] {
+    color: #ff8d91 !important;
+  }
+
+  .team-challenge-status[data-status="complete"] {
+    color: #6ee7a0 !important;
+  }
+
+  .team-challenge-status[data-status="finished"] {
+    color: #f5d583 !important;
+  }
+
+  .team-challenge-status[data-status="idle"] {
+    color: rgba(232, 238, 247, 0.64) !important;
+  }
+
   /* Shared floating navigation and account trigger. */
   .nav-btn {
     background: linear-gradient(160deg, rgba(62, 76, 97, 0.96), rgba(25, 33, 46, 0.96)) !important;
