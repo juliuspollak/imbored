@@ -4,7 +4,7 @@ import { supabase, supabaseReady } from "./lib/supabase.js";
 import { sendPoke } from "./lib/pokes.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
 
-const QUICK_REACTIONS = ["👍", "👎", "😂", "❤️", "🔥", "👏", "🎮", "👀"];
+const QUICK_REACTIONS = ["👍", "👎", "❤️"];
 
 function formatMessageTime(value) {
   if (!value) return "";
@@ -229,9 +229,12 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
         .chat-meta { margin-top:4px; display:flex; gap:5px; justify-content:flex-end; font-size:9px; opacity:.62; }
         .chat-empty { text-align:center; margin:54px auto; max-width:300px; color:rgba(27,33,41,.56); }
         .chat-composer-wrap { flex:0 0 auto; z-index:25; width:100%; padding:8px 12px max(12px,env(safe-area-inset-bottom)); background:rgba(245,247,251,.97); border-top:1px solid rgba(27,33,41,.07); backdrop-filter:blur(18px); }
-        .chat-reactions { display:flex; gap:7px; padding:4px 4px 8px; overflow-x:auto; scrollbar-width:none; }
-        .chat-reaction { flex:0 0 auto; width:34px; height:30px; border:0; border-radius:999px; background:rgba(255,255,255,.9); box-shadow:0 4px 12px rgba(27,33,41,.08); font-size:16px; }
-        .chat-composer { display:flex; align-items:flex-end; gap:8px; padding:8px; border-radius:24px; background:#fff; border:1px solid rgba(27,33,41,.09); box-shadow:0 12px 32px rgba(27,33,41,.13); }
+        .chat-composer { padding:7px 8px 6px; border-radius:24px; background:#fff; border:1px solid rgba(27,33,41,.09); box-shadow:0 12px 32px rgba(27,33,41,.13); }
+        .chat-composer-main { display:flex; align-items:flex-end; gap:8px; }
+        .chat-reactions { display:flex; gap:3px; width:max-content; margin:1px 0 0 30px; padding:2px 4px; border-radius:999px; background:rgba(27,33,41,.045); }
+        .chat-reaction { width:31px; height:27px; border:0; border-radius:999px; background:transparent; box-shadow:none; font-size:15px; transition:transform .14s ease,background .14s ease; }
+        .chat-reaction:hover { transform:scale(1.08); background:rgba(255,255,255,.9); }
+        .chat-reaction:active { transform:scale(.92); }
         .chat-input { flex:1; min-height:40px; max-height:112px; resize:none; border:0; outline:0; padding:9px 8px; background:transparent; font:inherit; color:#1b2129; }
         .chat-send { width:42px; height:42px; flex:0 0 auto; border:0; border-radius:50%; display:grid; place-items:center; background:linear-gradient(135deg,#7657ff,#4b72ff); color:#fff; box-shadow:0 8px 18px rgba(75,114,255,.32); }
         .chat-send:disabled { opacity:.4; box-shadow:none; }
@@ -241,7 +244,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
           .chat-poke { padding:8px 10px; }
           .chat-body { padding:12px 10px 16px; }
           .chat-composer-wrap { padding-left:8px; padding-right:8px; }
-          .chat-reactions { padding-bottom:6px; }
+          .chat-reactions { margin-left:26px; }
         }
         @keyframes chatPop { from { transform:scale(.96) translateY(4px); opacity:.3; } to { transform:none; opacity:1; } }
       `}</style>
@@ -306,29 +309,35 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
             </div>
           </div>
         ) : <div className="chat-composer-wrap">
-          <div className="chat-reactions" aria-label="Quick emoji reactions">
-            {QUICK_REACTIONS.map((emoji) => <button type="button" className="gloss-button chat-reaction" onClick={() => addReaction(emoji)} key={emoji}>{emoji}</button>)}
-          </div>
           <form className="chat-composer" onSubmit={submitMessage}>
-            <Sparkles size={18} style={{ margin:"11px 0 11px 4px", color:"#7657ff" }} />
-            <textarea
-              ref={textareaRef}
-              className="chat-input"
-              value={draft}
-              maxLength={1000}
-              rows={1}
-              placeholder={`Message ${peerProfile?.name || "player"}…`}
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                  event.preventDefault();
-                  submitMessage();
-                }
-              }}
-            />
-            <button className="gloss-button chat-send" type="submit" disabled={!draft.trim() || sending} aria-label="Send message">
-              <Send size={18} />
-            </button>
+            <div className="chat-composer-main">
+              <Sparkles size={18} style={{ margin:"11px 0 11px 4px", color:"#7657ff" }} />
+              <textarea
+                ref={textareaRef}
+                className="chat-input"
+                value={draft}
+                maxLength={1000}
+                rows={1}
+                placeholder={`Message ${peerProfile?.name || "player"}…`}
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    submitMessage();
+                  }
+                }}
+              />
+              <button className="gloss-button chat-send" type="submit" disabled={!draft.trim() || sending} aria-label="Send message">
+                <Send size={18} />
+              </button>
+            </div>
+            <div className="chat-reactions" aria-label="Quick message reactions">
+              {QUICK_REACTIONS.map((emoji) => (
+                <button type="button" className="chat-reaction" onClick={() => addReaction(emoji)} key={emoji} aria-label={`Add ${emoji} to message`}>
+                  {emoji}
+                </button>
+              ))}
+            </div>
           </form>
         </div>}
       </div>
