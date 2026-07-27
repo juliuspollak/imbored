@@ -459,7 +459,8 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
     : [];
   const todayRound = selectedRounds.find((round) => round.date === localDateString());
   const todayRoundDone = !!todayRound && todayCompletions.has(todayRound.date);
-  const selectedChallengePlayable = challengeScope?.type !== "team"
+  const teamChallengeIsActive = playMode === "challenge" && challengeScope?.type === "team";
+  const selectedChallengePlayable = !teamChallengeIsActive
     || (selectedTeam?.active_today && !!todayRound && !todayRoundDone);
 
   function choosePersonalChallenge() {
@@ -818,7 +819,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {visibleGames
-            .filter((g) => challengeScope?.type !== "team" || (!!todayRound && g.id === todayRound.game))
+            .filter((g) => !teamChallengeIsActive || (!!todayRound && g.id === todayRound.game))
             .map((g) => {
             const Icon = g.icon;
             const playingCount = players.filter((p) => p.game === g.id && p.mode === playMode).length;
