@@ -452,7 +452,25 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
                 : <button className="gloss-button" disabled={profile?.hidden_from_others} onClick={() => request(team.id)} className="rounded-full px-3 py-2 text-xs font-semibold" style={{ background:"rgba(47,111,237,.09)",color:ACCENT }}>Request to join</button>}
             </div>
 
-            {manager && pending.length > 0 && <div className="mt-3 rounded-2xl p-3" style={{ background:"#FFF8E7" }}><div className="text-[10px] font-bold uppercase tracking-wide mb-2" style={{ color:"#8A681D" }}>Join requests</div>{pending.map((requestItem) => { const candidate=byId[requestItem.user_id] || { id:requestItem.user_id,name:"Player",icon:"🙂" };return <div key={requestItem.id} className="flex items-center gap-2 py-1"><span>{candidate.icon || "🙂"}</span><span className="text-xs flex-1">{candidate.name}</span><button className="gloss-button" onClick={() => decide(requestItem.id,true)} className="text-[11px] font-semibold" style={{ color:"#15803D" }}>Approve</button><button className="gloss-button" onClick={() => decide(requestItem.id,false)} className="text-[11px]" style={{ color:"#755B22" }}>Decline</button><button className="gloss-button" onClick={() => moderateMember(team,candidate,"block")} className="text-[11px]" style={{ color:"#B5433A" }}>Block</button></div>;})}</div>}
+            {manager && pending.length > 0 && (
+              <div className="team-join-requests mt-3 rounded-2xl p-3" style={{ background:"rgba(217,174,88,.12)",border:"1px solid rgba(217,174,88,.20)" }}>
+                <div className="team-join-requests-title text-[10px] font-bold uppercase tracking-wide mb-2" style={{ color:"#8A681D" }}>Join requests</div>
+                {pending.map((requestItem) => {
+                  const candidate=byId[requestItem.user_id] || { id:requestItem.user_id,name:"Player",icon:"🙂" };
+                  return (
+                    <div key={requestItem.id} className="team-join-request flex items-center gap-2 py-2">
+                      <span className="team-join-request-icon grid place-items-center rounded-full shrink-0">{candidate.icon || "🙂"}</span>
+                      <span className="text-xs font-semibold flex-1 min-w-0 truncate">{candidate.name}</span>
+                      <span className="team-join-request-actions flex items-center gap-1.5">
+                        <button className="gloss-button team-join-action team-join-action--approve text-[11px] font-semibold" onClick={() => decide(requestItem.id,true)} style={{ color:"#15803D" }}>Approve</button>
+                        <button className="gloss-button team-join-action team-join-action--decline text-[11px]" onClick={() => decide(requestItem.id,false)} style={{ color:"#755B22" }}>Decline</button>
+                        <button className="gloss-button team-join-action team-join-action--block text-[11px]" onClick={() => moderateMember(team,candidate,"block")} style={{ color:"#B5433A" }}>Block</button>
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             {myRequest && myRequest.status !== "pending" && !isMine && <div className="mt-3 rounded-xl p-2 text-xs flex items-center gap-2" style={{ background:myRequest.status === "approved" ? "rgba(22,163,74,.1)" : "rgba(181,67,58,.1)" }}>{myRequest.status === "approved" ? <Check size={13}/> : <X size={13}/>}Your request was {myRequest.status}.</div>}
 
           </article>;
