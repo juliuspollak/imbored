@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { supabase, supabaseReady } from "../lib/supabase.js";
+import AnimalDie from "./animalRush/AnimalDie.jsx";
 import AnimalFace from "./animalRush/AnimalFace.jsx";
 import BotMatch from "./animalRush/BotMatch.jsx";
 import {
@@ -594,9 +595,13 @@ export default function AnimalRush({ onExit }) {
             <div className="rush-prompt text-center">
               <p className="rush-kicker">{phase === "open" ? "Find this animal" : room.status === "round_result" ? "Round complete" : "Get ready"}</p>
               <div className="rush-target mt-2" data-open={phase === "open"}>
-                {phase === "open" || room.status === "round_result"
-                  ? <AnimalFace animalId={targetAnimal.id} size={86} />
-                  : <span className="rush-countdown">{countdown || "•"}</span>}
+                <AnimalDie
+                  targetId={targetAnimal.id}
+                  countdown={countdown}
+                  roundKey={room.round_number}
+                  revealed={phase === "open" || room.status === "round_result"}
+                  rollDurationMs={new Date(room.reveal_at).getTime() - serverNow}
+                />
               </div>
               {(phase === "open" || room.status === "round_result") && (
                 <strong className="mt-1 block text-sm">{targetAnimal.label}</strong>
