@@ -510,14 +510,14 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
                               className="gloss-button inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold disabled:opacity-70"
                               style={challengeChoiceStyle(chosen)}
                             >
-                              {chosen && <Check size={12} strokeWidth={3}/>}
+                              {chosen && <Check size={12} strokeWidth={3} className="shrink-0"/>}
                               {GAME_LABELS[game] || game}
                             </button>;
                           })}
                         </div>
                         <div className="text-[11px] font-semibold mt-4 mb-1">Playing days</div>
                         {challenge.isNew && <div className="text-[10px] opacity-45 mb-2">Choose every day this challenge can be played. No days are selected yet.</div>}
-                        <div className="grid grid-cols-7 gap-1">
+                        <div className="flex flex-wrap gap-2">
                           {DAYS.map((day) => {
                             const chosen=edit.days.includes(day.id);
                             return <button
@@ -526,10 +526,10 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
                               key={day.id}
                               onClick={() => toggleDay(challengeKey,day.id)}
                               aria-pressed={chosen}
-                              className="gloss-button inline-flex items-center justify-center gap-1 rounded-xl px-1 py-2 text-xs font-semibold disabled:opacity-70"
+                              className="gloss-button inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold disabled:opacity-70"
                               style={challengeChoiceStyle(chosen)}
                             >
-                              {chosen && <Check size={11} strokeWidth={3}/>}
+                              {chosen && <Check size={12} strokeWidth={3} className="shrink-0"/>}
                               {day.label}
                             </button>;
                           })}
