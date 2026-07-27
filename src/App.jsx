@@ -5,7 +5,6 @@ import Login from "./Login.jsx";
 import ProfileSetup from "./ProfileSetup.jsx";
 import PendingApproval from "./PendingApproval.jsx";
 import BlockedAccount from "./BlockedAccount.jsx";
-import PointsToast from "./PointsToast.jsx";
 import ModePill from "./ModePill.jsx";
 import ChallengeGate from "./ChallengeGate.jsx";
 import OnlineWidget from "./OnlineWidget.jsx";
@@ -534,7 +533,6 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
         rewardResult={rewardResult}
       />
       {onSwitchMode && <ModePill mode="practice" onSwitch={switchToChallenge} />}
-      <PointsToast reward={rewardResult} />
       {showChallengeChoice && (
         <div className="fixed inset-0 z-[140] flex items-end sm:items-center justify-center p-4" style={{ background:"rgba(16,24,40,.48)" }}>
           <div className="w-full max-w-sm rounded-3xl p-5" style={{ background:"#fff", boxShadow:"0 24px 70px rgba(16,24,40,.24)" }}>

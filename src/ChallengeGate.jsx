@@ -5,7 +5,6 @@ import { supabase, supabaseReady } from "./lib/supabase.js";
 import { saveStats } from "./lib/saveStats.js";
 import { weekDates, weekDayLabels } from "./lib/week.js";
 import ModePill from "./ModePill.jsx";
-import PointsToast from "./PointsToast.jsx";
 import { buildTeamChallengeRounds, localDateString } from "./lib/teamChallengeRounds.js";
 
 const BG = "#F1F3F7";
@@ -217,7 +216,6 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           </div>
         )}
         {onSwitchMode && <ModePill mode="challenge" onSwitch={onSwitchMode} />}
-        <PointsToast reward={rewardResult} />
       </div>
     );
   }
