@@ -236,7 +236,20 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
       query = challengeScope?.type === "team"
         ? query.eq("team_challenge_id", challengeScope.id).gte("challenge_date", week.start).lte("challenge_date", week.end)
         : query.is("team_challenge_id", null).eq("challenge_date", todayString());
-      let { data: resultRows, error } = await query;
+      let { data:resultRows,error } = await query;
+      if (challengeScope?.type !== "team") {
+        const personalResult = await supabase.rpc("get_personal_challenge_standings", {
+          start_date_in:todayString(),
+          end_date_in:todayString(),
+        });
+        if (!personalResult.error) {
+          resultRows=(personalResult.data || []).map((row) => ({
+            ...row,
+            user_id:row.result_user_id,
+          }));
+          error=null;
+        }
+      }
       if (cancelled) return;
       const [{ data:roundRows }, { data:benchmarkRows }, { data:personalProfiles }, { data:historyRows }] = await Promise.all([
         challengeScope?.type === "team"
@@ -255,12 +268,10 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
             .eq("hidden_from_others",false)
           : Promise.resolve({ data:[] }),
         challengeScope?.type !== "team"
-          ? supabase.from("game_stats")
-            .select("user_id,game,challenge_date,seconds,mistakes,hints,completed_at")
-            .eq("mode","challenge")
-            .is("team_challenge_id",null)
-            .gte("challenge_date",daysAgoDate(7))
-            .lt("challenge_date",todayString())
+          ? supabase.rpc("get_personal_challenge_standings", {
+            start_date_in:daysAgoDate(7),
+            end_date_in:daysAgoDate(1),
+          })
           : Promise.resolve({ data:[] }),
       ]);
       if (cancelled) return;
@@ -325,7 +336,10 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         })));
         setChallengeBenchmarks(benchmarkRows || []);
         setPreviousChallengeRows(previousRows);
-        setPersonalHistoryRows(historyRows || []);
+        setPersonalHistoryRows((historyRows || []).map((row) => ({
+          ...row,
+          user_id:row.user_id || row.result_user_id,
+        })));
         setPreviousChallengeRounds(previousRoundRows.map((round) => ({
           date:round.challenge_date,
           game:round.game,
