@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Send, Smile } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { sendPoke } from "./lib/pokes.js";
@@ -101,6 +101,8 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
   const textareaRef = useRef(null);
   const quickPressTimerRef = useRef(null);
   const quickPressOpenedRef = useRef(false);
+  const initialScrollDoneRef = useRef(false);
+  const previousMessageCountRef = useRef(0);
 
   const peerId = peer?.user_id || peer?.id || null;
   const peerProfile = peer?.profiles || peer || null;
@@ -206,16 +208,28 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
   }, [currentUser?.id, peerId]);
 
   useEffect(() => {
-    const container = messagesRef.current;
-    if (!container) return;
+    initialScrollDoneRef.current=false;
+    previousMessageCountRef.current=0;
+  },[peerId]);
 
-    requestAnimationFrame(() => {
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: loading ? "auto" : "smooth",
-      });
-    });
-  }, [messages.length, loading]);
+  useLayoutEffect(() => {
+    const container = messagesRef.current;
+    if (!container || loading) return;
+
+    if (!initialScrollDoneRef.current) {
+      // Position before paint so opening a long conversation never visibly
+      // travels from its oldest message to its newest one.
+      container.scrollTop=container.scrollHeight;
+      initialScrollDoneRef.current=true;
+      previousMessageCountRef.current=messages.length;
+      return;
+    }
+
+    if (messages.length > previousMessageCountRef.current) {
+      container.scrollTo({ top:container.scrollHeight,behavior:"smooth" });
+    }
+    previousMessageCountRef.current=messages.length;
+  },[messages.length,loading]);
 
   const grouped = useMemo(() => {
     const result = [];
