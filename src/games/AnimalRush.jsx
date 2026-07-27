@@ -553,53 +553,55 @@ export default function AnimalRush({ onExit }) {
 
   return (
     <div className="animal-rush">
-      <main className="rush-shell">
-        <div className="mb-3 flex items-center justify-between">
+      <main className="rush-shell rush-shell--play">
+        <div className="rush-topbar mb-3 flex items-center justify-between">
           <button type="button" className="rush-quiet -ml-2" onClick={onExit}><Home size={16} /> Home</button>
           <span className="rush-muted text-[11px] font-semibold">Round {room.round_number}</span>
           <span className="rush-muted text-[11px]">{activePlayers.length} active</span>
         </div>
 
         <section className="rush-panel rush-stage p-4">
-          <div className="mb-3 grid grid-cols-2 gap-2">
+          <div className="rush-score-grid mb-3 grid grid-cols-2 gap-2">
             {players.map((player) => (
               <PlayerChip key={player.user_id} player={player} currentUserId={user?.id} />
             ))}
           </div>
 
-          {room.status === "round_result" && (
-            <div className="rush-round-result mb-3">
-              <strong className="block text-sm">
-                {!roundWinner
-                  ? "No one found it"
-                  : roundWinner.user_id === user?.id
-                    ? "You found it first"
-                    : `${roundWinner.player_name} found it first`}
-              </strong>
-              <small className="mt-0.5 block opacity-70">Next animal is coming…</small>
-            </div>
-          )}
-
-          {attemptFeedback && room.status !== "round_result" && (
-            <div className="rush-feedback mb-3 rounded-2xl border px-3 py-2 text-center text-xs font-semibold" data-kind={attemptFeedback.correct ? "correct" : "wrong"}>
-              {attemptFeedback.pending
-                ? "Checking your touch…"
-                : attemptFeedback.correct
-                  ? <><Check className="mr-1 inline" size={14} /> Correct · {attemptFeedback.reactionMs} ms</>
-                  : <><X className="mr-1 inline" size={14} /> Wrong · {attemptFeedback.penalty === "safety" ? "safety card lost" : attemptFeedback.penalty === "won_card" ? "won card lost" : "eliminated"}</>}
-            </div>
-          )}
-
-          <div className="text-center">
-            <p className="rush-kicker">{phase === "open" ? "Find this animal" : room.status === "round_result" ? "Round complete" : "Get ready"}</p>
-            <div className="rush-target mt-2" data-open={phase === "open"}>
-              {phase === "open" || room.status === "round_result"
-                ? <AnimalFace animalId={targetAnimal.id} size={86} />
-                : <span className="rush-countdown">{countdown || "•"}</span>}
-            </div>
-            {(phase === "open" || room.status === "round_result") && (
-              <strong className="mt-1 block text-sm">{targetAnimal.label}</strong>
+          <div className="rush-round-info">
+            {room.status === "round_result" && (
+              <div className="rush-round-result mb-3">
+                <strong className="block text-sm">
+                  {!roundWinner
+                    ? "No one found it"
+                    : roundWinner.user_id === user?.id
+                      ? "You found it first"
+                      : `${roundWinner.player_name} found it first`}
+                </strong>
+                <small className="mt-0.5 block opacity-70">Next animal is coming…</small>
+              </div>
             )}
+
+            {attemptFeedback && room.status !== "round_result" && (
+              <div className="rush-feedback mb-3 rounded-2xl border px-3 py-2 text-center text-xs font-semibold" data-kind={attemptFeedback.correct ? "correct" : "wrong"}>
+                {attemptFeedback.pending
+                  ? "Checking your touch…"
+                  : attemptFeedback.correct
+                    ? <><Check className="mr-1 inline" size={14} /> Correct · {attemptFeedback.reactionMs} ms</>
+                    : <><X className="mr-1 inline" size={14} /> Wrong · {attemptFeedback.penalty === "safety" ? "safety card lost" : attemptFeedback.penalty === "won_card" ? "won card lost" : "eliminated"}</>}
+              </div>
+            )}
+
+            <div className="rush-prompt text-center">
+              <p className="rush-kicker">{phase === "open" ? "Find this animal" : room.status === "round_result" ? "Round complete" : "Get ready"}</p>
+              <div className="rush-target mt-2" data-open={phase === "open"}>
+                {phase === "open" || room.status === "round_result"
+                  ? <AnimalFace animalId={targetAnimal.id} size={86} />
+                  : <span className="rush-countdown">{countdown || "•"}</span>}
+              </div>
+              {(phase === "open" || room.status === "round_result") && (
+                <strong className="mt-1 block text-sm">{targetAnimal.label}</strong>
+              )}
+            </div>
           </div>
 
           <div className="rush-grid" aria-label="Animal cards">
@@ -622,9 +624,9 @@ export default function AnimalRush({ onExit }) {
           </div>
 
           {me?.eliminated && (
-            <p className="rush-error mt-4 text-center">You have no cards left. You can watch the rest of the match.</p>
+            <p className="rush-stage-message rush-error mt-4 text-center">You have no cards left. You can watch the rest of the match.</p>
           )}
-          {message && <p className="rush-error mt-4">{message}</p>}
+          {message && <p className="rush-stage-message rush-error mt-4">{message}</p>}
         </section>
       </main>
     </div>
