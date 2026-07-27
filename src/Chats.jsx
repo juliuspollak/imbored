@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, MessageCircle, Search, Sparkles } from "lucide-react";
+import { ArrowLeft, MessageCircle, Search, Sparkles, Users } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
 
@@ -17,6 +17,7 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
   const [messages, setMessages] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [presence, setPresence] = useState(new Set());
+  const [view, setView] = useState("recent");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -73,11 +74,26 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
       .map((item) => ({ ...item, profile: profileMap[item.peerId] }));
   }, [messages, profileMap, currentUser.id]);
 
-  const filteredProfiles = profiles.filter((p) => `${p.name || ""} ${p.mood || ""}`.toLowerCase().includes(query.trim().toLowerCase()));
-  const conversationIds = new Set(conversations.map((c) => c.peerId));
-  const newPeople = filteredProfiles.filter((p) => (
-    !conversationIds.has(p.id) && (p.is_admin || p.is_approved !== false)
+  const normalisedQuery = query.trim().toLowerCase();
+  const filteredConversations = conversations.filter((conversation) => (
+    !normalisedQuery
+    || `${conversation.profile.name || ""} ${conversation.latest.body || ""}`.toLowerCase().includes(normalisedQuery)
   ));
+  const conversationIds = new Set(conversations.map((c) => c.peerId));
+  const findResults = normalisedQuery.length < 2
+    ? []
+    : profiles
+      .filter((profile) => (
+        profile.id !== currentUser.id
+        && (profile.is_admin || profile.is_approved !== false)
+        && `${profile.name || ""} ${profile.mood || ""}`.toLowerCase().includes(normalisedQuery)
+      ))
+      .slice(0, 20);
+
+  function changeView(nextView) {
+    setView(nextView);
+    setQuery("");
+  }
 
   async function open(profile, latest = null) {
     if (latest?.activity_type === "team_invitation") {
@@ -114,6 +130,9 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
         .chats-title{font-size:28px;font-weight:900;letter-spacing:-.04em}
         .chat-search{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.86);border:1px solid rgba(27,33,41,.08);border-radius:18px;padding:12px 14px;box-shadow:0 10px 30px rgba(50,45,90,.08)}
         .chat-search input{width:100%;border:0;outline:0;background:transparent;font:inherit}
+        .chat-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:5px;background:rgba(27,33,41,.055);border-radius:17px;margin-bottom:14px}
+        .chat-tab{display:flex;align-items:center;justify-content:center;gap:7px;border:0;border-radius:13px;padding:10px 12px;background:transparent;color:rgba(27,33,41,.55);font-size:12px;font-weight:800;transition:.16s ease}
+        .chat-tab.active{background:#fff;color:#5f4fe0;box-shadow:0 5px 16px rgba(50,45,90,.09)}
         .chat-section-title{display:flex;align-items:center;gap:7px;margin:22px 4px 10px;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:rgba(27,33,41,.48)}
         .conversation{width:100%;display:flex;align-items:center;gap:12px;border:0;text-align:left;background:rgba(255,255,255,.88);padding:12px;border-radius:22px;margin:8px 0;box-shadow:0 9px 26px rgba(27,33,41,.08);transition:.16s ease}
         .conversation:active{transform:scale(.985)}
@@ -129,25 +148,45 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
           <button type="button" onClick={onBack} className="nav-btn" style={{width:40,height:40,borderRadius:999,border:"1px solid rgba(27,33,41,.08)",background:"#fff",display:"grid",placeItems:"center"}}><ArrowLeft size={18}/></button>
           <div><div className="chats-title">Chats</div><div style={{fontSize:12,color:"rgba(27,33,41,.5)"}}>Messages wait here, even when friends are offline.</div></div>
         </header>
-        <label className="chat-search"><Search size={18} color="#7665ef"/><input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Find a player…" /></label>
-        {error && <div style={{marginTop:12,padding:12,borderRadius:14,background:"#fff0f0",color:"#a12b2b",fontSize:12}}>{error}</div>}
-        <div className="chat-section-title"><MessageCircle size={14}/>Recent conversations</div>
-        {loading && <div style={{padding:24,textAlign:"center",opacity:.55}}>Loading chats…</div>}
-        {!loading && conversations.length===0 && <div style={{padding:26,textAlign:"center",background:"rgba(255,255,255,.65)",borderRadius:22}}><div style={{fontSize:38}}>💬✨</div><strong>No chats yet</strong><div style={{fontSize:13,opacity:.55,marginTop:5}}>Choose someone below and say hello.</div></div>}
-        {conversations.filter(c => (c.profile.name||"").toLowerCase().includes(query.toLowerCase())).map(({peerId,profile,latest,unread}) => (
-          <button type="button" className="conversation" key={peerId} onClick={()=>open(profile,latest)}>
-            <div className="conversation-avatar">{profile.icon||"🙂"}{presence.has(peerId)&&<span className="online-dot"/>}</div>
-            <div style={{flex:1,minWidth:0}}><div style={{display:"flex",justifyContent:"space-between",gap:8}}><strong style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile.name||"Player"}</strong><span style={{fontSize:10,opacity:.45}}>{formatWhen(latest.created_at)}</span></div><div style={{fontSize:12,opacity:unread?.85:.5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:unread?700:400}}>{latest.activity_type==="user_approval_required" ? "" : latest.activity_type==="feedback_completed" ? "Feedback update · " : latest.activity_type==="team_invitation" ? "Team invitation · " : latest.activity_type==="team_challenge_winner" ? "Challenge result · " : latest.system_generated ? "Team update · " : latest.sender_id===currentUser.id?"You: ":""}{latest.body}</div></div>
-            {latest.activity_type==="user_approval_required"
-              ? <span className="rounded-full px-2.5 py-1 text-[10px] font-bold" style={{background:"#FFF0C2",color:"#8A5C00"}}>Review</span>
-              : unread>0&&<span className="unread-pill">{unread}</span>}
-          </button>
-        ))}
-        <div className="chat-section-title"><Sparkles size={14}/>Start a new chat</div>
-        <div className="people-list">
-          {newPeople.map((profile)=><button type="button" className="person-card" key={profile.id} onClick={()=>open(profile)}><div className="person-avatar">{profile.icon||"🙂"}{presence.has(profile.id)&&<span className="online-dot"/>}</div><span style={{flex:1,minWidth:0}}><strong style={{display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile.name||"Player"}</strong><span style={{display:"block",fontSize:11,opacity:.48,marginTop:2}}>{presence.has(profile.id)?"Online now":"Offline · message anyway"}</span></span><MessageCircle size={17} style={{opacity:.35}} aria-hidden="true"/></button>)}
-          {!loading && newPeople.length === 0 && query && <div style={{padding:18,textAlign:"center",fontSize:12,opacity:.55}}>No new players match your search.</div>}
+        <div className="chat-tabs" role="tablist" aria-label="Chat views">
+          <button type="button" role="tab" aria-selected={view==="recent"} className={`chat-tab ${view==="recent"?"active":""}`} onClick={()=>changeView("recent")}><MessageCircle size={15}/>Recent</button>
+          <button type="button" role="tab" aria-selected={view==="find"} className={`chat-tab ${view==="find"?"active":""}`} onClick={()=>changeView("find")}><Users size={15}/>Find people</button>
         </div>
+        {error && <div style={{marginTop:12,padding:12,borderRadius:14,background:"#fff0f0",color:"#a12b2b",fontSize:12}}>{error}</div>}
+        {view==="recent" ? (
+          <>
+            {conversations.length>6&&<label className="chat-search"><Search size={18} color="#7665ef"/><input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Search conversations…" /></label>}
+            <div className="chat-section-title"><MessageCircle size={14}/>Recent conversations</div>
+            {loading && <div style={{padding:24,textAlign:"center",opacity:.55}}>Loading chats…</div>}
+            {!loading && conversations.length===0 && <div style={{padding:26,textAlign:"center",background:"rgba(255,255,255,.65)",borderRadius:22}}><div style={{fontSize:38}}>💬✨</div><strong>No chats yet</strong><div style={{fontSize:13,opacity:.55,marginTop:5}}>Find someone and say hello.</div><button type="button" onClick={()=>changeView("find")} style={{marginTop:14,border:0,borderRadius:999,padding:"9px 15px",background:"#6d5dfc",color:"#fff",fontSize:12,fontWeight:800}}>Find people</button></div>}
+            {!loading && conversations.length>0 && filteredConversations.length===0 && <div style={{padding:24,textAlign:"center",fontSize:12,opacity:.55}}>No conversations match that search.</div>}
+            {filteredConversations.map(({peerId,profile,latest,unread}) => (
+              <button type="button" className="conversation" key={peerId} onClick={()=>open(profile,latest)}>
+                <div className="conversation-avatar">{profile.icon||"🙂"}{presence.has(peerId)&&<span className="online-dot"/>}</div>
+                <div style={{flex:1,minWidth:0}}><div style={{display:"flex",justifyContent:"space-between",gap:8}}><strong style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile.name||"Player"}</strong><span style={{fontSize:10,opacity:.45}}>{formatWhen(latest.created_at)}</span></div><div style={{fontSize:12,opacity:unread?.85:.5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:unread?700:400}}>{latest.activity_type==="user_approval_required" ? "" : latest.activity_type==="feedback_completed" ? "Feedback update · " : latest.activity_type==="team_invitation" ? "Team invitation · " : latest.activity_type==="team_challenge_winner" ? "Challenge result · " : latest.system_generated ? "Team update · " : latest.sender_id===currentUser.id?"You: ":""}{latest.body}</div></div>
+                {latest.activity_type==="user_approval_required"
+                  ? <span className="rounded-full px-2.5 py-1 text-[10px] font-bold" style={{background:"#FFF0C2",color:"#8A5C00"}}>Review</span>
+                  : unread>0&&<span className="unread-pill">{unread}</span>}
+              </button>
+            ))}
+          </>
+        ) : (
+          <>
+            <label className="chat-search"><Search size={18} color="#7665ef"/><input autoFocus value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Search by name…" /></label>
+            <div className="chat-section-title"><Sparkles size={14}/>Find someone</div>
+            {normalisedQuery.length<2 ? (
+              <div style={{padding:28,textAlign:"center",background:"rgba(255,255,255,.65)",borderRadius:22}}><Search size={28} style={{margin:"0 auto 9px",opacity:.24}}/><strong style={{fontSize:13}}>Search for a player</strong><div style={{fontSize:12,opacity:.48,marginTop:4}}>Enter at least two characters. The full player directory stays out of view.</div></div>
+            ) : (
+              <div className="people-list">
+                {findResults.map((profile)=>{
+                  const existing=conversations.find((conversation)=>conversation.peerId===profile.id);
+                  return <button type="button" className="person-card" key={profile.id} onClick={()=>open(profile,existing?.latest)}><div className="person-avatar">{profile.icon||"🙂"}{presence.has(profile.id)&&<span className="online-dot"/>}</div><span style={{flex:1,minWidth:0}}><strong style={{display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile.name||"Player"}</strong><span style={{display:"block",fontSize:11,opacity:.48,marginTop:2}}>{existing?"Open recent conversation":presence.has(profile.id)?"Online now":"Offline · message anyway"}</span></span><MessageCircle size={17} style={{opacity:.35}} aria-hidden="true"/></button>;
+                })}
+                {!loading && findResults.length===0&&<div style={{padding:22,textAlign:"center",fontSize:12,opacity:.55}}>No players match “{query.trim()}”.</div>}
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
