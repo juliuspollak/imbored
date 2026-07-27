@@ -405,13 +405,20 @@
 
 @media (orientation: landscape) and (max-height: 520px) {
   .animal-rush {
-    min-height: 100svh;
-    overflow-y: auto;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100svh;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .rush-shell--play {
     width: min(100%, 920px);
-    min-height: 100svh;
+    height: 100svh;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
     padding:
       max(8px, env(safe-area-inset-top))
       max(18px, env(safe-area-inset-right))
@@ -426,8 +433,11 @@
   }
 
   .rush-stage {
+    flex: 1;
+    min-height: 0;
     display: grid;
-    grid-template-columns: minmax(140px, 0.72fr) minmax(330px, 1.65fr);
+    grid-template-columns: clamp(112px, 18vw, 150px) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
     grid-template-areas:
       "scores scores"
       "info cards"
@@ -442,6 +452,7 @@
     grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
     gap: 6px;
     margin-bottom: 0 !important;
+    padding-right: 54px;
   }
 
   .rush-player-chip {
@@ -457,24 +468,33 @@
 
   .rush-round-info {
     grid-area: info;
+    align-self: stretch;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8px;
+    border: 1px solid var(--rush-border);
+    border-radius: 19px;
+    background: var(--rush-soft-fill);
   }
 
   .rush-grid {
     grid-area: cards;
-    grid-template-columns: repeat(3, auto);
+    width: 100%;
+    grid-template-columns: repeat(6, auto);
     align-content: center;
-    justify-content: center;
-    gap: 7px;
+    justify-content: space-evenly;
+    gap: clamp(4px, 0.8vw, 10px);
     margin-top: 0;
   }
 
   .rush-animal-card {
-    width: clamp(76px, calc((100svh - 120px) / 2), 112px);
+    width: clamp(64px, calc((100vw - 250px) / 6), 104px);
   }
 
   .rush-animal-card svg {
-    width: min(68%, 72px);
+    width: min(66%, 68px);
     height: auto;
   }
 
@@ -484,14 +504,14 @@
   }
 
   .rush-target {
-    width: 78px;
-    height: 78px;
-    border-radius: 22px;
+    width: clamp(68px, 19svh, 84px);
+    height: clamp(68px, 19svh, 84px);
+    border-radius: 23px;
   }
 
   .rush-target svg {
-    width: 64px;
-    height: 64px;
+    width: min(72%, 66px);
+    height: auto;
   }
 
   .rush-countdown {
