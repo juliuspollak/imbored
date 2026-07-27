@@ -63,6 +63,39 @@
   color: var(--rush-muted);
 }
 
+.rush-motion-notice {
+  display: grid;
+  gap: 2px;
+  border: 1px solid rgba(154, 107, 17, 0.2);
+  border-radius: 15px;
+  padding: 10px 12px;
+  color: var(--rush-result-text);
+  background: rgba(242, 198, 109, 0.11);
+  font-size: 11px;
+}
+
+.rush-motion-notice strong {
+  font-size: 12px;
+}
+
+.rush-motion-notice span {
+  opacity: 0.74;
+}
+
+.rush-motion-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(154, 107, 17, 0.18);
+  border-radius: 999px;
+  padding: 2px 6px;
+  color: var(--rush-result-text);
+  background: rgba(242, 198, 109, 0.12);
+  font-size: 8px;
+  font-style: normal;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
 .rush-icon-panel--mint {
   color: var(--rush-mint);
   background: rgba(21, 150, 111, 0.11);
@@ -561,6 +594,11 @@
     min-height: 34px;
     margin-bottom: 5px !important;
     padding-right: 64px;
+  }
+
+  .rush-motion-badge {
+    padding: 1px 5px;
+    font-size: 7px;
   }
 
   .rush-stage {

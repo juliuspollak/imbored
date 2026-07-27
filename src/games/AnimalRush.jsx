@@ -35,6 +35,28 @@ import "./animalRush/animal-rush.css";
 
 const ROOM_STORAGE_PREFIX = "imbored-animal-rush-room-";
 
+function useReducedMotionPreference() {
+  const [enabled, setEnabled] = useState(() =>
+    typeof window !== "undefined"
+    && window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true
+  );
+
+  useEffect(() => {
+    const preference = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    if (!preference) return undefined;
+    const onChange = (event) => setEnabled(event.matches);
+    setEnabled(preference.matches);
+    if (preference.addEventListener) preference.addEventListener("change", onChange);
+    else preference.addListener?.(onChange);
+    return () => {
+      if (preference.removeEventListener) preference.removeEventListener("change", onChange);
+      else preference.removeListener?.(onChange);
+    };
+  }, []);
+
+  return enabled;
+}
+
 function phoneSupported() {
   if (typeof window === "undefined" || typeof navigator === "undefined") return false;
   return isPhoneDevice({
@@ -102,6 +124,7 @@ function PhoneOnly({ onExit }) {
 export default function AnimalRush({ onExit }) {
   const { user, profile } = useAuth();
   const supported = useMemo(phoneSupported, []);
+  const reducedMotion = useReducedMotionPreference();
   const [room, setRoom] = useState(null);
   const [players, setPlayers] = useState([]);
   const [joinCode, setJoinCode] = useState(() => {
@@ -384,7 +407,14 @@ export default function AnimalRush({ onExit }) {
   if (!supported) return <PhoneOnly onExit={onExit} />;
 
   if (botMode) {
-    return <BotMatch userId={user?.id || "local-player"} profile={profile} onBack={() => setBotMode(false)} />;
+    return (
+      <BotMatch
+        userId={user?.id || "local-player"}
+        profile={profile}
+        reducedMotion={reducedMotion}
+        onBack={() => setBotMode(false)}
+      />
+    );
   }
 
   if (loading) {
@@ -415,6 +445,12 @@ export default function AnimalRush({ onExit }) {
             <p className="rush-muted mt-3 text-sm leading-relaxed">
               Roll the animal, find it first and protect your two safety cards. A wrong touch costs a safety card, then one you have won.
             </p>
+            {reducedMotion && (
+              <div className="rush-motion-notice mt-4" role="status">
+                <strong>Reduce Motion is on</strong>
+                <span>The die will use a static countdown, then reveal the animal.</span>
+              </div>
+            )}
 
             <button type="button" className="rush-primary mt-6 w-full" onClick={() => setBotMode(true)} disabled={!!working}>
               <Bot size={18} />
@@ -557,7 +593,10 @@ export default function AnimalRush({ onExit }) {
       <main className="rush-shell rush-shell--play">
         <div className="rush-topbar mb-3 flex items-center justify-between">
           <button type="button" className="rush-quiet -ml-2" onClick={onExit}><Home size={16} /> Home</button>
-          <span className="rush-muted text-[11px] font-semibold">Round {room.round_number}</span>
+          <span className="rush-muted flex items-center gap-2 text-[11px] font-semibold">
+            Round {room.round_number}
+            {reducedMotion && <span className="rush-motion-badge">Motion reduced</span>}
+          </span>
           <span className="rush-muted text-[11px]">{activePlayers.length} active</span>
         </div>
 

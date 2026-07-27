@@ -1,5 +1,12 @@
 [
   {
+    "id": "v146-animal-rush-motion-status",
+    "version": "v146",
+    "date": "2026-07-28",
+    "title": "Made Reduced Motion visible in Animal Rush",
+    "body": "Animal Rush now detects the iPhone Reduce Motion preference, explains the static-die behaviour before play, and shows a compact Motion reduced badge during bot and live rounds. The status updates immediately when the device setting changes."
+  },
+  {
     "id": "v145-animal-rush-reduced-motion-die",
     "version": "v145",
     "date": "2026-07-28",
