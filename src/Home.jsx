@@ -231,7 +231,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
       const week = currentWeekRange();
       let query = supabase
         .from("game_stats")
-        .select("user_id,game,challenge_date,seconds,mistakes,hints,completed_at,profiles(name,icon,show_stats_to_others)")
+        .select("user_id,game,challenge_date,seconds,mistakes,hints,zip_backtracked_cells,zip_required_moves,completed_at,profiles(name,icon,show_stats_to_others)")
         .eq("mode", "challenge");
       query = challengeScope?.type === "team"
         ? query.eq("team_challenge_id", challengeScope.id).gte("challenge_date", week.start).lte("challenge_date", week.end)
@@ -281,7 +281,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
       if (previousChallenge) {
         const [{ data:priorResults }, { data:priorRounds }] = await Promise.all([
           supabase.from("game_stats")
-            .select("user_id,game,challenge_date,seconds,mistakes,hints,completed_at")
+            .select("user_id,game,challenge_date,seconds,mistakes,hints,zip_backtracked_cells,zip_required_moves,completed_at")
             .eq("mode","challenge")
             .eq("team_challenge_id",previousChallenge.challenge_id),
           supabase.from("team_challenge_rounds")
@@ -294,7 +294,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         previousRoundRows = priorRounds || [];
       } else if (challengeScope?.type !== "team") {
         const { data:priorResults } = await supabase.from("game_stats")
-          .select("user_id,game,challenge_date,seconds,mistakes,hints,completed_at")
+          .select("user_id,game,challenge_date,seconds,mistakes,hints,zip_backtracked_cells,zip_required_moves,completed_at")
           .eq("user_id",userId)
           .eq("mode","challenge")
           .is("team_challenge_id",null)
@@ -308,7 +308,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
       if (error) {
         let fallback = supabase
           .from("game_stats")
-          .select("user_id,game,challenge_date,seconds,mistakes,hints,completed_at")
+          .select("user_id,game,challenge_date,seconds,mistakes,hints,zip_backtracked_cells,zip_required_moves,completed_at")
           .eq("mode", "challenge");
         fallback = challengeScope?.type === "team"
           ? fallback.eq("team_challenge_id", challengeScope.id).gte("challenge_date", week.start).lte("challenge_date", week.end)

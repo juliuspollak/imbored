@@ -280,6 +280,18 @@ function fmtTime(s) {
   return `${m}:${ss.toString().padStart(2, "0")}`;
 }
 
+function zipEfficiency(requiredMoves, backtrackedCells) {
+  const required = Math.max(1, Number(requiredMoves) || 1);
+  const retraced = Math.max(0, Number(backtrackedCells) || 0);
+  return Math.round((required / (required + retraced * 2)) * 100);
+}
+
+function zipEfficiencyPenaltyUnits(backtrackedCells) {
+  // The first nine retraced cells are free exploration. Thereafter one
+  // existing mistake-penalty unit applies per ten cells, capped at two.
+  return Math.min(2, Math.floor(Math.max(0, Number(backtrackedCells) || 0) / 10));
+}
+
 function rgba(hex, alpha) {
   const value = hex.replace("#", "");
   const size = value.length === 3 ? 1 : 2;
@@ -317,7 +329,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
   const [seconds, setSeconds] = useState(0);
   const [running, setRunning] = useState(false);
   const [solved, setSolved] = useState(false);
-  const [mistakes, setMistakes] = useState(0);
+  const [mistakes, setMistakes] = useState(0); // ZIP: cells deliberately backtracked
   const [hintsUsed, setHintsUsed] = useState(0);
   const [difficultyRating, setDifficultyRating] = useState(null);
   const [hintCell, setHintCell] = useState(null);
@@ -361,12 +373,25 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
   useEffect(() => {
     if (!puzzle || !path) return;
     const totalVisitable = puzzle.numberGrid.length * puzzle.numberGrid.length - puzzle.blocked.length;
+    const requiredMoves = Math.max(1,totalVisitable-1);
     const [lastR, lastC] = path[path.length - 1];
     const lastIsMaxCheckpoint = puzzle.numberGrid[lastR][lastC] === puzzle.maxNum;
     if (path.length === totalVisitable && lastIsMaxCheckpoint && !hasOrderConflict(path, puzzle.numberGrid) && !solved) {
       setSolved(true);
       setRunning(false);
-      onSolved && onSolved({ userId, game: "zip", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed, mode, challengeDate: isChallenge ? challengeDate : undefined });
+      onSolved && onSolved({
+        userId,
+        game:"zip",
+        dayIndex:dayIdx,
+        seconds,
+        mistakes:zipEfficiencyPenaltyUnits(mistakes),
+        hints:hintsUsed,
+        zipBacktrackedCells:mistakes,
+        zipRequiredMoves:requiredMoves,
+        zipEfficiency:zipEfficiency(requiredMoves,mistakes),
+        mode,
+        challengeDate:isChallenge ? challengeDate : undefined,
+      });
     }
   }, [path, puzzle]);
 
@@ -497,11 +522,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
     const p = latest.current.puzzle;
     const preview = processStep(currentPath, r, c, p.wallSet, p.numberGrid, p.tunnelMap, p.blockedSet, restrictRollback);
     if (preview.length < currentPath.length) {
-      const shouldCount = !restrictRollback || !dragRef.current.rollbackCounted;
-      if (shouldCount) {
-        setMistakes((value) => value + 1);
-        if (restrictRollback) dragRef.current.rollbackCounted = true;
-      }
+      setMistakes((value) => value + (currentPath.length-preview.length));
     }
     setPath((prev) => {
       return processStep(prev, r, c, p.wallSet, p.numberGrid, p.tunnelMap, p.blockedSet, restrictRollback);
@@ -586,6 +607,13 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
 
   function handleReset() {
     if (solved) return;
+    if (isChallenge) {
+      setMistakes((value) => value + Math.max(0,path.length-1));
+      setPath([puzzle.path[0]]);
+      setHintCell(null);
+      setHistory([]);
+      return;
+    }
     setPath([puzzle.path[0]]);
     setMistakes(0);
     setHintsUsed(0);
@@ -627,6 +655,10 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
   }
 
   latest.current = { path, puzzle, solved, mistakes, hintsUsed, processDragPoint };
+  const requiredMoves = puzzle
+    ? Math.max(1,puzzle.numberGrid.length*puzzle.numberGrid.length-puzzle.blocked.length-1)
+    : 1;
+  const efficiency = zipEfficiency(requiredMoves,mistakes);
 
   return (
     <div
@@ -705,7 +737,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
             <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
           </div>
           <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
-            returns: <span style={{ color: mistakes > 0 ? RED : CREAM }}>{mistakes}</span>
+            efficiency: <span style={{ color: efficiency < 85 ? RED : ZIP_GREEN }}>{efficiency}%</span>
           </div>
           <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
             hints: <span style={{ color: hintsUsed > 0 ? GOLD : CREAM }}>{hintsUsed}</span>
@@ -757,8 +789,9 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
           >
             Drag through cells (or tap one at a time) to extend your path — orange bars are walls
             you can't cross, and matching colored letters are linked tunnels: step into one and you continue from its pair. Tap any earlier
-            cell on your path to roll back to it and correct your route. Each tap backwards, or each
-            continuous backwards drag, counts as one return and reduces your score. Hint points to your last
+            cell on your path to roll back to it and correct your route. Efficiency compares the required
+            route with how many cells you retrace. Normal exploration is free; only substantial backtracking
+            receives a small, capped score adjustment. Hint points to your last
             correct cell if you've gone off track, or the next cell if you're still on it. Visit
             every open cell once, hit the checkpoints in order, and finish on the highest number.
           </div>
@@ -987,7 +1020,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
               <Flag size={28} style={{ color: ZIP_GREEN }} />
               <p style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 600, color: CREAM }} className="text-2xl">{t("common.solved")}</p>
               <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs mb-1">
-                {fmtTime(seconds)} &middot; {mistakes} return{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
+                {fmtTime(seconds)} &middot; {efficiency}% efficient &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
               </p>
               {rewardResult?.points_awarded != null && (
                 <div

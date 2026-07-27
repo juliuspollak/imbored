@@ -343,7 +343,12 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                     <div className="rounded-xl px-4 py-3 mt-1" style={{ background: "rgba(16,24,40,0.03)" }}>
                       <div className="grid grid-cols-3 gap-2 mb-2">
                         <Stat label="Time" value={fmtTime(result.seconds)} />
-                        <Stat label="Mistakes" value={result.mistakes} />
+                        <Stat
+                          label={gameId === "zip" && result.zip_required_moves ? "Efficiency" : "Mistakes"}
+                          value={gameId === "zip" && result.zip_required_moves
+                            ? `${Math.round((result.zip_required_moves/(result.zip_required_moves+(result.zip_backtracked_cells || 0)*2))*100)}%`
+                            : result.mistakes}
+                        />
                         <Stat label="Hints" value={result.hints} />
                       </div>
                       {communityRatings[date] && (

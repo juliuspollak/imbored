@@ -45,7 +45,7 @@ export default function Stats({ onBack }) {
       return;
     }
     Promise.all([
-      supabase.from("game_stats").select("user_id, game, mode, challenge_date, completed_at, seconds, mistakes, hints"),
+      supabase.from("game_stats").select("user_id, game, mode, challenge_date, completed_at, seconds, mistakes, hints, zip_backtracked_cells, zip_required_moves"),
       supabase.from("profiles").select("id, name, icon, mood, hidden_from_others, show_stats_to_others"),
     ]).then(([{ data: statsData }, { data: profilesData }]) => {
       setRows(statsData || []);
@@ -133,7 +133,7 @@ export default function Stats({ onBack }) {
                               <div key={date} className="py-2.5" style={{ borderBottom: "1px solid rgba(16,24,40,0.06)" }}>
                                 <div className="flex justify-between items-center mb-1.5"><span style={{ color: INK }} className="text-xs font-semibold">{formatDate(date)}</span><span style={{ color: INK, opacity: 0.45 }} className="text-[10px]">{dayRows.length} game{dayRows.length === 1 ? "" : "s"}</span></div>
                                 <div className="flex flex-col gap-1.5">{dayRows.sort((a, b) => (b.completed_at || "").localeCompare(a.completed_at || "")).map((row, index) => { const Icon = GAME_ICONS[row.game] || Grid3x3; return (
-                                  <div key={`${date}-${row.game}-${index}`} className="flex items-center gap-2 rounded-lg px-2 py-1.5" style={{ background: "rgba(16,24,40,0.035)" }}><Icon size={13} style={{ color: GAME_COLORS[row.game] || ACCENT }} /><span style={{ color: INK }} className="text-[11px] font-medium flex-1">{GAME_LABELS[row.game] || row.game}</span><span className="flex items-center gap-1 text-[10px]" style={{ color: INK, opacity: 0.55 }}><Clock size={10} />{formatSeconds(row.seconds)}</span><span className="flex items-center gap-1 text-[10px]" style={{ color: INK, opacity: 0.55 }}><TriangleAlert size={10} />{row.mistakes || 0}</span><span className="flex items-center gap-1 text-[10px]" style={{ color: INK, opacity: 0.55 }}><Lightbulb size={10} />{row.hints || 0}</span></div>
+                                  <div key={`${date}-${row.game}-${index}`} className="flex items-center gap-2 rounded-lg px-2 py-1.5" style={{ background: "rgba(16,24,40,0.035)" }}><Icon size={13} style={{ color: GAME_COLORS[row.game] || ACCENT }} /><span style={{ color: INK }} className="text-[11px] font-medium flex-1">{GAME_LABELS[row.game] || row.game}</span><span className="flex items-center gap-1 text-[10px]" style={{ color: INK, opacity: 0.55 }}><Clock size={10} />{formatSeconds(row.seconds)}</span>{row.game === "zip" && row.zip_required_moves ? <span className="text-[10px]" style={{ color:INK,opacity:.55 }}>{Math.round((row.zip_required_moves/(row.zip_required_moves+(row.zip_backtracked_cells || 0)*2))*100)}%</span> : <span className="flex items-center gap-1 text-[10px]" style={{ color: INK, opacity: 0.55 }}><TriangleAlert size={10} />{row.mistakes || 0}</span>}<span className="flex items-center gap-1 text-[10px]" style={{ color: INK, opacity: 0.55 }}><Lightbulb size={10} />{row.hints || 0}</span></div>
                                 ); })}</div>
                               </div>
                             ))}

@@ -25,6 +25,12 @@ function isoDayIndex(dateString) {
   return (new Date(`${dateString}T12:00:00`).getDay() || 7) - 1;
 }
 
+function zipEfficiency(result) {
+  const required = Math.max(1,Number(result?.zip_required_moves) || 1);
+  const retraced = Math.max(0,Number(result?.zip_backtracked_cells) || 0);
+  return Math.round((required/(required+retraced*2))*100);
+}
+
 function dailyChallengeScore(result, benchmark) {
   const adjusted = Math.max(1,
     (Number(result.seconds) || 0)
@@ -462,7 +468,9 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                                 <span className="text-[10px] font-semibold flex items-center gap-1.5" style={{ color:INK }}>
                                   <Clock3 size={10}/>{formatDuration(result.seconds)}
                                   {(Number(result.hints) || 0) > 0 && <><Lightbulb size={10}/>{result.hints}</>}
-                                  {(Number(result.mistakes) || 0) > 0 && <><TriangleAlert size={10}/>{result.mistakes}</>}
+                                  {game.id === "zip" && result.zip_required_moves
+                                    ? <span style={{ color:zipEfficiency(result) >= 85 ? "#137A3A" : "#9A721F" }}>{zipEfficiency(result)}% efficient</span>
+                                    : (Number(result.mistakes) || 0) > 0 && <><TriangleAlert size={10}/>{result.mistakes}</>}
                                   {isTeam && <strong style={{ color:item.score >= 100 ? "#137A3A" : "#9F2F2A" }}>{item.score > 0 ? "+" : ""}{item.score}</strong>}
                                 </span>
                               ) : isTeam && item.missed ? (
