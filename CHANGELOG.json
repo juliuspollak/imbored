@@ -1,5 +1,12 @@
 [
   {
+    "id": "v144-animal-rush-expressive-animals",
+    "version": "v144",
+    "date": "2026-07-28",
+    "title": "Gave Animal Rush a more expressive animal cast",
+    "body": "Redrew all six Animal Rush characters as colourful, expressive vector illustrations inspired by the physical cards: monkey, snake, octopus, elephant, spider and lion. The new artwork stays crisp on the animated cube and game cards while retaining compatibility with existing live rooms."
+  },
+  {
     "id": "v143-animal-rush-animated-die",
     "version": "v143",
     "date": "2026-07-28",

@@ -1,10 +1,10 @@
 export const ANIMALS = [
-  { id: "fox", label: "Fox", colour: "#E9783D" },
-  { id: "panda", label: "Panda", colour: "#374151" },
-  { id: "owl", label: "Owl", colour: "#8B5E3C" },
-  { id: "rabbit", label: "Rabbit", colour: "#7C6F9F" },
-  { id: "lion", label: "Lion", colour: "#C98B2E" },
-  { id: "frog", label: "Frog", colour: "#3D8C68" },
+  { id: "fox", label: "Monkey", colour: "#9B5B42" },
+  { id: "panda", label: "Snake", colour: "#49A94E" },
+  { id: "owl", label: "Octopus", colour: "#B83A9D" },
+  { id: "rabbit", label: "Elephant", colour: "#1EA4B8" },
+  { id: "lion", label: "Lion", colour: "#D58B32" },
+  { id: "frog", label: "Spider", colour: "#56376D" },
 ];
 
 export const ANIMAL_IDS = ANIMALS.map((animal) => animal.id);

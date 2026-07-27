@@ -1,7 +1,19 @@
 import { animalById } from "./engine.js";
 
+function Eye({ cx, cy, rotate = 0, iris = "#E9852D" }) {
+  return (
+    <g transform={`rotate(${rotate} ${cx} ${cy})`}>
+      <ellipse cx={cx} cy={cy} rx="8" ry="10" fill="#FFFEF8" />
+      <circle cx={cx + 1} cy={cy + 1} r="4.3" fill={iris} stroke="none" />
+      <circle cx={cx + 1.5} cy={cy + 1.5} r="2.3" fill="#211B24" stroke="none" />
+      <circle cx={cx} cy={cy} r="1" fill="#FFFFFF" stroke="none" />
+    </g>
+  );
+}
+
 function FaceFrame({ animalId, size, children }) {
   const animal = animalById(animalId);
+  const backgroundId = `rush-animal-bg-${animalId}`;
   return (
     <svg
       width={size}
@@ -11,82 +23,136 @@ function FaceFrame({ animalId, size, children }) {
       aria-hidden="true"
       focusable="false"
     >
-      <circle cx="50" cy="50" r="44" fill={`${animal.colour}20`} />
-      <g stroke={animal.colour} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
+      <defs>
+        <radialGradient id={backgroundId} cx="34%" cy="24%" r="76%">
+          <stop offset="0" stopColor="#FFFFFF" stopOpacity=".92" />
+          <stop offset=".62" stopColor={animal.colour} stopOpacity=".14" />
+          <stop offset="1" stopColor={animal.colour} stopOpacity=".25" />
+        </radialGradient>
+      </defs>
+      <circle cx="50" cy="50" r="45" fill={`url(#${backgroundId})`} />
+      <g stroke="#342532" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
         {children}
       </g>
     </svg>
   );
 }
 
+function Monkey({ size }) {
+  return (
+    <FaceFrame animalId="fox" size={size}>
+      <circle cx="22" cy="48" r="13" fill="#C9863F" />
+      <circle cx="78" cy="48" r="13" fill="#C9863F" />
+      <circle cx="22" cy="48" r="7" fill="#F2C47D" strokeWidth="2.4" />
+      <circle cx="78" cy="48" r="7" fill="#F2C47D" strokeWidth="2.4" />
+      <path fill="#5B2B42" d="M26 51c0-24 11-37 25-37 17 0 26 14 24 39-1 21-11 32-25 32S26 73 26 51Z" />
+      <path fill="#DCA861" d="M32 49c2-18 9-26 19-26 11 0 18 9 18 27 0 19-8 29-19 29S30 68 32 49Z" />
+      <Eye cx="43" cy="43" rotate="-5" />
+      <Eye cx="59" cy="43" rotate="5" />
+      <path fill="#F0C47F" d="M30 61c6-9 12-12 20-12 10 0 17 4 21 13-3 14-10 20-21 20-10 0-17-7-20-21Z" />
+      <path d="M43 61q7 4 14 0" />
+      <path fill="#D94C3F" d="M40 68q10 10 20 0-2 12-10 12t-10-12Z" />
+      <path d="M33 24q14-12 32-2" />
+    </FaceFrame>
+  );
+}
+
+function Snake({ size }) {
+  return (
+    <FaceFrame animalId="panda" size={size}>
+      <path fill="#389B4B" d="M22 77c2-14 13-20 27-17 9 2 18 0 18-6 0-5-5-6-12-5l-5-15c18-6 34 1 34 17 0 21-20 28-39 23-7-2-10 0-11 7l-12-4Z" />
+      <path fill="#70C754" d="M39 32c0-13 8-21 20-21 15 0 24 10 22 23-2 12-11 19-23 18-12-1-19-9-19-20Z" />
+      <path fill="#BCE479" d="M54 37c7-7 18-8 25-3-3 11-11 17-21 16-4 0-7-2-10-4l6-9Z" strokeWidth="2.5" />
+      <Eye cx="53" cy="25" rotate="-8" />
+      <Eye cx="68" cy="24" rotate="7" />
+      <circle cx="73" cy="39" r="1.5" fill="#342532" stroke="none" />
+      <path d="M72 45q-8 5-15 1" />
+      <path d="m44 67 9 2m-17 3 9 2" stroke="#A9DE6F" strokeWidth="3" />
+      <path d="M48 45 37 49m0 0-6-4m6 4-5 5" stroke="#DE3B79" />
+    </FaceFrame>
+  );
+}
+
+function Octopus({ size }) {
+  return (
+    <FaceFrame animalId="owl" size={size}>
+      <path fill="#A82E91" d="M31 49c0-23 8-36 21-36 15 0 23 14 22 36-1 18-9 26-22 26-13 0-21-9-21-26Z" />
+      <path d="M37 63C25 68 27 82 16 82c-6 0-7-6-2-11" stroke="#8E247D" strokeWidth="9" />
+      <path d="M44 69c-7 8-3 17-11 21-6 3-10-2-7-8" stroke="#B73B9D" strokeWidth="9" />
+      <path d="M57 69c7 8 3 17 11 21 6 3 10-2 7-8" stroke="#8E247D" strokeWidth="9" />
+      <path d="M66 63c12 5 10 19 21 19 6 0 7-6 2-11" stroke="#B73B9D" strokeWidth="9" />
+      <path fill="#C94AB0" d="M35 47c1-18 7-28 17-28 11 0 17 11 17 29-8-5-26-5-34-1Z" strokeWidth="2.5" />
+      <Eye cx="45" cy="43" rotate="-5" iris="#F0A82E" />
+      <Eye cx="61" cy="43" rotate="5" iris="#F0A82E" />
+      <path fill="#E45A5D" d="M43 56q10 9 20 0-2 12-10 12t-10-12Z" />
+      <circle cx="37" cy="54" r="2" fill="#E983C9" stroke="none" />
+      <circle cx="68" cy="54" r="2" fill="#E983C9" stroke="none" />
+    </FaceFrame>
+  );
+}
+
+function Elephant({ size }) {
+  return (
+    <FaceFrame animalId="rabbit" size={size}>
+      <path fill="#168EA4" d="M19 47c0-18 10-30 26-30 8 0 14 3 19 9 14 0 23 10 22 24-1 15-11 25-24 25H40C27 75 19 64 19 47Z" />
+      <path fill="#25AEC0" d="M28 49c0-17 9-28 22-28 15 0 24 12 23 31l-3 25c-1 10-7 15-15 13-7-2-9-9-5-15l6-8V50c0-7-4-11-10-11-7 0-11 4-11 10v15c-5-4-7-9-7-15Z" />
+      <path d="M55 75c-2 7 0 11 5 11 6 0 9-5 8-11" />
+      <Eye cx="43" cy="38" rotate="-4" />
+      <Eye cx="59" cy="38" rotate="5" />
+      <path d="M57 51q7 3 12-1" />
+      <path fill="#FFF8E7" d="M44 58c-5 9-9 12-14 11 4-2 7-8 8-14l6 3Z" strokeWidth="2.2" />
+      <path d="m58 58 10 1m-10 5 9 3" stroke="#11798E" strokeWidth="2" />
+    </FaceFrame>
+  );
+}
+
+function Lion({ size }) {
+  return (
+    <FaceFrame animalId="lion" size={size}>
+      <path fill="#783E32" d="m50 9 9 7 11-1 4 10 10 5-2 11 7 9-7 9 2 11-10 5-4 10-11-1-9 7-9-7-11 1-4-10-10-5 2-11-7-9 7-9-2-11 10-5 4-10 11 1 9-7Z" />
+      <circle cx="50" cy="50" r="29" fill="#D99438" />
+      <circle cx="28" cy="38" r="8" fill="#F1B557" />
+      <circle cx="72" cy="38" r="8" fill="#F1B557" />
+      <Eye cx="42" cy="43" rotate="-4" />
+      <Eye cx="59" cy="43" rotate="5" />
+      <path fill="#E9B966" d="M30 62c4-10 11-15 20-15 10 0 17 5 21 15-3 13-10 20-21 20S33 75 30 62Z" />
+      <path fill="#352633" d="M43 58q7-7 14 0-1 7-7 7t-7-7Z" />
+      <path fill="#DD4A42" d="M41 68q9 8 18 0-2 11-9 11t-9-11Z" />
+      <path d="m37 62-9-2m10 7-10 2m35-7 9-2m-10 7 10 2" strokeWidth="2" />
+    </FaceFrame>
+  );
+}
+
+function Spider({ size }) {
+  return (
+    <FaceFrame animalId="frog" size={size}>
+      <path d="M13 29 50 13l37 16-8 43-29 16-29-16-8-43Zm0 0 66 43M87 29 21 72M50 13v75M13 29h74M21 72h58" stroke="#9B89B0" strokeWidth="1.5" opacity=".45" />
+      <path d="M34 48 20 38m15 18-19-2m21 10-16 10m45-26 14-10M65 56l19-2M63 64l16 10" stroke="#30223F" strokeWidth="7" />
+      <ellipse cx="50" cy="57" rx="24" ry="21" fill="#4A315F" />
+      <circle cx="50" cy="34" r="16" fill="#5D3B76" />
+      <Eye cx="44" cy="33" rotate="-5" iris="#F29B2E" />
+      <Eye cx="58" cy="33" rotate="5" iris="#F29B2E" />
+      <path fill="#E24D57" d="M40 55q10 9 20 0-2 12-10 12T40 55Z" />
+      <circle cx="36" cy="48" r="2.2" fill="#81639A" stroke="none" />
+      <circle cx="65" cy="48" r="2.2" fill="#81639A" stroke="none" />
+    </FaceFrame>
+  );
+}
+
 export default function AnimalFace({ animalId, size = 72 }) {
   switch (animalId) {
     case "fox":
-      return (
-        <FaceFrame animalId={animalId} size={size}>
-          <path fill="#FFF7ED" d="M25 28 39 37a32 32 0 0 1 22 0l14-9-5 25c0 18-9 29-20 29S30 71 30 53l-5-25Z" />
-          <path d="m36 51 8 4m20-4-8 4M45 67h10m-5 0v5" />
-          <circle cx="41" cy="52" r="2.5" fill="currentColor" stroke="none" />
-          <circle cx="59" cy="52" r="2.5" fill="currentColor" stroke="none" />
-        </FaceFrame>
-      );
+      return <Monkey size={size} />;
     case "panda":
-      return (
-        <FaceFrame animalId={animalId} size={size}>
-          <circle cx="32" cy="31" r="11" fill="#374151" />
-          <circle cx="68" cy="31" r="11" fill="#374151" />
-          <circle cx="50" cy="54" r="30" fill="#F9FAFB" />
-          <ellipse cx="39" cy="51" rx="9" ry="12" fill="#374151" />
-          <ellipse cx="61" cy="51" rx="9" ry="12" fill="#374151" />
-          <circle cx="40" cy="50" r="2.5" fill="#F9FAFB" stroke="none" />
-          <circle cx="60" cy="50" r="2.5" fill="#F9FAFB" stroke="none" />
-          <path d="M45 66q5 5 10 0" />
-        </FaceFrame>
-      );
+      return <Snake size={size} />;
     case "owl":
-      return (
-        <FaceFrame animalId={animalId} size={size}>
-          <path fill="#FFF7ED" d="M27 32 39 38a28 28 0 0 1 22 0l12-6-3 20c0 18-8 31-20 31S30 70 30 52l-3-20Z" />
-          <circle cx="39" cy="52" r="11" fill="#FDE68A" />
-          <circle cx="61" cy="52" r="11" fill="#FDE68A" />
-          <circle cx="39" cy="52" r="3" fill="#4B3621" stroke="none" />
-          <circle cx="61" cy="52" r="3" fill="#4B3621" stroke="none" />
-          <path fill="#E9A23B" d="m45 64 5 7 5-7Z" />
-        </FaceFrame>
-      );
+      return <Octopus size={size} />;
     case "rabbit":
-      return (
-        <FaceFrame animalId={animalId} size={size}>
-          <ellipse cx="39" cy="27" rx="10" ry="23" fill="#F5F3FF" transform="rotate(-8 39 27)" />
-          <ellipse cx="61" cy="27" rx="10" ry="23" fill="#F5F3FF" transform="rotate(8 61 27)" />
-          <circle cx="50" cy="58" r="27" fill="#F5F3FF" />
-          <circle cx="41" cy="55" r="2.5" fill="#55496E" stroke="none" />
-          <circle cx="59" cy="55" r="2.5" fill="#55496E" stroke="none" />
-          <path fill="#D99AB7" d="m45 64 5 4 5-4-5-3Z" />
-          <path d="M50 68v5m0 0-5 3m5-3 5 3" />
-        </FaceFrame>
-      );
+      return <Elephant size={size} />;
     case "lion":
-      return (
-        <FaceFrame animalId={animalId} size={size}>
-          <path fill="#F4C967" d="M50 16 60 24l13-1 3 13 9 9-7 11 1 13-13 4-8 10-12-6-12 6-8-10-13-4 1-13-7-11 9-9 3-13 13 1 8-8Z" />
-          <circle cx="50" cy="53" r="25" fill="#FFF3D6" />
-          <circle cx="41" cy="51" r="2.5" fill="#704A19" stroke="none" />
-          <circle cx="59" cy="51" r="2.5" fill="#704A19" stroke="none" />
-          <path d="m45 63 5 4 5-4m-5 4v6" />
-        </FaceFrame>
-      );
+      return <Lion size={size} />;
     case "frog":
-      return (
-        <FaceFrame animalId={animalId} size={size}>
-          <circle cx="34" cy="38" r="13" fill="#DDF6E9" />
-          <circle cx="66" cy="38" r="13" fill="#DDF6E9" />
-          <path fill="#DDF6E9" d="M24 55c0-19 12-30 26-30s26 11 26 30c0 17-11 27-26 27S24 72 24 55Z" />
-          <circle cx="34" cy="38" r="3" fill="#236247" stroke="none" />
-          <circle cx="66" cy="38" r="3" fill="#236247" stroke="none" />
-          <path d="M36 63q14 12 28 0" />
-        </FaceFrame>
-      );
+      return <Spider size={size} />;
     default:
       return null;
   }
