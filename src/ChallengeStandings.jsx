@@ -38,6 +38,20 @@ function dailyChallengeScore(result, benchmark) {
   };
 }
 
+function pooledChallengeScore(results, benchmarkMap) {
+  const played = results.filter(Boolean);
+  if (played.length === 0) return 0;
+  const adjusted = played.reduce((total, result) => total + dailyChallengeScore(
+    result,
+    benchmarkMap[`${result.game}:${isoDayIndex(result.challenge_date)}`]
+  ).adjusted, 0);
+  const benchmarkSeconds = played.reduce((total, result) =>
+    total + Math.max(1, Number(benchmarkMap[`${result.game}:${isoDayIndex(result.challenge_date)}`]) || 100)
+  , 0);
+  const score = Math.round((100 * benchmarkSeconds) / Math.max(1, adjusted));
+  return Math.max(MIN_DAILY_SCORE * played.length, Math.min(MAX_DAILY_SCORE * played.length, score));
+}
+
 export default function ChallengeStandings({ rows = [], roster = [], games = [], rounds = [], benchmarks = [], previousRows = [], previousRounds = [], historyRows = [], previousWeekLabel = null, isTeam = false, userId, loading = false, refreshing = false, defaultOpen = true, embedded = false, rewardPoints = 0, closed = false, winnerId = null }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(defaultOpen);
@@ -132,10 +146,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
             row,
             benchmarkMap[`${row.game}:${isoDayIndex(row.challenge_date)}`]
           ).adjusted,0),
-          challengeScore:playerRows.reduce((total,row) => total + dailyChallengeScore(
-            row,
-            benchmarkMap[`${row.game}:${isoDayIndex(row.challenge_date)}`]
-          ).score,0),
+          challengeScore:pooledChallengeScore(playerRows,benchmarkMap),
           hints:playerRows.reduce((total,row) => total + (Number(row.hints) || 0),0),
           mistakes:playerRows.reduce((total,row) => total + (Number(row.mistakes) || 0),0),
         };
@@ -189,17 +200,11 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
     const matchingGames = myStanding.rows
       .filter((row) => myPreviousRows.some((previous) => previous.game === row.game));
     if (matchingGames.length === 0) return null;
-    const priorScore = matchingGames.reduce((sum,current) => {
-      const result = myPreviousRows.find((row) => row.game === current.game);
-      return sum + dailyChallengeScore(
-        result,
-        benchmarkMap[`${result.game}:${isoDayIndex(result.challenge_date)}`]
-      ).score;
-    },0);
-    const currentScore = matchingGames.reduce((sum,result) => sum + dailyChallengeScore(
-      result,
-      benchmarkMap[`${result.game}:${isoDayIndex(result.challenge_date)}`]
-    ).score,0);
+    const priorResults = matchingGames.map((current) =>
+      myPreviousRows.find((row) => row.game === current.game)
+    );
+    const priorScore = pooledChallengeScore(priorResults,benchmarkMap);
+    const currentScore = pooledChallengeScore(matchingGames,benchmarkMap);
     return {
       rounds:matchingGames.length,
       previousScore:priorScore,
@@ -215,22 +220,18 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
     );
     const grouped = historyRows.reduce((players,row) => {
       if (!gameIds.includes(row.game)) return players;
-      const entry = players[row.user_id] ||= { rows:[],dates:new Set(),score:0 };
+      const entry = players[row.user_id] ||= { rows:[],dates:new Set() };
       entry.rows.push(row);
       entry.dates.add(row.challenge_date);
-      entry.score += dailyChallengeScore(
-        row,
-        benchmarkMap[`${row.game}:${isoDayIndex(row.challenge_date)}`]
-      ).score;
       return players;
     },{});
     return roster.map((member) => {
-      const result = grouped[member.id] || { rows:[],dates:new Set(),score:0 };
+      const result = grouped[member.id] || { rows:[],dates:new Set() };
       return {
         ...member,
         completed:result.rows.length,
         days:result.dates.size,
-        challengeScore:result.score,
+        challengeScore:pooledChallengeScore(result.rows,benchmarkMap),
         privateStats:member.id !== userId && member.show_stats_to_others === false,
       };
     }).filter((item) => item.completed > 0 || item.privateStats)
@@ -250,18 +251,17 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
     return historyRows.filter((row) => row.user_id === userId)
       .reduce((dates,row) => {
         const item = dates.find((entry) => entry.date === row.challenge_date);
-        const score = dailyChallengeScore(
-          row,
-          benchmarkMap[`${row.game}:${isoDayIndex(row.challenge_date)}`]
-        ).score;
         if (item) {
           item.games += 1;
-          item.score += score;
+          item.rows.push(row);
         } else {
-          dates.push({ date:row.challenge_date,games:1,score });
+          dates.push({ date:row.challenge_date,games:1,rows:[row] });
         }
         return dates;
-      },[]).sort((a,b) => b.date.localeCompare(a.date));
+      },[]).map((item) => ({
+        ...item,
+        score:pooledChallengeScore(item.rows,benchmarkMap),
+      })).sort((a,b) => b.date.localeCompare(a.date));
   },[benchmarks,historyRows,isTeam,userId]);
 
   const playedCount = standings.filter((standing) => standing.completed > 0).length;
@@ -412,7 +412,11 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                       <span className="flex-1 min-w-0">
                         <span className="flex items-center gap-1.5">
                           <span className="text-xs font-semibold truncate">{standing.name || t("common.player")}{standing.id === userId ? ` · ${t("standings.you")}` : ""}</span>
-                          {finished && <Check size={12} strokeWidth={3} style={{ color:"#12946A" }}/>} 
+                          {finished && (
+                            <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold shrink-0" style={{ background:"rgba(18,148,106,.10)",color:"#0B7C58" }}>
+                              <Check size={9} strokeWidth={3}/> Completed
+                            </span>
+                          )}
                         </span>
                         {standing.privateStats ? (
                           <span className="flex items-center gap-1 text-[10px] mt-0.5" style={{ color:"rgba(27,33,41,.42)" }}><LockKeyhole size={10}/>{t("standings.private")}</span>
