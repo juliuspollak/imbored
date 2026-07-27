@@ -1,32 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Award, ChevronDown, Clock, Crown, EyeOff, Flame, Globe2, Grid3x3,
-  Lightbulb, Medal, Moon, Sparkles, Target, TriangleAlert, Trophy, Waypoints, ZoomIn,
+  Award, Crown, EyeOff, Flame, Gamepad2, Medal, Sparkles, Trophy, Users,
 } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 
 const BG = "#F1F3F7", PANEL = "#FFFFFF", INK = "#1B2129", ACCENT = "#2F6FED";
-const GAMES = ["queens", "tango", "zip", "minisudoku", "geo", "zoom"];
-const GAME_ICONS = { queens: Crown, tango: Moon, zip: Waypoints, minisudoku: Grid3x3, geo: Globe2, zoom: ZoomIn };
-const GAME_LABELS = { queens: "Queens", tango: "Tango", zip: "Zip", minisudoku: "Sudoku", geo: "Geo", zoom: "Zoom" };
-const GAME_COLORS = { queens: "#2F6FED", tango: "#4A6FA5", zip: "#12946A", minisudoku: "#0E7490", geo: "#DB2777", zoom: "#7C3AED" };
+const GAME_LABELS = {
+  queens: "Queens", tango: "Tango", zip: "Zip",
+  minisudoku: "Sudoku", geo: "Geo", zoom: "Zoom",
+};
 
-function statDate(row) { return row.challenge_date || row.completed_at?.slice(0, 10) || "Unknown date"; }
-function formatDate(value) {
-  if (value === "Unknown date") return value;
-  return new Intl.DateTimeFormat("en-AU", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T00:00:00Z`));
-}
-function formatSeconds(value) {
-  const seconds = Number(value) || 0;
-  const minutes = Math.floor(seconds / 60);
-  return minutes ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
-}
 function rankStyle(rank) {
-  if (rank === 1) return { color: "#8A6414", background: "#FFF5D6", icon: Trophy };
-  if (rank === 2) return { color: "#5E6B78", background: "#EEF2F6", icon: Medal };
-  if (rank === 3) return { color: "#9A5B34", background: "#FBECE2", icon: Medal };
+  if (rank === 1) return { color: "#8A6414", background: "linear-gradient(145deg,#FFF9E8,#FFE9A8)", icon: Trophy };
+  if (rank === 2) return { color: "#5E6B78", background: "linear-gradient(145deg,#F8FAFC,#E2E8F0)", icon: Medal };
+  if (rank === 3) return { color: "#9A5B34", background: "linear-gradient(145deg,#FFF7F2,#F5D8C7)", icon: Medal };
   return { color: "#68717C", background: "rgba(16,24,40,.055)", icon: Award };
 }
 
@@ -37,14 +26,14 @@ export default function Stats({ onBack }) {
   const [profiles, setProfiles] = useState({});
   const [progress, setProgress] = useState({});
   const [loading, setLoading] = useState(true);
-  const [mode, setMode] = useState("challenge");
-  const [expandedUserId, setExpandedUserId] = useState(null);
 
   const refresh = useCallback(async () => {
     if (!supabaseReady) { setLoading(false); return; }
     setLoading(true);
     const [statsResult, profilesResult, progressResult] = await Promise.all([
-      supabase.from("game_stats").select("user_id, game, mode, challenge_date, completed_at, seconds, mistakes, hints, zip_backtracked_cells, zip_required_moves"),
+      // Only aggregate-friendly fields are loaded. Individual attempts, times,
+      // mistakes and hints do not belong on the community leaderboard.
+      supabase.from("game_stats").select("user_id, game, mode"),
       supabase.from("profiles").select("id, name, icon, mood, hidden_from_others, show_stats_to_others"),
       supabase.rpc("get_public_player_progress"),
     ]);
@@ -61,92 +50,158 @@ export default function Stats({ onBack }) {
     refresh();
   }
 
-  const { players, totalsByGame, modeRows } = useMemo(() => {
-    const filtered = rows.filter((row) => row.mode === mode);
-    const totals = Object.fromEntries(GAMES.map((game) => [game, 0]));
-    const byUser = {};
-    filtered.forEach((row) => {
-      totals[row.game] = (totals[row.game] || 0) + 1;
-      byUser[row.user_id] ||= { total: 0, rows: [], ...Object.fromEntries(GAMES.map((game) => [game, 0])) };
-      byUser[row.user_id][row.game] = (byUser[row.user_id][row.game] || 0) + 1;
-      byUser[row.user_id].total += 1;
-      byUser[row.user_id].rows.push(row);
+  const players = useMemo(() => {
+    const activity = {};
+    rows.forEach((row) => {
+      activity[row.user_id] ||= { games: 0, challenge: 0, practice: 0, byGame: {} };
+      const item = activity[row.user_id];
+      item.games += 1;
+      if (row.mode === "challenge") item.challenge += 1;
+      if (row.mode === "practice") item.practice += 1;
+      item.byGame[row.game] = (item.byGame[row.game] || 0) + 1;
     });
-    const list = Object.entries(byUser).map(([userId, counts]) => ({
-      userId, profile: profiles[userId], progress: progress[userId], ...counts,
-    })).filter((item) => item.profile).sort((a, b) =>
-      Number(b.progress?.lifetime_points || 0) - Number(a.progress?.lifetime_points || 0) || b.total - a.total
-    );
-    return { players: list, totalsByGame: totals, modeRows: filtered };
-  }, [mode, profiles, progress, rows]);
 
-  const leader = players[0];
+    return Object.values(profiles).map((profile) => {
+      const stats = activity[profile.id] || { games: 0, challenge: 0, practice: 0, byGame: {} };
+      const favourite = Object.entries(stats.byGame).sort((a, b) => b[1] - a[1])[0]?.[0];
+      return {
+        userId: profile.id,
+        profile,
+        progress: progress[profile.id],
+        ...stats,
+        favourite,
+      };
+    }).sort((a, b) =>
+      Number(b.progress?.lifetime_points || -1) - Number(a.progress?.lifetime_points || -1)
+      || b.games - a.games
+      || a.profile.name.localeCompare(b.profile.name)
+    );
+  }, [profiles, progress, rows]);
+
+  const visibleScores = players.filter((player) => player.progress?.lifetime_points != null);
+  const leader = visibleScores[0];
+  const totalGames = players.reduce((sum, player) => sum + player.games, 0);
+  const averageLevel = visibleScores.length
+    ? Math.round(visibleScores.reduce((sum, player) => sum + Number(player.progress.current_level || 1), 0) / visibleScores.length)
+    : 0;
 
   return <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex justify-center p-4 pt-10">
+    <style>{`
+      @media (hover:hover) and (pointer:fine) {
+        .player-standing:hover { transform: translateY(-1px); box-shadow: 0 9px 24px rgba(20,35,60,.09) !important; }
+      }
+      @media (prefers-reduced-motion:reduce) {
+        .player-standing { transition:none !important; }
+      }
+    `}</style>
     <div className="w-full max-w-md">
       <header className="flex items-center gap-3 mb-5">
         <BackButton onClick={onBack}/>
         <div className="flex-1">
           <h1 className="text-2xl" style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }}>Player Stats</h1>
-          <p className="text-[10px] mt-0.5" style={{ color: INK, opacity: .46 }}>Compare scores, levels and game activity</p>
+          <p className="text-[10px] mt-0.5" style={{ color: INK, opacity: .46 }}>Community standings at a glance</p>
         </div>
       </header>
 
       {!supabaseReady ? <div className="text-xs rounded-xl p-3" style={{ background: "rgba(181,67,58,.1)", color: "#B5433A" }}>Supabase isn't configured yet.</div> : <>
-        <section className="rounded-3xl p-4 mb-3 overflow-hidden relative" style={{ background: "linear-gradient(145deg,#17233E 0%,#29467F 100%)", color: "white", boxShadow: "0 14px 34px rgba(31,52,102,.18)" }}>
-          <div className="absolute rounded-full" style={{ width: 180, height: 180, right: -70, top: -90, background: "rgba(255,255,255,.07)" }}/>
+        <section className="rounded-3xl p-4 mb-4 overflow-hidden relative" style={{ background: "linear-gradient(145deg,#17233E 0%,#29467F 100%)", color: "white", boxShadow: "0 14px 34px rgba(31,52,102,.18)" }}>
+          <div className="absolute rounded-full" style={{ width: 190, height: 190, right: -72, top: -105, background: "rgba(255,255,255,.07)" }}/>
           <div className="relative flex items-start justify-between gap-4">
             <div>
-              <div className="text-[10px] font-semibold uppercase tracking-[.16em]" style={{ opacity: .62 }}>Community leaderboard</div>
+              <div className="text-[10px] font-semibold uppercase tracking-[.16em]" style={{ opacity: .62 }}>Community standings</div>
               <div className="text-xl font-bold mt-1">{players.length} player{players.length === 1 ? "" : "s"}</div>
-              <div className="text-[10px] mt-1" style={{ opacity: .66 }}>Ranked by lifetime score</div>
+              <div className="text-[10px] mt-1" style={{ opacity: .66 }}>Ranked by lifetime points</div>
             </div>
             <div className="grid place-items-center rounded-2xl" style={{ width: 48, height: 48, background: "rgba(255,255,255,.12)", border: "1px solid rgba(255,255,255,.14)" }}><Trophy size={22}/></div>
           </div>
-          <div className="relative grid grid-cols-2 gap-2 mt-4">
-            <div className="rounded-2xl px-3 py-2.5" style={{ background: "rgba(255,255,255,.09)" }}><div className="text-lg font-bold">{modeRows.length.toLocaleString()}</div><div className="text-[9px]" style={{ opacity: .62 }}>{mode === "challenge" ? "Challenge" : "Practice"} games</div></div>
-            <div className="rounded-2xl px-3 py-2.5" style={{ background: "rgba(255,255,255,.09)" }}><div className="text-lg font-bold truncate">{leader ? `${leader.profile.icon || "🙂"} ${leader.profile.name}` : "—"}</div><div className="text-[9px]" style={{ opacity: .62 }}>Current score leader</div></div>
+          <div className="relative grid grid-cols-3 gap-2 mt-4">
+            <div className="rounded-2xl px-3 py-2.5" style={{ background: "rgba(255,255,255,.09)" }}>
+              <div className="text-base font-bold">{totalGames.toLocaleString()}</div>
+              <div className="text-[9px]" style={{ opacity: .62 }}>Games played</div>
+            </div>
+            <div className="rounded-2xl px-3 py-2.5" style={{ background: "rgba(255,255,255,.09)" }}>
+              <div className="text-base font-bold">{averageLevel || "—"}</div>
+              <div className="text-[9px]" style={{ opacity: .62 }}>Average level</div>
+            </div>
+            <div className="rounded-2xl px-3 py-2.5 min-w-0" style={{ background: "rgba(255,255,255,.09)" }}>
+              <div className="text-base font-bold truncate">{leader?.profile.icon || "—"} {leader?.profile.name || ""}</div>
+              <div className="text-[9px]" style={{ opacity: .62 }}>Points leader</div>
+            </div>
           </div>
         </section>
 
-        <div className="game-mode-switch mb-3" style={{ width: "100%" }}>
-          {["challenge", "practice"].map((item) => <button key={item} onClick={() => { setMode(item); setExpandedUserId(null); }} className={`gloss-button ${mode === item ? "is-active" : ""}`} style={{ flex: 1 }}>{item}</button>)}
-        </div>
-
-        {loading ? <p style={{ color: INK, opacity: .4 }} className="text-sm text-center py-10">Loading player stats…</p> : modeRows.length === 0 ? <div className="rounded-2xl text-center py-10 px-4" style={{ background: PANEL, border: "1px solid rgba(16,24,40,.08)" }}><Sparkles size={24} style={{ color: ACCENT, margin: "0 auto 8px" }}/><div className="text-sm font-semibold" style={{ color: INK }}>No {mode} games yet</div><div className="text-[10px] mt-1" style={{ color: INK, opacity: .45 }}>Completed games will appear here.</div></div> : <>
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            {GAMES.map((game) => { const Icon = GAME_ICONS[game]; return <div key={game} className="rounded-2xl px-2 py-3 text-center" style={{ background: PANEL, border: "1px solid rgba(16,24,40,.08)" }}><Icon size={16} style={{ color: GAME_COLORS[game], margin: "0 auto 5px" }}/><div className="text-base font-bold" style={{ color: INK }}>{totalsByGame[game]}</div><div className="text-[9px]" style={{ color: INK, opacity: .43 }}>{GAME_LABELS[game]}</div></div>; })}
+        {loading ? <p style={{ color: INK, opacity: .4 }} className="text-sm text-center py-10">Loading standings…</p> : players.length === 0 ? <div className="rounded-2xl text-center py-10 px-4" style={{ background: PANEL, border: "1px solid rgba(16,24,40,.08)" }}><Sparkles size={24} style={{ color: ACCENT, margin: "0 auto 8px" }}/><div className="text-sm font-semibold" style={{ color: INK }}>No player activity yet</div></div> : <>
+          <div className="flex items-end justify-between mb-2 px-1">
+            <div>
+              <div className="text-sm font-bold" style={{ color: INK }}>Leaderboard</div>
+              <div className="text-[9px]" style={{ color: INK, opacity: .42 }}>Current lifetime standings</div>
+            </div>
+            <div className="text-[9px] font-semibold uppercase tracking-wide" style={{ color: INK, opacity: .4 }}>Points</div>
           </div>
 
-          <div className="flex items-end justify-between mb-2 px-1"><div><div className="text-sm font-bold" style={{ color: INK }}>Leaderboard</div><div className="text-[9px]" style={{ color: INK, opacity: .42 }}>Tap a player to see game history</div></div><div className="text-[9px] font-semibold uppercase tracking-wide" style={{ color: INK, opacity: .4 }}>Lifetime score</div></div>
           <div className="flex flex-col gap-2">
             {players.map((player, index) => {
-              const expanded = expandedUserId === player.userId;
               const rank = index + 1;
               const rankData = rankStyle(rank);
               const RankIcon = rankData.icon;
               const playerProgress = player.progress;
-              const daily = Object.entries(player.rows.reduce((acc, row) => { const date = statDate(row); (acc[date] ||= []).push(row); return acc; }, {})).sort(([a], [b]) => b.localeCompare(a));
-              return <article key={player.userId} className="rounded-2xl overflow-hidden" style={{ background: PANEL, border: player.userId === user?.id ? "1px solid rgba(47,111,237,.32)" : "1px solid rgba(16,24,40,.08)", boxShadow: rank <= 3 ? "0 5px 16px rgba(20,35,60,.055)" : "none", opacity: player.profile.hidden_from_others ? .58 : 1 }}>
-                <div className="p-3 flex items-center gap-2.5">
-                  <button type="button" className="flex flex-1 items-center gap-2.5 text-left min-w-0" onClick={() => setExpandedUserId(expanded ? null : player.userId)} aria-expanded={expanded}>
-                    <span className="grid place-items-center rounded-xl shrink-0" style={{ width: 32, height: 32, color: rankData.color, background: rankData.background }}><RankIcon size={15}/></span>
-                    <span className="text-xl shrink-0">{player.profile.icon || "🙂"}</span>
-                    <span className="flex-1 min-w-0"><span className="flex items-center gap-1.5"><span className="block text-xs font-bold truncate" style={{ color: INK }}>{player.profile.name}</span>{player.userId === user?.id && <span className="rounded-full px-1.5 py-0.5 text-[8px] font-bold" style={{ background: "rgba(47,111,237,.09)", color: ACCENT }}>YOU</span>}</span><span className="flex items-center gap-2 mt-1 text-[9px]" style={{ color: INK, opacity: .48 }}><span className="flex items-center gap-1"><Target size={10}/>{player.total} games</span>{playerProgress && <span className="flex items-center gap-1"><Flame size={10}/>{playerProgress.current_streak || 0} streak</span>}</span></span>
-                    <span className="text-right shrink-0"><span className="block text-sm font-bold" style={{ color: INK }}>{playerProgress ? Number(playerProgress.lifetime_points).toLocaleString() : "—"}</span><span className="block text-[9px] mt-0.5" style={{ color: ACCENT, fontWeight: 700 }}>{playerProgress ? `Level ${playerProgress.current_level}` : "Score private"}</span></span>
-                    <ChevronDown size={14} style={{ color: INK, opacity: .3, transform: expanded ? "rotate(180deg)" : "none", transition: "transform .15s" }}/>
-                  </button>
+              const hasPublicProgress = playerProgress?.lifetime_points != null;
+              return <article
+                key={player.userId}
+                className="player-standing rounded-2xl p-3 transition-all"
+                style={{
+                  background: PANEL,
+                  border: player.userId === user?.id ? "1px solid rgba(47,111,237,.38)" : "1px solid rgba(16,24,40,.08)",
+                  boxShadow: rank <= 3 ? "0 5px 16px rgba(20,35,60,.055)" : "none",
+                  opacity: player.profile.hidden_from_others ? .58 : 1,
+                }}
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="grid place-items-center rounded-xl shrink-0" style={{ width: 34, height: 34, color: rankData.color, background: rankData.background }}>
+                    <RankIcon size={16}/>
+                  </span>
+                  <span className="text-xl shrink-0">{player.profile.icon || "🙂"}</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="flex items-center gap-1.5">
+                      <span className="block text-xs font-bold truncate" style={{ color: INK }}>{player.profile.name}</span>
+                      {player.userId === user?.id && <span className="rounded-full px-1.5 py-0.5 text-[8px] font-bold" style={{ background: "rgba(47,111,237,.09)", color: ACCENT }}>YOU</span>}
+                    </span>
+                    <span className="flex items-center gap-1.5 mt-1">
+                      <span className="rounded-full px-1.5 py-0.5 text-[8px] font-bold" style={{ color: "#6D3FD1", background: "rgba(124,58,237,.08)" }}>
+                        {hasPublicProgress ? `Level ${playerProgress.current_level}` : "Private"}
+                      </span>
+                      {player.favourite && <span className="text-[9px] truncate" style={{ color: INK, opacity: .45 }}>Likes {GAME_LABELS[player.favourite] || player.favourite}</span>}
+                    </span>
+                  </span>
+                  <span className="text-right shrink-0">
+                    <span className="block text-base font-extrabold tabular-nums" style={{ color: hasPublicProgress ? INK : "#9AA1AB" }}>{hasPublicProgress ? Number(playerProgress.lifetime_points).toLocaleString() : "—"}</span>
+                    <span className="block text-[8px] uppercase tracking-wide" style={{ color: INK, opacity: .38 }}>total points</span>
+                  </span>
                   {isAdmin && <button onClick={() => handleToggleHidden(player.userId, player.profile.hidden_from_others)} className="rounded-full grid place-items-center shrink-0" style={{ width: 28, height: 28, background: player.profile.hidden_from_others ? "rgba(181,67,58,.1)" : "rgba(16,24,40,.05)", color: player.profile.hidden_from_others ? "#B5433A" : INK, opacity: player.profile.hidden_from_others ? 1 : .42 }} aria-label={player.profile.hidden_from_others ? "Show player" : "Hide player"}><EyeOff size={12}/></button>}
                 </div>
-                {expanded && <div className="px-3 pb-3" style={{ borderTop: "1px solid rgba(16,24,40,.06)" }}>
-                  {playerProgress && <div className="grid grid-cols-3 gap-1.5 py-3"><div className="rounded-xl p-2 text-center" style={{ background: "rgba(47,111,237,.06)" }}><div className="text-xs font-bold" style={{ color: INK }}>{Number(playerProgress.lifetime_points).toLocaleString()}</div><div className="text-[8px] mt-0.5" style={{ color: INK, opacity: .42 }}>Score</div></div><div className="rounded-xl p-2 text-center" style={{ background: "rgba(124,58,237,.06)" }}><div className="text-xs font-bold" style={{ color: INK }}>Level {playerProgress.current_level}</div><div className="text-[8px] mt-0.5" style={{ color: INK, opacity: .42 }}>Progress</div></div><div className="rounded-xl p-2 text-center" style={{ background: "rgba(234,88,12,.06)" }}><div className="text-xs font-bold" style={{ color: INK }}>{playerProgress.longest_streak || 0}</div><div className="text-[8px] mt-0.5" style={{ color: INK, opacity: .42 }}>Best streak</div></div></div>}
-                  <div className="flex flex-wrap gap-1.5 pb-2">{GAMES.filter((game) => player[game] > 0).map((game) => <span key={game} className="rounded-full px-2 py-1 text-[9px] font-semibold" style={{ color: GAME_COLORS[game], background: `${GAME_COLORS[game]}10` }}>{GAME_LABELS[game]} ×{player[game]}</span>)}</div>
-                  {daily.map(([date, dayRows]) => <div key={date} className="py-2.5" style={{ borderTop: "1px solid rgba(16,24,40,.055)" }}><div className="flex justify-between mb-1.5"><span className="text-[10px] font-semibold" style={{ color: INK }}>{formatDate(date)}</span><span className="text-[9px]" style={{ color: INK, opacity: .4 }}>{dayRows.length} game{dayRows.length === 1 ? "" : "s"}</span></div><div className="flex flex-col gap-1.5">{dayRows.sort((a, b) => (b.completed_at || "").localeCompare(a.completed_at || "")).map((row, rowIndex) => { const Icon = GAME_ICONS[row.game] || Grid3x3; return <div key={`${date}-${row.game}-${rowIndex}`} className="flex items-center gap-2 rounded-xl px-2.5 py-2" style={{ background: "rgba(16,24,40,.035)" }}><Icon size={12} style={{ color: GAME_COLORS[row.game] || ACCENT }}/><span className="text-[10px] font-semibold flex-1" style={{ color: INK }}>{GAME_LABELS[row.game] || row.game}</span><span className="flex items-center gap-1 text-[9px]" style={{ color: INK, opacity: .5 }}><Clock size={9}/>{formatSeconds(row.seconds)}</span><span className="flex items-center gap-1 text-[9px]" style={{ color: INK, opacity: .5 }}><TriangleAlert size={9}/>{row.mistakes || 0}</span><span className="flex items-center gap-1 text-[9px]" style={{ color: INK, opacity: .5 }}><Lightbulb size={9}/>{row.hints || 0}</span></div>; })}</div></div>)}
-                </div>}
+
+                <div className="grid grid-cols-3 gap-1.5 mt-2.5 pt-2.5" style={{ borderTop: "1px solid rgba(16,24,40,.055)" }}>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="grid place-items-center rounded-lg shrink-0" style={{ width: 24, height: 24, color: ACCENT, background: "rgba(47,111,237,.07)" }}><Gamepad2 size={11}/></span>
+                    <span><span className="block text-[10px] font-bold" style={{ color: INK }}>{player.games}</span><span className="block text-[8px]" style={{ color: INK, opacity: .4 }}>games</span></span>
+                  </div>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="grid place-items-center rounded-lg shrink-0" style={{ width: 24, height: 24, color: "#E86A33", background: "rgba(234,88,12,.07)" }}><Flame size={11}/></span>
+                    <span><span className="block text-[10px] font-bold" style={{ color: INK }}>{hasPublicProgress ? playerProgress.current_streak || 0 : "—"}</span><span className="block text-[8px]" style={{ color: INK, opacity: .4 }}>day streak</span></span>
+                  </div>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="grid place-items-center rounded-lg shrink-0" style={{ width: 24, height: 24, color: "#12946A", background: "rgba(18,148,106,.07)" }}><Crown size={11}/></span>
+                    <span><span className="block text-[10px] font-bold" style={{ color: INK }}>{player.challenge}</span><span className="block text-[8px]" style={{ color: INK, opacity: .4 }}>challenges</span></span>
+                  </div>
+                </div>
               </article>;
             })}
           </div>
-          <div className="flex items-start gap-2 rounded-2xl px-3 py-2.5 mt-3" style={{ background: "rgba(47,111,237,.06)", color: INK }}><Sparkles size={13} className="shrink-0 mt-0.5" style={{ color: ACCENT }}/><p className="text-[9px] leading-relaxed" style={{ opacity: .52 }}>Score means lifetime points earned. Available points are private and may be lower after rewards or transfers. Players control whether others can see their stats.</p></div>
+
+          <div className="flex items-start gap-2 rounded-2xl px-3 py-2.5 mt-3" style={{ background: "rgba(47,111,237,.06)", color: INK }}>
+            <Users size={13} className="shrink-0 mt-0.5" style={{ color: ACCENT }}/>
+            <p className="text-[9px] leading-relaxed" style={{ opacity: .52 }}>Standings use lifetime points. Available wallet points remain private. Players who hide their progress appear without points or level.</p>
+          </div>
         </>}
       </>}
     </div>
