@@ -1024,7 +1024,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
 
           {solved && difficultyRating === null && (
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl p-4"
+              className="zip-solved-overlay absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl p-4"
               style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(4px)", zIndex: 20 }}
             >
               <Flag size={28} style={{ color: ZIP_GREEN }} />

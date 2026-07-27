@@ -205,6 +205,29 @@
     color: #1b2129 !important;
   }
 
+  .zip-solved-overlay {
+    background:
+      radial-gradient(circle at 50% 20%, rgba(18, 148, 106, 0.16), transparent 42%),
+      rgba(20, 28, 39, 0.96) !important;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    color: #f4f7fb !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .zip-solved-overlay .difficulty-rating {
+    color: #f4f7fb;
+  }
+
+  .zip-solved-overlay .difficulty-rating-bar[data-selected="false"] {
+    background: rgba(255, 255, 255, 0.16) !important;
+  }
+
+  .zip-solved-overlay .difficulty-rating-labels,
+  .zip-solved-overlay .difficulty-rating > div:first-child {
+    color: rgba(232, 238, 247, 0.70) !important;
+    opacity: 1 !important;
+  }
+
   /* Queens uses a deliberately dark, high-separation palette rather than
      filtering its light board. Filtering also dimmed hint rings and pieces. */
   .qp-card .relative.w-full.rounded-lg.overflow-hidden.select-none {

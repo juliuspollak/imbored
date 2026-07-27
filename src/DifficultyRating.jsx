@@ -24,11 +24,13 @@ function RatingBars({ selected, compact = false, activeColor = ACCENT }) {
   const gap = compact ? 3 : 6;
 
   return (
-    <div className="flex items-end" style={{ height, gap }}>
+    <div className="difficulty-rating-bars flex items-end" style={{ height, gap }}>
       {Array.from({ length: BAR_COUNT }, (_, i) => {
         const heightPct = 30 + (i / (BAR_COUNT - 1)) * 70;
         return (
           <div
+            className="difficulty-rating-bar"
+            data-selected={i === selected ? "true" : "false"}
             key={i}
             style={{
               width,
@@ -106,7 +108,7 @@ export default function DifficultyRating({ onRate, onRated }) {
   }
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="difficulty-rating flex flex-col items-center">
       <div style={{ color: INK, opacity: 0.5 }} className="text-xs mb-3">
         {saving ? "Saving your rating…" : "How did that feel?"}
       </div>
@@ -123,6 +125,8 @@ export default function DifficultyRating({ onRate, onRated }) {
               style={{ width: 28, height: 52, cursor: saving ? "wait" : "pointer" }}
             >
               <div
+                className="difficulty-rating-bar"
+                data-selected={i === selected ? "true" : "false"}
                 style={{
                   width: "100%",
                   height: `${heightPct}%`,
@@ -136,7 +140,7 @@ export default function DifficultyRating({ onRate, onRated }) {
           );
         })}
       </div>
-      <div className="flex justify-between w-full mt-2" style={{ maxWidth: BAR_COUNT * 28 + (BAR_COUNT - 1) * 6 }}>
+      <div className="difficulty-rating-labels flex justify-between w-full mt-2" style={{ maxWidth: BAR_COUNT * 28 + (BAR_COUNT - 1) * 6 }}>
         <span style={{ color: INK, opacity: 0.4 }} className="text-[10px]">Too easy</span>
         <span style={{ color: INK, opacity: 0.4 }} className="text-[10px]">Too hard</span>
       </div>
