@@ -1,6 +1,6 @@
 
 const CREAM = "#1B2129";import { useState, useEffect, useCallback } from "react";
-import { ChevronUp, ChevronDown, Eye, EyeOff, Lock, Unlock, Wrench, Eraser } from "lucide-react";
+import { ChevronUp, ChevronDown, Eye, EyeOff, Lock, Unlock, Wrench, Eraser, RotateCcw } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
@@ -92,6 +92,20 @@ export default function AdminGames({ onBack }) {
     setMessage(`${label}: removed ${data ?? 0} result${data === 1 ? "" : "s"} for today.`);
   }
 
+  async function resetMyChallengeForEveryone() {
+    if (!window.confirm("Restart today's My Challenge for every player? All six personal challenge results and ratings will be cleared. Existing rewards will be preserved and cannot be earned twice.")) return;
+    setResetting("all");
+    setMessage("");
+    const { data, error } = await supabase.rpc("admin_reset_my_challenge");
+    setResetting(null);
+    if (error) {
+      setMessage(`Reset failed: ${error.message}`);
+      return;
+    }
+    const removed = Number(data?.results_removed) || 0;
+    setMessage(`Today's My Challenge restarted for everyone. Removed ${removed} result${removed === 1 ? "" : "s"}; existing rewards remain protected.`);
+  }
+
   async function move(index, direction) {
     const target = index + direction;
     if (target < 0 || target >= rows.length) return;
@@ -138,6 +152,29 @@ export default function AdminGames({ onBack }) {
           </div>
         )}
 
+        {supabaseReady && isAdmin && (
+          <div className="rounded-2xl p-3 mb-4" style={{ background:"rgba(234,88,12,.07)",border:"1px solid rgba(234,88,12,.16)" }}>
+            <div className="flex items-center gap-3">
+              <span className="grid place-items-center rounded-xl shrink-0" style={{ width:36,height:36,background:"rgba(234,88,12,.12)",color:"#C2410C" }}>
+                <RotateCcw size={16} className={resetting === "all" ? "animate-spin" : ""}/>
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-sm font-semibold" style={{ color:INK }}>Restart today’s My Challenge</span>
+                <span className="block text-[10px] mt-0.5" style={{ color:"rgba(27,33,41,.48)" }}>Clears all personal results for every player. Existing rewards cannot be earned twice.</span>
+              </span>
+              <button
+                type="button"
+                className="gloss-button rounded-full px-3 py-2 text-xs font-semibold shrink-0 disabled:opacity-50"
+                onClick={resetMyChallengeForEveryone}
+                disabled={resetting !== null}
+                style={{ background:"#C2410C",color:"#fff" }}
+              >
+                {resetting === "all" ? "Resetting…" : "Restart"}
+              </button>
+            </div>
+          </div>
+        )}
+
         {!supabaseReady ? (
           <div className="text-xs rounded-lg p-3" style={{ background: "rgba(217,105,92,0.1)", color: "#B5433A" }}>
             Supabase isn't configured yet.
@@ -177,7 +214,7 @@ export default function AdminGames({ onBack }) {
 
                     <button className="gloss-button"
                       onClick={() => resetTodayChallenge(r.game_id, meta.label)}
-                      disabled={resetting === r.game_id || !r.available}
+                      disabled={resetting !== null || !r.available}
                       className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
                       style={{ background: "rgba(234,88,12,0.1)", color: "#C2410C", opacity: !r.available ? 0.35 : 1 }}
                       title="Reset today's challenge results"
