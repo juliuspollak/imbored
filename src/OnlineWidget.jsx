@@ -43,7 +43,25 @@ export default function OnlineWidget({ players, userId, myName, onOpenChat, unre
           98% { transform: rotate(0deg); }
         }
         .online-wiggle { animation: onlineWiggle 6s ease-in-out infinite; }
-        .online-btn { transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .online-btn {
+          width: 32px;
+          height: 32px;
+          transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .online-btn-icon { width: 13px; height: 13px; }
+        @media (max-width: 520px) {
+          .online-btn { width: 44px; height: 44px; }
+          .online-btn-icon { width: 18px; height: 18px; }
+          .online-btn-count {
+            top: -4px !important;
+            right: -4px !important;
+            min-width: 19px !important;
+            height: 19px !important;
+            padding: 0 4px !important;
+            font-size: 10px !important;
+            border-width: 2px !important;
+          }
+        }
         .online-btn:active { transform: scale(0.9); }
         @media (hover: hover) and (pointer: fine) {
           .online-btn:hover { transform: scale(1.08); }
@@ -59,15 +77,14 @@ export default function OnlineWidget({ players, userId, myName, onOpenChat, unre
       <button
         onClick={() => setOpen((o) => !o)}
         className={`online-btn relative flex items-center justify-center ${shouldWiggle ? "online-wiggle" : ""}`}
-        style={{ width: 32, height: 32 }}
         aria-label="Who's online"
       >
         <div className="online-ring absolute inset-0 rounded-full" style={{ background: `conic-gradient(from 0deg, ${GREEN}, #BBF7D0, ${GREEN})` }} />
         <div className="absolute rounded-full flex items-center justify-center" style={{ inset: 2.5, background: "rgba(255,255,255,0.95)" }}>
-          <Users size={13} style={{ color: CREAM }} />
+          <Users className="online-btn-icon" style={{ color: CREAM }} />
         </div>
         <div
-          className="absolute flex items-center justify-center rounded-full"
+          className="online-btn-count absolute flex items-center justify-center rounded-full"
           style={{ top: -3, right: -3, minWidth: 15, height: 15, padding: "0 3px", background: GREEN, color: "#FFFFFF", fontSize: 9, fontWeight: 700, border: "1.5px solid #F1F3F7" }}
         >
           {unreadTotal > 0 ? unreadTotal : players.length}
