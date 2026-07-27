@@ -1,5 +1,12 @@
 [
   {
+    "id": "v150-animal-rush-hidden-cards-inline-join-error",
+    "version": "v150",
+    "date": "2026-07-28",
+    "title": "Made Animal Rush reveals harder and join errors cleaner",
+    "body": "The six animal cards now remain fully concealed while the die rolls, revealing only when the target animal is ready so players cannot pre-scan card positions. A room-not-found response now appears directly inside the Join button and clears when the code is edited instead of creating a separate error panel."
+  },
+  {
     "id": "v149-animal-rush-join-and-start-sequence",
     "version": "v149",
     "date": "2026-07-28",
