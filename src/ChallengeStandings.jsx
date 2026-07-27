@@ -38,7 +38,7 @@ function dailyChallengeScore(result, benchmark) {
   };
 }
 
-export default function ChallengeStandings({ rows = [], roster = [], games = [], rounds = [], benchmarks = [], previousRows = [], previousRounds = [], previousWeekLabel = null, isTeam = false, userId, loading = false, refreshing = false, defaultOpen = true, embedded = false, rewardPoints = 0, closed = false, winnerId = null }) {
+export default function ChallengeStandings({ rows = [], roster = [], games = [], rounds = [], benchmarks = [], previousRows = [], previousRounds = [], historyRows = [], previousWeekLabel = null, isTeam = false, userId, loading = false, refreshing = false, defaultOpen = true, embedded = false, rewardPoints = 0, closed = false, winnerId = null }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(defaultOpen);
   const [expandedPlayerId, setExpandedPlayerId] = useState(null);
@@ -120,7 +120,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
     );
     const ranked = roster
       .map((member) => {
-        const privateStats = isTeam && member.id !== userId && member.show_stats_to_others === false;
+        const privateStats = member.id !== userId && member.show_stats_to_others === false;
         const playerRows = (rowsByPlayer[member.id] || []).filter((row) => gameIds.includes(row.game));
         return {
           ...member,
@@ -208,20 +208,74 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
     };
   }, [benchmarks, closed, isTeam, myStanding, previousRounds, previousRows, rounds.length, userId]);
 
+  const historyStandings = useMemo(() => {
+    if (isTeam || historyRows.length === 0) return [];
+    const benchmarkMap = Object.fromEntries(
+      benchmarks.map((item) => [`${item.game}:${item.day_index}`,Number(item.effective_seconds) || 100])
+    );
+    const grouped = historyRows.reduce((players,row) => {
+      if (!gameIds.includes(row.game)) return players;
+      const entry = players[row.user_id] ||= { rows:[],dates:new Set(),score:0 };
+      entry.rows.push(row);
+      entry.dates.add(row.challenge_date);
+      entry.score += dailyChallengeScore(
+        row,
+        benchmarkMap[`${row.game}:${isoDayIndex(row.challenge_date)}`]
+      ).score;
+      return players;
+    },{});
+    return roster.map((member) => {
+      const result = grouped[member.id] || { rows:[],dates:new Set(),score:0 };
+      return {
+        ...member,
+        completed:result.rows.length,
+        days:result.dates.size,
+        challengeScore:result.score,
+        privateStats:member.id !== userId && member.show_stats_to_others === false,
+      };
+    }).filter((item) => item.completed > 0 || item.privateStats)
+      .sort((a,b) => {
+        if (a.privateStats !== b.privateStats) return a.privateStats ? 1 : -1;
+        if (a.challengeScore !== b.challengeScore) return b.challengeScore-a.challengeScore;
+        if (a.completed !== b.completed) return b.completed-a.completed;
+        return (a.name || "").localeCompare(b.name || "");
+      }).map((item,index) => ({ ...item,rank:item.privateStats ? null : index+1 }));
+  },[benchmarks,gameIds,historyRows,isTeam,roster,userId]);
+  const myHistory = historyStandings.find((item) => item.id === userId) || null;
+  const personalHistoryByDate = useMemo(() => {
+    if (isTeam) return [];
+    const benchmarkMap = Object.fromEntries(
+      benchmarks.map((item) => [`${item.game}:${item.day_index}`,Number(item.effective_seconds) || 100])
+    );
+    return historyRows.filter((row) => row.user_id === userId)
+      .reduce((dates,row) => {
+        const item = dates.find((entry) => entry.date === row.challenge_date);
+        const score = dailyChallengeScore(
+          row,
+          benchmarkMap[`${row.game}:${isoDayIndex(row.challenge_date)}`]
+        ).score;
+        if (item) {
+          item.games += 1;
+          item.score += score;
+        } else {
+          dates.push({ date:row.challenge_date,games:1,score });
+        }
+        return dates;
+      },[]).sort((a,b) => b.date.localeCompare(a.date));
+  },[benchmarks,historyRows,isTeam,userId]);
+
   const playedCount = standings.filter((standing) => standing.completed > 0).length;
   const leader = (closed && winnerId
     ? standings.find((standing) => standing.id === winnerId)
     : null) || standings.find((standing) => standing.rank === 1);
-  const challengeComplete = isTeam
-    ? closed
-    : games.length > 0 && standings.length > 0 && standings.every((standing) => standing.completed === games.length);
+  const challengeComplete = isTeam && closed;
 
-  const heading = challengeComplete ? "Final results" : t("standings.title");
+  const heading = challengeComplete ? "Final results" : isTeam ? t("standings.title") : "Today’s standings";
   const summary = challengeComplete
     ? `${rounds.length || games.length} rounds · missed round −${Math.abs(MISSED_ROUND_SCORE)}`
     : isTeam
       ? `${playedCount} of ${roster.length} started · ${rounds.length || games.length} daily rounds`
-      : t("standings.personalSummary", { players:playedCount, games:games.length });
+      : `${playedCount} of ${roster.length} players started · ${games.length} games today`;
 
   return (
     <div className={`${embedded ? "rounded-2xl" : "rounded-3xl"} mt-3 overflow-hidden`} style={{ background:"#fff",border:"1px solid rgba(16,24,40,.09)",boxShadow:embedded ? "none" : "0 10px 28px rgba(16,24,40,.06)" }}>
@@ -244,7 +298,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
 
       {open && (
         <div className="px-3 pb-3">
-          {!loading && challengeComplete && (
+          {!loading && isTeam && challengeComplete && (
             <div className="challenge-complete-card rounded-2xl mb-3" role="status">
               <span className="challenge-complete-icon" aria-hidden="true">🏆</span>
               <span className="challenge-complete-copy">
@@ -267,7 +321,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                 <div>
                   <div className="text-[10px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.42)" }}>{isTeam ? "Your week" : "Your challenge"}</div>
                   <div className="text-sm font-bold mt-0.5">
-                    {myStanding.rank ? `#${myStanding.rank} of ${standings.filter((item) => item.rank).length}` : "Not ranked yet"}
+                    {myStanding.rank ? `#${myStanding.rank} of ${isTeam ? standings.filter((item) => item.rank).length : standings.length}` : "Not ranked yet"}
                   </div>
                 </div>
                 <div className="rounded-full px-3 py-1.5 text-sm font-bold" style={{ background:"#fff",color:"#2F6FED",boxShadow:"0 4px 12px rgba(47,111,237,.10)" }}>
@@ -411,6 +465,45 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                   ? "Highest total wins · missed round −100 · hint +30s · mistake/reset +15s"
                   : "Ranked by games completed, then challenge score · hint +30s · mistake/reset +15s"}
               </div>
+              {!isTeam && (
+                <div className="mt-3 pt-3" style={{ borderTop:"1px solid rgba(16,24,40,.08)" }}>
+                  <div className="flex items-end justify-between gap-2 px-1 mb-2">
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.40)" }}>Last 7 days overall</div>
+                      <div className="text-[9px] mt-0.5" style={{ color:"rgba(27,33,41,.38)" }}>Combined personal challenge points</div>
+                    </div>
+                    {myHistory && <div className="text-[10px] font-bold" style={{ color:"#2F6FED" }}>You: #{myHistory.rank} · {myHistory.challengeScore} pts</div>}
+                  </div>
+                  {historyStandings.length > 0 ? (
+                    <div className="rounded-2xl overflow-hidden" style={{ background:"#F7F8FB" }}>
+                      {historyStandings.slice(0,5).map((item) => (
+                        <div key={item.id} className="flex items-center gap-2 px-3 py-2 text-[10px]" style={{ borderTop:item.rank === 1 ? "none" : "1px solid rgba(16,24,40,.06)" }}>
+                          <span className="w-4 text-center font-bold" style={{ color:item.rank === 1 ? "#9A721F" : "rgba(27,33,41,.40)" }}>{item.rank || "—"}</span>
+                          <span aria-hidden="true">{item.icon || "🙂"}</span>
+                          <span className="flex-1 font-semibold truncate">{item.name}{item.id === userId ? " · You" : ""}</span>
+                          {item.privateStats ? <span style={{ color:"rgba(27,33,41,.40)" }}>Private</span> : <span className="font-bold">{item.challengeScore} pts · {item.days}d</span>}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl px-3 py-3 text-[10px] text-center" style={{ background:"#F7F8FB",color:"rgba(27,33,41,.45)" }}>No personal challenge results in the last 7 days.</div>
+                  )}
+                  {personalHistoryByDate.length > 0 && (
+                    <div className="mt-2">
+                      <div className="text-[9px] font-bold uppercase tracking-[.1em] px-1 mb-1.5" style={{ color:"rgba(27,33,41,.36)" }}>Your past challenges</div>
+                      <div className="flex gap-1.5 overflow-x-auto pb-1">
+                        {personalHistoryByDate.map((item) => (
+                          <div key={item.date} className="rounded-xl px-2.5 py-2 shrink-0" style={{ background:"rgba(47,111,237,.06)",border:"1px solid rgba(47,111,237,.10)" }}>
+                            <div className="text-[9px] font-semibold" style={{ color:"rgba(27,33,41,.46)" }}>{new Date(`${item.date}T12:00:00`).toLocaleDateString(undefined,{ weekday:"short",day:"numeric" })}</div>
+                            <div className="text-[11px] font-bold mt-0.5">{item.score} pts</div>
+                            <div className="text-[8px]" style={{ color:"rgba(27,33,41,.38)" }}>{item.games} game{item.games === 1 ? "" : "s"}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
