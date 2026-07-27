@@ -10,7 +10,7 @@ import DaySelector from "../DaySelector.jsx";
 
 /* ---------------- puzzle generation ---------------- */
 
-const SIZE = 7; // constant across all days — difficulty comes from checkpoints/walls/hazards, not grid size
+const DEFAULT_GRID_SIZES = [7, 7, 7, 7, 7, 7, 7];
 
 function shuffle(arr) {
   const a = arr.slice();
@@ -274,6 +274,12 @@ const WALL_COUNTS = [0, 1, 2, 3, 5, 6, 7];
 const BLACKHOLE_COUNTS = [0, 0, 0, 0, 0, 0, 0];
 const TUNNEL_PAIR_COUNTS = [0, 0, 0, 0, 0, 1, 1];
 
+function configuredDayValue(config, field, dayIndex, fallback, min, max) {
+  const configured = Array.isArray(config?.[field]) ? Number(config[field][dayIndex]) : NaN;
+  const value = Number.isFinite(configured) ? configured : fallback[dayIndex];
+  return Math.min(max, Math.max(min, Math.round(value)));
+}
+
 function fmtTime(s) {
   const m = Math.floor(s / 60);
   const ss = s % 60;
@@ -342,7 +348,13 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
   const latest = useRef({});
 
   const newPuzzle = useCallback((dIdx) => {
-    const gen = () => generatePuzzle(SIZE, CHECKPOINT_COUNTS[dIdx], WALL_COUNTS[dIdx], BLACKHOLE_COUNTS[dIdx], TUNNEL_PAIR_COUNTS[dIdx]);
+    const size = configuredDayValue(hintCooldownConfig, "zip_grid_sizes", dIdx, DEFAULT_GRID_SIZES, 4, 9);
+    const blackHoles = configuredDayValue(hintCooldownConfig, "zip_black_hole_counts", dIdx, BLACKHOLE_COUNTS, 0, Math.max(0, size * size - 2));
+    const visitableCells = size * size - blackHoles;
+    const checkpoints = configuredDayValue(hintCooldownConfig, "zip_checkpoint_counts", dIdx, CHECKPOINT_COUNTS, 2, Math.min(30, visitableCells));
+    const walls = configuredDayValue(hintCooldownConfig, "zip_wall_counts", dIdx, WALL_COUNTS, 0, 30);
+    const tunnels = configuredDayValue(hintCooldownConfig, "zip_tunnel_pair_counts", dIdx, TUNNEL_PAIR_COUNTS, 0, Math.min(4, Math.floor(visitableCells / 2)));
+    const gen = () => generatePuzzle(size, checkpoints, walls, blackHoles, tunnels);
     const p = isChallenge && seed ? withSeededRandom(seed, gen) : gen();
     setPuzzle(p);
     setPath(p ? [p.path[0]] : null);
@@ -356,7 +368,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
     setHistory([]);
     hintCooldown.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isChallenge, seed]);
+  }, [hintCooldownConfig, isChallenge, seed]);
 
   useEffect(() => {
     newPuzzle(dayIdx);

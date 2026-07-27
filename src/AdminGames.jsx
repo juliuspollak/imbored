@@ -10,6 +10,31 @@ const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
 const INK = "#1B2129";
 const ACCENT = "#2F6FED";
+const ZIP_DEFAULTS = {
+  zip_grid_sizes: [7, 7, 7, 7, 7, 7, 7],
+  zip_checkpoint_counts: [4, 6, 8, 10, 12, 14, 16],
+  zip_wall_counts: [0, 1, 2, 3, 5, 6, 7],
+  zip_black_hole_counts: [0, 0, 0, 0, 0, 0, 0],
+  zip_tunnel_pair_counts: [0, 0, 0, 0, 0, 1, 1],
+};
+const ZIP_DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function zipConfigPayload(row) {
+  if (row.game_id !== "zip") return {};
+  return {
+    zip_grid_sizes: row.zip_grid_sizes || ZIP_DEFAULTS.zip_grid_sizes,
+    zip_checkpoint_counts: row.zip_checkpoint_counts || ZIP_DEFAULTS.zip_checkpoint_counts,
+    zip_wall_counts: row.zip_wall_counts || ZIP_DEFAULTS.zip_wall_counts,
+    zip_black_hole_counts: row.zip_black_hole_counts || ZIP_DEFAULTS.zip_black_hole_counts,
+    zip_tunnel_pair_counts: row.zip_tunnel_pair_counts || ZIP_DEFAULTS.zip_tunnel_pair_counts,
+  };
+}
+
+function patchZipDay(row, field, dayIndex, value) {
+  const values = [...(row[field] || ZIP_DEFAULTS[field])];
+  values[dayIndex] = value;
+  return { [field]: values };
+}
 
 // Admin-only: control which games show on the home screen, whether
 // they're clickable ("Coming soon" vs playable), what order they appear
@@ -45,6 +70,7 @@ export default function AdminGames({ onBack }) {
       hint_cooldown_base: 0,
       hint_cooldown_per_day: 0,
       zip_path_style: "solid",
+      ...(g.id === "zip" ? ZIP_DEFAULTS : {}),
     }));
     setRows([...(data || []), ...missing]);
     setLoading(false);
@@ -68,6 +94,7 @@ export default function AdminGames({ onBack }) {
       hint_cooldown_base: updated.hint_cooldown_base ?? 0,
       hint_cooldown_per_day: updated.hint_cooldown_per_day ?? 0,
       zip_path_style: updated.zip_path_style || "solid",
+      ...zipConfigPayload(updated),
     });
     if (error) {
       // Roll back the optimistic update so the UI doesn't claim a setting
@@ -124,6 +151,7 @@ export default function AdminGames({ onBack }) {
           hint_cooldown_base: r.hint_cooldown_base ?? 0,
           hint_cooldown_per_day: r.hint_cooldown_per_day ?? 0,
           zip_path_style: r.zip_path_style || "solid",
+          ...zipConfigPayload(r),
         })
       )
     );
@@ -293,6 +321,46 @@ export default function AdminGames({ onBack }) {
                           <p style={{ color: INK, opacity: 0.35 }} className="text-[10px] mt-1.5">
                             Both styles keep tunnel jumps visually disconnected.
                           </p>
+                          <div className="mt-4 pt-3 overflow-x-auto" style={{ borderTop: "1px solid rgba(16,24,40,0.08)" }}>
+                            <div className="text-[10px] font-semibold mb-1" style={{ color: INK }}>Daily puzzle complexity</div>
+                            <p className="text-[10px] mb-2" style={{ color: INK, opacity: 0.42 }}>
+                              Changes apply when a new puzzle is generated. Existing challenge results are unaffected.
+                            </p>
+                            <div className="grid gap-1.5" style={{ gridTemplateColumns: "38px repeat(5,minmax(48px,1fr))", minWidth: 340 }}>
+                              {["Day", "Grid", "Numbers", "Walls", "Holes", "Tunnels"].map((heading) => (
+                                <div key={heading} className="text-[9px] font-semibold text-center" style={{ color: INK, opacity: 0.48 }}>{heading}</div>
+                              ))}
+                              {ZIP_DAY_LABELS.flatMap((day, dayIndex) => {
+                                const fields = [
+                                  ["zip_grid_sizes", 4, 9],
+                                  ["zip_checkpoint_counts", 2, 30],
+                                  ["zip_wall_counts", 0, 30],
+                                  ["zip_black_hole_counts", 0, 20],
+                                  ["zip_tunnel_pair_counts", 0, 4],
+                                ];
+                                return [
+                                  <div key={`${day}-label`} className="text-[10px] font-semibold flex items-center" style={{ color: INK }}>{day}</div>,
+                                  ...fields.map(([field, min, max]) => (
+                                    <input
+                                      key={`${day}-${field}`}
+                                      type="number"
+                                      min={min}
+                                      max={max}
+                                      value={(r[field] || ZIP_DEFAULTS[field])[dayIndex]}
+                                      onChange={(event) => {
+                                        const parsed = Number.parseInt(event.target.value, 10);
+                                        const value = Math.min(max, Math.max(min, Number.isFinite(parsed) ? parsed : min));
+                                        updateRow(r, patchZipDay(r, field, dayIndex, value));
+                                      }}
+                                      className="w-full rounded-lg px-1 py-1.5 text-[10px] text-center outline-none"
+                                      style={{ border: "1px solid rgba(16,24,40,0.12)", color: INK }}
+                                      aria-label={`${day} ${field.replace("zip_", "").replaceAll("_", " ")}`}
+                                    />
+                                  )),
+                                ];
+                              })}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -304,7 +372,7 @@ export default function AdminGames({ onBack }) {
         )}
 
         <p style={{ color: INK, opacity: 0.35 }} className="text-[11px] text-center mt-6">
-          Eye = shown on home at all. Lock = playable vs "coming soon". Maintenance = per-game settings such as hint cooldowns and ZIP snake appearance.
+          Eye = shown on home at all. Lock = playable vs "coming soon". Maintenance = per-game settings such as hint cooldowns and ZIP complexity.
         </p>
       </div>
     </div>
