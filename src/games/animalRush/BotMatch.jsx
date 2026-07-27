@@ -283,7 +283,13 @@ export default function BotMatch({ userId, profile, reducedMotion = false, onBac
                   rollDurationMs={game.round.revealAt - now}
                 />
               </div>
-              {revealed && <strong className="mt-1 block text-sm">{target.label}</strong>}
+              <strong
+                className="rush-target-label"
+                data-visible={revealed}
+                aria-hidden={!revealed}
+              >
+                {revealed ? target.label : "\u00a0"}
+              </strong>
             </div>
           </div>
 
