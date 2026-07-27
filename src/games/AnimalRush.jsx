@@ -28,6 +28,7 @@ import {
   countdownNumber,
   inviteUrl,
   isPhoneDevice,
+  matchIntroCountdown,
   rankPlayers,
   roundPhase,
 } from "./animalRush/engine.js";
@@ -245,7 +246,10 @@ export default function AnimalRush({ onExit }) {
 
   const serverNow = now + serverOffset;
   const phase = roundPhase(room, serverNow);
-  const countdown = countdownNumber(room, serverNow);
+  const introCountdown = matchIntroCountdown(room, serverNow);
+  const introActive = introCountdown !== null;
+  const countdown = introActive ? null : countdownNumber(room, serverNow);
+  const joinCodeReady = joinCode.trim().length === 6;
   const me = players.find((player) => player.user_id === user?.id);
   const roundWinner = players.find((player) => player.user_id === room?.round_winner_id);
   const matchWinner = players.find((player) => player.user_id === room?.winner_user_id);
@@ -302,10 +306,7 @@ export default function AnimalRush({ onExit }) {
 
   async function joinRoom() {
     const cleanCode = joinCode.trim().toUpperCase();
-    if (cleanCode.length !== 6) {
-      setMessage("Enter the six-character room code.");
-      return;
-    }
+    if (cleanCode.length !== 6) return;
     setWorking("join");
     setMessage("");
     const { data, error } = await supabase.rpc("animal_rush_join_room", { room_code: cleanCode });
@@ -477,7 +478,10 @@ export default function AnimalRush({ onExit }) {
             <input
               className="rush-input"
               value={joinCode}
-              onChange={(event) => setJoinCode(event.target.value.replace(/[^a-z0-9]/gi, "").slice(0, 6))}
+              onChange={(event) => {
+                setJoinCode(event.target.value.replace(/[^a-z0-9]/gi, "").slice(0, 6));
+                setMessage("");
+              }}
               placeholder="ROOM CODE"
               autoCapitalize="characters"
               autoCorrect="off"
@@ -485,9 +489,14 @@ export default function AnimalRush({ onExit }) {
               inputMode="text"
               aria-label="Room code"
             />
-            <button type="button" className="rush-secondary mt-3 w-full" onClick={joinRoom} disabled={!!working}>
+            <button
+              type="button"
+              className="rush-secondary mt-3 w-full"
+              onClick={joinRoom}
+              disabled={!!working || !joinCodeReady}
+            >
               {working === "join" ? <Loader2 className="animate-spin" size={17} /> : <Users size={17} />}
-              Join room
+              {working === "join" ? "Joining…" : joinCodeReady ? "Join room" : "Enter 6-character code"}
             </button>
             {message && <p className="rush-error mt-4">{message}</p>}
           </section>
@@ -607,11 +616,11 @@ export default function AnimalRush({ onExit }) {
             ))}
           </div>
 
-          {room.round_number === 1 && phase === "countdown" && (
+          {introActive && (
             <div className="rush-start-countdown" role="status" aria-live="polite">
               <div>
                 <span>Match starts in</span>
-                <strong key={countdown}>{countdown || 1}</strong>
+                <strong key={introCountdown}>{introCountdown}</strong>
                 <small>Get ready to find the animal</small>
               </div>
             </div>
@@ -644,13 +653,15 @@ export default function AnimalRush({ onExit }) {
             <div className="rush-prompt text-center">
               <p className="rush-kicker">{phase === "open" ? "Find this animal" : room.status === "round_result" ? "Round complete" : "Get ready"}</p>
               <div className="rush-target mt-2" data-open={phase === "open"}>
-                <AnimalDie
-                  targetId={targetAnimal.id}
-                  countdown={countdown}
-                  roundKey={room.round_number}
-                  revealed={phase === "open" || room.status === "round_result"}
-                  rollDurationMs={new Date(room.reveal_at).getTime() - serverNow}
-                />
+                {!introActive && (
+                  <AnimalDie
+                    targetId={targetAnimal.id}
+                    countdown={countdown}
+                    roundKey={room.round_number}
+                    revealed={phase === "open" || room.status === "round_result"}
+                    rollDurationMs={new Date(room.reveal_at).getTime() - serverNow}
+                  />
+                )}
               </div>
               <strong
                 className="rush-target-label"

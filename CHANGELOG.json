@@ -1,5 +1,12 @@
 [
   {
+    "id": "v149-animal-rush-join-and-start-sequence",
+    "version": "v149",
+    "date": "2026-07-28",
+    "title": "Separated the Animal Rush countdown and die roll",
+    "body": "New matches now show a synchronised 3–2–1 start countdown first, then begin a fresh three-second animal die roll instead of rolling invisibly behind the countdown. The live-room Join button now contains the six-character code guidance and remains disabled until the code is complete, removing the separate validation alert."
+  },
+  {
     "id": "v148-animal-rush-stable-target-label",
     "version": "v148",
     "date": "2026-07-28",

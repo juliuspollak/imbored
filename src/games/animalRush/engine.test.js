@@ -7,6 +7,7 @@ import {
   countdownNumber,
   inviteUrl,
   isPhoneDevice,
+  matchIntroCountdown,
   matchWinner,
   rankPlayers,
   roundPhase,
@@ -41,6 +42,19 @@ test("opens a round only after the shared reveal time", () => {
   assert.equal(roundPhase(room, Date.parse("2026-07-27T12:00:01.000Z")), "countdown");
   assert.equal(countdownNumber(room, Date.parse("2026-07-27T12:00:01.000Z")), 2);
   assert.equal(roundPhase(room, Date.parse("2026-07-27T12:00:03.000Z")), "open");
+});
+
+test("finishes the match intro before the first die starts rolling", () => {
+  const room = {
+    status: "countdown",
+    round_number: 1,
+    reveal_at: "2026-07-27T12:00:06.000Z",
+  };
+  assert.equal(matchIntroCountdown(room, Date.parse("2026-07-27T12:00:00.000Z")), 3);
+  assert.equal(matchIntroCountdown(room, Date.parse("2026-07-27T12:00:02.100Z")), 1);
+  assert.equal(matchIntroCountdown(room, Date.parse("2026-07-27T12:00:03.000Z")), null);
+  assert.equal(countdownNumber(room, Date.parse("2026-07-27T12:00:03.000Z")), 3);
+  assert.equal(matchIntroCountdown({ ...room, round_number: 2 }, Date.parse("2026-07-27T12:00:00.000Z")), null);
 });
 
 test("ranks cards before safety cards and uses join order as final tie-break", () => {

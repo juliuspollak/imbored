@@ -4,6 +4,7 @@ import AnimalDie from "./AnimalDie.jsx";
 import AnimalFace from "./AnimalFace.jsx";
 import {
   ANIMAL_IDS,
+  DIE_ROLL_DURATION_MS,
   animalById,
   applyWrongTap,
   botAnimalChoice,
@@ -22,7 +23,7 @@ function createRound(number) {
     number,
     target: ANIMAL_IDS[Math.floor(Math.random() * ANIMAL_IDS.length)],
     order: shuffledAnimals(),
-    revealAt: Date.now() + 3000,
+    revealAt: Date.now() + DIE_ROLL_DURATION_MS + (number === 1 ? 3000 : 0),
     status: "playing",
     attempts: { human: false, bot: false },
     winner: null,
@@ -170,8 +171,15 @@ export default function BotMatch({ userId, profile, reducedMotion = false, onBac
   const human = game.players.find((player) => player.user_id === userId);
   const bot = game.players.find((player) => player.user_id === BOT_ID);
   const target = animalById(game.round.target);
+  const introEndsAt = game.round.revealAt - DIE_ROLL_DURATION_MS;
+  const introActive = game.round.number === 1
+    && game.round.status === "playing"
+    && now < introEndsAt;
+  const introCountdown = introActive ? Math.max(1, Math.ceil((introEndsAt - now) / 1000)) : null;
   const revealed = now >= game.round.revealAt;
-  const countdown = revealed ? null : Math.max(1, Math.ceil((game.round.revealAt - now) / 1000));
+  const countdown = introActive || revealed
+    ? null
+    : Math.max(1, Math.ceil((game.round.revealAt - now) / 1000));
   const canTap = game.status === "playing"
     && game.round.status === "playing"
     && revealed
@@ -246,11 +254,11 @@ export default function BotMatch({ userId, profile, reducedMotion = false, onBac
             <ScoreChip player={bot} />
           </div>
 
-          {game.round.number === 1 && game.round.status === "playing" && !revealed && (
+          {introActive && (
             <div className="rush-start-countdown" role="status" aria-live="polite">
               <div>
                 <span>Match starts in</span>
-                <strong key={countdown}>{countdown || 1}</strong>
+                <strong key={introCountdown}>{introCountdown}</strong>
                 <small>Get ready to find the animal</small>
               </div>
             </div>
@@ -275,13 +283,15 @@ export default function BotMatch({ userId, profile, reducedMotion = false, onBac
             <div className="rush-prompt text-center">
               <p className="rush-kicker">{revealed ? "Find this animal" : "Get ready"}</p>
               <div className="rush-target mt-2" data-open={revealed}>
-                <AnimalDie
-                  targetId={target.id}
-                  countdown={countdown}
-                  roundKey={game.round.number}
-                  revealed={revealed}
-                  rollDurationMs={game.round.revealAt - now}
-                />
+                {!introActive && (
+                  <AnimalDie
+                    targetId={target.id}
+                    countdown={countdown}
+                    roundKey={game.round.number}
+                    revealed={revealed}
+                    rollDurationMs={game.round.revealAt - now}
+                  />
+                )}
               </div>
               <strong
                 className="rush-target-label"
