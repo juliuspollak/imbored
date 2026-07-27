@@ -1,5 +1,12 @@
 [
   {
+    "id": "v143-animal-rush-animated-die",
+    "version": "v143",
+    "date": "2026-07-28",
+    "title": "Added a 3D animal die to Animal Rush",
+    "body": "Animal Rush rounds now begin with a modern animated 3D die whose six faces carry the six animals. It spins through the countdown, settles on the selected animal, works in both live and bot matches, and respects reduced-motion preferences."
+  },
+  {
     "id": "v142-animal-rush-landscape-result-fit",
     "version": "v142",
     "date": "2026-07-28",

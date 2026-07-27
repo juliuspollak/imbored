@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bot, Check, ChevronLeft, RotateCcw, Shield, Trophy, X } from "lucide-react";
+import AnimalDie from "./AnimalDie.jsx";
 import AnimalFace from "./AnimalFace.jsx";
 import {
   ANIMAL_IDS,
@@ -261,9 +262,13 @@ export default function BotMatch({ userId, profile, onBack }) {
             <div className="rush-prompt text-center">
               <p className="rush-kicker">{revealed ? "Find this animal" : "Get ready"}</p>
               <div className="rush-target mt-2" data-open={revealed}>
-                {revealed
-                  ? <AnimalFace animalId={target.id} size={86} />
-                  : <span className="rush-countdown">{countdown || "•"}</span>}
+                <AnimalDie
+                  targetId={target.id}
+                  countdown={countdown}
+                  roundKey={game.round.number}
+                  revealed={revealed}
+                  rollDurationMs={game.round.revealAt - now}
+                />
               </div>
               {revealed && <strong className="mt-1 block text-sm">{target.label}</strong>}
             </div>
