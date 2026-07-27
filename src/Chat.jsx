@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Send, Sparkles } from "lucide-react";
+import { ArrowLeft, Send, Smile } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { sendPoke } from "./lib/pokes.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
 
-const QUICK_REACTIONS = ["👍", "👎", "❤️"];
+const QUICK_REACTIONS = ["👍", "👎", "❤️", "😂", "🔥", "👏"];
+const EMOJI_PICKER = ["😀","😂","🥰","😍","🤩","😎","🥳","😊","😉","🤔","😮","😢","😭","😡","👍","👎","❤️","🔥","👏","🎉","💯","🙌","🤝","👀","🎮","🏆","⭐","✨"];
 
 function formatMessageTime(value) {
   if (!value) return "";
@@ -29,9 +30,13 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
   const [error, setError] = useState("");
   const [pokeState, setPokeState] = useState("");
   const [peerAvailable, setPeerAvailable] = useState(true);
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const [quickPickerOpen, setQuickPickerOpen] = useState(false);
   const messagesRef = useRef(null);
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
+  const quickPressTimerRef = useRef(null);
+  const quickPressOpenedRef = useRef(false);
 
   const peerId = peer?.user_id || peer?.id || null;
   const peerProfile = peer?.profiles || peer || null;
@@ -138,48 +143,85 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
     return result;
   }, [messages]);
 
-  async function submitMessage(event) {
-    event?.preventDefault();
-    const body = draft.trim();
+  async function sendMessageBody(rawBody, restoreDraftOnError = false) {
+    const body = rawBody.trim();
     if (!body || sending || !peerId || !peerAvailable) return;
 
     setSending(true);
     setError("");
     const optimisticId = `temp-${Date.now()}`;
     const optimistic = {
-      id: optimisticId,
-      sender_id: currentUser.id,
-      recipient_id: peerId,
+      id:optimisticId,
+      sender_id:currentUser.id,
+      recipient_id:peerId,
       body,
-      created_at: new Date().toISOString(),
-      read_at: null,
-      system_generated: false,
-      activity_type: null,
+      created_at:new Date().toISOString(),
+      read_at:null,
+      system_generated:false,
+      activity_type:null,
     };
-    setMessages((items) => [...items, optimistic]);
-    setDraft("");
+    setMessages((items) => [...items,optimistic]);
 
-    const { data, error: sendError } = await supabase
+    const { data,error:sendError } = await supabase
       .rpc("send_direct_message", {
-        target_recipient_id: peerId,
-        message_body: body,
+        target_recipient_id:peerId,
+        message_body:body,
       })
       .single();
 
     if (sendError) {
       setMessages((items) => items.filter((item) => item.id !== optimisticId));
-      setDraft(body);
+      if (restoreDraftOnError) setDraft(body);
       setError(sendError.message || "Couldn’t send that message.");
     } else {
-      setMessages((items) => items.map((item) => (item.id === optimisticId ? data : item)));
+      setMessages((items) => items.map((item) => item.id === optimisticId ? data : item));
     }
     setSending(false);
     textareaRef.current?.focus();
   }
 
-  function addReaction(emoji) {
+  function submitMessage(event) {
+    event?.preventDefault();
+    const body = draft.trim();
+    if (!body) return;
+    setDraft("");
+    void sendMessageBody(body,true);
+  }
+
+  function addEmoji(emoji) {
     setDraft((value) => `${value}${value ? " " : ""}${emoji}`);
+    setEmojiPickerOpen(false);
     textareaRef.current?.focus();
+  }
+
+  function sendQuickReaction(emoji) {
+    setQuickPickerOpen(false);
+    setEmojiPickerOpen(false);
+    void sendMessageBody(emoji);
+  }
+
+  function startQuickPress() {
+    if (sending) return;
+    quickPressOpenedRef.current = false;
+    window.clearTimeout(quickPressTimerRef.current);
+    quickPressTimerRef.current = window.setTimeout(() => {
+      quickPressOpenedRef.current = true;
+      setQuickPickerOpen(true);
+      setEmojiPickerOpen(false);
+    },450);
+  }
+
+  function finishQuickPress() {
+    window.clearTimeout(quickPressTimerRef.current);
+    if (quickPressOpenedRef.current) {
+      quickPressOpenedRef.current = false;
+      return;
+    }
+    sendQuickReaction("👍");
+  }
+
+  function cancelQuickPress() {
+    window.clearTimeout(quickPressTimerRef.current);
   }
 
   async function handlePoke() {
@@ -228,23 +270,27 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
         .chat-text { white-space:pre-wrap; overflow-wrap:anywhere; font-size:15px; line-height:1.42; }
         .chat-meta { margin-top:4px; display:flex; gap:5px; justify-content:flex-end; font-size:9px; opacity:.62; }
         .chat-empty { text-align:center; margin:54px auto; max-width:300px; color:rgba(27,33,41,.56); }
-        .chat-composer-wrap { flex:0 0 auto; z-index:25; width:100%; padding:8px 12px max(12px,env(safe-area-inset-bottom)); background:rgba(245,247,251,.97); border-top:1px solid rgba(27,33,41,.07); backdrop-filter:blur(18px); }
-        .chat-composer { padding:7px 8px 6px; border-radius:24px; background:#fff; border:1px solid rgba(27,33,41,.09); box-shadow:0 12px 32px rgba(27,33,41,.13); }
-        .chat-composer-main { display:flex; align-items:flex-end; gap:8px; }
-        .chat-reactions { display:flex; gap:3px; width:max-content; margin:1px 0 0 30px; padding:2px 4px; border-radius:999px; background:rgba(27,33,41,.045); }
-        .chat-reaction { width:31px; height:27px; border:0; border-radius:999px; background:transparent; box-shadow:none; font-size:15px; transition:transform .14s ease,background .14s ease; }
-        .chat-reaction:hover { transform:scale(1.08); background:rgba(255,255,255,.9); }
-        .chat-reaction:active { transform:scale(.92); }
-        .chat-input { flex:1; min-height:40px; max-height:112px; resize:none; border:0; outline:0; padding:9px 8px; background:transparent; font:inherit; color:#1b2129; }
-        .chat-send { width:42px; height:42px; flex:0 0 auto; border:0; border-radius:50%; display:grid; place-items:center; background:linear-gradient(135deg,#7657ff,#4b72ff); color:#fff; box-shadow:0 8px 18px rgba(75,114,255,.32); }
-        .chat-send:disabled { opacity:.4; box-shadow:none; }
+        .chat-composer-wrap { position:relative; flex:0 0 auto; z-index:25; width:100%; padding:8px 12px max(12px,env(safe-area-inset-bottom)); background:rgba(245,247,251,.97); border-top:1px solid rgba(27,33,41,.07); backdrop-filter:blur(18px); }
+        .chat-composer { display:flex; align-items:flex-end; gap:6px; padding:7px 8px; border-radius:24px; background:#fff; border:1px solid rgba(27,33,41,.09); box-shadow:0 12px 32px rgba(27,33,41,.13); }
+        .chat-input { flex:1; min-width:0; min-height:40px; max-height:112px; resize:none; border:0; outline:0; padding:9px 6px; background:transparent; font:inherit; color:#1b2129; }
+        .chat-tool,.chat-send,.chat-quick { width:40px; height:40px; flex:0 0 auto; border:0; border-radius:50%; display:grid; place-items:center; }
+        .chat-tool { background:transparent; color:#7657ff; }
+        .chat-tool.is-open { background:rgba(118,87,255,.10); }
+        .chat-send { background:linear-gradient(135deg,#7657ff,#4b72ff); color:#fff; box-shadow:0 8px 18px rgba(75,114,255,.28); }
+        .chat-send:disabled { opacity:.32; box-shadow:none; }
+        .chat-quick { background:rgba(118,87,255,.10); font-size:19px; touch-action:none; user-select:none; -webkit-user-select:none; }
+        .chat-picker { position:absolute; z-index:40; bottom:calc(100% + 7px); padding:8px; border-radius:18px; background:rgba(255,255,255,.98); border:1px solid rgba(27,33,41,.09); box-shadow:0 16px 38px rgba(27,33,41,.18); backdrop-filter:blur(16px); }
+        .chat-emoji-picker { left:14px; width:min(310px,calc(100% - 28px)); display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+        .chat-quick-picker { right:14px; display:flex; gap:3px; border-radius:999px; }
+        .chat-picker-button { width:36px; height:34px; border:0; border-radius:11px; background:transparent; font-size:19px; transition:transform .13s ease,background .13s ease; }
+        .chat-picker-button:hover { background:rgba(118,87,255,.08); transform:scale(1.08); }
         @media (max-width: 520px) {
           .chat-header { padding:10px 10px; gap:9px; }
           .chat-avatar { width:40px; height:40px; border-radius:14px; font-size:22px; }
           .chat-poke { padding:8px 10px; }
           .chat-body { padding:12px 10px 16px; }
           .chat-composer-wrap { padding-left:8px; padding-right:8px; }
-          .chat-reactions { margin-left:26px; }
+          .chat-emoji-picker { grid-template-columns:repeat(7,1fr); }
         }
         @keyframes chatPop { from { transform:scale(.96) translateY(4px); opacity:.3; } to { transform:none; opacity:1; } }
       `}</style>
@@ -309,35 +355,74 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
             </div>
           </div>
         ) : <div className="chat-composer-wrap">
-          <form className="chat-composer" onSubmit={submitMessage}>
-            <div className="chat-composer-main">
-              <Sparkles size={18} style={{ margin:"11px 0 11px 4px", color:"#7657ff" }} />
-              <textarea
-                ref={textareaRef}
-                className="chat-input"
-                value={draft}
-                maxLength={1000}
-                rows={1}
-                placeholder={`Message ${peerProfile?.name || "player"}…`}
-                onChange={(event) => setDraft(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
-                    event.preventDefault();
-                    submitMessage();
-                  }
-                }}
-              />
-              <button className="gloss-button chat-send" type="submit" disabled={!draft.trim() || sending} aria-label="Send message">
-                <Send size={18} />
-              </button>
-            </div>
-            <div className="chat-reactions" aria-label="Quick message reactions">
-              {QUICK_REACTIONS.map((emoji) => (
-                <button type="button" className="chat-reaction" onClick={() => addReaction(emoji)} key={emoji} aria-label={`Add ${emoji} to message`}>
+          {emojiPickerOpen && (
+            <div className="chat-picker chat-emoji-picker" role="dialog" aria-label="Choose an emoji">
+              {EMOJI_PICKER.map((emoji) => (
+                <button type="button" className="chat-picker-button" onClick={() => addEmoji(emoji)} key={emoji} aria-label={`Add ${emoji}`}>
                   {emoji}
                 </button>
               ))}
             </div>
+          )}
+          {quickPickerOpen && (
+            <div className="chat-picker chat-quick-picker" role="dialog" aria-label="Choose a quick reaction">
+              {QUICK_REACTIONS.map((emoji) => (
+                <button type="button" className="chat-picker-button" onClick={() => sendQuickReaction(emoji)} key={emoji} aria-label={`Send ${emoji}`}>
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+          <form className="chat-composer" onSubmit={submitMessage}>
+            <button
+              type="button"
+              className={`chat-tool${emojiPickerOpen ? " is-open" : ""}`}
+              onClick={() => {
+                setEmojiPickerOpen((value) => !value);
+                setQuickPickerOpen(false);
+              }}
+              aria-label="Choose emoji"
+              aria-expanded={emojiPickerOpen}
+            >
+              <Smile size={21}/>
+            </button>
+            <textarea
+              ref={textareaRef}
+              className="chat-input"
+              value={draft}
+              maxLength={1000}
+              rows={1}
+              placeholder={`Message ${peerProfile?.name || "player"}…`}
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  submitMessage();
+                }
+              }}
+            />
+            <button className="chat-send" type="submit" disabled={!draft.trim() || sending} aria-label="Send message">
+              <Send size={18}/>
+            </button>
+            <button
+              className="chat-quick"
+              type="button"
+              disabled={sending}
+              onPointerDown={startQuickPress}
+              onPointerUp={finishQuickPress}
+              onPointerCancel={cancelQuickPress}
+              onPointerLeave={cancelQuickPress}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  sendQuickReaction("👍");
+                }
+              }}
+              aria-label="Send thumbs up. Press and hold for more reactions."
+              aria-expanded={quickPickerOpen}
+            >
+              👍
+            </button>
           </form>
         </div>}
       </div>
