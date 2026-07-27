@@ -10,22 +10,20 @@ import DaySelector from "../DaySelector.jsx";
 import { rewardStatusText } from "../lib/rewardStatus.js";
 
 function SunIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
-  const ray = isConflict ? "#E5484D" : "#F5A524";
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
       <defs>
-        <radialGradient id="tango-sun-core" cx="35%" cy="28%" r="72%">
-          <stop offset="0%" stopColor="#FFF6A8" />
-          <stop offset="48%" stopColor="#FFD45C" />
-          <stop offset="100%" stopColor={isConflict ? "#E5484D" : "#F08A18"} />
-        </radialGradient>
+        <linearGradient id="tango-sun-face" x1="6" y1="5" x2="18" y2="19" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FFC64A" />
+          <stop offset="100%" stopColor="#F59E0B" />
+        </linearGradient>
       </defs>
-      <g fill="none" stroke={ray} strokeWidth="2" strokeLinecap="round">
-        <path d="M12 1.7v2.15M12 20.15v2.15M1.7 12h2.15M20.15 12h2.15" />
-        <path d="m4.72 4.72 1.52 1.52m11.52 11.52 1.52 1.52m0-14.56-1.52 1.52M6.24 17.76l-1.52 1.52" />
-      </g>
-      <circle cx="12" cy="12" r="5.35" fill={isConflict ? "#E5484D" : "url(#tango-sun-core)"} />
-      {!isConflict && <ellipse cx="10.4" cy="9.75" rx="2.25" ry="1.25" fill="#FFFFFF" opacity=".32" transform="rotate(-24 10.4 9.75)" />}
+      <circle
+        cx="12" cy="12" r="7.55"
+        fill={isConflict ? "#E5484D" : "url(#tango-sun-face)"}
+        stroke={isConflict ? "#C9363B" : "#D97706"}
+        strokeWidth="1.35"
+      />
     </svg>
   );
 }
@@ -34,26 +32,19 @@ function ModernMoonIcon({ size = 24, className = "", style, isConflict = false, 
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
       <defs>
-        <linearGradient id="tango-moon-face" x1="6" y1="3" x2="19" y2="21" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#667085" />
-          <stop offset="48%" stopColor="#303746" />
-          <stop offset="100%" stopColor="#0D1118" />
+        <linearGradient id="tango-moon-face" x1="6" y1="4" x2="18" y2="20" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#67A8FF" />
+          <stop offset="55%" stopColor="#3478D4" />
+          <stop offset="100%" stopColor="#1855AA" />
         </linearGradient>
       </defs>
       <path
-        d="M20.1 15.55A8.9 8.9 0 0 1 8.45 3.9a9.15 9.15 0 1 0 11.65 11.65Z"
+        d="M19.75 15.55A8.65 8.65 0 0 1 8.45 4.25a8.9 8.9 0 1 0 11.3 11.3Z"
         fill={isConflict ? "#E5484D" : "url(#tango-moon-face)"}
-        stroke={isConflict ? "#C9363B" : "#090C12"}
-        strokeWidth=".65"
+        stroke={isConflict ? "#C9363B" : "#174A91"}
+        strokeWidth="1.15"
         strokeLinejoin="round"
       />
-      {!isConflict && (
-        <>
-          <path d="M7.25 5.45a7.9 7.9 0 0 0 8.55 12.9" fill="none" stroke="#FFFFFF" strokeWidth=".8" strokeLinecap="round" opacity=".16" />
-          <circle cx="7.1" cy="14.5" r=".75" fill="#FFFFFF" opacity=".1" />
-          <circle cx="10.2" cy="18.1" r=".48" fill="#FFFFFF" opacity=".12" />
-        </>
-      )}
     </svg>
   );
 }
@@ -592,9 +583,9 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           position: relative;
           z-index: 1;
         }
-        .tg-symbol-disc--sun { background: radial-gradient(circle, rgba(255,248,214,.82) 0%, rgba(255,255,255,0) 70%); filter: drop-shadow(0 4px 7px rgba(240,138,24,.2)); }
-        .tg-symbol-disc--moon { border-radius: 14px; background: linear-gradient(145deg, rgba(226,232,240,.94), rgba(185,198,216,.72)); box-shadow: inset 0 1px 0 rgba(255,255,255,.72), inset 0 0 0 1px rgba(71,85,105,.12), 0 5px 12px rgba(15,23,42,.17); }
-        .tg-cell:disabled .tg-symbol-disc { box-shadow: inset 0 0 0 1px rgba(27,33,41,.07), 0 4px 12px rgba(16,24,40,.09); }
+        .tg-symbol-disc--sun { background: transparent; filter: drop-shadow(0 2px 2px rgba(180,104,5,.14)); }
+        .tg-symbol-disc--moon { background: transparent; filter: drop-shadow(0 2px 2px rgba(23,74,145,.14)); }
+        .tg-cell:disabled .tg-symbol-disc { opacity: .96; }
         .tg-edge-token { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
         .tg-hint-error { animation: hintPulseError 1.1s ease-in-out infinite; }
         .tg-hint-forced { animation: hintPulseForced 1.1s ease-in-out infinite; }
@@ -759,7 +750,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                   disabled={isGiven}
                   className={`tg-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`}
                   style={{
-                    background: isGiven ? "rgba(74,111,165,0.055)" : "rgba(255,255,255,.22)",
+                    background: isGiven ? "rgba(120,113,100,.075)" : "rgba(255,255,255,.22)",
                     border: "1px solid rgba(27,33,41,0.14)",
                     boxShadow: isConflict ? `inset 0 0 0 3px ${RED}` : "none",
                     cursor: isGiven ? "default" : "pointer",
