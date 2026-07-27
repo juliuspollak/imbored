@@ -51,9 +51,11 @@ export default function PointsToast({ reward }) {
         }}>{CONFETTI[index % CONFETTI.length]}</span>
       ))}
       <div className="rounded-3xl px-6 py-5 shadow-xl" style={{ background: "rgba(255,255,255,0.97)", border: "1px solid rgba(16,24,40,0.1)", minWidth: 250, textAlign: "center", animation: "pointsPop .42s cubic-bezier(.34,1.56,.64,1)" }}>
-        <div className="text-3xl mb-1">🎉</div>
-        <div className="text-sm font-bold mb-2" style={{ color:"#1B2129" }}>Puzzle complete!</div>
-        {!hasPoints ? (
+        <div className="text-3xl mb-1">{reward.error ? "⚠️" : "🎉"}</div>
+        <div className="text-sm font-bold mb-2" style={{ color:"#1B2129" }}>{reward.error ? "Points not saved" : "Puzzle complete!"}</div>
+        {reward.error ? (
+          <div style={{ color:"#B5433A" }} className="text-xs font-medium">{reward.message || "Please try again before leaving this game."}</div>
+        ) : !hasPoints ? (
           <div style={{ color: "#1B2129", opacity:.62 }} className="text-xs font-medium">Nice solve — keep it going!</div>
         ) : noPoints ? (
           <div style={{ color: "#1B2129", opacity:.62 }} className="text-xs font-medium">Daily practice points limit reached</div>

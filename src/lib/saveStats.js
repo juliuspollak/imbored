@@ -11,29 +11,46 @@ import { supabase, supabaseReady } from "./supabase.js";
 export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hints, correctCount = null, totalCount = null, roundsNailed = null, zipBacktrackedCells = null, zipRequiredMoves = null, mode = "practice", challengeDate, teamChallengeId = null, teamId = null }) {
   if (!supabaseReady || !userId) return {};
   try {
-    const { data, error } = await supabase
+    const payload = {
+      user_id: userId,
+      game,
+      day_index: dayIndex,
+      seconds,
+      mistakes,
+      hints,
+      correct_count: correctCount,
+      total_count: totalCount,
+      rounds_nailed: roundsNailed,
+      ...(game === "zip" ? {
+        zip_backtracked_cells: zipBacktrackedCells,
+        zip_required_moves: zipRequiredMoves,
+      } : {}),
+      mode,
+      challenge_date: mode === "challenge" ? challengeDate : null,
+      team_challenge_id: mode === "challenge" ? teamChallengeId : null,
+      team_id: mode === "challenge" ? teamId : null,
+    };
+    let { data, error } = await supabase
       .from("game_stats")
-      .insert({
-        user_id: userId,
-        game,
-        day_index: dayIndex,
-        seconds,
-        mistakes,
-        hints,
-        correct_count: correctCount,
-        total_count: totalCount,
-        rounds_nailed: roundsNailed,
-        ...(game === "zip" ? {
-          zip_backtracked_cells: zipBacktrackedCells,
-          zip_required_moves: zipRequiredMoves,
-        } : {}),
-        mode,
-        challenge_date: mode === "challenge" ? challengeDate : null,
-        team_challenge_id: mode === "challenge" ? teamChallengeId : null,
-        team_id: mode === "challenge" ? teamId : null,
-      })
+      .insert(payload)
       .select()
       .single();
+    const missingZipColumns = game === "zip"
+      && error
+      && (
+        error.code === "PGRST204"
+        || /zip_(backtracked_cells|required_moves)/i.test(error.message || "")
+      );
+    if (missingZipColumns) {
+      const legacyPayload = { ...payload };
+      delete legacyPayload.zip_backtracked_cells;
+      delete legacyPayload.zip_required_moves;
+      ({ data, error } = await supabase
+        .from("game_stats")
+        .insert(legacyPayload)
+        .select()
+        .single());
+    }
     if (error && error.code === "23505") {
       return { alreadyPlayed: true };
     }

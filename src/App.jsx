@@ -456,9 +456,16 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
     const res = await saveStats(stats);
     if (res?.data) {
       setSavedStatId(res.data.id);
-      setRewardResult({ ...(res.reward || {}), completed:true, eventId:Date.now() });
+      setRewardResult(res.rewardError
+        ? { completed:true,error:true,message:res.rewardError.message || "Your result was saved, but points could not be awarded.",eventId:Date.now() }
+        : { ...(res.reward || {}),completed:true,eventId:Date.now() });
     } else {
-      setRewardResult({ completed:true, eventId:Date.now() });
+      setRewardResult({
+        completed:true,
+        error:true,
+        message:res?.error?.message || "Your result and points could not be saved.",
+        eventId:Date.now(),
+      });
     }
   }
 
