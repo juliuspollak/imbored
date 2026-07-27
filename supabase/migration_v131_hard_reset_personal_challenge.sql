@@ -90,7 +90,7 @@ begin
   if exists(
     select 1
     from (
-      select player_id,sum(points) as points
+      select player_id,sum(points)::bigint as points
       from pg_temp.reset_reward_transactions
       group by player_id
     ) removed
@@ -114,7 +114,7 @@ begin
 
   -- Keep the cached balances consistent with the remaining reward ledger.
   with removed_by_player as (
-    select player_id,sum(points) as points
+    select player_id,sum(points)::bigint as points
     from pg_temp.reset_reward_transactions
     group by player_id
   )
