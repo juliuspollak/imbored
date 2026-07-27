@@ -21,7 +21,7 @@ const DEFAULT_GAMES = ["queens","tango","zip","minisudoku","geo","zoom"];
 const GAME_LABELS = { queens:"Queens",tango:"Tango",zip:"Zip",minisudoku:"Mini Sudoku",geo:"Geo",zoom:"Zoom" };
 // The configured amount is the winner's prize, separate from daily challenge
 // score and from the wallet points earned for completing a puzzle.
-const MAX_CHALLENGE_REWARD_POINTS = 500;
+const MAX_CHALLENGE_REWARD_POINTS = 50;
 
 function challengeChoiceStyle(selected) {
   return {
