@@ -84,7 +84,7 @@ function PhoneOnly({ onExit }) {
         <Home size={17} /> Home
       </button>
       <div className="rush-panel w-full max-w-sm p-7">
-        <span className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-white/8 text-emerald-300">
+        <span className="rush-icon-panel rush-icon-panel--mint mx-auto grid h-16 w-16 place-items-center rounded-3xl">
           <Smartphone size={30} />
         </span>
         <p className="rush-kicker mt-5">Phone-only live game</p>
@@ -92,7 +92,7 @@ function PhoneOnly({ onExit }) {
         <p className="rush-muted mt-3 text-sm leading-relaxed">
           Finding an animal by mouse is not the same as reaching for it. Open ImBored on a phone so every player competes with direct touch.
         </p>
-        <p className="mt-5 rounded-2xl bg-white/6 px-4 py-3 text-sm font-semibold">imbored.au</p>
+        <p className="rush-address mt-5 rounded-2xl px-4 py-3 text-sm font-semibold">imbored.au</p>
       </div>
     </div>
   );
@@ -407,7 +407,7 @@ export default function AnimalRush({ onExit }) {
                 <p className="rush-kicker">Live · 2–6 phones</p>
                 <h1 className="mt-1 text-4xl font-bold" style={{ fontFamily: "'Fredoka', sans-serif" }}>Animal Rush</h1>
               </div>
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-300/10 text-emerald-300">
+              <span className="rush-icon-panel rush-icon-panel--mint grid h-12 w-12 place-items-center rounded-2xl">
                 <Radio size={24} />
               </span>
             </div>
@@ -422,9 +422,9 @@ export default function AnimalRush({ onExit }) {
             <p className="rush-muted mt-2 text-center text-[10px]">Solo testing · full rules · no points awarded</p>
 
             <div className="my-5 flex items-center gap-3">
-              <span className="h-px flex-1 bg-white/10" />
+              <span className="rush-divider h-px flex-1" />
               <span className="rush-muted text-[10px] font-bold uppercase tracking-[.18em]">or play live</span>
-              <span className="h-px flex-1 bg-white/10" />
+              <span className="rush-divider h-px flex-1" />
             </div>
 
             <button type="button" className="rush-secondary w-full" onClick={createRoom} disabled={!!working}>
@@ -433,9 +433,9 @@ export default function AnimalRush({ onExit }) {
             </button>
 
             <div className="my-5 flex items-center gap-3">
-              <span className="h-px flex-1 bg-white/10" />
+              <span className="rush-divider h-px flex-1" />
               <span className="rush-muted text-[10px] font-bold uppercase tracking-[.18em]">or join</span>
-              <span className="h-px flex-1 bg-white/10" />
+              <span className="rush-divider h-px flex-1" />
             </div>
             <input
               className="rush-input"
@@ -514,7 +514,7 @@ export default function AnimalRush({ onExit }) {
         <main className="rush-shell">
           <button type="button" className="rush-quiet -ml-2 mb-3" onClick={onExit}><Home size={16} /> Home</button>
           <section className="rush-panel p-6 text-center">
-            <span className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-amber-300/10 text-amber-300">
+            <span className="rush-icon-panel rush-icon-panel--gold mx-auto grid h-16 w-16 place-items-center rounded-3xl">
               <Trophy size={31} />
             </span>
             <p className="rush-kicker mt-4">Match finished</p>
@@ -581,11 +581,7 @@ export default function AnimalRush({ onExit }) {
           )}
 
           {attemptFeedback && room.status !== "round_result" && (
-            <div className={`mb-3 rounded-2xl border px-3 py-2 text-center text-xs font-semibold ${
-              attemptFeedback.correct
-                ? "border-emerald-300/20 bg-emerald-300/10 text-emerald-200"
-                : "border-red-300/20 bg-red-400/10 text-red-200"
-            }`}>
+            <div className="rush-feedback mb-3 rounded-2xl border px-3 py-2 text-center text-xs font-semibold" data-kind={attemptFeedback.correct ? "correct" : "wrong"}>
               {attemptFeedback.pending
                 ? "Checking your touch…"
                 : attemptFeedback.correct

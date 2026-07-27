@@ -1,5 +1,12 @@
 [
   {
+    "id": "v139-animal-rush-theme-support",
+    "version": "v139",
+    "date": "2026-07-28",
+    "title": "Animal Rush now follows your theme",
+    "body": "Animal Rush now uses a bright glass-and-mint appearance when ImBored is set to Light, while retaining its graphite appearance in Dark mode. Cards, controls, room entry, player scores, results and error states all switch with the selected app theme."
+  },
+  {
     "id": "v138-animal-rush-computer-opponent",
     "version": "v138",
     "date": "2026-07-28",
