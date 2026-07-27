@@ -219,7 +219,10 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
     if (!initialScrollDoneRef.current) {
       // Position before paint so opening a long conversation never visibly
       // travels from its oldest message to its newest one.
+      const previousBehaviour=container.style.scrollBehavior;
+      container.style.scrollBehavior="auto";
       container.scrollTop=container.scrollHeight;
+      container.style.scrollBehavior=previousBehaviour;
       initialScrollDoneRef.current=true;
       previousMessageCountRef.current=messages.length;
       return;
@@ -383,7 +386,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
         .chat-avatar { width:44px; height:44px; border-radius:16px; display:grid; place-items:center; font-size:25px; background:linear-gradient(145deg,#fff,#ebe8ff); box-shadow:0 8px 22px rgba(74,62,140,.16); }
         .chat-poke { border:0; border-radius:999px; padding:9px 13px; background:#fff3cf; color:#805b00; font-weight:700; font-size:12px; box-shadow:0 6px 16px rgba(128,91,0,.12); transition:.18s ease; }
         .chat-poke:hover { transform:translateY(-1px); }
-        .chat-body { flex:1 1 auto; min-height:0; padding:18px 14px 20px; overflow-y:auto; overscroll-behavior:contain; overflow-anchor:none; scroll-behavior:smooth; }
+        .chat-body { flex:1 1 auto; min-height:0; padding:18px 14px 20px; overflow-y:auto; overscroll-behavior:contain; overflow-anchor:none; }
         .chat-day { width:max-content; margin:18px auto 12px; padding:5px 10px; border-radius:999px; background:rgba(27,33,41,.07); color:rgba(27,33,41,.55); font-size:11px; font-weight:700; }
         .chat-row { display:flex; margin:7px 0; }
         .chat-row.mine { justify-content:flex-end; }
