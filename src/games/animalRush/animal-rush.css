@@ -1,17 +1,29 @@
 .animal-rush {
-  --rush-bg: #101923;
-  --rush-panel: rgba(26, 38, 50, 0.88);
-  --rush-panel-soft: rgba(255, 255, 255, 0.07);
-  --rush-border: rgba(255, 255, 255, 0.12);
-  --rush-text: #f8fafc;
-  --rush-muted: rgba(226, 232, 240, 0.62);
-  --rush-mint: #6ee7b7;
-  --rush-gold: #f2c66d;
+  --rush-bg: #f1f3f7;
+  --rush-panel: rgba(255, 255, 255, 0.90);
+  --rush-panel-soft: rgba(255, 255, 255, 0.70);
+  --rush-border: rgba(16, 24, 40, 0.10);
+  --rush-highlight: rgba(255, 255, 255, 0.88);
+  --rush-soft-fill: rgba(16, 24, 40, 0.045);
+  --rush-soft-fill-strong: rgba(16, 24, 40, 0.07);
+  --rush-input-bg: rgba(255, 255, 255, 0.84);
+  --rush-text: #1b2129;
+  --rush-muted: rgba(27, 33, 41, 0.56);
+  --rush-mint: #087a58;
+  --rush-gold: #9a6b11;
+  --rush-card-label: rgba(27, 33, 41, 0.60);
+  --rush-shield-text: #126c91;
+  --rush-card-text: #8a6414;
+  --rush-result-text: #75520c;
+  --rush-error-text: #a83232;
+  --rush-error-bg: rgba(220, 38, 38, 0.07);
+  --rush-panel-shadow: 0 22px 58px rgba(16, 24, 40, 0.12);
+  --rush-card-shadow: 0 10px 24px rgba(16, 24, 40, 0.10);
   min-height: 100vh;
   color: var(--rush-text);
   background:
-    radial-gradient(circle at 50% -8%, rgba(35, 148, 111, 0.28), transparent 34%),
-    radial-gradient(circle at 90% 72%, rgba(242, 198, 109, 0.13), transparent 30%),
+    radial-gradient(circle at 50% -8%, rgba(35, 148, 111, 0.14), transparent 34%),
+    radial-gradient(circle at 90% 72%, rgba(217, 174, 88, 0.11), transparent 30%),
     var(--rush-bg);
   font-family: "Inter", sans-serif;
   overscroll-behavior: none;
@@ -33,9 +45,9 @@
   border: 1px solid var(--rush-border);
   border-radius: 26px;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.08), transparent 48%),
+    linear-gradient(145deg, var(--rush-highlight), transparent 48%),
     var(--rush-panel);
-  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.32);
+  box-shadow: var(--rush-panel-shadow);
   backdrop-filter: blur(18px);
 }
 
@@ -51,6 +63,33 @@
   color: var(--rush-muted);
 }
 
+.rush-icon-panel--mint {
+  color: var(--rush-mint);
+  background: rgba(21, 150, 111, 0.11);
+}
+
+.rush-icon-panel--gold {
+  color: var(--rush-gold);
+  background: rgba(217, 174, 88, 0.14);
+}
+
+.rush-address,
+.rush-divider {
+  background: var(--rush-soft-fill-strong);
+}
+
+.rush-feedback[data-kind="correct"] {
+  color: #087a58;
+  border-color: rgba(21, 150, 111, 0.22);
+  background: rgba(21, 150, 111, 0.09);
+}
+
+.rush-feedback[data-kind="wrong"] {
+  color: var(--rush-error-text);
+  border-color: rgba(220, 38, 38, 0.18);
+  background: var(--rush-error-bg);
+}
+
 .rush-input {
   width: 100%;
   height: 54px;
@@ -58,7 +97,7 @@
   border-radius: 16px;
   outline: none;
   color: var(--rush-text);
-  background: rgba(3, 9, 15, 0.38) !important;
+  background: var(--rush-input-bg) !important;
   font-size: 22px;
   font-weight: 800;
   letter-spacing: 0.2em;
@@ -117,9 +156,9 @@
   align-items: center;
   gap: 10px;
   padding: 9px 11px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--rush-border);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.045);
+  background: var(--rush-soft-fill);
 }
 
 .rush-player[data-eliminated="true"] {
@@ -133,10 +172,10 @@
   grid-template-columns: 26px minmax(0, 1fr) auto;
   align-items: center;
   gap: 7px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--rush-border);
   border-radius: 13px;
   padding: 7px;
-  background: rgba(255, 255, 255, 0.045);
+  background: var(--rush-soft-fill);
 }
 
 .rush-player-chip[data-eliminated="true"] {
@@ -150,7 +189,7 @@
   height: 26px;
   place-items: center;
   border-radius: 9px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--rush-soft-fill-strong);
   font-size: 14px;
 }
 
@@ -168,7 +207,7 @@
   flex: 0 0 34px;
   place-items: center;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.09);
+  background: var(--rush-soft-fill-strong);
   font-size: 18px;
 }
 
@@ -186,12 +225,12 @@
 }
 
 .rush-token--shield {
-  color: #bde9ff;
+  color: var(--rush-shield-text);
   background: rgba(56, 189, 248, 0.13);
 }
 
 .rush-token--card {
-  color: #ffe5a7;
+  color: var(--rush-card-text);
   background: rgba(242, 198, 109, 0.14);
 }
 
@@ -214,12 +253,12 @@
   height: 104px;
   margin: 0 auto;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--rush-border);
   border-radius: 30px;
   background:
-    radial-gradient(circle at 32% 20%, rgba(255, 255, 255, 0.17), transparent 35%),
-    rgba(255, 255, 255, 0.07);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.13), 0 18px 38px rgba(0, 0, 0, 0.2);
+    radial-gradient(circle at 32% 20%, var(--rush-highlight), transparent 35%),
+    var(--rush-soft-fill-strong);
+  box-shadow: inset 0 1px 0 var(--rush-highlight), var(--rush-card-shadow);
 }
 
 .rush-target[data-open="true"] {
@@ -248,15 +287,15 @@
   aspect-ratio: 1;
   place-items: center;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.13);
+  border: 1px solid var(--rush-border);
   border-radius: 50%;
   color: var(--rush-text);
   background:
-    radial-gradient(circle at 36% 24%, rgba(255, 255, 255, 0.16), transparent 34%),
-    rgba(255, 255, 255, 0.075);
+    radial-gradient(circle at 36% 24%, var(--rush-highlight), transparent 34%),
+    var(--rush-soft-fill-strong);
   box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.21),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    var(--rush-card-shadow),
+    inset 0 1px 0 var(--rush-highlight);
   touch-action: manipulation;
   user-select: none;
   -webkit-touch-callout: none;
@@ -277,7 +316,7 @@
   bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
-  color: rgba(248, 250, 252, 0.64);
+  color: var(--rush-card-label);
   font-size: 10px;
   font-weight: 750;
   letter-spacing: 0.08em;
@@ -288,7 +327,7 @@
   border: 1px solid rgba(242, 198, 109, 0.23);
   border-radius: 18px;
   padding: 12px 14px;
-  color: #ffe7ad;
+  color: var(--rush-result-text);
   background: rgba(242, 198, 109, 0.1);
   text-align: center;
 }
@@ -297,8 +336,8 @@
   border: 1px solid rgba(248, 113, 113, 0.2);
   border-radius: 13px;
   padding: 9px 11px;
-  color: #fecaca;
-  background: rgba(127, 29, 29, 0.22);
+  color: var(--rush-error-text);
+  background: var(--rush-error-bg);
   font-size: 11px;
 }
 
@@ -309,6 +348,41 @@
   padding: 24px;
   color: var(--rush-text);
   text-align: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  .animal-rush {
+    --rush-bg: #101923;
+    --rush-panel: rgba(26, 38, 50, 0.88);
+    --rush-panel-soft: rgba(255, 255, 255, 0.07);
+    --rush-border: rgba(255, 255, 255, 0.12);
+    --rush-highlight: rgba(255, 255, 255, 0.12);
+    --rush-soft-fill: rgba(255, 255, 255, 0.045);
+    --rush-soft-fill-strong: rgba(255, 255, 255, 0.08);
+    --rush-input-bg: rgba(3, 9, 15, 0.38);
+    --rush-text: #f8fafc;
+    --rush-muted: rgba(226, 232, 240, 0.62);
+    --rush-mint: #6ee7b7;
+    --rush-gold: #f2c66d;
+    --rush-card-label: rgba(248, 250, 252, 0.64);
+    --rush-shield-text: #bde9ff;
+    --rush-card-text: #ffe5a7;
+    --rush-result-text: #ffe7ad;
+    --rush-error-text: #fecaca;
+    --rush-error-bg: rgba(127, 29, 29, 0.22);
+    --rush-panel-shadow: 0 26px 70px rgba(0, 0, 0, 0.32);
+    --rush-card-shadow: 0 12px 28px rgba(0, 0, 0, 0.21);
+    background:
+      radial-gradient(circle at 50% -8%, rgba(35, 148, 111, 0.28), transparent 34%),
+      radial-gradient(circle at 90% 72%, rgba(242, 198, 109, 0.13), transparent 30%),
+      var(--rush-bg);
+  }
+
+  .rush-feedback[data-kind="correct"] {
+    color: #a7f3d0;
+    border-color: rgba(110, 231, 183, 0.20);
+    background: rgba(110, 231, 183, 0.10);
+  }
 }
 
 @keyframes rush-target-reveal {

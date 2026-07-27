@@ -196,7 +196,7 @@ export default function BotMatch({ userId, profile, onBack }) {
             <ChevronLeft size={16} /> Game modes
           </button>
           <section className="rush-panel p-6 text-center">
-            <span className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-amber-300/10 text-amber-300">
+            <span className="rush-icon-panel rush-icon-panel--gold mx-auto grid h-16 w-16 place-items-center rounded-3xl">
               {youWon ? <Trophy size={31} /> : <Bot size={31} />}
             </span>
             <p className="rush-kicker mt-4">Practice match finished</p>
@@ -250,11 +250,7 @@ export default function BotMatch({ userId, profile, onBack }) {
           )}
 
           {feedback && game.round.status !== "result" && (
-            <div className={`mb-3 rounded-2xl border px-3 py-2 text-center text-xs font-semibold ${
-              feedback.isCorrect
-                ? "border-emerald-300/20 bg-emerald-300/10 text-emerald-200"
-                : "border-red-300/20 bg-red-400/10 text-red-200"
-            }`}>
+            <div className="rush-feedback mb-3 rounded-2xl border px-3 py-2 text-center text-xs font-semibold" data-kind={feedback.isCorrect ? "correct" : "wrong"}>
               {feedback.isCorrect
                 ? <><Check className="mr-1 inline" size={14} /> Correct · {feedback.reactionMs} ms</>
                 : <><X className="mr-1 inline" size={14} /> Wrong · {feedback.penalty === "safety" ? "safety card lost" : feedback.penalty === "won_card" ? "won card lost" : "eliminated"}</>}
