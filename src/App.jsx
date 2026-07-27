@@ -22,6 +22,7 @@ const ZipGame = lazy(() => import("./games/Zip.jsx"));
 const MiniSudokuGame = lazy(() => import("./games/MiniSudoku.jsx"));
 const GeoGame = lazy(() => import("./games/Geo.jsx"));
 const ZoomGame = lazy(() => import("./games/Zoom.jsx"));
+const AnimalRushGame = lazy(() => import("./games/AnimalRush.jsx"));
 const Teams = lazy(() => import("./Teams.jsx"));
 const Stats = lazy(() => import("./Stats.jsx"));
 const Feedback = lazy(() => import("./Feedback.jsx"));
@@ -52,6 +53,7 @@ const GAME_COMPONENTS = {
   minisudoku: { Component: MiniSudokuGame, label: "Mini Sudoku" },
   geo: { Component: GeoGame, label: "Geo" },
   zoom: { Component: ZoomGame, label: "Zoom" },
+  animalrush: { Component: AnimalRushGame, label: "Animal Rush" },
 };
 
 function IncognitoIcon({ size = 24 }) {
@@ -71,6 +73,7 @@ function AppShell() {
   const [active, setActive] = useState(() => {
     if (typeof window === "undefined") return null;
     const query = new URLSearchParams(window.location.search);
+    if (query.get("rush")) return "animalrush";
     return query.get("auth_return") === "profile" ? "profile" : null;
   }); // null | profile screens | a game id
   const [chatPlayer, setChatPlayer] = useState(null);
@@ -184,7 +187,11 @@ function AppShell() {
   }, [playMode, user?.id]);
   const players = useOnlinePlayers({ includeHidden: !!profile?.is_admin });
   const { config: gameConfig, refetch: refetchGameConfig } = useGameConfig();
-  usePresence(["queens", "tango", "zip", "minisudoku", "geo", "zoom"].includes(active) ? active : null, playMode, incognito);
+  usePresence(
+    ["queens", "tango", "zip", "minisudoku", "geo", "zoom", "animalrush"].includes(active) ? active : null,
+    active === "animalrush" ? "live" : playMode,
+    incognito,
+  );
   const openFeedbackCount = useOpenFeedbackCount(profile?.is_admin ? user?.id : undefined);
   const completedFeedbackCount = useCompletedFeedbackCount(profile?.is_admin ? undefined : user?.id);
   const newTransfersCount = useNewTransfersCount(user?.id);
@@ -206,6 +213,17 @@ function AppShell() {
   function openTeams(target = null) {
     setTeamsTarget(target?.teamId ? target : null);
     openSection("teams");
+  }
+
+  function closeAnimalRush() {
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("rush")) {
+        url.searchParams.delete("rush");
+        window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+      }
+    }
+    setActive(null);
   }
 
   useEffect(() => {
@@ -396,6 +414,16 @@ function AppShell() {
         />
         {accountMenu}
       </>
+    );
+  }
+
+  if (active === "animalrush") {
+    return withAccountMenu(
+      <ErrorBoundary key={active} onReset={closeAnimalRush}>
+        <Suspense fallback={<FullScreenMessage text="Opening live room…" />}>
+          <AnimalRushGame onExit={closeAnimalRush} />
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 

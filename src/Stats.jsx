@@ -9,7 +9,7 @@ import { useAuth } from "./lib/AuthContext.jsx";
 const BG = "#F1F3F7", PANEL = "#FFFFFF", INK = "#1B2129", ACCENT = "#2F6FED";
 const GAME_LABELS = {
   queens: "Queens", tango: "Tango", zip: "Zip",
-  minisudoku: "Sudoku", geo: "Geo", zoom: "Zoom",
+  minisudoku: "Sudoku", geo: "Geo", zoom: "Zoom", animalrush: "Animal Rush",
 };
 
 function rankStyle(rank) {
@@ -31,14 +31,20 @@ export default function Stats({ onBack }) {
   const refresh = useCallback(async () => {
     if (!supabaseReady) { setLoading(false); return; }
     setLoading(true);
-    const [statsResult, profilesResult, progressResult] = await Promise.all([
+    const [statsResult, liveResult, profilesResult, progressResult] = await Promise.all([
       // Only aggregate-friendly fields are loaded. Individual attempts, times,
       // mistakes and hints do not belong on the community leaderboard.
       supabase.from("game_stats").select("user_id, game, mode"),
+      supabase.from("animal_rush_match_results").select("user_id"),
       supabase.from("profiles").select("id, name, icon, mood, hidden_from_others, show_stats_to_others, account_deleted_at").is("account_deleted_at", null),
       supabase.rpc("get_public_player_progress"),
     ]);
-    setRows(statsResult.data || []);
+    const liveRows = (liveResult.data || []).map((item) => ({
+      user_id:item.user_id,
+      game:"animalrush",
+      mode:"live",
+    }));
+    setRows([...(statsResult.data || []),...liveRows]);
     setProfiles(Object.fromEntries((profilesResult.data || []).map((item) => [item.id, item])));
     setProgress(Object.fromEntries((progressResult.data || []).map((item) => [item.player_id, item])));
     setProgressError(progressResult.error?.message || "");
