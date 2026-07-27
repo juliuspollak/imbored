@@ -233,7 +233,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
         </div>
 
         {/* toolbar - text labels, spread at top */}
-        <div className="flex items-center justify-between gap-2 mb-3 px-1">
+        <div className="game-toolbar flex items-center justify-between gap-2 mb-3 px-1">
           {[
             { label: t("common.restart"), onClick: handleReset, disabled: solved },
             {
@@ -396,6 +396,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
                       onClick={() => !isEliminated && pick(option)}
                       disabled={answered || isEliminated}
                       className="geo-option rounded-xl px-3 py-3 text-sm font-semibold transition-all min-h-[52px]"
+                      data-state={isCorrect ? "correct" : isWrong ? "wrong" : "idle"}
                       style={{ background, color, border, opacity: isEliminated ? 0.22 : 1, cursor: answered || isEliminated ? "default" : "pointer" }}
                     >
                       {localizeGeoValue(option, language, q)}
