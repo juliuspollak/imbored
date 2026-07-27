@@ -183,6 +183,12 @@
   opacity: 0.38;
 }
 
+.rush-secondary[data-error="true"] {
+  border-color: rgba(220, 38, 38, 0.2);
+  color: var(--rush-error-text);
+  background: var(--rush-error-bg);
+}
+
 .rush-player {
   display: flex;
   min-height: 54px;
@@ -510,6 +516,28 @@
   user-select: none;
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.rush-animal-card::after {
+  content: "?";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--rush-muted);
+  font-family: "Fredoka", sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 180ms ease, transform 180ms ease;
+  pointer-events: none;
+}
+
+.rush-animal-card svg,
+.rush-animal-label {
+  transition: opacity 180ms ease;
 }
 
 .rush-animal-card:not(:disabled):active {
@@ -519,6 +547,21 @@
 
 .rush-animal-card:disabled {
   opacity: 0.44;
+}
+
+.rush-grid[data-concealed="true"] .rush-animal-card {
+  opacity: 1;
+}
+
+.rush-grid[data-concealed="true"] .rush-animal-card svg,
+.rush-grid[data-concealed="true"] .rush-animal-label {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.rush-grid[data-concealed="true"] .rush-animal-card::after {
+  opacity: 0.32;
+  transform: scale(1);
 }
 
 .rush-animal-label {
@@ -832,6 +875,16 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .rush-animal-card {
+    transition: none;
+  }
+
+  .rush-animal-card::after,
+  .rush-animal-card svg,
+  .rush-animal-label {
+    transition: none;
+  }
+
   .rush-target[data-open="true"] {
     animation: none;
   }

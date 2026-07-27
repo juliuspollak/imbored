@@ -303,7 +303,12 @@ export default function BotMatch({ userId, profile, reducedMotion = false, onBac
             </div>
           </div>
 
-          <div className="rush-grid" aria-label="Animal cards">
+          <div
+            className="rush-grid"
+            data-concealed={!revealed}
+            aria-hidden={!revealed}
+            aria-label="Animal cards"
+          >
             {game.round.order.map((animalId) => {
               const animal = animalById(animalId);
               return (

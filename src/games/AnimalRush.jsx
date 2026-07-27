@@ -135,6 +135,7 @@ export default function AnimalRush({ onExit }) {
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState("");
   const [message, setMessage] = useState("");
+  const [joinError, setJoinError] = useState("");
   const [now, setNow] = useState(Date.now());
   const [serverOffset, setServerOffset] = useState(0);
   const [attemptFeedback, setAttemptFeedback] = useState(null);
@@ -309,11 +310,14 @@ export default function AnimalRush({ onExit }) {
     if (cleanCode.length !== 6) return;
     setWorking("join");
     setMessage("");
+    setJoinError("");
     const { data, error } = await supabase.rpc("animal_rush_join_room", { room_code: cleanCode });
     setWorking("");
     const nextRoom = Array.isArray(data) ? data[0] : data;
     if (error || !nextRoom) {
-      setMessage(error?.message || "Couldn’t join that room.");
+      const errorMessage = error?.message || "Couldn’t join that room.";
+      if (/room not found/i.test(errorMessage)) setJoinError("Room not found — check the code");
+      else setMessage(errorMessage);
       return;
     }
     rememberRoom(nextRoom);
@@ -481,6 +485,7 @@ export default function AnimalRush({ onExit }) {
               onChange={(event) => {
                 setJoinCode(event.target.value.replace(/[^a-z0-9]/gi, "").slice(0, 6));
                 setMessage("");
+                setJoinError("");
               }}
               placeholder="ROOM CODE"
               autoCapitalize="characters"
@@ -494,9 +499,17 @@ export default function AnimalRush({ onExit }) {
               className="rush-secondary mt-3 w-full"
               onClick={joinRoom}
               disabled={!!working || !joinCodeReady}
+              data-error={!!joinError}
+              aria-live="polite"
             >
-              {working === "join" ? <Loader2 className="animate-spin" size={17} /> : <Users size={17} />}
-              {working === "join" ? "Joining…" : joinCodeReady ? "Join room" : "Enter 6-character code"}
+              {working === "join"
+                ? <Loader2 className="animate-spin" size={17} />
+                : joinError
+                  ? <X size={17} />
+                  : <Users size={17} />}
+              {working === "join"
+                ? "Joining…"
+                : joinError || (joinCodeReady ? "Join room" : "Enter 6-character code")}
             </button>
             {message && <p className="rush-error mt-4">{message}</p>}
           </section>
@@ -673,7 +686,12 @@ export default function AnimalRush({ onExit }) {
             </div>
           </div>
 
-          <div className="rush-grid" aria-label="Animal cards">
+          <div
+            className="rush-grid"
+            data-concealed={phase !== "open" && room.status !== "round_result"}
+            aria-hidden={phase !== "open" && room.status !== "round_result"}
+            aria-label="Animal cards"
+          >
             {cardOrder.map((animalId) => {
               const animal = animalById(animalId);
               return (
