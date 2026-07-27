@@ -7,6 +7,7 @@ import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx
 import { Crown, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock, X } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
+import { rewardStatusText } from "../lib/rewardStatus.js";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -1073,9 +1074,7 @@ export default function Queens({
                   className="rounded-full px-3 py-1 text-sm font-bold"
                   style={{ background: "rgba(217,174,88,0.14)", color: "#B88724" }}
                 >
-                  {rewardResult.points_awarded > 0
-                    ? `★ +${rewardResult.points_awarded} Points`
-                    : t("common.noPoints")}
+                  {rewardStatusText(rewardResult, t("common.noPoints"))}
                 </div>
               )}
               {savedStatId ? (

@@ -7,6 +7,7 @@ import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx
 import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Flag, Lock } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
+import { rewardStatusText } from "../lib/rewardStatus.js";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -1044,11 +1045,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
                 >
                   {rewardResult.error
                     ? "Points could not be saved"
-                    : rewardResult.points_awarded > 0
-                    ? `★ +${rewardResult.points_awarded} Points`
-                    : rewardResult.daily_limit_reached
-                      ? "Daily practice points limit reached"
-                      : t("common.noPoints")}
+                    : rewardStatusText(rewardResult, t("common.noPoints"))}
                 </div>
               )}
               {savedStatId ? (

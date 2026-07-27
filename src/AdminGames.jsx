@@ -120,7 +120,7 @@ export default function AdminGames({ onBack }) {
   }
 
   async function resetMyChallengeForEveryone() {
-    if (!window.confirm("Restart today's My Challenge for every player? All six personal challenge results and ratings will be cleared. Existing rewards will be preserved and cannot be earned twice.")) return;
+    if (!window.confirm("Restart today's My Challenge for every player? All six personal challenge results and ratings will be cleared. Replays will create fresh challenge scores, but account points already awarded today will be kept and will not be awarded twice.")) return;
     setResetting("all");
     setMessage("");
     const { data, error } = await supabase.rpc("admin_reset_my_challenge");
@@ -130,7 +130,7 @@ export default function AdminGames({ onBack }) {
       return;
     }
     const removed = Number(data?.results_removed) || 0;
-    setMessage(`Today's My Challenge restarted for everyone. Removed ${removed} result${removed === 1 ? "" : "s"}; existing rewards remain protected.`);
+    setMessage(`Today's My Challenge restarted for everyone. Removed ${removed} result${removed === 1 ? "" : "s"}. Replays create fresh challenge scores; previously awarded account points remain unchanged.`);
   }
 
   async function move(index, direction) {

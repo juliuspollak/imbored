@@ -9,6 +9,7 @@ import FlagImage from "./geo/FlagImage.jsx";
 import { useI18n } from "../lib/i18n.jsx";
 import { localizeZoomValue, localizeZoomPrompt } from "./zoom/zoomLocalization.js";
 import DaySelector from "../DaySelector.jsx";
+import { rewardStatusText } from "../lib/rewardStatus.js";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -372,7 +373,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
             </p>
             {rewardResult?.points_awarded != null && (
               <div className="rounded-full px-3 py-1 text-sm font-bold" style={{ background:"rgba(217,174,88,.14)",color:"#B88724" }}>
-                {rewardResult.points_awarded > 0 ? `★ +${rewardResult.points_awarded} Points` : t("common.noPoints")}
+                {rewardStatusText(rewardResult, t("common.noPoints"))}
               </div>
             )}
             {savedStatId

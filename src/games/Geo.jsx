@@ -12,6 +12,7 @@ import FlagImage from "./geo/FlagImage.jsx";
 import { useI18n } from "../lib/i18n.jsx";
 import { localizeGeoQuestion, localizeGeoValue } from "./geo/geoLocalization.js";
 import DaySelector from "../DaySelector.jsx";
+import { rewardStatusText } from "../lib/rewardStatus.js";
 
 /* ---------------- continents & map ---------------- */
 
@@ -427,7 +428,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
             </p>
             {rewardResult?.points_awarded != null && (
               <div className="rounded-full px-3 py-1 text-sm font-bold" style={{ background:"rgba(217,174,88,.14)",color:"#B88724" }}>
-                {rewardResult.points_awarded > 0 ? `★ +${rewardResult.points_awarded} Points` : t("common.noPoints")}
+                {rewardStatusText(rewardResult, t("common.noPoints"))}
               </div>
             )}
             {savedStatId
