@@ -1,5 +1,12 @@
 [
   {
+    "id": "v140-animal-rush-landscape",
+    "version": "v140",
+    "date": "2026-07-28",
+    "title": "Play Animal Rush in landscape",
+    "body": "Animal Rush now has a dedicated phone-landscape layout for both live and computer matches. Scores stay across the top, the target and round result sit on the left, and all six animal cards remain reachable in a compact 3-by-2 grid on the right."
+  },
+  {
     "id": "v139-animal-rush-theme-support",
     "version": "v139",
     "date": "2026-07-28",

@@ -227,8 +227,8 @@ export default function BotMatch({ userId, profile, onBack }) {
 
   return (
     <div className="animal-rush">
-      <main className="rush-shell">
-        <div className="mb-3 flex items-center justify-between">
+      <main className="rush-shell rush-shell--play">
+        <div className="rush-topbar mb-3 flex items-center justify-between">
           <button type="button" className="rush-quiet -ml-2" onClick={onBack}>
             <ChevronLeft size={16} /> Game modes
           </button>
@@ -237,34 +237,36 @@ export default function BotMatch({ userId, profile, onBack }) {
         </div>
 
         <section className="rush-panel rush-stage p-4">
-          <div className="mb-3 grid grid-cols-2 gap-2">
+          <div className="rush-score-grid mb-3 grid grid-cols-2 gap-2">
             <ScoreChip player={human} isYou />
             <ScoreChip player={bot} />
           </div>
 
-          {game.round.status === "result" && (
-            <div className="rush-round-result mb-3">
-              <strong className="block text-sm">{resultText}</strong>
-              <small className="mt-0.5 block opacity-70">Next animal is coming…</small>
-            </div>
-          )}
+          <div className="rush-round-info">
+            {game.round.status === "result" && (
+              <div className="rush-round-result mb-3">
+                <strong className="block text-sm">{resultText}</strong>
+                <small className="mt-0.5 block opacity-70">Next animal is coming…</small>
+              </div>
+            )}
 
-          {feedback && game.round.status !== "result" && (
-            <div className="rush-feedback mb-3 rounded-2xl border px-3 py-2 text-center text-xs font-semibold" data-kind={feedback.isCorrect ? "correct" : "wrong"}>
-              {feedback.isCorrect
-                ? <><Check className="mr-1 inline" size={14} /> Correct · {feedback.reactionMs} ms</>
-                : <><X className="mr-1 inline" size={14} /> Wrong · {feedback.penalty === "safety" ? "safety card lost" : feedback.penalty === "won_card" ? "won card lost" : "eliminated"}</>}
-            </div>
-          )}
+            {feedback && game.round.status !== "result" && (
+              <div className="rush-feedback mb-3 rounded-2xl border px-3 py-2 text-center text-xs font-semibold" data-kind={feedback.isCorrect ? "correct" : "wrong"}>
+                {feedback.isCorrect
+                  ? <><Check className="mr-1 inline" size={14} /> Correct · {feedback.reactionMs} ms</>
+                  : <><X className="mr-1 inline" size={14} /> Wrong · {feedback.penalty === "safety" ? "safety card lost" : feedback.penalty === "won_card" ? "won card lost" : "eliminated"}</>}
+              </div>
+            )}
 
-          <div className="text-center">
-            <p className="rush-kicker">{revealed ? "Find this animal" : "Get ready"}</p>
-            <div className="rush-target mt-2" data-open={revealed}>
-              {revealed
-                ? <AnimalFace animalId={target.id} size={86} />
-                : <span className="rush-countdown">{countdown || "•"}</span>}
+            <div className="rush-prompt text-center">
+              <p className="rush-kicker">{revealed ? "Find this animal" : "Get ready"}</p>
+              <div className="rush-target mt-2" data-open={revealed}>
+                {revealed
+                  ? <AnimalFace animalId={target.id} size={86} />
+                  : <span className="rush-countdown">{countdown || "•"}</span>}
+              </div>
+              {revealed && <strong className="mt-1 block text-sm">{target.label}</strong>}
             </div>
-            {revealed && <strong className="mt-1 block text-sm">{target.label}</strong>}
           </div>
 
           <div className="rush-grid" aria-label="Animal cards">
@@ -291,7 +293,7 @@ export default function BotMatch({ userId, profile, onBack }) {
           </div>
 
           {human.eliminated && (
-            <p className="rush-error mt-4 text-center">You have no cards left. Rush Bot wins this test.</p>
+            <p className="rush-stage-message rush-error mt-4 text-center">You have no cards left. Rush Bot wins this test.</p>
           )}
         </section>
       </main>
