@@ -24,10 +24,12 @@ export default function PointsToast({ reward }) {
   const breakdown = reward.breakdown || null;
   const breakdownParts = breakdown ? [
     ["base", "base"],
+    ["day_bonus", "day difficulty"],
     ["time", "time"],
     ["hints", "hints"],
     ["mistakes", "mistakes"],
     ["weekly_streak", "weekly streak"],
+    ["mode_adjustment", "practice rate"],
     ["limit_adjustment", "minimum/maximum limit"],
   ].flatMap(([key, label]) => {
     const value = Number(breakdown[key] || 0);

@@ -46,10 +46,12 @@ function gameBreakdown(item){
   const metadata=item.metadata||{};
   return [
     ["Base",metadata.base],
+    ["Day difficulty",metadata.day_bonus],
     ["Speed",metadata.time],
     ["Hints",metadata.hints],
     ["Mistakes",metadata.mistakes],
     ["Weekly streak",metadata.weekly_streak],
+    ["Practice rate",metadata.mode_adjustment],
     ["Adjustment",metadata.limit_adjustment],
   ].filter(([,value])=>Number(value)!==0);
 }
