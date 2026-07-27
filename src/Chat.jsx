@@ -5,6 +5,12 @@ import { sendPoke } from "./lib/pokes.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
 
 const QUICK_REACTIONS = ["👍", "👎", "❤️", "😂", "🔥", "👏"];
+const MESSAGE_REACTIONS = [
+  { id:"like",emoji:"👍",label:"Like" },
+  { id:"dislike",emoji:"👎",label:"Dislike" },
+  { id:"love",emoji:"❤️",label:"Love" },
+];
+const MESSAGE_REACTION_EMOJI = Object.fromEntries(MESSAGE_REACTIONS.map((item) => [item.id,item.emoji]));
 const EMOJI_PICKER = ["😀","😂","🥰","😍","🤩","😎","🥳","😊","😉","🤔","😮","😢","😭","😡","👍","👎","❤️","🔥","👏","🎉","💯","🙌","🤝","👀","🎮","🏆","⭐","✨"];
 
 function formatMessageTime(value) {
@@ -32,6 +38,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
   const [peerAvailable, setPeerAvailable] = useState(true);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [quickPickerOpen, setQuickPickerOpen] = useState(false);
+  const [reactingMessageId, setReactingMessageId] = useState(null);
   const messagesRef = useRef(null);
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
@@ -63,14 +70,29 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
         );
       }
 
-      const { data, error: loadError } = await supabase
+      let { data,error:loadError } = await supabase
         .from("direct_messages")
-        .select("id, sender_id, recipient_id, body, created_at, read_at, system_generated, activity_type")
+        .select("id,sender_id,recipient_id,body,created_at,read_at,system_generated,activity_type,reactions:direct_message_reactions(user_id,reaction)")
         .or(
           `and(sender_id.eq.${currentUser.id},recipient_id.eq.${peerId}),and(sender_id.eq.${peerId},recipient_id.eq.${currentUser.id})`
         )
-        .order("created_at", { ascending: true })
+        .order("created_at",{ ascending:true })
         .limit(250);
+
+      // Keep chat usable during the short deployment window before migration
+      // v121 has been applied and PostgREST has discovered the relationship.
+      if (loadError) {
+        const fallback = await supabase
+          .from("direct_messages")
+          .select("id,sender_id,recipient_id,body,created_at,read_at,system_generated,activity_type")
+          .or(
+            `and(sender_id.eq.${currentUser.id},recipient_id.eq.${peerId}),and(sender_id.eq.${peerId},recipient_id.eq.${currentUser.id})`
+          )
+          .order("created_at",{ ascending:true })
+          .limit(250);
+        data=fallback.data;
+        loadError=fallback.error;
+      }
 
       if (loadError) {
         setError(loadError.message || "Couldn’t load this chat.");
@@ -111,7 +133,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
     loadMessages();
     return attachRealtimeRefresh({
       channelName: `chat-${currentUser?.id}-${peerId}`,
-      tables: [{ name: "direct_messages" }, { name: "profiles" }],
+      tables: [{ name:"direct_messages" },{ name:"direct_message_reactions" },{ name:"profiles" }],
       refresh: () => loadMessages({ quiet: true }),
       fallbackMs: 60000,
     });
@@ -224,6 +246,28 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
     window.clearTimeout(quickPressTimerRef.current);
   }
 
+  async function toggleMessageReaction(messageId,reaction) {
+    if (!messageId || String(messageId).startsWith("temp-") || sending) return;
+    setReactingMessageId(null);
+    const previousMessages = messages;
+    setMessages((items) => items.map((message) => {
+      if (message.id !== messageId) return message;
+      const reactions = (message.reactions || []).filter((item) => item.user_id !== currentUser.id);
+      const existing = (message.reactions || []).find((item) => item.user_id === currentUser.id)?.reaction;
+      if (existing !== reaction) reactions.push({ user_id:currentUser.id,reaction });
+      return { ...message,reactions };
+    }));
+
+    const { error:reactionError } = await supabase.rpc("toggle_direct_message_reaction", {
+      target_message_id:messageId,
+      reaction_in:reaction,
+    });
+    if (reactionError) {
+      setMessages(previousMessages);
+      setError(reactionError.message || "Couldn’t save that reaction.");
+    }
+  }
+
   async function handlePoke() {
     if (pokeState === "sending" || !currentUser?.id || !peerId || !peerAvailable) return;
     setPokeState("sending");
@@ -263,7 +307,18 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
         .chat-day { width:max-content; margin:18px auto 12px; padding:5px 10px; border-radius:999px; background:rgba(27,33,41,.07); color:rgba(27,33,41,.55); font-size:11px; font-weight:700; }
         .chat-row { display:flex; margin:7px 0; }
         .chat-row.mine { justify-content:flex-end; }
-        .chat-bubble { max-width:min(78%,520px); padding:10px 13px 7px; border-radius:20px; box-shadow:0 7px 18px rgba(27,33,41,.08); animation:chatPop .2s ease both; }
+        .chat-bubble { position:relative; max-width:min(78%,520px); padding:10px 13px 7px; border-radius:20px; box-shadow:0 7px 18px rgba(27,33,41,.08); animation:chatPop .2s ease both; cursor:pointer; }
+        .chat-row.has-reaction { margin-bottom:18px; }
+        .chat-message-picker { position:absolute; z-index:35; bottom:calc(100% + 7px); display:flex; gap:3px; padding:5px; border-radius:999px; background:rgba(255,255,255,.98); border:1px solid rgba(27,33,41,.09); box-shadow:0 12px 30px rgba(27,33,41,.18); }
+        .chat-row.mine .chat-message-picker { right:0; }
+        .chat-row.theirs .chat-message-picker { left:0; }
+        .chat-message-reaction { width:36px; height:34px; border:0; border-radius:50%; background:transparent; font-size:19px; transition:transform .13s ease,background .13s ease; }
+        .chat-message-reaction:hover,.chat-message-reaction.is-selected { background:rgba(118,87,255,.11); transform:scale(1.08); }
+        .chat-reaction-badges { position:absolute; bottom:-13px; display:flex; gap:3px; padding:2px 5px; min-height:24px; border-radius:999px; background:#fff; color:#1b2129; border:1px solid rgba(27,33,41,.10); box-shadow:0 4px 11px rgba(27,33,41,.13); }
+        .chat-row.mine .chat-reaction-badges { right:8px; }
+        .chat-row.theirs .chat-reaction-badges { left:8px; }
+        .chat-reaction-count { display:flex; align-items:center; gap:2px; font-size:13px; line-height:1; }
+        .chat-reaction-count small { font-size:9px; font-weight:800; opacity:.55; }
         .chat-row.mine .chat-bubble { background:linear-gradient(135deg,#7657ff,#4b72ff); color:#fff; border-bottom-right-radius:6px; }
         .chat-row.theirs .chat-bubble { background:rgba(255,255,255,.95); color:#1b2129; border-bottom-left-radius:6px; }
         .chat-bubble.system { max-width:min(90%,620px); background:linear-gradient(135deg,#fff7d6,#fff1b5)!important; color:#6f5200!important; border:1px solid rgba(174,128,0,.18); border-radius:18px!important; box-shadow:0 9px 24px rgba(128,91,0,.12); }
@@ -326,14 +381,58 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
           {grouped.map((item) => {
             if (item.type === "day") return <div className="chat-day" key={item.id}>{item.label}</div>;
             const mine = item.sender_id === currentUser.id;
+            const reactions = item.reactions || [];
+            const reactionCounts = reactions.reduce((counts,reaction) => {
+              counts[reaction.reaction]=(counts[reaction.reaction] || 0)+1;
+              return counts;
+            },{});
+            const myReaction = reactions.find((reaction) => reaction.user_id === currentUser.id)?.reaction;
+            const pickerOpen = reactingMessageId === item.id;
+            const canReact = !item.system_generated && !String(item.id).startsWith("temp-");
             return (
-              <div className={`chat-row ${mine ? "mine" : "theirs"}`} key={item.id}>
-                <div className={`chat-bubble${item.system_generated ? " system" : ""}`}>
+              <div className={`chat-row ${mine ? "mine" : "theirs"}${reactions.length ? " has-reaction" : ""}`} key={item.id}>
+                <div
+                  className={`chat-bubble${item.system_generated ? " system" : ""}`}
+                  onClick={() => canReact && setReactingMessageId(pickerOpen ? null : item.id)}
+                  role={canReact ? "button" : undefined}
+                  tabIndex={canReact ? 0 : undefined}
+                  onKeyDown={(event) => {
+                    if (canReact && (event.key === "Enter" || event.key === " ")) {
+                      event.preventDefault();
+                      setReactingMessageId(pickerOpen ? null : item.id);
+                    }
+                  }}
+                  aria-label={canReact ? "Message. Activate to react." : undefined}
+                >
+                  {pickerOpen && (
+                    <div className="chat-message-picker" onClick={(event) => event.stopPropagation()} role="dialog" aria-label="React to message">
+                      {MESSAGE_REACTIONS.map((reaction) => (
+                        <button
+                          type="button"
+                          className={`chat-message-reaction${myReaction === reaction.id ? " is-selected" : ""}`}
+                          key={reaction.id}
+                          onClick={() => toggleMessageReaction(item.id,reaction.id)}
+                          aria-label={myReaction === reaction.id ? `Remove ${reaction.label}` : reaction.label}
+                        >
+                          {reaction.emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <div className="chat-text">{item.body}</div>
                   <div className="chat-meta">
                     <span>{formatMessageTime(item.created_at)}</span>
                     {mine && <span>{item.read_at ? "Seen" : "Sent"}</span>}
                   </div>
+                  {Object.keys(reactionCounts).length > 0 && (
+                    <div className="chat-reaction-badges" aria-label={`${reactions.length} message reaction${reactions.length === 1 ? "" : "s"}`}>
+                      {Object.entries(reactionCounts).map(([reaction,count]) => (
+                        <span className="chat-reaction-count" key={reaction}>
+                          {MESSAGE_REACTION_EMOJI[reaction] || "🙂"}{count > 1 && <small>{count}</small>}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             );
