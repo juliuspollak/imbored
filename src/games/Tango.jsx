@@ -34,22 +34,16 @@ function ModernMoonIcon({ size = 24, className = "", style, isConflict = false, 
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
       <defs>
-        <linearGradient id="tango-moon-face" x1="4" y1="3" x2="19" y2="21" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#667085" />
-          <stop offset="45%" stopColor="#303746" />
-          <stop offset="100%" stopColor="#10131A" />
+        <linearGradient id="tango-moon-face" x1="5" y1="3" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#71798A" />
+          <stop offset="48%" stopColor="#343A48" />
+          <stop offset="100%" stopColor="#11141B" />
         </linearGradient>
       </defs>
-      <circle cx="12" cy="12" r="9" fill={isConflict ? "#E5484D" : "url(#tango-moon-face)"} />
-      {!isConflict && (
-        <g fill="#FFFFFF">
-          <circle cx="8.35" cy="8.1" r="1.25" opacity=".12" />
-          <circle cx="15.55" cy="7.15" r=".72" opacity=".16" />
-          <circle cx="14.9" cy="14.4" r="1.55" opacity=".09" />
-          <circle cx="7.35" cy="15.4" r=".78" opacity=".1" />
-          <path d="M6.5 5.9c2.2-2.05 5.5-2.82 8.42-1.66" fill="none" stroke="#FFFFFF" strokeWidth=".9" strokeLinecap="round" opacity=".18" />
-        </g>
-      )}
+      <path
+        d="M20.4 15.35A8.65 8.65 0 0 1 8.65 3.6 9.1 9.1 0 1 0 20.4 15.35Z"
+        fill={isConflict ? "#E5484D" : "url(#tango-moon-face)"}
+      />
     </svg>
   );
 }
