@@ -1,5 +1,12 @@
 [
   {
+    "id": "v145-animal-rush-reduced-motion-die",
+    "version": "v145",
+    "date": "2026-07-28",
+    "title": "Stopped the Animal Rush die revealing early",
+    "body": "Fixed an iOS Reduce Motion issue that could show the final animal before the countdown finished. Reduced-motion phones now see a neutral question-mark die during the countdown and the correct animal only at reveal; a safe neutral orientation also protects browsers where the spin cannot run."
+  },
+  {
     "id": "v144-animal-rush-expressive-animals",
     "version": "v144",
     "date": "2026-07-28",
