@@ -1,5 +1,12 @@
 [
   {
+    "id": "v147-animal-rush-stable-results-countdown",
+    "version": "v147",
+    "date": "2026-07-28",
+    "title": "Stabilised Animal Rush rounds",
+    "body": "Round-winner and touch feedback now appear as floating overlays, so the board no longer jumps down and back up. Every new match also begins with a clear full-board 3–2–1 countdown before the first animal is revealed."
+  },
+  {
     "id": "v146-animal-rush-motion-status",
     "version": "v146",
     "date": "2026-07-28",
