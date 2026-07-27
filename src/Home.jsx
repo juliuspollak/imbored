@@ -36,6 +36,12 @@ function previousWeekDate() {
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
 }
 
+function daysAgoDate(days) {
+  const date = new Date();
+  date.setDate(date.getDate()-days);
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+}
+
 function currentWeekRange() {
   const date = new Date();
   const isoDay = date.getDay() || 7;
@@ -74,6 +80,8 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   const [previousChallengeRows, setPreviousChallengeRows] = useState([]);
   const [previousChallengeRounds, setPreviousChallengeRounds] = useState([]);
   const [previousChallengeLabel, setPreviousChallengeLabel] = useState(null);
+  const [personalHistoryRows, setPersonalHistoryRows] = useState([]);
+  const [personalExpanded, setPersonalExpanded] = useState(false);
   const [challengeProfiles, setChallengeProfiles] = useState({});
   const [standingsLoading, setStandingsLoading] = useState(false);
   const [standingsRefreshing, setStandingsRefreshing] = useState(false);
@@ -169,6 +177,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         setPreviousChallengeRows([]);
         setPreviousChallengeRounds([]);
         setPreviousChallengeLabel(null);
+        setPersonalHistoryRows([]);
         setChallengeProfiles({});
         setStandingsLoading(false);
         setStandingsRefreshing(false);
@@ -217,7 +226,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         : query.is("team_challenge_id", null).eq("challenge_date", todayString());
       let { data: resultRows, error } = await query;
       if (cancelled) return;
-      const [{ data:roundRows }, { data:benchmarkRows }] = await Promise.all([
+      const [{ data:roundRows }, { data:benchmarkRows }, { data:personalProfiles }, { data:historyRows }] = await Promise.all([
         challengeScope?.type === "team"
           ? supabase.from("team_challenge_rounds")
             .select("challenge_date,game,round_number")
@@ -227,6 +236,20 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         supabase.from("game_time_benchmarks")
           .select("game,day_index,effective_seconds")
           .eq("mode","challenge"),
+        challengeScope?.type !== "team"
+          ? supabase.from("profiles")
+            .select("id,name,icon,show_stats_to_others")
+            .eq("is_approved",true)
+            .eq("hidden_from_others",false)
+          : Promise.resolve({ data:[] }),
+        challengeScope?.type !== "team"
+          ? supabase.from("game_stats")
+            .select("user_id,game,challenge_date,seconds,mistakes,hints,completed_at")
+            .eq("mode","challenge")
+            .is("team_challenge_id",null)
+            .gte("challenge_date",daysAgoDate(7))
+            .lt("challenge_date",todayString())
+          : Promise.resolve({ data:[] }),
       ]);
       if (cancelled) return;
 
@@ -278,7 +301,9 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         profiles = profileResult.data || [];
       }
       if (!cancelled) {
-        const profileMap = Object.fromEntries(profiles.map((profile) => [profile.id, profile]));
+        const profileMap = Object.fromEntries(
+          [...(personalProfiles || []),...profiles].map((profile) => [profile.id,profile])
+        );
         standingsCacheRef.current[cacheKey] = { rows, profiles:profileMap };
         setChallengeRows(rows);
         setChallengeRounds((roundRows || []).map((round) => ({
@@ -288,6 +313,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         })));
         setChallengeBenchmarks(benchmarkRows || []);
         setPreviousChallengeRows(previousRows);
+        setPersonalHistoryRows(historyRows || []);
         setPreviousChallengeRounds(previousRoundRows.map((round) => ({
           date:round.challenge_date,
           game:round.game,
@@ -411,7 +437,9 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
     || (selectedTeam?.active_today && !!todayRound && !todayRoundDone);
 
   function choosePersonalChallenge() {
+    const alreadySelected = challengeScope?.type !== "team";
     onChallengeScopeChange({ type:"personal",id:null,name:"My Challenge",gameIds:null });
+    setPersonalExpanded(alreadySelected ? (value) => !value : true);
     setExpandedChallengeId(null);
   }
 
@@ -547,17 +575,18 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                 </span>
               </span>
               <span className="rounded-full px-2.5 py-1 text-[10px] font-bold shrink-0" style={{ background:personalStatus.done ? "rgba(22,163,74,.11)" : "rgba(47,111,237,.10)",color:personalStatus.done ? "#137A3A" : "#2F6FED" }}>
-                {personalStatus.done ? t("home.done") : t("home.gamesLeft", { count:personalStatus.remaining })}
+                {personalStatus.done ? "Completed today" : t("home.gamesLeft", { count:personalStatus.remaining })}
               </span>
             </button>
 
-            {challengeScope?.type !== "team" && (
+            {challengeScope?.type !== "team" && personalExpanded && (
               <ChallengeStandings
                 rows={challengeRows}
                 roster={standingsRoster}
                 games={selectedChallengeGames}
                 benchmarks={challengeBenchmarks}
                 previousRows={previousChallengeRows}
+                historyRows={personalHistoryRows}
                 previousWeekLabel={previousChallengeLabel}
                 userId={userId}
                 loading={standingsLoading}
