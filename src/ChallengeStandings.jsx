@@ -186,19 +186,22 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
       return { rounds:comparableCount,previousScore:priorScore,currentScore,delta:currentScore-priorScore };
     }
 
-    const currentGames = myStanding.rows.map((row) => row.game);
-    if (currentGames.length === 0 || myPreviousRows.length === 0) return null;
-    const priorScore = currentGames.reduce((sum,gameId) => {
-      const result = myPreviousRows.find((row) => row.game === gameId);
-      if (!result) return sum;
+    const matchingGames = myStanding.rows
+      .filter((row) => myPreviousRows.some((previous) => previous.game === row.game));
+    if (matchingGames.length === 0) return null;
+    const priorScore = matchingGames.reduce((sum,current) => {
+      const result = myPreviousRows.find((row) => row.game === current.game);
       return sum + dailyChallengeScore(
         result,
         benchmarkMap[`${result.game}:${isoDayIndex(result.challenge_date)}`]
       ).score;
     },0);
-    const currentScore = myStanding.challengeScore;
+    const currentScore = matchingGames.reduce((sum,result) => sum + dailyChallengeScore(
+      result,
+      benchmarkMap[`${result.game}:${isoDayIndex(result.challenge_date)}`]
+    ).score,0);
     return {
-      rounds:currentGames.length,
+      rounds:matchingGames.length,
       previousScore:priorScore,
       currentScore,
       delta:currentScore-priorScore,
@@ -309,7 +312,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
           {!loading && standings.length > 0 && (
             <div className="flex items-center justify-between px-1 mb-2">
               <span className="text-[10px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.38)" }}>{isTeam ? "Team standings" : "Challenge standings"}</span>
-              <span className="text-[9px]" style={{ color:"rgba(27,33,41,.38)" }}>Highest score first</span>
+              <span className="text-[9px]" style={{ color:"rgba(27,33,41,.38)" }}>{isTeam ? "Highest score first" : "Played, then score"}</span>
             </div>
           )}
           {loading ? (
