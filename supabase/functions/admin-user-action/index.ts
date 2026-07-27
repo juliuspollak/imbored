@@ -196,16 +196,14 @@ Deno.serve(async (req) => {
         throw deleteError;
       }
 
-      const { error: markDeletedError } = await admin
+      // The account is a permanent admin deletion: remove the retained
+      // profile as well. Foreign keys configured with CASCADE/SET NULL clean
+      // up or detach the player's dependent app data.
+      const { error: profileDeleteError } = await admin
         .from("profiles")
-        .update({ auth_deleted_at: new Date().toISOString() })
+        .delete()
         .eq("id", targetUserId);
-      // Auth deletion has already succeeded. Older databases may not have the
-      // tracking column until v99 is applied, so do not turn that success into
-      // a misleading deletion failure.
-      if (markDeletedError && markDeletedError.code !== "42703") {
-        console.error("Unable to record completed Auth deletion", markDeletedError);
-      }
+      if (profileDeleteError) throw profileDeleteError;
     } else {
       const blocked = action === "block";
       const { error: authError } = await admin.auth.admin.updateUserById(targetUserId, {
