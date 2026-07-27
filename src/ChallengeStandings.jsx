@@ -48,8 +48,10 @@ function pooledChallengeScore(results, benchmarkMap) {
   const benchmarkSeconds = played.reduce((total, result) =>
     total + Math.max(1, Number(benchmarkMap[`${result.game}:${isoDayIndex(result.challenge_date)}`]) || 100)
   , 0);
-  const score = Math.round((100 * benchmarkSeconds) / Math.max(1, adjusted));
-  return Math.max(MIN_DAILY_SCORE * played.length, Math.min(MAX_DAILY_SCORE * played.length, score));
+  // Pool the full set so one unusually fast game cannot distort the result.
+  // Each adjusted second above/below the combined benchmark changes the score
+  // by one point, keeping both the ranking and displayed points transparent.
+  return Math.max(0, Math.round((100 * played.length) + benchmarkSeconds - adjusted));
 }
 
 export default function ChallengeStandings({ rows = [], roster = [], games = [], rounds = [], benchmarks = [], previousRows = [], previousRounds = [], historyRows = [], previousWeekLabel = null, isTeam = false, userId, loading = false, refreshing = false, defaultOpen = true, embedded = false, rewardPoints = 0, closed = false, winnerId = null }) {
@@ -378,7 +380,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
           {!loading && displayedStandings.length > 0 && (
             <div className="flex items-center justify-between px-1 mb-2">
               <span className="text-[10px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.38)" }}>{isTeam ? "Team standings" : "Challenge standings"}</span>
-              <span className="text-[9px]" style={{ color:"rgba(27,33,41,.38)" }}>{isTeam ? "Highest score first" : "Played, then score"}</span>
+              <span className="text-[9px]" style={{ color:"rgba(27,33,41,.38)" }}>{isTeam ? "Highest score first" : "Completed, then overall score"}</span>
             </div>
           )}
           {loading ? (
@@ -481,7 +483,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                   ? "Highest total wins · missed round −100 · hint +30s · mistake/reset +15s"
                   : displayedStandings.length < playedCount
                     ? `Top 3 + your position · ${playedCount} active today`
-                    : "Games played first, then challenge score"}
+                    : "Games completed first · pooled time, hints and mistakes"}
               </div>
               {!isTeam && (
                 <details className="mt-3 pt-3" style={{ borderTop:"1px solid rgba(16,24,40,.08)" }}>
