@@ -70,7 +70,6 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   const [progress, setProgress] = useState(null);
   const [teamChallenges, setTeamChallenges] = useState([]);
   const [challengeHistory, setChallengeHistory] = useState([]);
-  const [showAllChallengeHistory, setShowAllChallengeHistory] = useState(false);
   const [teamRosters, setTeamRosters] = useState({});
   const [challengeLifecycle, setChallengeLifecycle] = useState({});
   const [challengeCompletions, setChallengeCompletions] = useState({ personal: new Set() });
@@ -740,17 +739,20 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
 
             {challengeHistory.length > 0 && (
               <details className="mt-3 pt-3 group" style={{ borderTop:"1px solid rgba(16,24,40,.07)" }}>
-                <summary className="flex items-center gap-2 px-1 cursor-pointer list-none">
-                  <span className="grid place-items-center rounded-lg text-sm" style={{ width:28,height:28,background:"rgba(16,24,40,.05)" }}>🕘</span>
-                  <span className="flex-1">
-                    <span className="block text-xs font-bold">Past team challenges</span>
-                    <span className="block text-[9px] mt-0.5" style={{ color:"rgba(27,33,41,.43)" }}>Recent results</span>
+                <summary className="flex items-center gap-2 px-1 py-1 cursor-pointer list-none">
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-xs font-bold">Challenge history</span>
+                    <span className="block text-[9px] mt-0.5" style={{ color:"rgba(27,33,41,.43)" }}>
+                      Your latest team results
+                    </span>
                   </span>
-                  <span className="text-[10px] font-semibold rounded-full px-2 py-0.5" style={{ background:"rgba(16,24,40,.05)",color:"rgba(27,33,41,.48)" }}>{challengeHistory.length}</span>
-                  <ChevronDown size={15} className="transition-transform group-open:rotate-180" style={{ opacity:.35 }}/>
+                  <span className="text-[9px] font-semibold" style={{ color:"rgba(27,33,41,.42)" }}>
+                    {Math.min(challengeHistory.length, 5)} recent
+                  </span>
+                  <ChevronDown size={15} className="transition-transform group-open:rotate-180" style={{ opacity:.32 }}/>
                 </summary>
-                <div className="mt-3 overflow-hidden rounded-2xl" style={{ background:"rgba(16,24,40,.025)",border:"1px solid rgba(16,24,40,.07)" }}>
-                  {challengeHistory.slice(0, showAllChallengeHistory ? challengeHistory.length : 3).map((item, index) => {
+                <div className="mt-2 overflow-hidden rounded-2xl" style={{ background:"rgba(16,24,40,.025)",border:"1px solid rgba(16,24,40,.07)" }}>
+                  {challengeHistory.slice(0, 5).map((item, index) => {
                     const isWinner = item.winner_id === userId;
                     const hasWinner = !!item.winner_id;
                     const entries = Number(item.entry_count) || 0;
@@ -763,12 +765,9 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                     return (
                       <div
                         key={item.challenge_id}
-                        className="flex items-center gap-2.5 px-3 py-2.5"
+                        className="flex items-center gap-3 px-3 py-2.5"
                         style={{ borderTop:index ? "1px solid rgba(16,24,40,.06)" : "none" }}
                       >
-                        <span className="grid place-items-center rounded-full text-sm shrink-0" style={{ width:30,height:30,background:"rgba(255,255,255,.78)" }}>
-                          {item.team_emoji || "⭐"}
-                        </span>
                         <span className="flex-1 min-w-0">
                           <span className="block text-[11px] font-semibold truncate">{item.challenge_title || item.team_name}</span>
                           <span className="block text-[9px] mt-0.5 truncate" style={{ color:"rgba(27,33,41,.44)" }}>
@@ -779,11 +778,11 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                           <span
                             className="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold"
                             style={{
-                              background:isWinner ? "rgba(22,163,74,.10)" : "rgba(16,24,40,.05)",
-                              color:isWinner ? "#15803D" : "rgba(27,33,41,.58)",
+                              background:isWinner ? "rgba(22,163,74,.10)" : hasWinner ? "rgba(47,111,237,.08)" : "rgba(16,24,40,.05)",
+                              color:isWinner ? "#15803D" : hasWinner ? "#2F6FED" : "rgba(27,33,41,.50)",
                             }}
                           >
-                            {isWinner ? "🏆 " : ""}{resultLabel}
+                            {resultLabel}
                           </span>
                           <span className="block text-[8px] mt-1" style={{ color:"rgba(27,33,41,.38)" }}>
                             {entries > 0 ? `${finishers}/${entries} finished` : "No entries"}
@@ -792,16 +791,6 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                       </div>
                     );
                   })}
-                  {challengeHistory.length > 3 && (
-                    <button
-                      type="button"
-                      onClick={() => setShowAllChallengeHistory((visible) => !visible)}
-                      className="w-full py-2 text-[9px] font-semibold"
-                      style={{ borderTop:"1px solid rgba(16,24,40,.06)",color:"#2F6FED",background:"rgba(255,255,255,.36)" }}
-                    >
-                      {showAllChallengeHistory ? "Show recent only" : `Show all ${challengeHistory.length}`}
-                    </button>
-                  )}
                 </div>
               </details>
             )}
