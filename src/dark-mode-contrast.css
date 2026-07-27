@@ -186,6 +186,14 @@
     opacity: 1;
   }
 
+  .tg-edge-token {
+    background: #f8fafc !important;
+    border-color: rgba(16, 24, 40, 0.24) !important;
+    color: #111827 !important;
+    text-shadow: none;
+    box-shadow: 0 3px 9px rgba(0, 0, 0, 0.28) !important;
+  }
+
   .zp-cell {
     border-color: rgba(20, 20, 24, 0.36) !important;
     color: #1b2129 !important;
