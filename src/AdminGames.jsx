@@ -324,7 +324,7 @@ export default function AdminGames({ onBack }) {
                           <div className="mt-4 pt-3 overflow-x-auto" style={{ borderTop: "1px solid rgba(16,24,40,0.08)" }}>
                             <div className="text-[10px] font-semibold mb-1" style={{ color: INK }}>Daily puzzle complexity</div>
                             <p className="text-[10px] mb-2" style={{ color: INK, opacity: 0.42 }}>
-                              Changes apply when a new puzzle is generated. Existing challenge results are unaffected.
+                              Changes apply to newly generated puzzles. If today’s ZIP challenge has started, reset it after changing today’s row so every player receives the same puzzle.
                             </p>
                             <div className="grid gap-1.5" style={{ gridTemplateColumns: "38px repeat(5,minmax(48px,1fr))", minWidth: 340 }}>
                               {["Day", "Grid", "Numbers", "Walls", "Holes", "Tunnels"].map((heading) => (
