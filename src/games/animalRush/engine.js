@@ -8,6 +8,7 @@ export const ANIMALS = [
 ];
 
 export const ANIMAL_IDS = ANIMALS.map((animal) => animal.id);
+export const DIE_ROLL_DURATION_MS = 3000;
 
 export function animalById(id) {
   return ANIMALS.find((animal) => animal.id === id) || ANIMALS[0];
@@ -34,6 +35,13 @@ export function roundPhase(room, now = Date.now()) {
 export function countdownNumber(room, now = Date.now()) {
   if (!room?.reveal_at) return null;
   const milliseconds = new Date(room.reveal_at).getTime() - now;
+  return milliseconds <= 0 ? null : Math.max(1, Math.ceil(milliseconds / 1000));
+}
+
+export function matchIntroCountdown(room, now = Date.now()) {
+  if (room?.status !== "countdown" || Number(room?.round_number) !== 1 || !room?.reveal_at) return null;
+  const introEndsAt = new Date(room.reveal_at).getTime() - DIE_ROLL_DURATION_MS;
+  const milliseconds = introEndsAt - now;
   return milliseconds <= 0 ? null : Math.max(1, Math.ceil(milliseconds / 1000));
 }
 

@@ -342,7 +342,7 @@ begin
     round_number=1,
     target_animal=animals[1+floor(random()*array_length(animals,1))::integer],
     card_order=next_order,
-    reveal_at=clock_timestamp()+interval '3 seconds',
+    reveal_at=clock_timestamp()+interval '6 seconds',
     round_closed_at=null,
     round_winner_id=null,
     winner_user_id=null,
