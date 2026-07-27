@@ -34,16 +34,26 @@ function ModernMoonIcon({ size = 24, className = "", style, isConflict = false, 
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
       <defs>
-        <linearGradient id="tango-moon-face" x1="5" y1="3" x2="20" y2="20" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#71798A" />
-          <stop offset="48%" stopColor="#343A48" />
-          <stop offset="100%" stopColor="#11141B" />
+        <linearGradient id="tango-moon-face" x1="6" y1="3" x2="19" y2="21" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#667085" />
+          <stop offset="48%" stopColor="#303746" />
+          <stop offset="100%" stopColor="#0D1118" />
         </linearGradient>
       </defs>
       <path
-        d="M20.4 15.35A8.65 8.65 0 0 1 8.65 3.6 9.1 9.1 0 1 0 20.4 15.35Z"
+        d="M20.1 15.55A8.9 8.9 0 0 1 8.45 3.9a9.15 9.15 0 1 0 11.65 11.65Z"
         fill={isConflict ? "#E5484D" : "url(#tango-moon-face)"}
+        stroke={isConflict ? "#C9363B" : "#090C12"}
+        strokeWidth=".65"
+        strokeLinejoin="round"
       />
+      {!isConflict && (
+        <>
+          <path d="M7.25 5.45a7.9 7.9 0 0 0 8.55 12.9" fill="none" stroke="#FFFFFF" strokeWidth=".8" strokeLinecap="round" opacity=".16" />
+          <circle cx="7.1" cy="14.5" r=".75" fill="#FFFFFF" opacity=".1" />
+          <circle cx="10.2" cy="18.1" r=".48" fill="#FFFFFF" opacity=".12" />
+        </>
+      )}
     </svg>
   );
 }
@@ -583,7 +593,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           z-index: 1;
         }
         .tg-symbol-disc--sun { background: radial-gradient(circle, rgba(255,248,214,.82) 0%, rgba(255,255,255,0) 70%); filter: drop-shadow(0 4px 7px rgba(240,138,24,.2)); }
-        .tg-symbol-disc--moon { background: radial-gradient(circle at 38% 30%, rgba(148,163,184,.18), rgba(30,41,59,.05) 68%, transparent 72%); filter: drop-shadow(0 4px 7px rgba(15,23,42,.24)); }
+        .tg-symbol-disc--moon { border-radius: 14px; background: linear-gradient(145deg, rgba(226,232,240,.94), rgba(185,198,216,.72)); box-shadow: inset 0 1px 0 rgba(255,255,255,.72), inset 0 0 0 1px rgba(71,85,105,.12), 0 5px 12px rgba(15,23,42,.17); }
         .tg-cell:disabled .tg-symbol-disc { box-shadow: inset 0 0 0 1px rgba(27,33,41,.07), 0 4px 12px rgba(16,24,40,.09); }
         .tg-edge-token { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
         .tg-hint-error { animation: hintPulseError 1.1s ease-in-out infinite; }
@@ -756,10 +766,10 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                   }}
                 >
                   {val === SUN && (
-                    <span className="tg-symbol tg-symbol-disc tg-symbol-disc--sun"><SunIcon key={`sun-${r}-${c}`} size={Math.max(22, 32 - SIZE)} isConflict={isConflict} /></span>
+                    <span className="tg-symbol tg-symbol-disc tg-symbol-disc--sun"><SunIcon key={`sun-${r}-${c}`} size={Math.max(25, 35 - SIZE)} isConflict={isConflict} /></span>
                   )}
                   {val === MOON && (
-                    <span className="tg-symbol tg-symbol-disc tg-symbol-disc--moon"><ModernMoonIcon key={`moon-${r}-${c}`} size={Math.max(22, 32 - SIZE)} isConflict={isConflict} /></span>
+                    <span className="tg-symbol tg-symbol-disc tg-symbol-disc--moon"><ModernMoonIcon key={`moon-${r}-${c}`} size={Math.max(25, 35 - SIZE)} isConflict={isConflict} /></span>
                   )}
                   {/* The pulsing border alone doesn't say what belongs here —
                       show a faint preview of the actual symbol. For an empty
@@ -773,7 +783,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                         {hintCell.symbol === SUN ? (
                           <SunIcon size={Math.max(22, 32 - SIZE)} style={{ color: SUN_COLOR, opacity: 0.4 }} />
                         ) : (
-                          <ModernMoonIcon size={Math.max(20, 30 - SIZE)} style={{ color: "#40557D", opacity: 0.4 }} />
+                          <ModernMoonIcon size={Math.max(24, 34 - SIZE)} style={{ opacity: 0.42 }} />
                         )}
                       </span>
                     ) : (
