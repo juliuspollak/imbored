@@ -1,5 +1,12 @@
 [
   {
+    "id": "v141-animal-rush-landscape-board",
+    "version": "v141",
+    "date": "2026-07-28",
+    "title": "Redesigned Animal Rush landscape board",
+    "body": "Redesigned the Animal Rush landscape screen after phone testing. The target now has a clear panel on the left, all six animal cards use one balanced horizontal row, score content avoids the account button, and the board stays locked to the visible Safari viewport without awkward scrolling or clipped controls."
+  },
+  {
     "id": "v140-animal-rush-landscape",
     "version": "v140",
     "date": "2026-07-28",
