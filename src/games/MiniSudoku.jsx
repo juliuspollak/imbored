@@ -3,11 +3,11 @@ import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
 import { rateDifficulty } from "../lib/saveStats.js";
-import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx";
+import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
+import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import { Grid3x3, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Delete, Lock } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
-import { rewardStatusText } from "../lib/rewardStatus.js";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -658,48 +658,22 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
           )}
 
           {solved && difficultyRating === null && (
-            <div
-              className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl p-4"
-              style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(3px)", zIndex: 3 }}
-            >
-              <Grid3x3 size={26} style={{ color: GOLD }} />
-              <p style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 600, color: CREAM }} className="text-2xl">
-                Solved
-              </p>
-              <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs mb-1">
-                {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
-              </p>
-              {rewardResult?.points_awarded != null && (
-                <div
-                  className="rounded-full px-3 py-1 text-sm font-bold"
-                  style={{ background: "rgba(217,174,88,0.14)", color: "#B88724" }}
-                >
-                  {rewardStatusText(rewardResult, t("common.noPoints"))}
-                </div>
-              )}
-              {savedStatId ? (
-                <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} onRated={setDifficultyRating} />
-              ) : (
-                <div className="flex items-center gap-2 py-3" role="status" aria-live="polite">
-                  <span
-                    className="inline-block rounded-full animate-pulse"
-                    style={{ width: 8, height: 8, background: GOLD }}
-                  />
-                  <span className="text-xs font-medium" style={{ color: CREAM, opacity: 0.65 }}>
-                    Finalising your result…
-                  </span>
-                </div>
-              )}
-              {!isChallenge && savedStatId && (
-                <button
-                  onClick={() => newPuzzle(dayIdx)}
-                  className="ms-play-again mt-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors"
-                  style={{ background: GOLD, color: "#FFFFFF" }}
-                >
-                  Play again
-                </button>
-              )}
-            </div>
+            <GameSolvedPanel
+              icon={<Grid3x3 size={26} style={{ color: GOLD }} />}
+              title="Solved"
+              stats={
+                <>
+                  {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
+                </>
+              }
+              rewardResult={rewardResult?.points_awarded != null ? rewardResult : null}
+              savedStatId={savedStatId}
+              onRate={(value) => rateDifficulty(savedStatId, value)}
+              onRated={setDifficultyRating}
+              showPlayAgain={!isChallenge}
+              onPlayAgain={() => newPuzzle(dayIdx)}
+              noPointsLabel={t("common.noPoints")}
+            />
           )}
         </div>
 

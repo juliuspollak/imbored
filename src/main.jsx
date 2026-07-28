@@ -9,6 +9,7 @@ import "./index.css";
 import "./challenge-card-fix.css";
 import "./mode-switch-contrast.css";
 import "./theme.css";
+import "./game-solved-panel.css";
 import "./dark-mode-contrast.css";
 import "./profile-dark-fix.css";
 import "./game-control-contrast.css";

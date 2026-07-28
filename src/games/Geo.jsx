@@ -3,7 +3,8 @@ import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
 import { rateDifficulty } from "../lib/saveStats.js";
-import DifficultyRating from "../DifficultyRating.jsx";
+import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
+import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import { Globe2, RotateCcw, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
 import { MAP_REGIONS, CONTINENT_SHAPES, MAP_VIEWBOX, REGION_HIT_AREAS } from "./geo/geoRegions.js";
 import { shuffle, generateQuiz } from "./geo/geoGenerator.js";
@@ -12,7 +13,6 @@ import FlagImage from "./geo/FlagImage.jsx";
 import { useI18n } from "../lib/i18n.jsx";
 import { localizeGeoQuestion, localizeGeoValue } from "./geo/geoLocalization.js";
 import DaySelector from "../DaySelector.jsx";
-import { rewardStatusText } from "../lib/rewardStatus.js";
 
 /* ---------------- continents & map ---------------- */
 
@@ -56,6 +56,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
   const [mistakes, setMistakes] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
+  const [difficultyRating, setDifficultyRating] = useState(null);
   const timerRef = useRef(null);
   const stateKey = `imbored:geo:i18n-v1:${mode}:${userId || "guest"}:${challengeDate || dayIdx}:${seed || "practice"}`;
 
@@ -74,6 +75,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
           setSolved(false);
           setMistakes(saved.mistakes || 0);
           setHintsUsed(saved.hintsUsed || 0);
+          setDifficultyRating(null);
           return;
         }
       } catch {}
@@ -94,6 +96,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
     setSolved(false);
     setMistakes(0);
     setHintsUsed(0);
+    setDifficultyRating(null);
     hintCooldown.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isChallenge, seed, userId, stateKey]);
@@ -424,23 +427,30 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
           </>
         )}
 
-        {solved && (
-          <div className="flex flex-col items-center gap-2 py-4">
-            <Globe2 size={32} style={{ color: ACCENT }} />
-            <p style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 600, color: INK }} className="text-2xl">
-              {t("geo.result", { correct: questions.length - mistakes, total: questions.length })}
-            </p>
-            <p style={{ color: INK, opacity: 0.7 }} className="text-xs mb-1">
-              {fmtTime(seconds)} &middot; {t(hintsUsed === 1 ? "geo.hints.one" : "geo.hints.other", { count: hintsUsed })}
-            </p>
-            {rewardResult?.points_awarded != null && (
-              <div className="rounded-full px-3 py-1 text-sm font-bold" style={{ background:"rgba(217,174,88,.14)",color:"#B88724" }}>
-                {rewardStatusText(rewardResult, t("common.noPoints"))}
-              </div>
-            )}
-            {savedStatId
-              ? <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} />
-              : <div className="text-xs py-3" style={{ color:INK,opacity:.55 }}>Finalising your result…</div>}
+        {solved && difficultyRating === null && (
+          <GameSolvedPanel
+            variant="inline"
+            icon={<Globe2 size={32} style={{ color: ACCENT }} />}
+            title={t("geo.result", { correct: questions.length - mistakes, total: questions.length })}
+            stats={
+              <>
+                {fmtTime(seconds)} &middot; {t(hintsUsed === 1 ? "geo.hints.one" : "geo.hints.other", { count: hintsUsed })}
+              </>
+            }
+            rewardResult={rewardResult?.points_awarded != null ? rewardResult : null}
+            savedStatId={savedStatId}
+            onRate={(value) => rateDifficulty(savedStatId, value)}
+            onRated={setDifficultyRating}
+            showPlayAgain={!isChallenge}
+            onPlayAgain={() => newQuiz(dayIdx)}
+            playAgainLabel={t("geo.playAgain")}
+            noPointsLabel={t("common.noPoints")}
+          />
+        )}
+
+        {solved && difficultyRating !== null && (
+          <div className="flex flex-col items-center gap-3 py-4">
+            <DifficultyRatingBadge value={difficultyRating} />
             {!isChallenge && (
               <button onClick={() => newQuiz(dayIdx)} className="geo-next-btn mt-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors" style={{ background: ACCENT, color: "#FFFFFF" }}>
                 {t("geo.playAgain")}

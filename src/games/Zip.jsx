@@ -3,11 +3,11 @@ import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
 import { rateDifficulty } from "../lib/saveStats.js";
-import DifficultyRating, { DifficultyRatingBadge } from "../DifficultyRating.jsx";
+import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
+import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Flag, Lock } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
-import { rewardStatusText } from "../lib/rewardStatus.js";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -1023,53 +1023,24 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
           </svg>
 
           {solved && difficultyRating === null && (
-            <div
-              className="zip-solved-overlay absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl p-4"
-              style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(4px)", zIndex: 20 }}
-            >
-              <Flag size={28} style={{ color: ZIP_GREEN }} />
-              <p style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 600, color: CREAM }} className="text-2xl">{t("common.solved")}</p>
-              <p style={{ color: CREAM, opacity: 0.7 }} className="text-xs mb-1">
-                {fmtTime(seconds)} &middot; {efficiency}% efficient
-                {resets > 0 ? ` · ${resets} reset${resets === 1 ? "" : "s"}` : ""}
-                {" · "}{hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
-              </p>
-              {rewardResult?.completed && (
-                <div
-                  className="rounded-full px-3 py-1 text-sm font-bold"
-                  style={{
-                    background:rewardResult.error ? "rgba(181,67,58,.10)" : "rgba(217,174,88,0.14)",
-                    color:rewardResult.error ? "#B5433A" : "#B88724",
-                  }}
-                >
-                  {rewardResult.error
-                    ? "Points could not be saved"
-                    : rewardStatusText(rewardResult, t("common.noPoints"))}
-                </div>
-              )}
-              {savedStatId ? (
-                <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} onRated={setDifficultyRating} />
-              ) : (
-                <div className="flex items-center gap-2 py-3" role="status" aria-live="polite">
-                  <span
-                    className="inline-block rounded-full animate-pulse"
-                    style={{ width: 8, height: 8, background: GOLD }}
-                  />
-                  <span className="text-xs font-medium" style={{ color: CREAM, opacity: 0.65 }}>
-                    Finalising your result…
-                  </span>
-                </div>
-              )}
-              {!isChallenge && savedStatId && (
-                <button
-                  onClick={() => newPuzzle(dayIdx)}
-                  className="zp-play-again mt-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors"
-                  style={{ background: GOLD, color: "#FFFFFF" }}
-                >
-                  Play again
-                </button>
-              )}
-            </div>
+            <GameSolvedPanel
+              icon={<Flag size={28} style={{ color: ZIP_GREEN }} />}
+              title={t("common.solved")}
+              stats={
+                <>
+                  {fmtTime(seconds)} &middot; {efficiency}% efficient
+                  {resets > 0 ? ` · ${resets} reset${resets === 1 ? "" : "s"}` : ""}
+                  {" · "}{hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
+                </>
+              }
+              rewardResult={rewardResult?.completed ? rewardResult : null}
+              savedStatId={savedStatId}
+              onRate={(value) => rateDifficulty(savedStatId, value)}
+              onRated={setDifficultyRating}
+              showPlayAgain={!isChallenge}
+              onPlayAgain={() => newPuzzle(dayIdx)}
+              noPointsLabel={t("common.noPoints")}
+            />
           )}
         </div>
 

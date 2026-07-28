@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
 import { rateDifficulty } from "../lib/saveStats.js";
-import DifficultyRating from "../DifficultyRating.jsx";
+import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
+import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import { ZoomIn, RotateCcw, Timer as TimerIcon, HelpCircle } from "lucide-react";
 import { generateZoomQuiz, ROUNDS_PER_QUIZ, LEVELS_PER_ROUND } from "./zoom/zoomGenerator.js";
 import { getTargetHistory, rememberTargets } from "./zoom/zoomHistory.js";
@@ -9,7 +10,6 @@ import FlagImage from "./geo/FlagImage.jsx";
 import { useI18n } from "../lib/i18n.jsx";
 import { localizeZoomValue, localizeZoomPrompt } from "./zoom/zoomLocalization.js";
 import DaySelector from "../DaySelector.jsx";
-import { rewardStatusText } from "../lib/rewardStatus.js";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -45,6 +45,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
   const [mistakes, setMistakes] = useState(0);
   const [correctLog, setCorrectLog] = useState([]); // per-step booleans, for the "rounds nailed" stat
   const [showHelp, setShowHelp] = useState(false);
+  const [difficultyRating, setDifficultyRating] = useState(null);
   const timerRef = useRef(null);
   const stateKey = `imbored:zoom:i18n-v1:${mode}:${userId || "guest"}:${challengeDate || dayIdx}:${seed || "practice"}`;
 
@@ -62,6 +63,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
           setSolved(false);
           setMistakes(saved.mistakes || 0);
           setCorrectLog(saved.correctLog || []);
+          setDifficultyRating(null);
           return;
         }
       } catch {}
@@ -79,6 +81,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
     setSolved(false);
     setMistakes(0);
     setCorrectLog([]);
+    setDifficultyRating(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isChallenge, seed, userId, stateKey]);
 
@@ -368,23 +371,30 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
           </>
         )}
 
-        {solved && (
-          <div className="flex flex-col items-center gap-2 py-4">
-            <ZoomIn size={32} style={{ color: ACCENT }} />
-            <p style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 600, color: INK }} className="text-2xl">
-              {t("zoom.result", { correct: correctLog.filter(Boolean).length, total: steps.length })}
-            </p>
-            <p style={{ color: INK, opacity: 0.7 }} className="text-xs mb-1">
-              {fmtTime(seconds)} &middot; {t("zoom.roundsNailed", { count: roundsNailed, total: totalRounds })}
-            </p>
-            {rewardResult?.points_awarded != null && (
-              <div className="rounded-full px-3 py-1 text-sm font-bold" style={{ background:"rgba(217,174,88,.14)",color:"#B88724" }}>
-                {rewardStatusText(rewardResult, t("common.noPoints"))}
-              </div>
-            )}
-            {savedStatId
-              ? <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} />
-              : <div className="text-xs py-3" style={{ color:INK,opacity:.55 }}>Finalising your result…</div>}
+        {solved && difficultyRating === null && (
+          <GameSolvedPanel
+            variant="inline"
+            icon={<ZoomIn size={32} style={{ color: ACCENT }} />}
+            title={t("zoom.result", { correct: correctLog.filter(Boolean).length, total: steps.length })}
+            stats={
+              <>
+                {fmtTime(seconds)} &middot; {t("zoom.roundsNailed", { count: roundsNailed, total: totalRounds })}
+              </>
+            }
+            rewardResult={rewardResult?.points_awarded != null ? rewardResult : null}
+            savedStatId={savedStatId}
+            onRate={(value) => rateDifficulty(savedStatId, value)}
+            onRated={setDifficultyRating}
+            showPlayAgain={!isChallenge}
+            onPlayAgain={() => newQuiz(dayIdx)}
+            playAgainLabel={t("zoom.playAgain")}
+            noPointsLabel={t("common.noPoints")}
+          />
+        )}
+
+        {solved && difficultyRating !== null && (
+          <div className="flex flex-col items-center gap-3 py-4">
+            <DifficultyRatingBadge value={difficultyRating} />
             {!isChallenge && (
               <button onClick={() => newQuiz(dayIdx)} className="zoom-next-btn mt-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors" style={{ background: ACCENT, color: "#FFFFFF" }}>
                 {t("zoom.playAgain")}
