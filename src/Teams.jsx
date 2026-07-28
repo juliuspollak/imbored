@@ -9,6 +9,7 @@ import { useAuth } from "./lib/AuthContext.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
 import { buildTeamChallengeRounds } from "./lib/teamChallengeRounds.js";
+import { useGameConfig } from "./lib/useGameConfig.js";
 
 const BG = "#F1F3F7";
 const PANEL = "#fff";
@@ -51,6 +52,7 @@ const defaultChallenge = () => ({
 
 export default function Teams({ onBack, initialTeamId = null, initialChallengeId = null }) {
   const { user, profile, createTeam, addPlayerToTeam, joinTeam, leaveTeam } = useAuth();
+  const { config: gameConfig, loading: gameConfigLoading } = useGameConfig();
   const [teams, setTeams] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [members, setMembers] = useState([]);
@@ -358,6 +360,12 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
       && !candidate.account_deleted_at
       && candidate.name?.toLowerCase().includes(inviteQuery.toLowerCase());
   }) : [];
+  const configuredChallengeGames = gameConfigLoading
+    ? []
+    : DEFAULT_GAMES.filter((game) => {
+        const config = gameConfig?.[game];
+        return config?.available !== false && config?.challenge_enabled !== false;
+      });
 
   return (
     <div style={{ background:BG, minHeight:"100vh", fontFamily:"'Inter',sans-serif" }} className="teams-page flex justify-center p-4 pt-10">
@@ -507,6 +515,10 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
                     const challengeKey=String(challenge.challenge_id);
                     const edit=challengeFor(challengeKey);
                     const challengeOpen=String(expandedChallengeId) === challengeKey;
+                    const challengeGameOptions=[...new Set([
+                      ...configuredChallengeGames,
+                      ...edit.games.filter((game) => DEFAULT_GAMES.includes(game)),
+                    ])];
                     return <div key={challengeKey} className="rounded-2xl overflow-hidden" style={{ background:"#F7F8FB",border:challengeOpen ? "1px solid rgba(47,111,237,.18)" : "1px solid transparent" }}>
                       <button className="gloss-button" type="button" onClick={() => setExpandedChallengeId(challengeOpen ? null : challengeKey)} className="w-full flex items-center gap-2 p-3 text-left">
                         <div className="flex-1 min-w-0"><div className="text-xs font-semibold truncate">{edit.title || challenge.challenge_title || "Weekly challenge"}</div><div className="text-[10px] opacity-45 mt-0.5">{edit.days.length} daily rounds · {edit.rewardType === "points" ? `${edit.reward} pts prize` : edit.rewardLabel || "Prize"}</div></div>
@@ -517,7 +529,7 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
                         {owner && <label className="block mt-3"><span className="text-[11px] font-semibold">Challenge name</span><input disabled={edit.locked} value={edit.title} onChange={(event) => patchChallenge(challengeKey,{ title:event.target.value })} placeholder="e.g. Weekend sprint" className="w-full rounded-xl border px-3 py-2 text-base mt-1 bg-white disabled:opacity-55"/></label>}
                         <div className="text-[11px] font-semibold mt-3 mb-2">Games</div>
                         <div className="flex flex-wrap gap-2">
-                          {DEFAULT_GAMES.map((game) => {
+                          {challengeGameOptions.map((game) => {
                             const chosen=edit.games.includes(game);
                             return <button
                               disabled={!owner || edit.locked}
