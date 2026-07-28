@@ -1,5 +1,12 @@
 [
   {
+    "id": "v156-animal-rush-leave-hotfix",
+    "version": "v156",
+    "date": "2026-07-28",
+    "title": "Fixed Animal Rush leave errors",
+    "body": "Fixed an Animal Rush database error that could prevent a player from leaving or rejoining a live room after the hidden-player privacy update. The v156 migration now installs the required hidden-player helper independently, and v155 is self-contained for future deployments."
+  },
+  {
     "id": "v155-complete-hidden-player-privacy",
     "version": "v155",
     "date": "2026-07-28",
