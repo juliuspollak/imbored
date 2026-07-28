@@ -788,7 +788,10 @@ export default function AnimalRush({ onExit }) {
   const rollStartedAt = room.roll_at
     ? new Date(room.roll_at).getTime()
     : new Date(room.reveal_at).getTime() - DIE_ROLL_DURATION_MS;
-  const rollElapsedMs = Math.max(0, Math.min(DIE_ROLL_DURATION_MS, serverNow - rollStartedAt));
+  const rollEndsAt = room.shuffle_at
+    ? new Date(room.shuffle_at).getTime()
+    : new Date(room.reveal_at).getTime();
+  const rollDurationMs = Math.max(0, rollEndsAt - Math.max(serverNow, rollStartedAt));
   const shuffleElapsedMs = shuffling && room.shuffle_at
     ? Math.max(0, serverNow - new Date(room.shuffle_at).getTime())
     : 0;
@@ -860,8 +863,7 @@ export default function AnimalRush({ onExit }) {
                     revealed={targetRevealed}
                     concealed={shuffling}
                     colourMode={room.colour_mode || "uniform"}
-                    rollDurationMs={DIE_ROLL_DURATION_MS}
-                    rollElapsedMs={rollElapsedMs}
+                    rollDurationMs={rollDurationMs}
                   />
                 )}
               </div>
