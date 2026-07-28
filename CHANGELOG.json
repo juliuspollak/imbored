@@ -1,5 +1,12 @@
 [
   {
+    "id": "v159-animal-rush-safari-cube-animation",
+    "version": "v159",
+    "date": "2026-07-28",
+    "title": "Rebuilt the Animal Rush cube animation for iOS",
+    "body": "The die now uses two short, continuous hardware-accelerated rotations instead of one large multi-axis transform that Safari could render slowly or unevenly. The roll stays fast and smooth while remaining aligned to the shared round clock, and the target animal still appears only when the cards reveal."
+  },
+  {
     "id": "v158-animal-rush-ios-die-roll",
     "version": "v158",
     "date": "2026-07-28",
