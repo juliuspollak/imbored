@@ -4,6 +4,7 @@ import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
+import BoardReviewToggle from "../BoardReviewToggle.jsx";
 import { Grid3x3, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Delete, Lock } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
@@ -459,6 +460,68 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     }
   }
 
+  const boardGrid = (
+    <div
+      className="ms-board w-full rounded-xl overflow-hidden"
+      style={{
+        aspectRatio: "1 / 1",
+        display: "grid",
+        gridTemplateColumns: `repeat(${N}, 1fr)`,
+        gridTemplateRows: `repeat(${N}, 1fr)`,
+        background: PANEL,
+        border: "2px solid #6B6B70",
+      }}
+    >
+      {board.map((row, r) =>
+        row.map((val, c) => {
+          const isGiven = puzzle.givens[r][c] !== 0;
+          const isConflict = conflicts.has(`${r}-${c}`);
+          const isHint = hintCell && hintCell.r === r && hintCell.c === c;
+          const isSelected = selected && selected.r === r && selected.c === c;
+          const isCelebrating = celebratingCells.has(`${r}-${c}`);
+          const hintClass = isHint ? `ms-hint-${hintCell.type}` : "";
+          // thicker border on the right/bottom edge of each 2x3 box
+          const rightEdge = (c + 1) % BOX_C === 0 && c !== N - 1;
+          const bottomEdge = (r + 1) % BOX_R === 0 && r !== N - 1;
+          return (
+            <button
+              key={`${r}-${c}`}
+              onClick={() => handleCellClick(r, c)}
+              disabled={isGiven}
+              className={`ms-cell relative flex items-center justify-center transition-colors duration-150 ${hintClass} ${isCelebrating ? "ms-celebrate" : ""}`}
+              style={{
+                background: isCelebrating ? "rgba(34,197,94,0.18)" : PANEL,
+                borderRight: rightEdge ? "2px solid #6B6B70" : "1px solid rgba(16,24,40,0.08)",
+                borderBottom: bottomEdge ? "2px solid #6B6B70" : "1px solid rgba(16,24,40,0.08)",
+                boxShadow: isConflict
+                  ? `inset 0 0 0 3px ${RED}`
+                  : isSelected
+                  ? "inset 0 0 0 2.5px #22C55E"
+                  : "none",
+                cursor: isGiven ? "default" : "pointer",
+              }}
+            >
+              {val !== 0 && (
+                <span
+                  className="ms-cell-value"
+                  data-given={isGiven ? "true" : "false"}
+                  data-conflict={isConflict ? "true" : "false"}
+                  style={{
+                    fontSize: "clamp(16px, 5vw, 26px)",
+                    fontWeight: isGiven ? 700 : 500,
+                    color: isConflict ? RED : isGiven ? CREAM : "rgba(27,33,41,0.5)",
+                  }}
+                >
+                  {val}
+                </span>
+              )}
+            </button>
+          );
+        })
+      )}
+    </div>
+  );
+
   return (
     <div style={{ background: BG, minHeight: "100vh" }} className="flex items-start justify-center p-4 pt-[72px]">
       <style>{`
@@ -511,8 +574,10 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
           </p>
         </div>
 
-        {/* day selector — locked to today's date in challenge mode */}
-        {isChallenge ? (
+        {/* day selector — locked to today's date in challenge mode. Only
+            relevant before solving: you already picked the day you just
+            played, and it belongs on the next puzzle, not this result. */}
+        {!solved && (isChallenge ? (
           <div className="flex justify-center mb-4">
             <div className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: `${GOLD}18`, color: GOLD }}>
               <span className="text-xs font-semibold">{t("common.todaysChallenge")}</span>
@@ -525,7 +590,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
             value={dayIdx}
             onChange={setDayIdx}
           />
-        )}
+        ))}
 
         {solved && difficultyRating !== null && (
           <div className="flex justify-center mb-3">
@@ -533,58 +598,64 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
           </div>
         )}
 
-        {/* stats row */}
-        <div className="flex items-center justify-center gap-4 mb-3 px-1">
-          <div className="flex items-center gap-1.5" style={{ color: CREAM, opacity: 0.7 }}>
-            <TimerIcon size={14} />
-            <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
+        {/* stats row — redundant with GameSolvedPanel's own stats once solved */}
+        {!solved && (
+          <div className="flex items-center justify-center gap-4 mb-3 px-1">
+            <div className="flex items-center gap-1.5" style={{ color: CREAM, opacity: 0.7 }}>
+              <TimerIcon size={14} />
+              <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
+            </div>
+            <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
+              mistakes: <span style={{ color: mistakes > 0 ? RED : CREAM }}>{mistakes}</span>
+            </div>
+            <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
+              hints: <span style={{ color: hintsUsed > 0 ? GOLD : CREAM }}>{hintsUsed}</span>
+            </div>
           </div>
-          <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
-            mistakes: <span style={{ color: mistakes > 0 ? RED : CREAM }}>{mistakes}</span>
-          </div>
-          <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
-            hints: <span style={{ color: hintsUsed > 0 ? GOLD : CREAM }}>{hintsUsed}</span>
-          </div>
-        </div>
+        )}
 
-        {/* toolbar - text labels, spread at top */}
-        <div className="game-toolbar flex items-center justify-between gap-2 mb-3 px-1">
-          {[
-            { label: t("common.reset"), onClick: handleReset, disabled: solved },
-            { label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
-            {
-              label: t("common.hint"),
-              onClick: handleHint,
-              disabled: solved,
-              hint: true,
-            },
-          ].map(({ label, onClick, disabled, hint }) => hint ? (
-            <HintCooldownButton
-              key="hint"
-              cooldown={hintCooldown}
-              label={label}
-              onClick={onClick}
-              disabled={disabled}
-            />
-          ) : (
-            <button
-              key={label}
-              onClick={onClick}
-              disabled={disabled}
-              aria-label={label}
-              className="gloss-button flex-1 rounded-lg py-2 text-xs font-semibold transition-all"
-              style={{
-                background: disabled ? "rgba(16,24,40,0.06)" : undefined,
-                color: disabled ? "rgba(27,33,41,0.4)" : CREAM,
-                cursor: disabled ? "default" : "pointer",
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        {/* toolbar — Reset/New/Hint only ever act on a puzzle still in
+            progress; once solved there's nothing left for any of them to do
+            (Play Again in the solved panel below replaces "New"). */}
+        {!solved && (
+          <div className="game-toolbar flex items-center justify-between gap-2 mb-3 px-1">
+            {[
+              { label: t("common.reset"), onClick: handleReset, disabled: solved },
+              { label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
+              {
+                label: t("common.hint"),
+                onClick: handleHint,
+                disabled: solved,
+                hint: true,
+              },
+            ].map(({ label, onClick, disabled, hint }) => hint ? (
+              <HintCooldownButton
+                key="hint"
+                cooldown={hintCooldown}
+                label={label}
+                onClick={onClick}
+                disabled={disabled}
+              />
+            ) : (
+              <button
+                key={label}
+                onClick={onClick}
+                disabled={disabled}
+                aria-label={label}
+                className="gloss-button flex-1 rounded-lg py-2 text-xs font-semibold transition-all"
+                style={{
+                  background: disabled ? "rgba(16,24,40,0.06)" : undefined,
+                  color: disabled ? "rgba(27,33,41,0.4)" : CREAM,
+                  cursor: disabled ? "default" : "pointer",
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
 
-        {showHelp && (
+        {!solved && showHelp && (
           <div
             className="text-xs rounded-lg p-2.5 mb-3"
             style={{ background: "rgba(16,24,40,0.05)", color: CREAM, opacity: 0.75, lineHeight: 1.4 }}
@@ -596,106 +667,51 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
           </div>
         )}
 
-        {/* board */}
-        <div
-          className="ms-board relative w-full rounded-xl overflow-hidden"
-          style={{
-            aspectRatio: "1 / 1",
-            display: "grid",
-            gridTemplateColumns: `repeat(${N}, 1fr)`,
-            gridTemplateRows: `repeat(${N}, 1fr)`,
-            background: PANEL,
-            border: "2px solid #6B6B70",
-          }}
-        >
-          {board.map((row, r) =>
-            row.map((val, c) => {
-              const isGiven = puzzle.givens[r][c] !== 0;
-              const isConflict = conflicts.has(`${r}-${c}`);
-              const isHint = hintCell && hintCell.r === r && hintCell.c === c;
-              const isSelected = selected && selected.r === r && selected.c === c;
-              const isCelebrating = celebratingCells.has(`${r}-${c}`);
-              const hintClass = isHint ? `ms-hint-${hintCell.type}` : "";
-              // thicker border on the right/bottom edge of each 2x3 box
-              const rightEdge = (c + 1) % BOX_C === 0 && c !== N - 1;
-              const bottomEdge = (r + 1) % BOX_R === 0 && r !== N - 1;
-              return (
-                <button
-                  key={`${r}-${c}`}
-                  onClick={() => handleCellClick(r, c)}
-                  disabled={isGiven}
-                  className={`ms-cell relative flex items-center justify-center transition-colors duration-150 ${hintClass} ${isCelebrating ? "ms-celebrate" : ""}`}
-                  style={{
-                    background: isCelebrating ? "rgba(34,197,94,0.18)" : PANEL,
-                    borderRight: rightEdge ? "2px solid #6B6B70" : "1px solid rgba(16,24,40,0.08)",
-                    borderBottom: bottomEdge ? "2px solid #6B6B70" : "1px solid rgba(16,24,40,0.08)",
-                    boxShadow: isConflict
-                      ? `inset 0 0 0 3px ${RED}`
-                      : isSelected
-                      ? "inset 0 0 0 2.5px #22C55E"
-                      : "none",
-                    cursor: isGiven ? "default" : "pointer",
-                  }}
-                >
-                  {val !== 0 && (
-                    <span
-                      className="ms-cell-value"
-                      data-given={isGiven ? "true" : "false"}
-                      data-conflict={isConflict ? "true" : "false"}
-                      style={{
-                        fontSize: "clamp(16px, 5vw, 26px)",
-                        fontWeight: isGiven ? 700 : 500,
-                        color: isConflict ? RED : isGiven ? CREAM : "rgba(27,33,41,0.5)",
-                      }}
-                    >
-                      {val}
-                    </span>
-                  )}
-                </button>
-              );
-            })
-          )}
+        <GameSolvedPanel
+          solved={solved}
+          difficultyRating={difficultyRating}
+          icon={<Grid3x3 size={26} style={{ color: GOLD }} />}
+          stats={
+            <>
+              {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
+            </>
+          }
+          rewardResult={rewardResult}
+          savedStatId={savedStatId}
+          onRated={setDifficultyRating}
+          showPlayAgain={!isChallenge}
+          onPlayAgain={() => newPuzzle(dayIdx)}
+        />
 
-          <GameSolvedPanel
-            solved={solved}
-            difficultyRating={difficultyRating}
-            icon={<Grid3x3 size={26} style={{ color: GOLD }} />}
-            stats={
-              <>
-                {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
-              </>
-            }
-            rewardResult={rewardResult}
-            savedStatId={savedStatId}
-            onRated={setDifficultyRating}
-            showPlayAgain={!isChallenge}
-            onPlayAgain={() => newPuzzle(dayIdx)}
-          />
-        </div>
+        {solved ? <BoardReviewToggle>{boardGrid}</BoardReviewToggle> : boardGrid}
 
-        {/* number palette */}
-        <div className="grid grid-cols-4 gap-2 mt-4">
-          {paletteDigits.slice(0, 3).map((d) => (
-            <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={solved || !selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
-              {d}
+        {/* number palette — every button is a no-op once solved */}
+        {!solved && (
+          <div className="grid grid-cols-4 gap-2 mt-4">
+            {paletteDigits.slice(0, 3).map((d) => (
+              <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={!selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
+                {d}
+              </NumBtn>
+            ))}
+            <NumBtn onClick={handleErase} disabled={!selected} aria-label={t("common.erase")}>
+              <Delete size={18} />
             </NumBtn>
-          ))}
-          <NumBtn onClick={handleErase} disabled={solved || !selected} aria-label={t("common.erase")}>
-            <Delete size={18} />
-          </NumBtn>
-          {paletteDigits.slice(3).map((d) => (
-            <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={solved || !selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
-              {d}
+            {paletteDigits.slice(3).map((d) => (
+              <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={!selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
+                {d}
+              </NumBtn>
+            ))}
+            <NumBtn onClick={handleUndo} disabled={history.length === 0} aria-label={t("common.undo")}>
+              <CornerUpLeft size={18} />
             </NumBtn>
-          ))}
-          <NumBtn onClick={handleUndo} disabled={solved || history.length === 0} aria-label={t("common.undo")}>
-            <CornerUpLeft size={18} />
-          </NumBtn>
-        </div>
+          </div>
+        )}
 
-        <p style={{ color: CREAM, opacity: 0.35 }} className="text-center text-[11px] mt-3">
-          {filledCount}/{N * N} filled
-        </p>
+        {!solved && (
+          <p style={{ color: CREAM, opacity: 0.35 }} className="text-center text-[11px] mt-3">
+            {filledCount}/{N * N} filled
+          </p>
+        )}
       </div>
     </div>
   );

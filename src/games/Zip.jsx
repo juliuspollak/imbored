@@ -4,6 +4,7 @@ import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
+import BoardReviewToggle from "../BoardReviewToggle.jsx";
 import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Flag, Lock } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
@@ -666,6 +667,224 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
     : 1;
   const efficiency = zipEfficiency(requiredMoves,mistakes);
 
+  const boardGrid = (
+    <div
+      ref={boardRef}
+      onMouseDown={handleMouseDown}
+      className="relative w-full rounded-xl overflow-hidden select-none"
+      style={{
+        aspectRatio: "1 / 1",
+        display: "grid",
+        gridTemplateColumns: `repeat(${boardSize}, 1fr)`,
+        gridTemplateRows: `repeat(${boardSize}, 1fr)`,
+        background: BG,
+        touchAction: "none",
+      }}
+    >
+      {Array.from({ length: boardSize }, (_, r) =>
+        Array.from({ length: boardSize }, (_, c) => {
+          const key = `${r}-${c}`;
+          const isVisited = visited.has(key);
+          const isCurrent = r === curR && c === curC;
+          const num = puzzle.numberGrid[r][c];
+          const tunnel = tunnelInfo.get(`${r},${c}`);
+          const isHint = hintCell && hintCell.r === r && hintCell.c === c;
+          const hintClass = isHint ? `zp-hint-${hintCell.type}` : "";
+          return (
+            <div
+              key={key}
+              role="button"
+              tabIndex={0}
+              onClick={() => handleCellClick(r, c)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleCellClick(r, c);
+                }
+              }}
+              className={`zp-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`}
+              style={{
+                background: visitedCellBg(key),
+                border: "1px solid rgba(20,20,24,0.30)",
+                cursor: solved ? "default" : "pointer",
+                WebkitTouchCallout: "none",
+                WebkitUserSelect: "none",
+                userSelect: "none",
+              }}
+            >
+              {num !== 0 && !solved && (
+                <span
+                  className="zp-dot flex items-center justify-center rounded-full"
+                  style={{
+                    width: "72%",
+                    height: "72%",
+                    background: isVisited ? visitedDotBg(key) : "rgba(16,24,40,0.08)",
+                    color: isVisited ? "#FFFFFF" : CREAM,
+                    fontWeight: 800,
+                    fontSize: Math.max(14, 22 - boardSize),
+                    border: orderConflict && isVisited ? `2px solid ${RED}` : "none",
+                    position: "relative",
+                    zIndex: 5,
+                  }}
+                >
+                  {num}
+                </span>
+              )}
+              {tunnel && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 2,
+                    right: 2,
+                    width: 14,
+                    height: 14,
+                    borderRadius: "50%",
+                    background: tunnel.color,
+                    color: "#FFFFFF",
+                    fontSize: 8,
+                    fontWeight: 800,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 1,
+                  }}
+                >
+                  {tunnel.label}
+                </span>
+              )}
+              {isCurrent && !solved && (
+                <span style={{ position: "absolute", inset: 0, borderRadius: 8, boxShadow: `inset 0 0 0 2px ${ZIP_GREEN}`, pointerEvents: "none" }} />
+              )}
+            </div>
+          );
+        })
+      )}
+
+      {puzzle.walls.map((w) => {
+        const horizontal = w.r1 === w.r2;
+        const style = horizontal
+          ? {
+              left: `${((w.c1 + 1) / boardSize) * 100}%`,
+              top: `${(w.r1 / boardSize) * 100}%`,
+              width: 5,
+              height: `${(1 / boardSize) * 100}%`,
+              transform: "translateX(-50%)",
+            }
+          : {
+              left: `${(w.c1 / boardSize) * 100}%`,
+              top: `${((w.r1 + 1) / boardSize) * 100}%`,
+              width: `${(1 / boardSize) * 100}%`,
+              height: 5,
+              transform: "translateY(-50%)",
+            };
+        return (
+          <span
+            key={`wall-${w.r1}-${w.c1}-${w.r2}-${w.c2}`}
+            style={{ position: "absolute", background: WALL_COLOR, borderRadius: 2, pointerEvents: "none", zIndex: 2, ...style }}
+          />
+        );
+      })}
+
+      <svg className="absolute inset-0 pointer-events-none" style={{ width: "100%", height: "100%" }} viewBox="0 0 100 100" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="zipSnakeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FF6B6B" />
+            <stop offset="24%" stopColor="#F6C85F" />
+            <stop offset="48%" stopColor="#62C370" />
+            <stop offset="72%" stopColor="#4D96FF" />
+            <stop offset="100%" stopColor="#9B5DE5" />
+          </linearGradient>
+        </defs>
+        {pathSegments.map((seg, idx) => {
+          const points = seg.map(([r, c]) => `${((c + 0.5) / boardSize) * 100},${((r + 0.5) / boardSize) * 100}`).join(" ");
+          const mainStroke = orderConflict ? RED : zipPathStyle === "rainbow" ? "url(#zipSnakeGradient)" : ZIP_GREEN;
+          return (
+            <g key={idx}>
+              <polyline
+                points={points}
+                fill="none"
+                stroke={orderConflict ? "rgba(217,105,92,0.28)" : "rgba(255,255,255,0.90)"}
+                strokeWidth="7.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <polyline
+                points={points}
+                fill="none"
+                stroke={mainStroke}
+                strokeWidth="5.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                opacity="0.98"
+              />
+            </g>
+          );
+        })}
+        {path.length > 1 && (
+          <circle
+            cx={((path[0][1] + 0.5) / boardSize) * 100}
+            cy={((path[0][0] + 0.5) / boardSize) * 100}
+            r="1.75"
+            fill={ZIP_GREEN}
+            stroke="#FFFFFF"
+            strokeWidth="0.6"
+            vectorEffect="non-scaling-stroke"
+          />
+        )}
+        <circle
+          cx={((path[path.length - 1][1] + 0.5) / boardSize) * 100}
+          cy={((path[path.length - 1][0] + 0.5) / boardSize) * 100}
+          r="1.9"
+          fill="#FFFFFF"
+          stroke={ZIP_GREEN}
+          strokeWidth="1"
+          vectorEffect="non-scaling-stroke"
+        />
+        {lastMoveIsTunnel && lastMove && (
+          <>
+            {[lastMove[0], lastMove[1]].map(([r, c], idx) => {
+              const warpColor = tunnelInfo.get(`${r},${c}`)?.color || ZIP_GREEN;
+              const cx = ((c + 0.5) / boardSize) * 100;
+              const cy = ((r + 0.5) / boardSize) * 100;
+              return (
+                <g key={`warp-${path.length}-${idx}`}>
+                  <circle
+                    className="zp-warp"
+                    cx={cx}
+                    cy={cy}
+                    r="3.8"
+                    fill="none"
+                    stroke={warpColor}
+                    strokeWidth="1.6"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                  <circle
+                    className="zp-warp zp-warp-secondary"
+                    cx={cx}
+                    cy={cy}
+                    r="2.6"
+                    fill="none"
+                    stroke={warpColor}
+                    strokeWidth="0.95"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r="1.05"
+                    fill={warpColor}
+                    opacity="0.34"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                </g>
+              );
+            })}
+          </>
+        )}
+      </svg>
+    </div>
+  );
+
   return (
     <div
       style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}
@@ -723,7 +942,9 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
           </p>
         </div>
 
-        {isChallenge ? (
+        {/* day selector — you already picked the day you just played; it
+            belongs on the next puzzle, not this result. */}
+        {!solved && (isChallenge ? (
           <div className="flex justify-center mb-4">
             <div className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: `${GOLD}18`, color: GOLD }}>
               <span className="text-xs font-semibold">{t("common.todaysChallenge")}</span>
@@ -735,29 +956,35 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
             value={dayIdx}
             onChange={setDayIdx}
           />
+        ))}
+
+        {/* stats row — redundant with GameSolvedPanel's own stats once solved */}
+        {!solved && (
+          <div className="flex items-center justify-center gap-4 mb-3 px-1">
+            <div className="flex items-center gap-1.5" style={{ color: CREAM, opacity: 0.7 }}>
+              <TimerIcon size={14} />
+              <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
+            </div>
+            <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
+              efficiency: <span style={{ color: efficiency < 85 ? RED : ZIP_GREEN }}>{efficiency}%</span>
+            </div>
+            <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
+              hints: <span style={{ color: hintsUsed > 0 ? GOLD : CREAM }}>{hintsUsed}</span>
+            </div>
+            {resets > 0 && <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
+              resets: <span style={{ color: RED }}>{resets}</span>
+            </div>}
+          </div>
         )}
 
-        <div className="flex items-center justify-center gap-4 mb-3 px-1">
-          <div className="flex items-center gap-1.5" style={{ color: CREAM, opacity: 0.7 }}>
-            <TimerIcon size={14} />
-            <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
-          </div>
-          <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
-            efficiency: <span style={{ color: efficiency < 85 ? RED : ZIP_GREEN }}>{efficiency}%</span>
-          </div>
-          <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
-            hints: <span style={{ color: hintsUsed > 0 ? GOLD : CREAM }}>{hintsUsed}</span>
-          </div>
-          {resets > 0 && <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
-            resets: <span style={{ color: RED }}>{resets}</span>
-          </div>}
-        </div>
-
-        {/* toolbar - text labels, spread at top */}
+        {/* toolbar — Undo/Reset/Hint only ever act on a puzzle still in
+            progress; once solved there's nothing left for any of them to do
+            (Play Again in the solved panel below replaces "New"). */}
+        {!solved && (
         <div className="game-toolbar flex items-center justify-between gap-2 mb-3 px-1">
           {[
-            { label: t("common.undo"), onClick: handleUndo, disabled: solved || history.length === 0 },
-            { label: t("common.reset"), onClick: handleReset, disabled: solved },
+            { label: t("common.undo"), onClick: handleUndo, disabled: history.length === 0 },
+            { label: t("common.reset"), onClick: handleReset, disabled: false },
             { label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
             {
               label: t("common.hint"),
@@ -790,8 +1017,9 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
             </button>
           ))}
         </div>
+        )}
 
-        {showHelp && (
+        {!solved && showHelp && (
           <div
             className="text-xs rounded-lg p-2.5 mb-3"
             style={{ background: "rgba(16,24,40,0.05)", color: CREAM, opacity: 0.75, lineHeight: 1.4 }}
@@ -806,239 +1034,25 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
           </div>
         )}
 
-        <div
-          ref={boardRef}
-          onMouseDown={handleMouseDown}
-          className="relative w-full rounded-xl overflow-hidden select-none"
-          style={{
-            aspectRatio: "1 / 1",
-            display: "grid",
-            gridTemplateColumns: `repeat(${boardSize}, 1fr)`,
-            gridTemplateRows: `repeat(${boardSize}, 1fr)`,
-            background: BG,
-            touchAction: "none",
-          }}
-        >
-          {Array.from({ length: boardSize }, (_, r) =>
-            Array.from({ length: boardSize }, (_, c) => {
-              const key = `${r}-${c}`;
-              const isVisited = visited.has(key);
-              const isCurrent = r === curR && c === curC;
-              const num = puzzle.numberGrid[r][c];
-              const tunnel = tunnelInfo.get(`${r},${c}`);
-              const isHint = hintCell && hintCell.r === r && hintCell.c === c;
-              const hintClass = isHint ? `zp-hint-${hintCell.type}` : "";
-              return (
-                <div
-                  key={key}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => handleCellClick(r, c)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      handleCellClick(r, c);
-                    }
-                  }}
-                  className={`zp-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`}
-                  style={{
-                    background: visitedCellBg(key),
-                    border: "1px solid rgba(20,20,24,0.30)",
-                    cursor: solved ? "default" : "pointer",
-                    WebkitTouchCallout: "none",
-                    WebkitUserSelect: "none",
-                    userSelect: "none",
-                  }}
-                >
-                  {num !== 0 && !solved && (
-                    <span
-                      className="zp-dot flex items-center justify-center rounded-full"
-                      style={{
-                        width: "72%",
-                        height: "72%",
-                        background: isVisited ? visitedDotBg(key) : "rgba(16,24,40,0.08)",
-                        color: isVisited ? "#FFFFFF" : CREAM,
-                        fontWeight: 800,
-                        fontSize: Math.max(14, 22 - boardSize),
-                        border: orderConflict && isVisited ? `2px solid ${RED}` : "none",
-                        position: "relative",
-                        zIndex: 5,
-                      }}
-                    >
-                      {num}
-                    </span>
-                  )}
-                  {tunnel && (
-                    <span
-                      style={{
-                        position: "absolute",
-                        top: 2,
-                        right: 2,
-                        width: 14,
-                        height: 14,
-                        borderRadius: "50%",
-                        background: tunnel.color,
-                        color: "#FFFFFF",
-                        fontSize: 8,
-                        fontWeight: 800,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        zIndex: 1,
-                      }}
-                    >
-                      {tunnel.label}
-                    </span>
-                  )}
-                  {isCurrent && !solved && (
-                    <span style={{ position: "absolute", inset: 0, borderRadius: 8, boxShadow: `inset 0 0 0 2px ${ZIP_GREEN}`, pointerEvents: "none" }} />
-                  )}
-                </div>
-              );
-            })
-          )}
+        <GameSolvedPanel
+          solved={solved}
+          difficultyRating={difficultyRating}
+          icon={<Flag size={28} style={{ color: ZIP_GREEN }} />}
+          stats={
+            <>
+              {fmtTime(seconds)} &middot; {efficiency}% efficient
+              {resets > 0 ? ` · ${resets} reset${resets === 1 ? "" : "s"}` : ""}
+              {" · "}{hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
+            </>
+          }
+          rewardResult={rewardResult}
+          savedStatId={savedStatId}
+          onRated={setDifficultyRating}
+          showPlayAgain={!isChallenge}
+          onPlayAgain={() => newPuzzle(dayIdx)}
+        />
 
-          {puzzle.walls.map((w) => {
-            const horizontal = w.r1 === w.r2;
-            const style = horizontal
-              ? {
-                  left: `${((w.c1 + 1) / boardSize) * 100}%`,
-                  top: `${(w.r1 / boardSize) * 100}%`,
-                  width: 5,
-                  height: `${(1 / boardSize) * 100}%`,
-                  transform: "translateX(-50%)",
-                }
-              : {
-                  left: `${(w.c1 / boardSize) * 100}%`,
-                  top: `${((w.r1 + 1) / boardSize) * 100}%`,
-                  width: `${(1 / boardSize) * 100}%`,
-                  height: 5,
-                  transform: "translateY(-50%)",
-                };
-            return (
-              <span
-                key={`wall-${w.r1}-${w.c1}-${w.r2}-${w.c2}`}
-                style={{ position: "absolute", background: WALL_COLOR, borderRadius: 2, pointerEvents: "none", zIndex: 2, ...style }}
-              />
-            );
-          })}
-
-          <svg className="absolute inset-0 pointer-events-none" style={{ width: "100%", height: "100%" }} viewBox="0 0 100 100" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="zipSnakeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#FF6B6B" />
-                <stop offset="24%" stopColor="#F6C85F" />
-                <stop offset="48%" stopColor="#62C370" />
-                <stop offset="72%" stopColor="#4D96FF" />
-                <stop offset="100%" stopColor="#9B5DE5" />
-              </linearGradient>
-            </defs>
-            {pathSegments.map((seg, idx) => {
-              const points = seg.map(([r, c]) => `${((c + 0.5) / boardSize) * 100},${((r + 0.5) / boardSize) * 100}`).join(" ");
-              const mainStroke = orderConflict ? RED : zipPathStyle === "rainbow" ? "url(#zipSnakeGradient)" : ZIP_GREEN;
-              return (
-                <g key={idx}>
-                  <polyline
-                    points={points}
-                    fill="none"
-                    stroke={orderConflict ? "rgba(217,105,92,0.28)" : "rgba(255,255,255,0.90)"}
-                    strokeWidth="7.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <polyline
-                    points={points}
-                    fill="none"
-                    stroke={mainStroke}
-                    strokeWidth="5.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    opacity="0.98"
-                  />
-                </g>
-              );
-            })}
-            {path.length > 1 && (
-              <circle
-                cx={((path[0][1] + 0.5) / boardSize) * 100}
-                cy={((path[0][0] + 0.5) / boardSize) * 100}
-                r="1.75"
-                fill={ZIP_GREEN}
-                stroke="#FFFFFF"
-                strokeWidth="0.6"
-                vectorEffect="non-scaling-stroke"
-              />
-            )}
-            <circle
-              cx={((path[path.length - 1][1] + 0.5) / boardSize) * 100}
-              cy={((path[path.length - 1][0] + 0.5) / boardSize) * 100}
-              r="1.9"
-              fill="#FFFFFF"
-              stroke={ZIP_GREEN}
-              strokeWidth="1"
-              vectorEffect="non-scaling-stroke"
-            />
-            {lastMoveIsTunnel && lastMove && (
-              <>
-                {[lastMove[0], lastMove[1]].map(([r, c], idx) => {
-                  const warpColor = tunnelInfo.get(`${r},${c}`)?.color || ZIP_GREEN;
-                  const cx = ((c + 0.5) / boardSize) * 100;
-                  const cy = ((r + 0.5) / boardSize) * 100;
-                  return (
-                    <g key={`warp-${path.length}-${idx}`}>
-                      <circle
-                        className="zp-warp"
-                        cx={cx}
-                        cy={cy}
-                        r="3.8"
-                        fill="none"
-                        stroke={warpColor}
-                        strokeWidth="1.6"
-                        vectorEffect="non-scaling-stroke"
-                      />
-                      <circle
-                        className="zp-warp zp-warp-secondary"
-                        cx={cx}
-                        cy={cy}
-                        r="2.6"
-                        fill="none"
-                        stroke={warpColor}
-                        strokeWidth="0.95"
-                        vectorEffect="non-scaling-stroke"
-                      />
-                      <circle
-                        cx={cx}
-                        cy={cy}
-                        r="1.05"
-                        fill={warpColor}
-                        opacity="0.34"
-                        vectorEffect="non-scaling-stroke"
-                      />
-                    </g>
-                  );
-                })}
-              </>
-            )}
-          </svg>
-
-          <GameSolvedPanel
-            solved={solved}
-            difficultyRating={difficultyRating}
-            icon={<Flag size={28} style={{ color: ZIP_GREEN }} />}
-            stats={
-              <>
-                {fmtTime(seconds)} &middot; {efficiency}% efficient
-                {resets > 0 ? ` · ${resets} reset${resets === 1 ? "" : "s"}` : ""}
-                {" · "}{hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
-              </>
-            }
-            rewardResult={rewardResult}
-            savedStatId={savedStatId}
-            onRated={setDifficultyRating}
-            showPlayAgain={!isChallenge}
-            onPlayAgain={() => newPuzzle(dayIdx)}
-          />
-        </div>
+        {solved ? <BoardReviewToggle>{boardGrid}</BoardReviewToggle> : boardGrid}
 
         {solved && difficultyRating !== null && (
           <div className="flex justify-center mt-3">

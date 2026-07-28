@@ -4,6 +4,7 @@ import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
+import BoardReviewToggle from "../BoardReviewToggle.jsx";
 import { Crown, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock, X } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
@@ -788,6 +789,87 @@ export default function Queens({
     );
   }
 
+  const boardGrid = (
+    <div
+      ref={boardRef}
+      onMouseDown={handleMouseDown}
+      onTouchStart={handleMouseDown}
+      className="relative w-full rounded-lg overflow-hidden select-none"
+      style={{
+        aspectRatio: "1 / 1",
+        display: "grid",
+        gridTemplateColumns: `repeat(${boardSize}, 1fr)`,
+        gridTemplateRows: `repeat(${boardSize}, 1fr)`,
+        touchAction: "none",
+        border: `2.5px solid ${BOARD_LINE}`,
+      }}
+    >
+      {board.map((row, r) =>
+        row.map((val, c) => {
+          const region = puzzle.regionGrid[r][c];
+          const isConflict = conflicts.has(`${r}-${c}`);
+          const cellHint = hintCells.find((hint) => hint.r === r && hint.c === c);
+          const isHint = !!cellHint;
+          const hintClass = isHint ? `qp-hint-${cellHint.type}` : "";
+          return (
+            <button
+              key={`${r}-${c}`}
+              onClick={() => handleCellClick(r, c)}
+              className={`qp-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`}
+              style={{
+                "--qp-region-color": REGION_COLORS[region % REGION_COLORS.length],
+                "--qp-region-dark": DARK_REGION_COLORS[region % DARK_REGION_COLORS.length],
+                backgroundColor: "var(--qp-region-color)",
+                borderTop: edgeBorder(r, c, -1, 0),
+                borderBottom: edgeBorder(r, c, 1, 0),
+                borderLeft: edgeBorder(r, c, 0, -1),
+                borderRight: edgeBorder(r, c, 0, 1),
+                boxShadow: isConflict ? `inset 0 0 0 3px ${RED}` : "none",
+              }}
+            >
+              {val === 2 && (
+                <Crown
+                  key={`crown-${r}-${c}`}
+                  className="qp-crown"
+                  size={Math.max(17, 27 - boardSize)}
+                  style={{
+                    color: isConflict ? RED : INK,
+                    fill: isConflict ? "rgba(217,105,92,0.22)" : "#F6C453",
+                  }}
+                  strokeWidth={2.6}
+                />
+              )}
+              {val === 1 && (
+                <X
+                  className="qp-cross"
+                  size={Math.max(13, 22 - boardSize)}
+                  strokeWidth={2.6}
+                  style={{ color: "rgba(17,24,39,0.60)" }}
+                />
+              )}
+              {isHint && cellHint.type === "cross" && cellHint.src !== "queen-elimination" && val === 0 && (
+                <X
+                  className="qp-cross"
+                  size={Math.max(13, 22 - boardSize)}
+                  strokeWidth={2.8}
+                  style={{ color: "#2563EB", opacity: 0.72, pointerEvents: "none" }}
+                />
+              )}
+              {isHint && cellHint.type === "queen" && val !== 2 && (
+                <Crown
+                  className="qp-crown"
+                  size={Math.max(17, 27 - boardSize)}
+                  strokeWidth={2.6}
+                  style={{ color: "#047857", fill: "rgba(16,185,129,0.28)", opacity: 0.82, pointerEvents: "none" }}
+                />
+              )}
+            </button>
+          );
+        })
+      )}
+    </div>
+  );
+
   return (
     <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-start justify-center p-4 pt-[72px]">
       <style>{`
@@ -866,8 +948,9 @@ export default function Queens({
           </p>
         </div>
 
-        {/* day selector — locked to today's date in challenge mode */}
-        {isChallenge ? (
+        {/* day selector — you already picked the day you just played; it
+            belongs on the next puzzle, not this result. */}
+        {!solved && (isChallenge ? (
           <div className="flex justify-center mb-4">
             <div
               className="flex items-center gap-2 rounded-lg px-3 py-1.5"
@@ -883,7 +966,7 @@ export default function Queens({
             value={dayIdx}
             onChange={setDayIdx}
           />
-        )}
+        ))}
 
         {solved && difficultyRating !== null && (
           <div className="flex justify-center mb-3">
@@ -891,59 +974,65 @@ export default function Queens({
           </div>
         )}
 
-        {/* stats row */}
-        <div className="flex items-center justify-center gap-4 mb-3 px-1">
-          <div className="flex items-center gap-1.5" style={{ color: CREAM, opacity: 0.7 }}>
-            <TimerIcon size={14} />
-            <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
+        {/* stats row — redundant with GameSolvedPanel's own stats once solved */}
+        {!solved && (
+          <div className="flex items-center justify-center gap-4 mb-3 px-1">
+            <div className="flex items-center gap-1.5" style={{ color: CREAM, opacity: 0.7 }}>
+              <TimerIcon size={14} />
+              <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
+            </div>
+            <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
+              mistakes: <span style={{ color: mistakes > 0 ? RED : CREAM }}>{mistakes}</span>
+            </div>
+            <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
+              hints: <span style={{ color: hintsUsed > 0 ? GOLD : CREAM }}>{hintsUsed}</span>
+            </div>
           </div>
-          <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
-            mistakes: <span style={{ color: mistakes > 0 ? RED : CREAM }}>{mistakes}</span>
-          </div>
-          <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
-            hints: <span style={{ color: hintsUsed > 0 ? GOLD : CREAM }}>{hintsUsed}</span>
-          </div>
-        </div>
+        )}
 
-        {/* toolbar - text labels, spread at top */}
-        <div className="game-toolbar flex items-center justify-between gap-2 mb-3 px-1">
-          {[
-            { label: t("common.undo"), onClick: handleUndo, disabled: solved || history.length === 0 },
-            { label: t("common.reset"), onClick: handleReset, disabled: solved },
-            { label: "New", onClick: () => newPuzzle(n), disabled: isChallenge },
-            {
-              label: t("common.hint"),
-              onClick: handleHint,
-              disabled: solved,
-              hint: true,
-            },
-          ].map(({ label, onClick, disabled, hint }) => hint ? (
-            <HintCooldownButton
-              key="hint"
-              cooldown={hintCooldown}
-              label={label}
-              onClick={onClick}
-              disabled={disabled}
-            />
-          ) : (
-            <button
-              key={label}
-              onClick={onClick}
-              disabled={disabled}
-              aria-label={label}
-              className="gloss-button flex-1 rounded-lg py-2 text-xs font-semibold transition-all"
-              style={{
-                background: disabled ? "rgba(16,24,40,0.06)" : undefined,
-                color: disabled ? "rgba(27,33,41,0.4)" : CREAM,
-                cursor: disabled ? "default" : "pointer",
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        {/* toolbar — Undo/Reset/Hint only ever act on a puzzle still in
+            progress; once solved there's nothing left for any of them to do
+            (Play Again in the solved panel below replaces "New"). */}
+        {!solved && (
+          <div className="game-toolbar flex items-center justify-between gap-2 mb-3 px-1">
+            {[
+              { label: t("common.undo"), onClick: handleUndo, disabled: history.length === 0 },
+              { label: t("common.reset"), onClick: handleReset, disabled: false },
+              { label: "New", onClick: () => newPuzzle(n), disabled: isChallenge },
+              {
+                label: t("common.hint"),
+                onClick: handleHint,
+                disabled: false,
+                hint: true,
+              },
+            ].map(({ label, onClick, disabled, hint }) => hint ? (
+              <HintCooldownButton
+                key="hint"
+                cooldown={hintCooldown}
+                label={label}
+                onClick={onClick}
+                disabled={disabled}
+              />
+            ) : (
+              <button
+                key={label}
+                onClick={onClick}
+                disabled={disabled}
+                aria-label={label}
+                className="gloss-button flex-1 rounded-lg py-2 text-xs font-semibold transition-all"
+                style={{
+                  background: disabled ? "rgba(16,24,40,0.06)" : undefined,
+                  color: disabled ? "rgba(27,33,41,0.4)" : CREAM,
+                  cursor: disabled ? "default" : "pointer",
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
 
-        {showHelp && (
+        {!solved && showHelp && (
           <div
             className="text-xs rounded-lg p-2.5 mb-3"
             style={{ background: "rgba(16,24,40,0.05)", color: CREAM, opacity: 0.75, lineHeight: 1.4 }}
@@ -957,106 +1046,30 @@ export default function Queens({
           </div>
         )}
 
-        {/* board */}
-        <div
-          ref={boardRef}
-          onMouseDown={handleMouseDown}
-          onTouchStart={handleMouseDown}
-          className="relative w-full rounded-lg overflow-hidden select-none"
-          style={{
-            aspectRatio: "1 / 1",
-            display: "grid",
-            gridTemplateColumns: `repeat(${boardSize}, 1fr)`,
-            gridTemplateRows: `repeat(${boardSize}, 1fr)`,
-            touchAction: "none",
-            border: `2.5px solid ${BOARD_LINE}`,
-          }}
-        >
-          {board.map((row, r) =>
-            row.map((val, c) => {
-              const region = puzzle.regionGrid[r][c];
-              const isConflict = conflicts.has(`${r}-${c}`);
-              const cellHint = hintCells.find((hint) => hint.r === r && hint.c === c);
-              const isHint = !!cellHint;
-              const hintClass = isHint ? `qp-hint-${cellHint.type}` : "";
-              return (
-                <button
-                  key={`${r}-${c}`}
-                  onClick={() => handleCellClick(r, c)}
-                  className={`qp-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`}
-                  style={{
-                    "--qp-region-color": REGION_COLORS[region % REGION_COLORS.length],
-                    "--qp-region-dark": DARK_REGION_COLORS[region % DARK_REGION_COLORS.length],
-                    backgroundColor: "var(--qp-region-color)",
-                    borderTop: edgeBorder(r, c, -1, 0),
-                    borderBottom: edgeBorder(r, c, 1, 0),
-                    borderLeft: edgeBorder(r, c, 0, -1),
-                    borderRight: edgeBorder(r, c, 0, 1),
-                    boxShadow: isConflict ? `inset 0 0 0 3px ${RED}` : "none",
-                  }}
-                >
-                  {val === 2 && (
-                    <Crown
-                      key={`crown-${r}-${c}`}
-                      className="qp-crown"
-                      size={Math.max(17, 27 - boardSize)}
-                      style={{
-                        color: isConflict ? RED : INK,
-                        fill: isConflict ? "rgba(217,105,92,0.22)" : "#F6C453",
-                      }}
-                      strokeWidth={2.6}
-                    />
-                  )}
-                  {val === 1 && (
-                    <X
-                      className="qp-cross"
-                      size={Math.max(13, 22 - boardSize)}
-                      strokeWidth={2.6}
-                      style={{ color: "rgba(17,24,39,0.60)" }}
-                    />
-                  )}
-                  {isHint && cellHint.type === "cross" && cellHint.src !== "queen-elimination" && val === 0 && (
-                    <X
-                      className="qp-cross"
-                      size={Math.max(13, 22 - boardSize)}
-                      strokeWidth={2.8}
-                      style={{ color: "#2563EB", opacity: 0.72, pointerEvents: "none" }}
-                    />
-                  )}
-                  {isHint && cellHint.type === "queen" && val !== 2 && (
-                    <Crown
-                      className="qp-crown"
-                      size={Math.max(17, 27 - boardSize)}
-                      strokeWidth={2.6}
-                      style={{ color: "#047857", fill: "rgba(16,185,129,0.28)", opacity: 0.82, pointerEvents: "none" }}
-                    />
-                  )}
-                </button>
-              );
-            })
-          )}
+        <GameSolvedPanel
+          solved={solved}
+          difficultyRating={difficultyRating}
+          icon={<Crown size={32} style={{ color: GOLD }} />}
+          stats={
+            <>
+              {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
+            </>
+          }
+          rewardResult={rewardResult}
+          savedStatId={savedStatId}
+          onRated={setDifficultyRating}
+          completionFinished={completionFinished}
+          showPlayAgain={!isChallenge}
+          onPlayAgain={() => newPuzzle(n)}
+        />
 
-          <GameSolvedPanel
-            solved={solved}
-            difficultyRating={difficultyRating}
-            icon={<Crown size={32} style={{ color: GOLD }} />}
-            stats={
-              <>
-                {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
-              </>
-            }
-            rewardResult={rewardResult}
-            savedStatId={savedStatId}
-            onRated={setDifficultyRating}
-            completionFinished={completionFinished}
-            showPlayAgain={!isChallenge}
-            onPlayAgain={() => newPuzzle(n)}
-          />
-        </div>
+        {solved ? <BoardReviewToggle>{boardGrid}</BoardReviewToggle> : boardGrid}
 
-        <p style={{ color: CREAM, opacity: 0.35 }} className="text-center text-[11px] mt-3">
-          {queensCount}/{boardSize} crowns placed
-        </p>
+        {!solved && (
+          <p style={{ color: CREAM, opacity: 0.35 }} className="text-center text-[11px] mt-3">
+            {queensCount}/{boardSize} crowns placed
+          </p>
+        )}
       </div>
     </div>
   );

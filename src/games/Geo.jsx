@@ -429,7 +429,6 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
         <GameSolvedPanel
           solved={solved}
           difficultyRating={difficultyRating}
-          variant="inline"
           icon={<Globe2 size={32} style={{ color: ACCENT }} />}
           title={t("geo.result", { correct: questions.length - mistakes, total: questions.length })}
           stats={

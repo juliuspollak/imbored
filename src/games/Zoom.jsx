@@ -373,7 +373,6 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
         <GameSolvedPanel
           solved={solved}
           difficultyRating={difficultyRating}
-          variant="inline"
           icon={<ZoomIn size={32} style={{ color: ACCENT }} />}
           title={t("zoom.result", { correct: correctLog.filter(Boolean).length, total: steps.length })}
           stats={

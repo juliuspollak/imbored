@@ -4,26 +4,6 @@ import { rateDifficulty } from "./lib/saveStats.js";
 import { useI18n } from "./lib/i18n.jsx";
 import "./game-solved-panel.css";
 
-// The overlay must cover the board from its very first paint, so its
-// position/background/blur live inline (guaranteed to be present the instant
-// the element exists) rather than in the external stylesheet. Every game is
-// lazy-loaded, so relying on an external class for this would risk a frame
-// (or, on a slow connection, up to about a second) where the panel's text is
-// visible before its background/positioning has actually applied - exposing
-// the finished board underneath. Only the dark-mode override, which by its
-// nature has to live in a real stylesheet rule, stays in game-solved-panel.css.
-const OVERLAY_STYLE = {
-  position: "absolute",
-  inset: 0,
-  zIndex: 20,
-  borderRadius: 12,
-  padding: 16,
-  background: "rgba(255,255,255,0.97)",
-  WebkitBackdropFilter: "blur(4px)",
-  backdropFilter: "blur(4px)",
-  isolation: "isolate",
-};
-
 // Shared "you solved it" panel for every puzzle game. Each game used to hand-roll
 // this block with its own inline colours, which is why dark mode only ever got
 // fixed for whichever game someone happened to be working on at the time (Zip).
@@ -45,7 +25,6 @@ const OVERLAY_STYLE = {
 export default function GameSolvedPanel({
   solved,
   difficultyRating,
-  variant = "overlay",
   icon,
   title,
   stats,
@@ -64,10 +43,7 @@ export default function GameSolvedPanel({
   if (!solved || difficultyRating !== null) return null;
 
   return (
-    <div
-      className={`game-solved-panel game-solved-panel--${variant}`}
-      style={variant === "overlay" ? OVERLAY_STYLE : undefined}
-    >
+    <div className="game-solved-panel">
       {icon}
       <p className="game-solved-title">{title ?? t("common.solved")}</p>
       {stats && <p className="game-solved-stats">{stats}</p>}

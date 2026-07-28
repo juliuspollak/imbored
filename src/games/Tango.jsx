@@ -4,6 +4,7 @@ import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
+import BoardReviewToggle from "../BoardReviewToggle.jsx";
 import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
@@ -537,6 +538,156 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     }
   }
 
+  const boardGrid = (
+    <div
+      className="tg-board-shell relative w-full rounded-2xl overflow-hidden"
+      style={{
+        aspectRatio: "1 / 1",
+        display: "grid",
+        gridTemplateColumns: `repeat(${SIZE}, 1fr)`,
+        gridTemplateRows: `repeat(${SIZE}, 1fr)`,
+        background: "linear-gradient(145deg, #FBFCFE 0%, #F2F5F9 100%)",
+        border: "6px solid rgba(255,255,255,.92)",
+        boxShadow: "0 16px 34px rgba(16,24,40,.13), 0 2px 8px rgba(16,24,40,.08), inset 0 0 0 1px rgba(16,24,40,.08)",
+        containerType: "inline-size",
+      }}
+    >
+      {board.map((row, r) =>
+        row.map((val, c) => {
+          const isGiven = puzzle.givens[r][c] !== 0;
+          const isConflict = displayedConflicts.has(`${r}-${c}`);
+          const isHint = hintCell && hintCell.r === r && hintCell.c === c;
+          const hintClass = isHint && !isConflict ? `tg-hint-${hintCell.type}` : "";
+          return (
+            <button
+              key={`${r}-${c}`}
+              onClick={() => handleCellClick(r, c)}
+              disabled={isGiven}
+              className={`tg-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`}
+              style={{
+                background: isGiven ? "rgba(120,113,100,.075)" : "rgba(255,255,255,.22)",
+                border: "1px solid rgba(27,33,41,0.14)",
+                boxShadow: isConflict ? `inset 0 0 0 3px ${RED}` : "none",
+                cursor: isGiven ? "default" : "pointer",
+              }}
+            >
+              {val === SUN && (
+                <span className="tg-symbol tg-symbol-disc tg-symbol-disc--sun"><SunIcon key={`sun-${r}-${c}`} size={Math.max(25, 35 - SIZE)} isConflict={isConflict} /></span>
+              )}
+              {val === MOON && (
+                <span className="tg-symbol tg-symbol-disc tg-symbol-disc--moon"><ModernMoonIcon key={`moon-${r}-${c}`} size={Math.max(25, 35 - SIZE)} isConflict={isConflict} /></span>
+              )}
+              {/* The pulsing border alone doesn't say what belongs here —
+                  show a faint preview of the actual symbol. For an empty
+                  hinted cell it sits centred like a real placement; for a
+                  wrong existing symbol (val !== EMPTY) it sits as a small
+                  corner badge instead, so it doesn't visually collide
+                  with the (still-visible, still red) wrong symbol. */}
+              {isHint && hintCell.symbol && !solved && (
+                val === EMPTY ? (
+                  <span className="tg-hint-ghost" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+                    {hintCell.symbol === SUN ? (
+                      <SunIcon size={Math.max(22, 32 - SIZE)} style={{ color: SUN_COLOR, opacity: 0.4 }} />
+                    ) : (
+                      <ModernMoonIcon size={Math.max(24, 34 - SIZE)} style={{ opacity: 0.42 }} />
+                    )}
+                  </span>
+                ) : (
+                  <span
+                    className="tg-hint-ghost-badge"
+                    style={{
+                      position: "absolute", top: 2, right: 2, width: 14, height: 14, borderRadius: "50%",
+                      background: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center",
+                      boxShadow: "0 1px 3px rgba(16,24,40,0.35)", pointerEvents: "none",
+                    }}
+                  >
+                    {hintCell.symbol === SUN ? (
+                      <SunIcon size={10} style={{ color: SUN_COLOR }} />
+                    ) : (
+                      <ModernMoonIcon size={9} style={{ color: "#40557D" }} />
+                    )}
+                  </span>
+                )
+              )}
+            </button>
+          );
+        })
+      )}
+
+      {puzzle.edges.map((e) => {
+        const horizontal = e.r1 === e.r2;
+        const cx = horizontal ? ((e.c1 + 1) / SIZE) * 100 : ((e.c1 + 0.5) / SIZE) * 100;
+        const cy = horizontal ? ((e.r1 + 0.5) / SIZE) * 100 : ((e.r1 + 1) / SIZE) * 100;
+        return (
+          <span
+            key={`edge-${e.r1}-${e.c1}-${e.r2}-${e.c2}`}
+            className="tg-edge-token"
+            style={{
+              position: "absolute",
+              left: `${cx}%`,
+              top: `${cy}%`,
+              transform: "translate(-50%, -50%)",
+              width: 26,
+              height: 26,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,.92)",
+              border: `1px solid rgba(16,24,40,0.14)`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 13,
+              fontWeight: 700,
+              color: CREAM,
+              boxShadow: "0 3px 9px rgba(16,24,40,.14)",
+              pointerEvents: "none",
+              zIndex: 2,
+            }}
+          >
+            {e.type === "eq" ? "=" : "×"}
+          </span>
+        );
+      })}
+
+      {celebratingLines.map((line) => {
+        const [direction, rawIndex] = line.split("-");
+        const index = Number(rawIndex);
+        const isRow = direction === "row";
+        return (
+          <div
+            key={line}
+            className="tg-line-complete absolute pointer-events-none"
+            style={{
+              left: isRow ? 0 : `${(index / SIZE) * 100}%`,
+              top: isRow ? `${(index / SIZE) * 100}%` : 0,
+              width: isRow ? "100%" : `${100 / SIZE}%`,
+              height: isRow ? `${100 / SIZE}%` : "100%",
+              zIndex: 4,
+              border: "2px solid rgba(22,163,74,.78)",
+              background: isRow
+                ? "linear-gradient(90deg,rgba(22,163,74,.04),rgba(22,163,74,.22),rgba(255,255,255,.42),rgba(22,163,74,.04))"
+                : "linear-gradient(180deg,rgba(22,163,74,.04),rgba(22,163,74,.22),rgba(255,255,255,.42),rgba(22,163,74,.04))",
+              boxShadow: "0 0 22px rgba(22,163,74,.32), inset 0 0 18px rgba(255,255,255,.55)",
+            }}
+          >
+            <span
+              className="tg-line-spark absolute grid place-items-center rounded-full text-white font-bold"
+              style={{
+                left: "50%",
+                top: "50%",
+                width: 28,
+                height: 28,
+                background: "linear-gradient(145deg,#35C886,#0D9A62)",
+                boxShadow: "0 5px 16px rgba(13,154,98,.38)",
+              }}
+            >
+              ✓
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div
       style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}
@@ -636,8 +787,9 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           </p>
         </div>
 
-        {/* day selector — locked to today's date in challenge mode */}
-        {isChallenge ? (
+        {/* day selector — you already picked the day you just played; it
+            belongs on the next puzzle, not this result. */}
+        {!solved && (isChallenge ? (
           <div className="flex justify-center mb-4">
             <div className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: `${GOLD}18`, color: GOLD }}>
               <span className="text-xs font-semibold">{t("common.todaysChallenge")}</span>
@@ -650,7 +802,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
             value={dayIdx}
             onChange={setDayIdx}
           />
-        )}
+        ))}
 
         {solved && difficultyRating !== null && (
           <div className="flex justify-center mb-3">
@@ -658,59 +810,65 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           </div>
         )}
 
-        {/* stats row */}
-        <div className="flex items-center justify-center gap-4 mb-3 px-1">
-          <div className="flex items-center gap-1.5" style={{ color: CREAM, opacity: 0.7 }}>
-            <TimerIcon size={14} />
-            <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
+        {/* stats row — redundant with GameSolvedPanel's own stats once solved */}
+        {!solved && (
+          <div className="flex items-center justify-center gap-4 mb-3 px-1">
+            <div className="flex items-center gap-1.5" style={{ color: CREAM, opacity: 0.7 }}>
+              <TimerIcon size={14} />
+              <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
+            </div>
+            <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
+              mistakes: <span style={{ color: mistakes > 0 ? RED : CREAM }}>{mistakes}</span>
+            </div>
+            <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
+              hints: <span style={{ color: hintsUsed > 0 ? GOLD : CREAM }}>{hintsUsed}</span>
+            </div>
           </div>
-          <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
-            mistakes: <span style={{ color: mistakes > 0 ? RED : CREAM }}>{mistakes}</span>
-          </div>
-          <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
-            hints: <span style={{ color: hintsUsed > 0 ? GOLD : CREAM }}>{hintsUsed}</span>
-          </div>
-        </div>
+        )}
 
-        {/* toolbar - text labels, spread at top */}
-        <div className="game-toolbar flex items-center justify-between gap-2 mb-3 px-1">
-          {[
-            { label: t("common.undo"), onClick: handleUndo, disabled: solved || history.length === 0 },
-            { label: t("common.reset"), onClick: handleReset, disabled: solved },
-            { label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
-            {
-              label: t("common.hint"),
-              onClick: handleHint,
-              disabled: solved,
-              hint: true,
-            },
-          ].map(({ label, onClick, disabled, hint }) => hint ? (
-            <HintCooldownButton
-              key="hint"
-              cooldown={hintCooldown}
-              label={label}
-              onClick={onClick}
-              disabled={disabled}
-            />
-          ) : (
-            <button
-              key={label}
-              onClick={onClick}
-              disabled={disabled}
-              aria-label={label}
-              className="gloss-button flex-1 rounded-lg py-2 text-xs font-semibold transition-all"
-              style={{
-                background: disabled ? "rgba(16,24,40,0.06)" : undefined,
-                color: disabled ? "rgba(27,33,41,0.4)" : CREAM,
-                cursor: disabled ? "default" : "pointer",
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        {/* toolbar — Undo/Reset/Hint only ever act on a puzzle still in
+            progress; once solved there's nothing left for any of them to do
+            (Play Again in the solved panel below replaces "New"). */}
+        {!solved && (
+          <div className="game-toolbar flex items-center justify-between gap-2 mb-3 px-1">
+            {[
+              { label: t("common.undo"), onClick: handleUndo, disabled: history.length === 0 },
+              { label: t("common.reset"), onClick: handleReset, disabled: false },
+              { label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
+              {
+                label: t("common.hint"),
+                onClick: handleHint,
+                disabled: false,
+                hint: true,
+              },
+            ].map(({ label, onClick, disabled, hint }) => hint ? (
+              <HintCooldownButton
+                key="hint"
+                cooldown={hintCooldown}
+                label={label}
+                onClick={onClick}
+                disabled={disabled}
+              />
+            ) : (
+              <button
+                key={label}
+                onClick={onClick}
+                disabled={disabled}
+                aria-label={label}
+                className="gloss-button flex-1 rounded-lg py-2 text-xs font-semibold transition-all"
+                style={{
+                  background: disabled ? "rgba(16,24,40,0.06)" : undefined,
+                  color: disabled ? "rgba(27,33,41,0.4)" : CREAM,
+                  cursor: disabled ? "default" : "pointer",
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
 
-        {showHelp && (
+        {!solved && showHelp && (
           <div
             className="text-xs rounded-lg p-2.5 mb-3"
             style={{ background: "rgba(16,24,40,0.05)", color: CREAM, opacity: 0.75, lineHeight: 1.4 }}
@@ -722,179 +880,34 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           </div>
         )}
 
-        {/* board */}
-        <div
-          className="tg-board-shell relative w-full rounded-2xl overflow-hidden"
-          style={{
-            aspectRatio: "1 / 1",
-            display: "grid",
-            gridTemplateColumns: `repeat(${SIZE}, 1fr)`,
-            gridTemplateRows: `repeat(${SIZE}, 1fr)`,
-            background: "linear-gradient(145deg, #FBFCFE 0%, #F2F5F9 100%)",
-            border: "6px solid rgba(255,255,255,.92)",
-            boxShadow: "0 16px 34px rgba(16,24,40,.13), 0 2px 8px rgba(16,24,40,.08), inset 0 0 0 1px rgba(16,24,40,.08)",
-            containerType: "inline-size",
-          }}
-        >
-          {board.map((row, r) =>
-            row.map((val, c) => {
-              const isGiven = puzzle.givens[r][c] !== 0;
-              const isConflict = displayedConflicts.has(`${r}-${c}`);
-              const isHint = hintCell && hintCell.r === r && hintCell.c === c;
-              const hintClass = isHint && !isConflict ? `tg-hint-${hintCell.type}` : "";
-              return (
-                <button
-                  key={`${r}-${c}`}
-                  onClick={() => handleCellClick(r, c)}
-                  disabled={isGiven}
-                  className={`tg-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`}
-                  style={{
-                    background: isGiven ? "rgba(120,113,100,.075)" : "rgba(255,255,255,.22)",
-                    border: "1px solid rgba(27,33,41,0.14)",
-                    boxShadow: isConflict ? `inset 0 0 0 3px ${RED}` : "none",
-                    cursor: isGiven ? "default" : "pointer",
-                  }}
-                >
-                  {val === SUN && (
-                    <span className="tg-symbol tg-symbol-disc tg-symbol-disc--sun"><SunIcon key={`sun-${r}-${c}`} size={Math.max(25, 35 - SIZE)} isConflict={isConflict} /></span>
-                  )}
-                  {val === MOON && (
-                    <span className="tg-symbol tg-symbol-disc tg-symbol-disc--moon"><ModernMoonIcon key={`moon-${r}-${c}`} size={Math.max(25, 35 - SIZE)} isConflict={isConflict} /></span>
-                  )}
-                  {/* The pulsing border alone doesn't say what belongs here —
-                      show a faint preview of the actual symbol. For an empty
-                      hinted cell it sits centred like a real placement; for a
-                      wrong existing symbol (val !== EMPTY) it sits as a small
-                      corner badge instead, so it doesn't visually collide
-                      with the (still-visible, still red) wrong symbol. */}
-                  {isHint && hintCell.symbol && !solved && (
-                    val === EMPTY ? (
-                      <span className="tg-hint-ghost" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-                        {hintCell.symbol === SUN ? (
-                          <SunIcon size={Math.max(22, 32 - SIZE)} style={{ color: SUN_COLOR, opacity: 0.4 }} />
-                        ) : (
-                          <ModernMoonIcon size={Math.max(24, 34 - SIZE)} style={{ opacity: 0.42 }} />
-                        )}
-                      </span>
-                    ) : (
-                      <span
-                        className="tg-hint-ghost-badge"
-                        style={{
-                          position: "absolute", top: 2, right: 2, width: 14, height: 14, borderRadius: "50%",
-                          background: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center",
-                          boxShadow: "0 1px 3px rgba(16,24,40,0.35)", pointerEvents: "none",
-                        }}
-                      >
-                        {hintCell.symbol === SUN ? (
-                          <SunIcon size={10} style={{ color: SUN_COLOR }} />
-                        ) : (
-                          <ModernMoonIcon size={9} style={{ color: "#40557D" }} />
-                        )}
-                      </span>
-                    )
-                  )}
-                </button>
-              );
-            })
-          )}
+        <GameSolvedPanel
+          solved={solved}
+          difficultyRating={difficultyRating}
+          icon={
+            <div className="flex items-center gap-1">
+              <SunIcon size={27} style={{ color: SUN_COLOR }} />
+              <ModernMoonIcon size={26} style={{ color: "#40557D" }} />
+            </div>
+          }
+          stats={
+            <>
+              {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
+            </>
+          }
+          rewardResult={rewardResult}
+          savedStatId={savedStatId}
+          onRated={setDifficultyRating}
+          showPlayAgain={!isChallenge}
+          onPlayAgain={() => newPuzzle(dayIdx)}
+        />
 
-          {puzzle.edges.map((e) => {
-            const horizontal = e.r1 === e.r2;
-            const cx = horizontal ? ((e.c1 + 1) / SIZE) * 100 : ((e.c1 + 0.5) / SIZE) * 100;
-            const cy = horizontal ? ((e.r1 + 0.5) / SIZE) * 100 : ((e.r1 + 1) / SIZE) * 100;
-            return (
-              <span
-                key={`edge-${e.r1}-${e.c1}-${e.r2}-${e.c2}`}
-                className="tg-edge-token"
-                style={{
-                  position: "absolute",
-                  left: `${cx}%`,
-                  top: `${cy}%`,
-                  transform: "translate(-50%, -50%)",
-                  width: 26,
-                  height: 26,
-                  borderRadius: "50%",
-                  background: "rgba(255,255,255,.92)",
-                  border: `1px solid rgba(16,24,40,0.14)`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: CREAM,
-                  boxShadow: "0 3px 9px rgba(16,24,40,.14)",
-                  pointerEvents: "none",
-                  zIndex: 2,
-                }}
-              >
-                {e.type === "eq" ? "=" : "×"}
-              </span>
-            );
-          })}
+        {solved ? <BoardReviewToggle>{boardGrid}</BoardReviewToggle> : boardGrid}
 
-          {celebratingLines.map((line) => {
-            const [direction, rawIndex] = line.split("-");
-            const index = Number(rawIndex);
-            const isRow = direction === "row";
-            return (
-              <div
-                key={line}
-                className="tg-line-complete absolute pointer-events-none"
-                style={{
-                  left: isRow ? 0 : `${(index / SIZE) * 100}%`,
-                  top: isRow ? `${(index / SIZE) * 100}%` : 0,
-                  width: isRow ? "100%" : `${100 / SIZE}%`,
-                  height: isRow ? `${100 / SIZE}%` : "100%",
-                  zIndex: 4,
-                  border: "2px solid rgba(22,163,74,.78)",
-                  background: isRow
-                    ? "linear-gradient(90deg,rgba(22,163,74,.04),rgba(22,163,74,.22),rgba(255,255,255,.42),rgba(22,163,74,.04))"
-                    : "linear-gradient(180deg,rgba(22,163,74,.04),rgba(22,163,74,.22),rgba(255,255,255,.42),rgba(22,163,74,.04))",
-                  boxShadow: "0 0 22px rgba(22,163,74,.32), inset 0 0 18px rgba(255,255,255,.55)",
-                }}
-              >
-                <span
-                  className="tg-line-spark absolute grid place-items-center rounded-full text-white font-bold"
-                  style={{
-                    left: "50%",
-                    top: "50%",
-                    width: 28,
-                    height: 28,
-                    background: "linear-gradient(145deg,#35C886,#0D9A62)",
-                    boxShadow: "0 5px 16px rgba(13,154,98,.38)",
-                  }}
-                >
-                  ✓
-                </span>
-              </div>
-            );
-          })}
-
-          <GameSolvedPanel
-            solved={solved}
-            difficultyRating={difficultyRating}
-            icon={
-              <div className="flex items-center gap-1">
-                <SunIcon size={27} style={{ color: SUN_COLOR }} />
-                <ModernMoonIcon size={26} style={{ color: "#40557D" }} />
-              </div>
-            }
-            stats={
-              <>
-                {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
-              </>
-            }
-            rewardResult={rewardResult}
-            savedStatId={savedStatId}
-            onRated={setDifficultyRating}
-            showPlayAgain={!isChallenge}
-            onPlayAgain={() => newPuzzle(dayIdx)}
-          />
-        </div>
-
-        <p style={{ color: CREAM, opacity: 0.35 }} className="text-center text-[11px] mt-3">
-          {filledCount}/{SIZE * SIZE} filled
-        </p>
+        {!solved && (
+          <p style={{ color: CREAM, opacity: 0.35 }} className="text-center text-[11px] mt-3">
+            {filledCount}/{SIZE * SIZE} filled
+          </p>
+        )}
       </div>
     </div>
   );
