@@ -130,8 +130,16 @@ export default function Progress({ onBack }) {
   const levelTarget=nextLevelThreshold(level);
   const pointsToNext=Math.max(0,levelTarget-lifetimePoints);
   const pct=useMemo(()=>Math.max(0,Math.min(100,((lifetimePoints-levelStart)/Math.max(1,levelTarget-levelStart))*100)),[levelStart,levelTarget,lifetimePoints]);
-  const today=new Date(); today.setHours(0,0,0,0); const last=progress?.last_completed_date ? new Date(progress.last_completed_date+"T00:00:00") : null;
-  const canProtect=last && Math.round((today-last)/86400000)===2 && !(progress?.streak_protected_through);
+  // Compares against the live challenge-streak columns (challenge_current_streak /
+  // challenge_last_completed_date), not the legacy current_streak / last_completed_date
+  // pair the scoring function stopped updating after the streak system moved to
+  // per-day-in-Sydney tracking - those are frozen and unrelated to the real streak.
+  // Sydney-day strings (not the browser's local timezone) so this can't drift from
+  // what the server actually considers "yesterday"/"two days ago".
+  const sydneyDateString=(offsetDays=0)=>new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney"}).format(new Date(Date.now()+offsetDays*86400000));
+  const canProtect=Number(progress?.challenge_current_streak||0)>0
+    && progress?.challenge_last_completed_date===sydneyDateString(-2)
+    && !(progress?.streak_protected_through && progress.streak_protected_through>=sydneyDateString(-1));
   const socialUnlocked=!!profile?.is_admin || Number(progress?.current_level || 1)>=2 || Number(progress?.lifetime_points || 0)>=500;
 
   async function redeem(id){ if(!confirm("Redeem this reward with your Points?"))return; const {error}=await supabase.rpc("redeem_reward",{target_reward_id:id,note:null}); setMessage(error?.message||"Reward requested"); refresh(); }
@@ -197,7 +205,7 @@ export default function Progress({ onBack }) {
       <div className="rounded-2xl px-3 py-2.5 mb-3 flex items-start gap-2" style={{background:"rgba(47,111,237,.07)",color:INK}}>
         <Info size={14} className="shrink-0 mt-0.5" style={{color:ACCENT}}/>
         <span className="text-[10px] leading-relaxed" style={{opacity:.62}}>
-          Lifetime points raise your level and never decrease when you spend or send points. Gameplay can earn up to {rules?.daily_points_cap||40} points per Sydney day; only the first {rules?.practice_daily_limit||3} Practice games score, at {rules?.practice_points_percent||50}% of Challenge points.
+          Lifetime points raise your level and never decrease when you spend or send points. Gameplay can earn up to {rules?.daily_points_cap||40} points per Sydney day; only the first {rules?.practice_daily_limit||3} Practice games score per game each day, at {rules?.practice_points_percent||50}% of Challenge points.
         </span>
       </div>
 

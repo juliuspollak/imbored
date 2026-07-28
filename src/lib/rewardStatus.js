@@ -5,8 +5,8 @@ export function rewardStatusText(reward, fallback = "No points awarded") {
   if (reward.practice_limit_reached || reward.daily_limit_reached) {
     const limit = reward.breakdown?.practice_daily_limit;
     return limit
-      ? `Practice limit reached (${limit}/day) — resets tomorrow`
-      : "Practice limit reached for today — resets tomorrow";
+      ? `Practice limit reached for this game (${limit}/day) — resets tomorrow`
+      : "Practice limit reached for this game — resets tomorrow";
   }
   if (reward.daily_points_cap_reached) {
     const earned = reward.daily_points_earned;
