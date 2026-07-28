@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
-import { rateDifficulty } from "../lib/saveStats.js";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import { Grid3x3, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Delete, Lock } from "lucide-react";
@@ -657,24 +656,21 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
             })
           )}
 
-          {solved && difficultyRating === null && (
-            <GameSolvedPanel
-              icon={<Grid3x3 size={26} style={{ color: GOLD }} />}
-              title="Solved"
-              stats={
-                <>
-                  {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
-                </>
-              }
-              rewardResult={rewardResult?.points_awarded != null ? rewardResult : null}
-              savedStatId={savedStatId}
-              onRate={(value) => rateDifficulty(savedStatId, value)}
-              onRated={setDifficultyRating}
-              showPlayAgain={!isChallenge}
-              onPlayAgain={() => newPuzzle(dayIdx)}
-              noPointsLabel={t("common.noPoints")}
-            />
-          )}
+          <GameSolvedPanel
+            solved={solved}
+            difficultyRating={difficultyRating}
+            icon={<Grid3x3 size={26} style={{ color: GOLD }} />}
+            stats={
+              <>
+                {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
+              </>
+            }
+            rewardResult={rewardResult}
+            savedStatId={savedStatId}
+            onRated={setDifficultyRating}
+            showPlayAgain={!isChallenge}
+            onPlayAgain={() => newPuzzle(dayIdx)}
+          />
         </div>
 
         {/* number palette */}

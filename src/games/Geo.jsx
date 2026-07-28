@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
-import { rateDifficulty } from "../lib/saveStats.js";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import { Globe2, RotateCcw, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
@@ -427,26 +426,24 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
           </>
         )}
 
-        {solved && difficultyRating === null && (
-          <GameSolvedPanel
-            variant="inline"
-            icon={<Globe2 size={32} style={{ color: ACCENT }} />}
-            title={t("geo.result", { correct: questions.length - mistakes, total: questions.length })}
-            stats={
-              <>
-                {fmtTime(seconds)} &middot; {t(hintsUsed === 1 ? "geo.hints.one" : "geo.hints.other", { count: hintsUsed })}
-              </>
-            }
-            rewardResult={rewardResult?.points_awarded != null ? rewardResult : null}
-            savedStatId={savedStatId}
-            onRate={(value) => rateDifficulty(savedStatId, value)}
-            onRated={setDifficultyRating}
-            showPlayAgain={!isChallenge}
-            onPlayAgain={() => newQuiz(dayIdx)}
-            playAgainLabel={t("geo.playAgain")}
-            noPointsLabel={t("common.noPoints")}
-          />
-        )}
+        <GameSolvedPanel
+          solved={solved}
+          difficultyRating={difficultyRating}
+          variant="inline"
+          icon={<Globe2 size={32} style={{ color: ACCENT }} />}
+          title={t("geo.result", { correct: questions.length - mistakes, total: questions.length })}
+          stats={
+            <>
+              {fmtTime(seconds)} &middot; {t(hintsUsed === 1 ? "geo.hints.one" : "geo.hints.other", { count: hintsUsed })}
+            </>
+          }
+          rewardResult={rewardResult}
+          savedStatId={savedStatId}
+          onRated={setDifficultyRating}
+          showPlayAgain={!isChallenge}
+          onPlayAgain={() => newQuiz(dayIdx)}
+          playAgainLabel={t("geo.playAgain")}
+        />
 
         {solved && difficultyRating !== null && (
           <div className="flex flex-col items-center gap-3 py-4">

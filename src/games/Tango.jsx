@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
-import { rateDifficulty } from "../lib/saveStats.js";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
@@ -871,29 +870,26 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
             );
           })}
 
-          {solved && difficultyRating === null && (
-            <GameSolvedPanel
-              icon={
-                <div className="flex items-center gap-1">
-                  <SunIcon size={27} style={{ color: SUN_COLOR }} />
-                  <ModernMoonIcon size={26} style={{ color: "#40557D" }} />
-                </div>
-              }
-              title="Solved"
-              stats={
-                <>
-                  {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
-                </>
-              }
-              rewardResult={rewardResult?.points_awarded != null ? rewardResult : null}
-              savedStatId={savedStatId}
-              onRate={(value) => rateDifficulty(savedStatId, value)}
-              onRated={setDifficultyRating}
-              showPlayAgain={!isChallenge}
-              onPlayAgain={() => newPuzzle(dayIdx)}
-              noPointsLabel={t("common.noPoints")}
-            />
-          )}
+          <GameSolvedPanel
+            solved={solved}
+            difficultyRating={difficultyRating}
+            icon={
+              <div className="flex items-center gap-1">
+                <SunIcon size={27} style={{ color: SUN_COLOR }} />
+                <ModernMoonIcon size={26} style={{ color: "#40557D" }} />
+              </div>
+            }
+            stats={
+              <>
+                {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
+              </>
+            }
+            rewardResult={rewardResult}
+            savedStatId={savedStatId}
+            onRated={setDifficultyRating}
+            showPlayAgain={!isChallenge}
+            onPlayAgain={() => newPuzzle(dayIdx)}
+          />
         </div>
 
         <p style={{ color: CREAM, opacity: 0.35 }} className="text-center text-[11px] mt-3">

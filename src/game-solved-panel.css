@@ -79,6 +79,17 @@
   color: #ffffff;
 }
 
+/* Rated/finalising/spinner swap in once savedStatId (or completionFinished)
+   arrives from the network - fade it in rather than a hard pop. */
+.game-solved-rating-in {
+  animation: game-solved-fade-in 0.32s ease both;
+}
+
+@keyframes game-solved-fade-in {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes game-solved-pulse {
   0%, 100% { opacity: 0.4; transform: scale(0.85); }
   50% { opacity: 1; transform: scale(1); }

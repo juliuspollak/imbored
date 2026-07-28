@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
-import { rateDifficulty } from "../lib/saveStats.js";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Flag, Lock } from "lucide-react";
@@ -1022,26 +1021,23 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
             )}
           </svg>
 
-          {solved && difficultyRating === null && (
-            <GameSolvedPanel
-              icon={<Flag size={28} style={{ color: ZIP_GREEN }} />}
-              title={t("common.solved")}
-              stats={
-                <>
-                  {fmtTime(seconds)} &middot; {efficiency}% efficient
-                  {resets > 0 ? ` · ${resets} reset${resets === 1 ? "" : "s"}` : ""}
-                  {" · "}{hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
-                </>
-              }
-              rewardResult={rewardResult?.completed ? rewardResult : null}
-              savedStatId={savedStatId}
-              onRate={(value) => rateDifficulty(savedStatId, value)}
-              onRated={setDifficultyRating}
-              showPlayAgain={!isChallenge}
-              onPlayAgain={() => newPuzzle(dayIdx)}
-              noPointsLabel={t("common.noPoints")}
-            />
-          )}
+          <GameSolvedPanel
+            solved={solved}
+            difficultyRating={difficultyRating}
+            icon={<Flag size={28} style={{ color: ZIP_GREEN }} />}
+            stats={
+              <>
+                {fmtTime(seconds)} &middot; {efficiency}% efficient
+                {resets > 0 ? ` · ${resets} reset${resets === 1 ? "" : "s"}` : ""}
+                {" · "}{hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
+              </>
+            }
+            rewardResult={rewardResult}
+            savedStatId={savedStatId}
+            onRated={setDifficultyRating}
+            showPlayAgain={!isChallenge}
+            onPlayAgain={() => newPuzzle(dayIdx)}
+          />
         </div>
 
         {solved && difficultyRating !== null && (

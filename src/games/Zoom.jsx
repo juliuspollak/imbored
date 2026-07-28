@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
-import { rateDifficulty } from "../lib/saveStats.js";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import { ZoomIn, RotateCcw, Timer as TimerIcon, HelpCircle } from "lucide-react";
@@ -371,26 +370,24 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
           </>
         )}
 
-        {solved && difficultyRating === null && (
-          <GameSolvedPanel
-            variant="inline"
-            icon={<ZoomIn size={32} style={{ color: ACCENT }} />}
-            title={t("zoom.result", { correct: correctLog.filter(Boolean).length, total: steps.length })}
-            stats={
-              <>
-                {fmtTime(seconds)} &middot; {t("zoom.roundsNailed", { count: roundsNailed, total: totalRounds })}
-              </>
-            }
-            rewardResult={rewardResult?.points_awarded != null ? rewardResult : null}
-            savedStatId={savedStatId}
-            onRate={(value) => rateDifficulty(savedStatId, value)}
-            onRated={setDifficultyRating}
-            showPlayAgain={!isChallenge}
-            onPlayAgain={() => newQuiz(dayIdx)}
-            playAgainLabel={t("zoom.playAgain")}
-            noPointsLabel={t("common.noPoints")}
-          />
-        )}
+        <GameSolvedPanel
+          solved={solved}
+          difficultyRating={difficultyRating}
+          variant="inline"
+          icon={<ZoomIn size={32} style={{ color: ACCENT }} />}
+          title={t("zoom.result", { correct: correctLog.filter(Boolean).length, total: steps.length })}
+          stats={
+            <>
+              {fmtTime(seconds)} &middot; {t("zoom.roundsNailed", { count: roundsNailed, total: totalRounds })}
+            </>
+          }
+          rewardResult={rewardResult}
+          savedStatId={savedStatId}
+          onRated={setDifficultyRating}
+          showPlayAgain={!isChallenge}
+          onPlayAgain={() => newQuiz(dayIdx)}
+          playAgainLabel={t("zoom.playAgain")}
+        />
 
         {solved && difficultyRating !== null && (
           <div className="flex flex-col items-center gap-3 py-4">

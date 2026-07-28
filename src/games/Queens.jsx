@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
-import { rateDifficulty } from "../lib/saveStats.js";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import { Crown, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock, X } from "lucide-react";
@@ -1037,26 +1036,22 @@ export default function Queens({
             })
           )}
 
-          {solved && difficultyRating === null && (
-            <GameSolvedPanel
-              icon={<Crown size={32} style={{ color: GOLD }} />}
-              title="Solved"
-              stats={
-                <>
-                  {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
-                </>
-              }
-              rewardResult={rewardResult?.points_awarded != null ? rewardResult : null}
-              savedStatId={savedStatId}
-              onRate={(value) => rateDifficulty(savedStatId, value)}
-              onRated={setDifficultyRating}
-              completionFinished={completionFinished}
-              resultCompletedLabel="Result completed"
-              showPlayAgain={!isChallenge}
-              onPlayAgain={() => newPuzzle(n)}
-              noPointsLabel={t("common.noPoints")}
-            />
-          )}
+          <GameSolvedPanel
+            solved={solved}
+            difficultyRating={difficultyRating}
+            icon={<Crown size={32} style={{ color: GOLD }} />}
+            stats={
+              <>
+                {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
+              </>
+            }
+            rewardResult={rewardResult}
+            savedStatId={savedStatId}
+            onRated={setDifficultyRating}
+            completionFinished={completionFinished}
+            showPlayAgain={!isChallenge}
+            onPlayAgain={() => newPuzzle(n)}
+          />
         </div>
 
         <p style={{ color: CREAM, opacity: 0.35 }} className="text-center text-[11px] mt-3">
