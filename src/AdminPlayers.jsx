@@ -45,11 +45,16 @@ export default function AdminPlayers({ onBack }) {
       return;
     }
     setLoading(true);
-    let profilesResult = await supabase
-      .from("profiles")
-      .select("id,name,icon,is_private,is_admin,hidden_from_others,is_approved,is_blocked,account_deleted_at,auth_deleted_at")
-      .order("name");
-    // Compatibility while v99 is being applied.
+    let profilesResult = await supabase.rpc("admin_list_players");
+    // Keep the management screen usable while the frontend and v155 database
+    // migration are being deployed. This is the only screen allowed to use
+    // the old administrator profile visibility.
+    if (profilesResult.error?.code === "PGRST202" || /admin_list_players/i.test(profilesResult.error?.message || "")) {
+      profilesResult = await supabase
+        .from("profiles")
+        .select("id,name,icon,is_private,is_admin,hidden_from_others,is_approved,is_blocked,account_deleted_at,auth_deleted_at")
+        .order("name");
+    }
     if (profilesResult.error?.code === "42703") {
       profilesResult = await supabase
         .from("profiles")

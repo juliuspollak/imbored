@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Award, Crown, EyeOff, Flame, Gamepad2, Medal, Sparkles, Trophy, Users,
+  Award, Crown, Flame, Gamepad2, Medal, Sparkles, Trophy, Users,
 } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
+import { isCommunityVisibleProfile } from "./lib/profileVisibility.js";
 
 const BG = "#F1F3F7", PANEL = "#FFFFFF", INK = "#1B2129", ACCENT = "#2F6FED";
 const GAME_LABELS = {
@@ -20,8 +21,7 @@ function rankStyle(rank) {
 }
 
 export default function Stats({ onBack }) {
-  const { user, profile: myProfile, setUserHidden } = useAuth();
-  const isAdmin = !!myProfile?.is_admin;
+  const { user } = useAuth();
   const [rows, setRows] = useState([]);
   const [profiles, setProfiles] = useState({});
   const [progress, setProgress] = useState({});
@@ -37,7 +37,7 @@ export default function Stats({ onBack }) {
       // Individual attempts, times, mistakes and hints never leave the RPC.
       supabase.rpc("get_public_player_game_summary"),
       supabase.from("animal_rush_match_results").select("user_id"),
-      supabase.from("profiles").select("id, name, icon, mood, hidden_from_others, show_stats_to_others, account_deleted_at").is("account_deleted_at", null),
+      supabase.from("profiles").select("id, name, icon, mood, hidden_from_others, show_stats_to_others, account_deleted_at").is("account_deleted_at", null).eq("hidden_from_others", false),
       supabase.rpc("get_public_player_progress"),
     ]);
     const liveCounts = (liveResult.data || []).reduce((counts, item) => {
@@ -56,7 +56,11 @@ export default function Stats({ onBack }) {
       });
     });
     setRows([...summaries.values()]);
-    setProfiles(Object.fromEntries((profilesResult.data || []).map((item) => [item.id, item])));
+    setProfiles(Object.fromEntries(
+      (profilesResult.data || [])
+        .filter(isCommunityVisibleProfile)
+        .map((item) => [item.id, item]),
+    ));
     setProgress(Object.fromEntries((progressResult.data || []).map((item) => [item.player_id, item])));
     setProgressError(progressResult.error?.message || "");
     setSummaryError(statsResult.error?.message || "");
@@ -64,11 +68,6 @@ export default function Stats({ onBack }) {
   }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
-
-  async function handleToggleHidden(userId, currentlyHidden) {
-    await setUserHidden(userId, !currentlyHidden);
-    refresh();
-  }
 
   const players = useMemo(() => {
     const activity = {};
@@ -174,7 +173,6 @@ export default function Stats({ onBack }) {
                   background: PANEL,
                   border: player.userId === user?.id ? "1px solid rgba(47,111,237,.38)" : "1px solid rgba(16,24,40,.08)",
                   boxShadow: rank <= 3 ? "0 5px 16px rgba(20,35,60,.055)" : "none",
-                  opacity: player.profile.hidden_from_others ? .58 : 1,
                 }}
               >
                 <div className="flex items-center gap-2.5">
@@ -198,7 +196,6 @@ export default function Stats({ onBack }) {
                     <span className="block text-base font-extrabold tabular-nums" style={{ color: hasPublicProgress ? INK : "#9AA1AB" }}>{hasPublicProgress ? Number(playerProgress.lifetime_points).toLocaleString() : "—"}</span>
                     <span className="block text-[8px] uppercase tracking-wide" style={{ color: INK, opacity: .38 }}>total points</span>
                   </span>
-                  {isAdmin && <button onClick={() => handleToggleHidden(player.userId, player.profile.hidden_from_others)} className="rounded-full grid place-items-center shrink-0" style={{ width: 28, height: 28, background: player.profile.hidden_from_others ? "rgba(181,67,58,.1)" : "rgba(16,24,40,.05)", color: player.profile.hidden_from_others ? "#B5433A" : INK, opacity: player.profile.hidden_from_others ? 1 : .42 }} aria-label={player.profile.hidden_from_others ? "Show player" : "Hide player"}><EyeOff size={12}/></button>}
                 </div>
 
                 <div className="grid grid-cols-3 gap-1.5 mt-2.5 pt-2.5" style={{ borderTop: "1px solid rgba(16,24,40,.055)" }}>

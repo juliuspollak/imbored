@@ -1,5 +1,12 @@
 [
   {
+    "id": "v155-complete-hidden-player-privacy",
+    "version": "v155",
+    "date": "2026-07-28",
+    "title": "Completed hidden-player privacy",
+    "body": "Administrator-hidden players now disappear from Player Stats and every community surface for all viewers, including administrators. Team rosters, invitations, challenge summaries, live Animal Rush data, chats and transfer pickers now apply the same rule. Hidden accounts remain available only in Admin Players so they can be shown or moderated later. Profile wording now also distinguishes the player-controlled Private profile setting from detailed stats sharing."
+  },
+  {
     "id": "v154-animal-rush-colour-modes",
     "version": "v154",
     "date": "2026-07-28",

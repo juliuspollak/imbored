@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Star, Flame, Trophy, Gift, Send, Plus, ShieldCheck, ExternalLink, PartyPopper, X, Pencil, Save, Sparkles, Lock, Gamepad2, ArrowDownLeft, ArrowUpRight, RotateCcw, Info, ChevronDown } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase } from "./lib/supabase.js";
+import { isCommunityVisibleProfile } from "./lib/profileVisibility.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { markTransfersSeen } from "./lib/useNewTransfers.js";
 
@@ -85,7 +86,7 @@ export default function Progress({ onBack }) {
       supabase.from("reward_rules").select("*").eq("is_active",true).maybeSingle(),
       supabase.from("rewards").select("*").eq("is_active",true).order("points_cost"),
       supabase.from("reward_wishes").select("*").eq("player_id",user.id).order("created_at",{ascending:false}),
-      supabase.from("profiles").select("id,name,icon,is_admin,is_approved,is_blocked,account_deleted_at").neq("id",user.id).order("name"),
+      supabase.from("profiles").select("id,name,icon,is_admin,is_approved,is_blocked,hidden_from_others,account_deleted_at").neq("id",user.id).order("name"),
       supabase.from("points_transactions").select("id,points,reason_code,game_stat_id,related_player_id,reward_id,metadata,created_at,seen_at")
         .eq("player_id",user.id).order("created_at",{ascending:false}).order("id",{ascending:false}).limit(ACTIVITY_LIMIT),
       supabase.from("points_transactions").select("id,points,reason_code,related_player_id,created_at,seen_at")
@@ -97,7 +98,11 @@ export default function Progress({ onBack }) {
     const {data:gameStats}=gameStatIds.length
       ? await supabase.from("game_stats").select("id,game,mode,seconds,mistakes,hints").in("id",gameStatIds)
       : {data:[]};
-    const availablePlayers = (ps || []).filter((item) => !item.account_deleted_at && !item.is_blocked && (item.is_admin || item.is_approved !== false));
+    const availablePlayers = (ps || []).filter((item) =>
+      isCommunityVisibleProfile(item)
+      && !item.is_blocked
+      && (item.is_admin || item.is_approved !== false)
+    );
     setProgress(p); setRules(r); setRewards(rw||[]); setWishes(w||[]); setPlayers(availablePlayers); setLoading(false);
 
     const playerById = Object.fromEntries(availablePlayers.map(pl=>[pl.id,pl]));
