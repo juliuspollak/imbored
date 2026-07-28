@@ -7,7 +7,6 @@ import { useAuth } from "./lib/AuthContext.jsx";
 import { GAME_META } from "./Home.jsx";
 
 const BG = "#F1F3F7";
-const PANEL = "#FFFFFF";
 const INK = "#1B2129";
 const ACCENT = "#2F6FED";
 const ZIP_DEFAULTS = {
@@ -170,7 +169,159 @@ export default function AdminGames({ onBack }) {
   }
 
   return (
-    <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex justify-center p-4 pt-10">
+    <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="admin-games-page flex justify-center p-4 pt-10">
+      <style>{`
+        .admin-games-page {
+          padding-left: max(14px, env(safe-area-inset-left));
+          padding-right: max(14px, env(safe-area-inset-right));
+          padding-bottom: max(28px, env(safe-area-inset-bottom));
+        }
+        .admin-game-card {
+          overflow: hidden;
+          border: 1px solid rgba(16, 24, 40, 0.08);
+          border-radius: 22px;
+          background: rgba(255, 255, 255, 0.94);
+          box-shadow: 0 10px 30px rgba(16, 24, 40, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+          transition: opacity 160ms ease, box-shadow 160ms ease;
+        }
+        .admin-game-card__header {
+          display: grid;
+          grid-template-columns: 40px 48px minmax(0, 1fr);
+          align-items: center;
+          gap: 11px;
+          padding: 14px 14px 10px;
+        }
+        .admin-game-order {
+          display: grid;
+          gap: 4px;
+        }
+        .admin-game-order button {
+          display: grid;
+          width: 40px;
+          height: 29px;
+          place-items: center;
+          border-radius: 11px;
+          padding: 0;
+        }
+        .admin-game-icon {
+          display: grid;
+          width: 48px;
+          height: 48px;
+          place-items: center;
+          border-radius: 16px;
+        }
+        .admin-game-copy {
+          min-width: 0;
+        }
+        .admin-game-copy h2 {
+          overflow: hidden;
+          margin: 0;
+          color: ${INK};
+          font-size: 16px;
+          font-weight: 750;
+          line-height: 1.2;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .admin-game-copy p {
+          display: -webkit-box;
+          overflow: hidden;
+          margin: 3px 0 0;
+          color: rgba(27, 33, 41, 0.5);
+          font-size: 11px;
+          line-height: 1.35;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
+        }
+        .admin-game-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 5px;
+          margin-top: 7px;
+        }
+        .admin-game-chip {
+          border: 1px solid rgba(16, 24, 40, 0.06);
+          border-radius: 999px;
+          padding: 3px 7px;
+          background: rgba(16, 24, 40, 0.045);
+          color: rgba(27, 33, 41, 0.62);
+          font-size: 9px;
+          font-weight: 700;
+          line-height: 1;
+          white-space: nowrap;
+        }
+        .admin-game-chip[data-tone="green"] {
+          border-color: rgba(22, 163, 74, 0.1);
+          background: rgba(22, 163, 74, 0.08);
+          color: #15803d;
+        }
+        .admin-game-chip[data-tone="blue"] {
+          border-color: rgba(47, 111, 237, 0.1);
+          background: rgba(47, 111, 237, 0.08);
+          color: ${ACCENT};
+        }
+        .admin-game-actions {
+          display: grid;
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+          gap: 7px;
+          padding: 0 12px 12px;
+        }
+        .admin-game-action {
+          display: flex;
+          min-width: 0;
+          min-height: 52px;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          border-radius: 15px;
+          padding: 6px 2px;
+          font-size: 9px;
+          font-weight: 700;
+          line-height: 1;
+        }
+        .admin-game-action span {
+          display: block;
+          max-width: 100%;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .admin-game-settings {
+          border-top: 1px solid rgba(16, 24, 40, 0.06);
+          background: rgba(248, 250, 252, 0.72);
+        }
+        @media (max-width: 390px) {
+          .admin-game-card__header {
+            grid-template-columns: 36px 44px minmax(0, 1fr);
+            gap: 9px;
+            padding: 12px 11px 9px;
+          }
+          .admin-game-order button {
+            width: 36px;
+            height: 28px;
+          }
+          .admin-game-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+          }
+          .admin-game-actions {
+            gap: 5px;
+            padding: 0 9px 10px;
+          }
+          .admin-game-action {
+            min-height: 49px;
+            border-radius: 13px;
+            font-size: 8.5px;
+          }
+        }
+        @media (max-width: 360px) {
+          .admin-game-actions {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+        }
+      `}</style>
       <div className="w-full max-w-md">
         <div className="flex items-center gap-3 mb-2">
           <BackButton onClick={onBack} />
@@ -188,7 +339,7 @@ export default function AdminGames({ onBack }) {
         )}
 
         {supabaseReady && isAdmin && (
-          <div className="rounded-2xl p-3 mb-4" style={{ background:"rgba(234,88,12,.07)",border:"1px solid rgba(234,88,12,.16)" }}>
+          <div className="admin-reset-card rounded-2xl p-3 mb-4" style={{ background:"rgba(234,88,12,.07)",border:"1px solid rgba(234,88,12,.16)" }}>
             <div className="flex items-center gap-3">
               <span className="grid place-items-center rounded-xl shrink-0" style={{ width:36,height:36,background:"rgba(234,88,12,.12)",color:"#C2410C" }}>
                 <RotateCcw size={16} className={resetting === "all" ? "animate-spin" : ""}/>
@@ -230,9 +381,9 @@ export default function AdminGames({ onBack }) {
                 ? r.challenge_enabled
                 : meta.challenge === true;
               return (
-                <div key={r.game_id} className="rounded-xl" style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)", opacity: r.visible ? 1 : 0.5 }}>
-                  <div className="p-3 flex items-center gap-3">
-                    <div className="flex flex-col">
+                <div key={r.game_id} className="admin-game-card" style={{ opacity: r.visible ? 1 : 0.68 }}>
+                  <div className="admin-game-card__header">
+                    <div className="admin-game-order" aria-label={`Change ${meta.label} position`}>
                       <button className="gloss-button" onClick={() => move(i, -1)} disabled={i === 0} style={{ color: INK, opacity: i === 0 ? 0.2 : 0.5 }}>
                         <ChevronUp size={14} />
                       </button>
@@ -241,38 +392,50 @@ export default function AdminGames({ onBack }) {
                       </button>
                     </div>
 
-                    <div className="flex items-center justify-center rounded-lg flex-shrink-0" style={{ width: 32, height: 32, background: `${meta.accent}22` }}>
-                      <Icon size={16} style={{ color: meta.accent }} />
+                    <div className="admin-game-icon" style={{ background: `${meta.accent}20` }}>
+                      <Icon size={21} style={{ color: meta.accent }} />
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div style={{ color: INK, fontWeight: 600 }} className="text-sm truncate">{meta.label}</div>
-                      <div style={{ color: INK, opacity: 0.4 }} className="text-[11px] truncate">{meta.desc}</div>
-                      <div style={{ color: INK, opacity: 0.52 }} className="text-[10px] font-medium mt-0.5">
-                        {meta.live ? "Live only" : challengeEnabled ? "Challenges on" : "Challenges off"}
+                    <div className="admin-game-copy">
+                      <h2>{meta.label}</h2>
+                      <p>{meta.desc}</p>
+                      <div className="admin-game-chips">
+                        <span className="admin-game-chip" data-tone={r.visible ? "green" : undefined}>
+                          {r.visible ? "Shown" : "Hidden"}
+                        </span>
+                        <span className="admin-game-chip" data-tone={r.available ? "green" : undefined}>
+                          {r.available ? "Playable" : "Locked"}
+                        </span>
+                        <span className="admin-game-chip" data-tone={challengeEnabled ? "blue" : undefined}>
+                          {meta.live ? "Live only" : challengeEnabled ? "Challenges" : "No challenges"}
+                        </span>
                       </div>
                     </div>
+                  </div>
 
+                  <div className="admin-game-actions">
                     <button
                       onClick={() => resetTodayChallenge(r.game_id, meta.label)}
                       disabled={resetting !== null || !r.available}
-                      className="gloss-button flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
+                      className="gloss-button admin-game-action"
                       style={{ background: "rgba(234,88,12,0.1)", color: "#C2410C", opacity: !r.available ? 0.35 : 1 }}
                       title="Reset today's challenge results"
                     >
-                      <Eraser size={12} className={resetting === r.game_id ? "animate-spin" : ""} />
+                      <Eraser size={16} className={resetting === r.game_id ? "animate-spin" : ""} />
+                      <span>Reset</span>
                     </button>
                     <button
                       onClick={() => setExpanded(isExpanded ? null : r.game_id)}
-                      className="gloss-button flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
+                      className="gloss-button admin-game-action"
                       style={{ background: hasMaintenance ? "rgba(47,111,237,0.1)" : "rgba(16,24,40,0.05)", color: hasMaintenance ? ACCENT : INK }}
                       title="Maintenance & settings"
                     >
-                      <Wrench size={12} />
+                      <Wrench size={16} />
+                      <span>Settings</span>
                     </button>
                     <button
                       type="button"
-                      className="gloss-button flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
+                      className="gloss-button admin-game-action"
                       onClick={() => updateRow(r, { challenge_enabled: !challengeEnabled })}
                       disabled={!meta.challenge || !r.available}
                       style={{
@@ -289,27 +452,30 @@ export default function AdminGames({ onBack }) {
                         ? `${meta.label} is live only`
                         : `${challengeEnabled ? "Remove" : "Add"} ${meta.label} ${challengeEnabled ? "from" : "to"} Challenges`}
                     >
-                      <Trophy size={12} />
+                      <Trophy size={16} />
+                      <span>Challenge</span>
                     </button>
                     <button
                       onClick={() => updateRow(r, { visible: !r.visible })}
-                      className="gloss-button flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
+                      className="gloss-button admin-game-action"
                       style={{ background: r.visible ? "rgba(16,24,40,0.05)" : "rgba(181,67,58,0.1)", color: r.visible ? INK : "#B5433A" }}
                     >
-                      {r.visible ? <Eye size={12} /> : <EyeOff size={12} />}
+                      {r.visible ? <Eye size={16} /> : <EyeOff size={16} />}
+                      <span>{r.visible ? "Shown" : "Hidden"}</span>
                     </button>
                     <button
                       onClick={() => updateRow(r, { available: !r.available })}
-                      className="gloss-button flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
+                      className="gloss-button admin-game-action"
                       style={{ background: r.available ? "rgba(22,163,74,0.1)" : "rgba(16,24,40,0.05)", color: r.available ? "#16A34A" : INK }}
                       title={r.available ? "Playable" : "Coming soon (shown, not clickable)"}
                     >
-                      {r.available ? <Unlock size={12} /> : <Lock size={12} />}
+                      {r.available ? <Unlock size={16} /> : <Lock size={16} />}
+                      <span>{r.available ? "Playable" : "Locked"}</span>
                     </button>
                   </div>
 
                   {isExpanded && (
-                    <div className="px-3 pb-3 pt-1" style={{ borderTop: "1px solid rgba(16,24,40,0.06)" }}>
+                    <div className="admin-game-settings px-3 pb-3 pt-1">
                       <div className="flex gap-3">
                         <div className="flex-1">
                           <label style={{ color: INK, opacity: 0.5 }} className="text-[10px] font-medium block mb-1 mt-2">
@@ -406,7 +572,7 @@ export default function AdminGames({ onBack }) {
         )}
 
         <p style={{ color: INK, opacity: 0.35 }} className="text-[11px] text-center mt-6">
-          Eye = shown on home at all. Lock = playable vs "coming soon". Maintenance = per-game settings such as hint cooldowns and ZIP complexity.
+          Challenge controls Challenge availability. Shown controls the Home tile. Playable controls whether the game can be opened.
         </p>
       </div>
     </div>
