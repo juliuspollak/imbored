@@ -1,5 +1,12 @@
 [
   {
+    "id": "v161-animal-rush-ios-roll-timing",
+    "version": "v161",
+    "date": "2026-07-28",
+    "title": "Removed the iOS-incompatible die offset",
+    "body": "The cube now starts the known-good animation normally and uses the remaining shared roll time as its duration, matching the earlier working implementation. The later negative CSS animation offset—which Safari could interpret as an already-finished roll—has been removed. The die and cards still reveal together at the shared server timestamp."
+  },
+  {
     "id": "v160-animal-rush-known-good-die",
     "version": "v160",
     "date": "2026-07-28",
