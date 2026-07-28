@@ -5,6 +5,27 @@ begin;
 -- still read their own account, and administrators can manage hidden accounts
 -- only through the narrow admin_list_players() RPC below.
 
+-- Keep this migration self-contained. Earlier deployments received this
+-- helper in v153, but v155's live-game trigger also depends on it.
+create or replace function public.is_user_hidden(target_user_id uuid)
+returns boolean
+language sql
+security definer
+stable
+set search_path=public
+as $$
+  select coalesce((
+    select
+      coalesce(profile.hidden_from_others,false)
+      or profile.account_deleted_at is not null
+    from public.profiles profile
+    where profile.id=target_user_id
+  ),true);
+$$;
+
+revoke all on function public.is_user_hidden(uuid) from public;
+grant execute on function public.is_user_hidden(uuid) to authenticated;
+
 create or replace function public.can_view_user(target_user_id uuid)
 returns boolean
 language sql
