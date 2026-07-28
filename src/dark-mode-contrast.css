@@ -614,3 +614,67 @@
     color: #a99cff !important;
   }
 }
+
+/* Moved out of ChallengeStreakBadge's own inline <style> tag: that component
+   can mount after the initial page load (its data loads asynchronously), so
+   its stylesheet was never present when the app rewrites prefers-color-scheme
+   media queries to honour the in-app theme choice. Living in a stylesheet
+   that's already in <head> at boot means it's always caught by that rewrite. */
+.challenge-streak-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 11px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .94);
+  border: 1px solid rgba(16, 24, 40, .10);
+  box-shadow: 0 4px 14px rgba(16, 24, 40, .06);
+  color: #1b2129;
+}
+.challenge-streak-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #ffdf89, #ff7a45);
+  color: #9b2f16;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5);
+}
+.challenge-streak-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.challenge-streak-copy small {
+  font-size: 11px;
+  font-weight: 700;
+  white-space: normal;
+  color: rgba(27, 33, 41, .7);
+}
+.challenge-streak-badge.is-safe .challenge-streak-icon {
+  background: linear-gradient(145deg, #7ee6ad, #159669);
+  color: #0b3d26;
+}
+.challenge-streak-badge.is-risk {
+  border-color: rgba(229, 72, 77, .28);
+  box-shadow: 0 4px 14px rgba(229, 72, 77, .12);
+}
+
+@media (prefers-color-scheme: dark) {
+  .challenge-streak-badge {
+    background: rgba(24, 31, 43, .94) !important;
+    border-color: rgba(255, 255, 255, .12) !important;
+    color: #f4f7fb !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .32) !important;
+  }
+  .challenge-streak-copy small {
+    color: rgba(232, 238, 247, .62);
+  }
+  .challenge-streak-badge.is-risk {
+    border-color: rgba(255, 111, 115, .34) !important;
+  }
+}
