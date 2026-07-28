@@ -9,21 +9,13 @@
   color: #1b2129;
 }
 
+/* .game-solved-panel--overlay's position/background/blur/isolation are set
+   inline (GameSolvedPanel.jsx) so they're guaranteed present on first paint -
+   see the comment on OVERLAY_STYLE there. This class only needs to add the
+   one thing that has to live in a real stylesheet rule: the dark override
+   below. */
 .game-solved-panel--overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 20;
   justify-content: center;
-  border-radius: 12px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.97);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
-  /* Some boards (Queens) keep an infinitely-animating hint highlight in the
-     DOM underneath this overlay. Without isolation, backdrop-filter can fail
-     to fully separate its blur/compositing from that animation, letting it
-     flicker through. */
-  isolation: isolate;
 }
 
 .game-solved-panel--inline {
