@@ -164,6 +164,14 @@ export default function BotMatch({
   }, [game.round.number, game.round.revealAt]);
 
   useEffect(() => {
+    if (!game.round.shuffleAt) return undefined;
+    const remaining = game.round.shuffleAt - Date.now();
+    if (!Number.isFinite(remaining) || remaining <= 0) return undefined;
+    const timer = window.setTimeout(() => setNow(game.round.shuffleAt), remaining);
+    return () => window.clearTimeout(timer);
+  }, [game.round.number, game.round.shuffleAt]);
+
+  useEffect(() => {
     if (game.status !== "playing" || game.round.status !== "playing") return undefined;
     const botReaction = 850 + Math.floor(Math.random() * 1150);
     const timer = window.setTimeout(() => {
@@ -217,7 +225,7 @@ export default function BotMatch({
   const revealed = now >= game.round.revealAt;
   const targetRevealed = revealed;
   const rollEndsAt = game.round.shuffleAt || game.round.revealAt;
-  const hardRollCoverMs = game.difficulty === "hard" ? 100 : 0;
+  const hardRollCoverMs = game.difficulty === "hard" ? 200 : 0;
   const rollDurationMs = DIE_ROLL_DURATION_MS + hardRollCoverMs;
   const rollElapsedMs = Math.max(
     0,
