@@ -1,6 +1,8 @@
 import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
-import { Home as HomeIcon, LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3, Star, Gift, MessagesSquare } from "lucide-react";
+import { createPortal } from "react-dom";
+import { LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3, Star, Gift, MessagesSquare } from "lucide-react";
 import Home from "./Home.jsx";
+import GameHomeButton from "./GameHomeButton.jsx";
 import Login from "./Login.jsx";
 import ProfileSetup from "./ProfileSetup.jsx";
 import PendingApproval from "./PendingApproval.jsx";
@@ -215,6 +217,18 @@ function AppShell() {
     openSection("teams");
   }
 
+  function openAccountSection(section, markViewed = false) {
+    // Chat is rendered before the regular section routes. Clear it first so
+    // an account-menu selection can actually replace the active conversation.
+    setChatPlayer(null);
+    setChatReturn(null);
+    if (markViewed) {
+      openSection(section);
+      return;
+    }
+    setActive(section);
+  }
+
   function closeAnimalRush() {
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
@@ -268,16 +282,16 @@ function AppShell() {
     <AccountBadge
       profile={profile}
       onSignOut={signOut}
-      onOpenProfile={() => setActive("profile")}
-      onOpenTeams={() => openSection("teams")}
-      onOpenChats={() => setActive("chats")}
-      onOpenStats={() => setActive("stats")}
-      onOpenProgress={() => setActive("progress")}
-      onOpenFeedback={() => setActive("feedback")}
-      onOpenWhatsNew={() => openSection("whatsnew")}
-      onOpenAdminPlayers={() => setActive("adminplayers")}
-      onOpenAdminGames={() => setActive("admingames")}
-      onOpenAdminRewards={() => setActive("adminrewards")}
+      onOpenProfile={() => openAccountSection("profile")}
+      onOpenTeams={() => openAccountSection("teams", true)}
+      onOpenChats={() => openAccountSection("chats")}
+      onOpenStats={() => openAccountSection("stats")}
+      onOpenProgress={() => openAccountSection("progress")}
+      onOpenFeedback={() => openAccountSection("feedback")}
+      onOpenWhatsNew={() => openAccountSection("whatsnew", true)}
+      onOpenAdminPlayers={() => openAccountSection("adminplayers")}
+      onOpenAdminGames={() => openAccountSection("admingames")}
+      onOpenAdminRewards={() => openAccountSection("adminrewards")}
       players={players}
       userId={user?.id}
       openFeedbackCount={openFeedbackCount}
@@ -527,31 +541,7 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
 
   return (
     <div style={{ position: "relative" }}>
-      <button
-        onClick={onExit}
-        className="nav-btn"
-        style={{
-          "--nav-glow": "rgba(47,111,237,0.35)",
-          "--nav-border": "rgba(47,111,237,0.4)",
-          position: "fixed",
-          top: 16,
-          left: "max(16px, calc((100vw - var(--game-nav-width, 512px)) / 2))",
-          zIndex: 50,
-          width: 36,
-          height: 36,
-          borderRadius: "50%",
-          background: "rgba(255,255,255,0.9)",
-          backdropFilter: "blur(6px)",
-          border: "1px solid rgba(16,24,40,0.12)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#1B2129",
-        }}
-        aria-label="Home"
-      >
-        <HomeIcon size={17} />
-      </button>
+      <GameHomeButton onClick={onExit} />
       <Current
         userId={userId}
         onSolved={handleSolved}
@@ -624,7 +614,7 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
     item.onClick?.();
   }
 
-  return (
+  const accountBadge = (
     <div
       ref={menuRef}
       className="account-menu-dock"
@@ -632,7 +622,11 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
         position:"fixed",
         top:"max(16px, env(safe-area-inset-top))",
         right:"max(16px, env(safe-area-inset-right))",
-        zIndex:80,
+        zIndex:200,
+        pointerEvents:"auto",
+        isolation:"isolate",
+        transform:"translateZ(0)",
+        WebkitTransform:"translateZ(0)",
       }}
     >
       {(menuOpen || incognito) && (
@@ -680,6 +674,8 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
           border:menuOpen ? "2px solid rgba(47,111,237,.38)" : "1px solid rgba(16,24,40,.12)",
           boxShadow:"0 8px 24px rgba(16,24,40,.12)",
           fontSize:22,
+          touchAction:"manipulation",
+          WebkitTapHighlightColor:"transparent",
         }}
       >
         {profile.icon || "🙂"}
@@ -709,14 +705,16 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
           role="menu"
           className="absolute right-0 mt-3 overflow-hidden"
           style={{
-            width:286,
-            maxHeight:"calc(100vh - 80px)",
+            width:"min(286px, calc(100vw - 32px))",
+            maxHeight:"calc(100dvh - max(80px, env(safe-area-inset-top)) - 16px)",
             overflowY:"auto",
             background:"rgba(255,255,255,.98)",
             border:"1px solid rgba(16,24,40,.10)",
             borderRadius:22,
             boxShadow:"0 24px 64px rgba(16,24,40,.20)",
             backdropFilter:"blur(18px)",
+            WebkitBackdropFilter:"blur(18px)",
+            WebkitOverflowScrolling:"touch",
           }}
         >
           <button type="button" onClick={() => openItem({ onClick:onOpenProfile })} className="w-full flex items-center gap-3 p-4 text-left" style={{ background:"linear-gradient(135deg,rgba(47,111,237,.08),rgba(139,92,246,.05))" }}>
@@ -774,6 +772,13 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
       )}
     </div>
   );
+
+  // Chat uses full-screen blurred compositor layers on iOS. Rendering this
+  // global control at document.body keeps Safari from placing those layers
+  // above the account button during touch hit-testing.
+  return typeof document === "undefined"
+    ? accountBadge
+    : createPortal(accountBadge, document.body);
 }
 
 function FullScreenMessage({ text }) {

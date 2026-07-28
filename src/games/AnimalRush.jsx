@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Bot,
   Copy,
-  Home,
   Loader2,
   LogOut,
   Play,
@@ -18,6 +17,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { supabase, supabaseReady } from "../lib/supabase.js";
+import GameHomeButton from "../GameHomeButton.jsx";
 import AnimalDie from "./animalRush/AnimalDie.jsx";
 import AnimalFace from "./animalRush/AnimalFace.jsx";
 import BotMatch from "./animalRush/BotMatch.jsx";
@@ -162,9 +162,7 @@ function PlayerChip({ player, currentUserId }) {
 function PhoneOnly({ onExit }) {
   return (
     <div className="animal-rush rush-phone-only">
-      <button type="button" className="rush-quiet absolute left-3 top-3" onClick={onExit}>
-        <Home size={17} /> Home
-      </button>
+      <GameHomeButton onClick={onExit} />
       <div className="rush-panel w-full max-w-sm p-7">
         <span className="rush-icon-panel rush-icon-panel--mint mx-auto grid h-16 w-16 place-items-center rounded-3xl">
           <Smartphone size={30} />
@@ -585,9 +583,7 @@ export default function AnimalRush({ onExit }) {
     return (
       <div className="animal-rush">
         <main className="rush-shell">
-          <button type="button" className="rush-quiet -ml-2 mb-3" onClick={onExit}>
-            <Home size={16} /> Home
-          </button>
+          <GameHomeButton onClick={onExit} />
           <section className="rush-panel p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -684,7 +680,8 @@ export default function AnimalRush({ onExit }) {
       <div className="animal-rush">
         <main className="rush-shell">
           <div className="mb-3 flex items-center justify-between">
-            <button type="button" className="rush-quiet -ml-2" onClick={onExit}><Home size={16} /> Home</button>
+            <GameHomeButton onClick={onExit} />
+            <span aria-hidden="true" style={{ width:36, height:36 }} />
             <button type="button" className="rush-quiet -mr-2" onClick={leaveRoom} disabled={working === "leave"}>
               <LogOut size={15} /> Leave
             </button>
@@ -749,7 +746,7 @@ export default function AnimalRush({ onExit }) {
     return (
       <div className="animal-rush">
         <main className="rush-shell">
-          <button type="button" className="rush-quiet -ml-2 mb-3" onClick={onExit}><Home size={16} /> Home</button>
+          <GameHomeButton onClick={onExit} />
           <section className="rush-panel p-6 text-center">
             <span className="rush-icon-panel rush-icon-panel--gold mx-auto grid h-16 w-16 place-items-center rounded-3xl">
               <Trophy size={31} />
@@ -809,7 +806,8 @@ export default function AnimalRush({ onExit }) {
     <div className="animal-rush">
       <main className="rush-shell rush-shell--play">
         <div className="rush-topbar mb-3 flex items-center justify-between">
-          <button type="button" className="rush-quiet -ml-2" onClick={onExit}><Home size={16} /> Home</button>
+          <GameHomeButton onClick={onExit} />
+          <span aria-hidden="true" style={{ width:36, height:36 }} />
           <span className="rush-muted flex items-center gap-2 text-[11px] font-semibold">
             Round {room.round_number}
             <span className="rush-mode-badge">

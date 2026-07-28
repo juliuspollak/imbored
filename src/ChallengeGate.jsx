@@ -1,10 +1,11 @@
 
 const CREAM = "#1B2129";import { useState, useEffect, useCallback } from "react";
-import { Home, Lock, Check, Play, X } from "lucide-react";
+import { Lock, Check, Play, X } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { saveStats } from "./lib/saveStats.js";
 import { weekDates, weekDayLabels } from "./lib/week.js";
 import ModePill from "./ModePill.jsx";
+import GameHomeButton from "./GameHomeButton.jsx";
 import { buildTeamChallengeRounds, localDateString } from "./lib/teamChallengeRounds.js";
 
 const BG = "#F1F3F7";
@@ -184,20 +185,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
       : playingIdx;
     return (
       <div style={{ position: "relative" }}>
-        <button
-          onClick={onExit}
-          className="gloss-button nav-btn"
-          style={{
-            "--nav-glow": "rgba(47,111,237,0.35)",
-            "--nav-border": "rgba(47,111,237,0.4)",
-            position: "fixed", top: 16, left: "max(16px, calc((100vw - var(--game-nav-width, 512px)) / 2))", zIndex: 50, width: 36, height: 36, borderRadius: "50%",
-            background: "rgba(255,255,255,0.9)", backdropFilter: "blur(6px)", border: "1px solid rgba(16,24,40,0.12)",
-            display: "flex", alignItems: "center", justifyContent: "center", color: INK,
-          }}
-          aria-label="Home"
-        >
-          <Home size={17} />
-        </button>
+        <GameHomeButton onClick={onExit} />
         <GameComponent
           userId={userId}
           onSolved={handleSolved}
@@ -222,20 +210,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
 
   return (
     <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-start justify-center p-4 pt-[72px]">
-      <button
-        onClick={onExit}
-        className="gloss-button nav-btn"
-        style={{
-          "--nav-glow": "rgba(47,111,237,0.35)", "--nav-border": "rgba(47,111,237,0.4)",
-          position: "fixed", top: 16, left: "max(16px, calc((100vw - var(--game-nav-width, 512px)) / 2))", zIndex: 50,
-          width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.9)",
-          backdropFilter: "blur(6px)", border: "1px solid rgba(16,24,40,0.12)",
-          display: "flex", alignItems: "center", justifyContent: "center", color: INK,
-        }}
-        aria-label="Home"
-      >
-        <Home size={17} />
-      </button>
+      <GameHomeButton onClick={onExit} />
       {onSwitchMode && <ModePill mode="challenge" onSwitch={onSwitchMode} />}
 
       {/* Same rounded white panel + shadow as the game screens themselves,

@@ -1,5 +1,19 @@
 [
   {
+    "id": "v167-shared-game-home-control",
+    "version": "v167",
+    "date": "2026-07-28",
+    "title": "Unified Animal Rush navigation",
+    "body": "Animal Rush now uses the same compact circular glass Home button as every other game instead of its separate text-style control. The shared component also keeps Home navigation styling, iPhone safe-area placement and touch behaviour consistent across practice and challenge games."
+  },
+  {
+    "id": "v166-chat-account-menu-touch-layer",
+    "version": "v166",
+    "date": "2026-07-28",
+    "title": "Fixed the account bubble inside Chat",
+    "body": "The global account bubble and its menu now render in a body-level overlay with explicit iOS touch and stacking behaviour. Chat's full-screen blurred layer can no longer intercept the button or hide the opened menu, and selecting Profile or another account section correctly closes the conversation and opens that page."
+  },
+  {
     "id": "v165-ios-admin-games-layout",
     "version": "v165",
     "date": "2026-07-28",
