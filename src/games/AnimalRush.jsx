@@ -878,7 +878,7 @@ export default function AnimalRush({ onExit }) {
                     countdown={countdown}
                     roundKey={room.round_number}
                     revealed={targetRevealed}
-                    concealed={shuffling}
+                    concealed={concealed}
                     colourMode={room.colour_mode || "uniform"}
                     rollDurationMs={rollDurationMs}
                     rollElapsedMs={rollElapsedMs}
