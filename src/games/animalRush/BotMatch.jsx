@@ -157,6 +157,13 @@ export default function BotMatch({
   }, []);
 
   useEffect(() => {
+    const remaining = game.round.revealAt - Date.now();
+    if (!Number.isFinite(remaining) || remaining <= 0) return undefined;
+    const timer = window.setTimeout(() => setNow(game.round.revealAt), remaining);
+    return () => window.clearTimeout(timer);
+  }, [game.round.number, game.round.revealAt]);
+
+  useEffect(() => {
     if (game.status !== "playing" || game.round.status !== "playing") return undefined;
     const botReaction = 850 + Math.floor(Math.random() * 1150);
     const timer = window.setTimeout(() => {
