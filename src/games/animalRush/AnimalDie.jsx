@@ -26,13 +26,16 @@ export default function AnimalDie({
   roundKey,
   revealed,
   rollDurationMs = 2850,
+  rollElapsedMs = 0,
 }) {
   const [startedRound, setStartedRound] = useState(null);
-  const timingRef = useRef({ roundKey: null, durationMs: 2850 });
+  const timingRef = useRef({ roundKey: null, durationMs: 2850, elapsedMs: 0 });
   if (timingRef.current.roundKey !== roundKey) {
+    const durationMs = Math.max(0, Number(rollDurationMs) || 0);
     timingRef.current = {
       roundKey,
-      durationMs: Math.max(0, Number(rollDurationMs) || 0),
+      durationMs,
+      elapsedMs: Math.max(0, Math.min(durationMs, Number(rollElapsedMs) || 0)),
     };
   }
 
@@ -52,6 +55,7 @@ export default function AnimalDie({
         }}
         style={{
           "--rush-die-duration": `${timingRef.current.durationMs}ms`,
+          "--rush-die-delay": `-${timingRef.current.elapsedMs}ms`,
           "--rush-die-end": TARGET_ROTATIONS[targetId] || TARGET_ROTATIONS.fox,
         }}
       >

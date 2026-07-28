@@ -9,6 +9,12 @@ export const ANIMALS = [
 
 export const ANIMAL_IDS = ANIMALS.map((animal) => animal.id);
 export const DIE_ROLL_DURATION_MS = 3000;
+export const SHUFFLE_DURATION_MS = 800;
+export const DIFFICULTY_MODES = [
+  { id: "easy", label: "Easy", description: "Cards stay visible" },
+  { id: "standard", label: "Standard", description: "Cards reveal with the animal" },
+  { id: "hard", label: "Hard", description: "Cards reshuffle before reveal" },
+];
 
 export function animalById(id) {
   return ANIMALS.find((animal) => animal.id === id) || ANIMALS[0];
@@ -28,21 +34,60 @@ export function isPhoneDevice({
 export function roundPhase(room, now = Date.now()) {
   if (!room) return "none";
   if (room.status !== "countdown") return room.status;
+  const rollAt = room.roll_at
+    ? new Date(room.roll_at).getTime()
+    : room.reveal_at
+      ? new Date(room.reveal_at).getTime() - DIE_ROLL_DURATION_MS
+      : Number.POSITIVE_INFINITY;
+  if (now < rollAt) return "waiting";
+  const shuffleAt = room.shuffle_at ? new Date(room.shuffle_at).getTime() : null;
   const revealAt = room.reveal_at ? new Date(room.reveal_at).getTime() : Number.POSITIVE_INFINITY;
+  if (shuffleAt && now >= shuffleAt && now < revealAt) return "shuffling";
+  if (now < revealAt) return "rolling";
   return now >= revealAt ? "open" : "countdown";
 }
 
 export function countdownNumber(room, now = Date.now()) {
-  if (!room?.reveal_at) return null;
-  const milliseconds = new Date(room.reveal_at).getTime() - now;
+  if (roundPhase(room, now) !== "rolling") return null;
+  const rollEndsAt = room?.shuffle_at || room?.reveal_at;
+  if (!rollEndsAt) return null;
+  const milliseconds = new Date(rollEndsAt).getTime() - now;
   return milliseconds <= 0 ? null : Math.max(1, Math.ceil(milliseconds / 1000));
 }
 
 export function matchIntroCountdown(room, now = Date.now()) {
-  if (room?.status !== "countdown" || Number(room?.round_number) !== 1 || !room?.reveal_at) return null;
-  const introEndsAt = new Date(room.reveal_at).getTime() - DIE_ROLL_DURATION_MS;
-  const milliseconds = introEndsAt - now;
-  return milliseconds <= 0 ? null : Math.max(1, Math.ceil(milliseconds / 1000));
+  if (room?.status !== "countdown" || Number(room?.round_number) !== 1) return null;
+  const rollAt = room?.roll_at
+    ? new Date(room.roll_at).getTime()
+    : room?.reveal_at
+      ? new Date(room.reveal_at).getTime() - DIE_ROLL_DURATION_MS
+      : null;
+  if (!rollAt) return null;
+  const milliseconds = rollAt - now;
+  if (milliseconds <= 0 || milliseconds > 3000) return null;
+  return Math.max(1, Math.ceil(milliseconds / 1000));
+}
+
+export function cardsConcealed(room, phase) {
+  if (room?.status === "round_result" || room?.status === "finished" || phase === "open") return false;
+  if (room?.difficulty === "easy") return false;
+  if (room?.difficulty === "hard") return phase === "shuffling";
+  return true;
+}
+
+export function visibleCardOrder(room, phase) {
+  const finalOrder = Array.isArray(room?.card_order) && room.card_order.length === ANIMAL_IDS.length
+    ? room.card_order
+    : ANIMAL_IDS;
+  if (
+    room?.difficulty === "hard"
+    && (phase === "waiting" || phase === "rolling")
+    && Array.isArray(room?.preview_card_order)
+    && room.preview_card_order.length === ANIMAL_IDS.length
+  ) {
+    return room.preview_card_order;
+  }
+  return finalOrder;
 }
 
 export function rankPlayers(players = []) {
