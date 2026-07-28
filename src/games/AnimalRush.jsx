@@ -24,6 +24,7 @@ import AnimalFace from "./animalRush/AnimalFace.jsx";
 import BotMatch from "./animalRush/BotMatch.jsx";
 import {
   DIE_ROLL_DURATION_MS,
+  COLOUR_MODES,
   DIFFICULTY_MODES,
   animalById,
   cardsConcealed,
@@ -78,6 +79,28 @@ function DifficultySelector({ value, onChange, disabled = false, label = "Diffic
       <legend>{label}</legend>
       <div>
         {DIFFICULTY_MODES.map((mode) => (
+          <button
+            type="button"
+            key={mode.id}
+            data-selected={value === mode.id}
+            onClick={() => onChange?.(mode.id)}
+            disabled={disabled}
+          >
+            <strong>{mode.label}</strong>
+            <small>{mode.description}</small>
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+function ColourModeSelector({ value, onChange, disabled = false, label = "Animal colours" }) {
+  return (
+    <fieldset className="rush-difficulty rush-difficulty--colours">
+      <legend>{label}</legend>
+      <div>
+        {COLOUR_MODES.map((mode) => (
           <button
             type="button"
             key={mode.id}
@@ -176,6 +199,7 @@ export default function AnimalRush({ onExit }) {
   const [attemptFeedback, setAttemptFeedback] = useState(null);
   const [botMode, setBotMode] = useState(false);
   const [botDifficulty, setBotDifficulty] = useState("standard");
+  const [botColourMode, setBotColourMode] = useState("uniform");
   const [clockRtt, setClockRtt] = useState(null);
   const attemptRef = useRef(false);
   const roundRef = useRef(null);
@@ -438,6 +462,19 @@ export default function AnimalRush({ onExit }) {
     await refreshRoom(room.id, true);
   }
 
+  async function changeColourMode(nextColourMode) {
+    if (!isHost || !COLOUR_MODES.some((mode) => mode.id === nextColourMode)) return;
+    setWorking("colour");
+    setMessage("");
+    const { error } = await supabase.rpc("animal_rush_set_colour_mode", {
+      target_room_id: room.id,
+      selected_colour_mode: nextColourMode,
+    });
+    setWorking("");
+    if (error) setMessage(error.message);
+    await refreshRoom(room.id, true);
+  }
+
   async function submitAnimal(event, animalId) {
     event.preventDefault();
     if (event.pointerType && event.pointerType !== "touch") {
@@ -520,6 +557,7 @@ export default function AnimalRush({ onExit }) {
         userId={user?.id || "local-player"}
         profile={profile}
         difficulty={botDifficulty}
+        colourMode={botColourMode}
         reducedMotion={reducedMotion}
         onBack={() => setBotMode(false)}
       />
@@ -565,6 +603,10 @@ export default function AnimalRush({ onExit }) {
               value={botDifficulty}
               onChange={setBotDifficulty}
               label="Computer match difficulty"
+            />
+            <ColourModeSelector
+              value={botColourMode}
+              onChange={setBotColourMode}
             />
 
             <button type="button" className="rush-primary mt-6 w-full" onClick={() => setBotMode(true)} disabled={!!working}>
@@ -673,6 +715,12 @@ export default function AnimalRush({ onExit }) {
               disabled={!isHost || !!working}
               label={isHost ? "Match difficulty" : "Host-selected difficulty"}
             />
+            <ColourModeSelector
+              value={room.colour_mode || "uniform"}
+              onChange={changeColourMode}
+              disabled={!isHost || !!working}
+              label={isHost ? "Animal colours" : "Host-selected colours"}
+            />
             {isHost ? (
               <button type="button" className="rush-primary mt-4 w-full" onClick={startGame} disabled={!allPlayersReady || !!working}>
                 {working === "start" ? <Loader2 className="animate-spin" size={17} /> : <Play size={17} fill="currentColor" />}
@@ -746,7 +794,9 @@ export default function AnimalRush({ onExit }) {
           <button type="button" className="rush-quiet -ml-2" onClick={onExit}><Home size={16} /> Home</button>
           <span className="rush-muted flex items-center gap-2 text-[11px] font-semibold">
             Round {room.round_number}
-            <span className="rush-mode-badge">{room.difficulty || "standard"}</span>
+            <span className="rush-mode-badge">
+              {room.difficulty || "standard"} · {room.colour_mode === "individual" ? "animal colours" : "one colour"}
+            </span>
             {reducedMotion && <span className="rush-motion-badge">Motion reduced</span>}
           </span>
           <span className="rush-muted text-[11px]">{activePlayers.length} active</span>
@@ -815,6 +865,7 @@ export default function AnimalRush({ onExit }) {
                     roundKey={room.round_number}
                     revealed={targetRevealed}
                     concealed={shuffling}
+                    colourMode={room.colour_mode || "uniform"}
                     rollDurationMs={DIE_ROLL_DURATION_MS}
                     rollElapsedMs={rollElapsedMs}
                   />
@@ -849,7 +900,7 @@ export default function AnimalRush({ onExit }) {
                   disabled={!canTap}
                   aria-label={animal.label}
                 >
-                  <AnimalFace animalId={animal.id} size={72} />
+                  <AnimalFace animalId={animal.id} colourMode={room.colour_mode || "uniform"} size={72} />
                   <span className="rush-animal-label">{animal.label}</span>
                 </button>
               );
