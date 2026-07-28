@@ -1,6 +1,6 @@
 
 const CREAM = "#1B2129";import { useState, useEffect, useCallback } from "react";
-import { ChevronUp, ChevronDown, Eye, EyeOff, Lock, Unlock, Wrench, Eraser, RotateCcw } from "lucide-react";
+import { ChevronUp, ChevronDown, Eye, EyeOff, Lock, Unlock, Wrench, Eraser, RotateCcw, Trophy } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
@@ -66,6 +66,7 @@ export default function AdminGames({ onBack }) {
       game_id: g.id,
       visible: true,
       available: g.available,
+      challenge_enabled: g.challenge === true,
       sort_order: (data?.length || 0) + i,
       hint_cooldown_base: 0,
       hint_cooldown_per_day: 0,
@@ -86,7 +87,7 @@ export default function AdminGames({ onBack }) {
     // always send every relevant column explicitly, not just the changed
     // one — avoids any ambiguity about whether an upsert preserves columns
     // left out of the payload
-    const { error } = await supabase.from("game_config").upsert({
+    const payload = {
       game_id: row.game_id,
       visible: updated.visible,
       available: updated.available,
@@ -95,7 +96,11 @@ export default function AdminGames({ onBack }) {
       hint_cooldown_per_day: updated.hint_cooldown_per_day ?? 0,
       zip_path_style: updated.zip_path_style || "solid",
       ...zipConfigPayload(updated),
-    });
+    };
+    if (Object.prototype.hasOwnProperty.call(updated, "challenge_enabled")) {
+      payload.challenge_enabled = updated.challenge_enabled;
+    }
+    const { error } = await supabase.from("game_config").upsert(payload);
     if (error) {
       // Roll back the optimistic update so the UI doesn't claim a setting
       // is saved when it silently wasn't (e.g. this row never existed yet
@@ -221,6 +226,9 @@ export default function AdminGames({ onBack }) {
               const Icon = meta.icon;
               const isExpanded = expanded === r.game_id;
               const hasMaintenance = (r.hint_cooldown_base || 0) > 0 || (r.hint_cooldown_per_day || 0) > 0 || (r.game_id === "zip" && (r.zip_path_style || "solid") !== "solid");
+              const challengeEnabled = typeof r.challenge_enabled === "boolean"
+                ? r.challenge_enabled
+                : meta.challenge === true;
               return (
                 <div key={r.game_id} className="rounded-xl" style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)", opacity: r.visible ? 1 : 0.5 }}>
                   <div className="p-3 flex items-center gap-3">
@@ -240,35 +248,59 @@ export default function AdminGames({ onBack }) {
                     <div className="flex-1 min-w-0">
                       <div style={{ color: INK, fontWeight: 600 }} className="text-sm truncate">{meta.label}</div>
                       <div style={{ color: INK, opacity: 0.4 }} className="text-[11px] truncate">{meta.desc}</div>
+                      <div style={{ color: INK, opacity: 0.52 }} className="text-[10px] font-medium mt-0.5">
+                        {meta.live ? "Live only" : challengeEnabled ? "Challenges on" : "Challenges off"}
+                      </div>
                     </div>
 
-                    <button className="gloss-button"
+                    <button
                       onClick={() => resetTodayChallenge(r.game_id, meta.label)}
                       disabled={resetting !== null || !r.available}
-                      className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
+                      className="gloss-button flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
                       style={{ background: "rgba(234,88,12,0.1)", color: "#C2410C", opacity: !r.available ? 0.35 : 1 }}
                       title="Reset today's challenge results"
                     >
                       <Eraser size={12} className={resetting === r.game_id ? "animate-spin" : ""} />
                     </button>
-                    <button className="gloss-button"
+                    <button
                       onClick={() => setExpanded(isExpanded ? null : r.game_id)}
-                      className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
+                      className="gloss-button flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
                       style={{ background: hasMaintenance ? "rgba(47,111,237,0.1)" : "rgba(16,24,40,0.05)", color: hasMaintenance ? ACCENT : INK }}
                       title="Maintenance & settings"
                     >
                       <Wrench size={12} />
                     </button>
-                    <button className="gloss-button"
+                    <button
+                      type="button"
+                      className="gloss-button flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
+                      onClick={() => updateRow(r, { challenge_enabled: !challengeEnabled })}
+                      disabled={!meta.challenge || !r.available}
+                      style={{
+                        background: challengeEnabled ? "rgba(47,111,237,0.12)" : "rgba(16,24,40,0.05)",
+                        color: challengeEnabled ? ACCENT : INK,
+                        opacity: !meta.challenge || !r.available ? 0.32 : 1,
+                      }}
+                      title={meta.live
+                        ? "Live only — not compatible with Challenges"
+                        : challengeEnabled
+                          ? "Available in Challenges"
+                          : "Not available in Challenges"}
+                      aria-label={meta.live
+                        ? `${meta.label} is live only`
+                        : `${challengeEnabled ? "Remove" : "Add"} ${meta.label} ${challengeEnabled ? "from" : "to"} Challenges`}
+                    >
+                      <Trophy size={12} />
+                    </button>
+                    <button
                       onClick={() => updateRow(r, { visible: !r.visible })}
-                      className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
+                      className="gloss-button flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
                       style={{ background: r.visible ? "rgba(16,24,40,0.05)" : "rgba(181,67,58,0.1)", color: r.visible ? INK : "#B5433A" }}
                     >
                       {r.visible ? <Eye size={12} /> : <EyeOff size={12} />}
                     </button>
-                    <button className="gloss-button"
+                    <button
                       onClick={() => updateRow(r, { available: !r.available })}
-                      className="flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
+                      className="gloss-button flex items-center gap-1 rounded-full px-2 py-1 flex-shrink-0"
                       style={{ background: r.available ? "rgba(22,163,74,0.1)" : "rgba(16,24,40,0.05)", color: r.available ? "#16A34A" : INK }}
                       title={r.available ? "Playable" : "Coming soon (shown, not clickable)"}
                     >
