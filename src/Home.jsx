@@ -5,7 +5,6 @@ import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useI18n } from "./lib/i18n.jsx";
 import { challengeProgress, groupChallengeCompletions } from "./lib/challengeProgress.js";
 import ChallengeStandings from "./ChallengeStandings.jsx";
-import ChallengeStreakBadge from "./ChallengeStreakBadge.jsx";
 import { buildTeamChallengeRounds, localDateString } from "./lib/teamChallengeRounds.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
 
@@ -510,11 +509,6 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         .home-tile { transition: transform 0.15s ease, filter 0.15s ease; }
         .home-status-row { display:flex; align-items:stretch; gap:8px; margin-bottom:8px; }
         .home-progress-pill { flex:0 0 auto; min-height:48px; }
-        .home-status-row .challenge-streak-badge { flex:1 1 auto; min-width:0; }
-        @media (max-width:520px) {
-          .home-status-row { flex-direction:column; align-items:stretch; }
-          .home-progress-pill { align-self:flex-start; min-height:auto; }
-        }
       `}</style>
       <div className="w-full max-w-2xl" style={{ fontFamily: "'Inter', sans-serif" }}>
         <div className="flex items-center gap-2 mb-2 pr-14">
@@ -552,7 +546,6 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
               <ChevronRight size={13} style={{ opacity: 0.3 }} />
             </button>
           )}
-          <ChallengeStreakBadge />
         </div>
         <p style={{ color: CREAM, opacity: 0.4 }} className="text-[11px] mb-4">
           {t("home.tagline")}
