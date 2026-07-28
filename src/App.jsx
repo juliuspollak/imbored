@@ -185,7 +185,7 @@ function AppShell() {
       // non-fatal — the choice just won't survive a refresh this time
     }
   }, [playMode, user?.id]);
-  const players = useOnlinePlayers({ includeHidden: !!profile?.is_admin });
+  const players = useOnlinePlayers();
   const { config: gameConfig, refetch: refetchGameConfig } = useGameConfig();
   usePresence(
     ["queens", "tango", "zip", "minisudoku", "geo", "zoom", "animalrush"].includes(active) ? active : null,

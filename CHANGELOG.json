@@ -1,5 +1,12 @@
 [
   {
+    "id": "v153-hidden-presence-zoom-description",
+    "version": "v153",
+    "date": "2026-07-28",
+    "title": "Closed hidden-player presence and Zoom label gaps",
+    "body": "Hidden players are now excluded from the social online list for everyone, including administrators, while remaining manageable inside Admin Players. Hiding somebody also clears their active presence immediately, with database policy enforcement preventing direct presence reads from bypassing the rule. Zoom’s home tile now displays its proper English or Slovak description instead of the untranslated game.zoom.desc key."
+  },
+  {
     "id": "v152-animal-rush-glass-difficulty",
     "version": "v152",
     "date": "2026-07-28",
