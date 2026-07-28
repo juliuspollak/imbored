@@ -1,5 +1,12 @@
 [
   {
+    "id": "v165-ios-admin-games-layout",
+    "version": "v165",
+    "date": "2026-07-28",
+    "title": "Modernised Admin Games for iPhone",
+    "body": "Rebuilt each Admin Games row as a responsive management card so titles and descriptions remain readable on narrow iPhone screens. Ordering, game identity and status chips now occupy a clean header, while Reset, Settings, Challenge, visibility and playability use a separate labelled action grid with safe-area spacing and an extra-small-screen layout."
+  },
+  {
     "id": "v164-admin-challenge-game-availability",
     "version": "v164",
     "date": "2026-07-28",
