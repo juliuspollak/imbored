@@ -1,5 +1,12 @@
 [
   {
+    "id": "v158-animal-rush-ios-die-roll",
+    "version": "v158",
+    "date": "2026-07-28",
+    "title": "Restored the fast Animal Rush die roll",
+    "body": "The Animal Rush die no longer relies on iOS animation events to uncover the spinning cube. Its visibility now follows the synchronised round phase directly, restoring a fast continuous roll on every phone while keeping the final animal hidden until the cards reveal at the same shared moment."
+  },
+  {
     "id": "v157-animal-rush-single-reveal-outcome",
     "version": "v157",
     "date": "2026-07-28",
