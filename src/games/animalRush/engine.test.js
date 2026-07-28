@@ -13,6 +13,7 @@ import {
   isPhoneDevice,
   matchIntroCountdown,
   matchWinner,
+  playerRoundOutcome,
   rankPlayers,
   roundPhase,
   targetIsRevealed,
@@ -101,6 +102,26 @@ test("supports a shape-only palette and an easier individual-colour palette", ()
   assert.equal(new Set(ANIMALS.map((animal) => animalColour(animal.id, "uniform"))).size, 1);
   assert.equal(new Set(ANIMALS.map((animal) => animalColour(animal.id, "individual"))).size, ANIMALS.length);
   assert.equal(animalColour("fox", "unknown"), animalColour("fox", "uniform"));
+});
+
+test("shows one authoritative player outcome for a round", () => {
+  assert.equal(playerRoundOutcome(), null);
+  assert.equal(playerRoundOutcome({ attempted: true, attemptCorrect: true }), "win");
+  assert.equal(playerRoundOutcome({ attempted: true, attemptCorrect: false }), "loss");
+  assert.equal(playerRoundOutcome({
+    roundComplete: true,
+    winnerId: "me",
+    currentUserId: "me",
+    attempted: true,
+    attemptCorrect: false,
+  }), "win");
+  assert.equal(playerRoundOutcome({
+    roundComplete: true,
+    winnerId: "other",
+    currentUserId: "me",
+    attempted: true,
+    attemptCorrect: true,
+  }), "loss");
 });
 
 test("ranks cards before safety cards and uses join order as final tie-break", () => {
