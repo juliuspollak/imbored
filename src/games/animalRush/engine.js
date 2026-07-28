@@ -1,10 +1,10 @@
 export const ANIMALS = [
-  { id: "fox", label: "Monkey", colour: "#9B5B42" },
-  { id: "panda", label: "Snake", colour: "#49A94E" },
-  { id: "owl", label: "Octopus", colour: "#B83A9D" },
-  { id: "rabbit", label: "Elephant", colour: "#1EA4B8" },
-  { id: "lion", label: "Lion", colour: "#D58B32" },
-  { id: "frog", label: "Spider", colour: "#56376D" },
+  { id: "fox", label: "Monkey", colour: "#3B9A80" },
+  { id: "panda", label: "Snake", colour: "#3B9A80" },
+  { id: "owl", label: "Octopus", colour: "#3B9A80" },
+  { id: "rabbit", label: "Elephant", colour: "#3B9A80" },
+  { id: "lion", label: "Lion", colour: "#3B9A80" },
+  { id: "frog", label: "Spider", colour: "#3B9A80" },
 ];
 
 export const ANIMAL_IDS = ANIMALS.map((animal) => animal.id);
@@ -73,6 +73,10 @@ export function cardsConcealed(room, phase) {
   if (room?.difficulty === "easy") return false;
   if (room?.difficulty === "hard") return phase === "shuffling";
   return true;
+}
+
+export function targetIsRevealed(room, phase) {
+  return phase === "open" || room?.status === "round_result" || room?.status === "finished";
 }
 
 export function visibleCardOrder(room, phase) {

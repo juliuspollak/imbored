@@ -1,5 +1,12 @@
 [
   {
+    "id": "v152-animal-rush-glass-difficulty",
+    "version": "v152",
+    "date": "2026-07-28",
+    "title": "Made Animal Rush recognition fairer",
+    "body": "The Easy, Standard and Hard selectors now use compact glass surfaces with translucent depth, reflected highlights and a clearer mint-glass selected state. All six animals now share one coordinated teal palette so players must recognise their shapes rather than follow distinctive colours. In Hard mode, the die stays neutral throughout the hidden reshuffle and reveals its animal at the exact same server-owned moment as the final card faces."
+  },
+  {
     "id": "v151-animal-rush-synchronised-difficulty",
     "version": "v151",
     "date": "2026-07-28",

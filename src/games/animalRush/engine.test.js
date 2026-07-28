@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  ANIMALS,
   ANIMAL_IDS,
   applyWrongTap,
   botAnimalChoice,
@@ -12,6 +13,7 @@ import {
   matchWinner,
   rankPlayers,
   roundPhase,
+  targetIsRevealed,
   visibleCardOrder,
 } from "./engine.js";
 
@@ -79,15 +81,21 @@ test("uses one shared hard-mode shuffle phase and final order", () => {
   assert.equal(roundPhase(room, Date.parse("2026-07-27T12:00:06.200Z")), "shuffling");
   assert.equal(cardsConcealed(room, "rolling"), false);
   assert.equal(cardsConcealed(room, "shuffling"), true);
+  assert.equal(targetIsRevealed(room, "shuffling"), false);
   assert.deepEqual(visibleCardOrder(room, "rolling"), room.preview_card_order);
   assert.deepEqual(visibleCardOrder(room, "shuffling"), room.card_order);
   assert.equal(roundPhase(room, Date.parse("2026-07-27T12:00:06.800Z")), "open");
+  assert.equal(targetIsRevealed(room, "open"), true);
 });
 
 test("standard conceals cards while easy keeps them visible", () => {
   assert.equal(cardsConcealed({ difficulty: "standard", status: "countdown" }, "rolling"), true);
   assert.equal(cardsConcealed({ difficulty: "easy", status: "countdown" }, "rolling"), false);
   assert.equal(cardsConcealed({ difficulty: "standard", status: "countdown" }, "open"), false);
+});
+
+test("uses one shared colour so animal shape, not colour, determines the match", () => {
+  assert.equal(new Set(ANIMALS.map((animal) => animal.colour)).size, 1);
 });
 
 test("ranks cards before safety cards and uses join order as final tie-break", () => {

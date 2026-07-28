@@ -199,7 +199,7 @@ export default function BotMatch({ userId, profile, difficulty = "standard", red
         ? "rolling"
         : "open";
   const revealed = now >= game.round.revealAt;
-  const targetRevealed = revealed || visualPhase === "shuffling";
+  const targetRevealed = revealed;
   const rollEndsAt = game.round.shuffleAt || game.round.revealAt;
   const rollElapsedMs = Math.max(
     0,
@@ -329,6 +329,7 @@ export default function BotMatch({ userId, profile, difficulty = "standard", red
                     countdown={countdown}
                     roundKey={game.round.number}
                     revealed={targetRevealed}
+                    concealed={visualPhase === "shuffling"}
                     rollDurationMs={DIE_ROLL_DURATION_MS}
                     rollElapsedMs={rollElapsedMs}
                   />
