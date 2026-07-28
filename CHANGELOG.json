@@ -1,5 +1,12 @@
 [
   {
+    "id": "v157-animal-rush-single-reveal-outcome",
+    "version": "v157",
+    "date": "2026-07-28",
+    "title": "Removed Animal Rush reveal and message glitches",
+    "body": "The animated die now finishes on a neutral hidden state and shows its target only at the same reveal moment as the animal cards, removing the brief animal–question mark–animal flash. Card taps now use one authoritative round outcome, showing only You won this round or You lost this round instead of overlapping touch and winner messages."
+  },
+  {
     "id": "v156-animal-rush-leave-hotfix",
     "version": "v156",
     "date": "2026-07-28",

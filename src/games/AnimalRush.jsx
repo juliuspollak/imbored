@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Check,
   Bot,
   Copy,
   Home,
@@ -32,6 +31,7 @@ import {
   inviteUrl,
   isPhoneDevice,
   matchIntroCountdown,
+  playerRoundOutcome,
   rankPlayers,
   roundPhase,
   targetIsRevealed,
@@ -359,7 +359,6 @@ export default function AnimalRush({ onExit }) {
   const countdown = introActive ? null : countdownNumber(room, serverNow);
   const joinCodeReady = joinCode.trim().length === 6;
   const me = players.find((player) => player.user_id === user?.id);
-  const roundWinner = players.find((player) => player.user_id === room?.round_winner_id);
   const matchWinner = players.find((player) => player.user_id === room?.winner_user_id);
   const activePlayers = players.filter((player) => !player.eliminated && !player.left_at);
   const lobbyPlayers = players.filter((player) => !player.left_at);
@@ -779,6 +778,13 @@ export default function AnimalRush({ onExit }) {
   const concealed = cardsConcealed(room, phase);
   const shuffling = phase === "shuffling";
   const targetRevealed = targetIsRevealed(room, phase);
+  const outcome = playerRoundOutcome({
+    roundComplete: room.status === "round_result",
+    winnerId: room.round_winner_id,
+    currentUserId: user?.id,
+    attempted: !!attemptFeedback && !attemptFeedback.pending && !attemptFeedback.error,
+    attemptCorrect: attemptFeedback?.correct === true,
+  });
   const rollStartedAt = room.roll_at
     ? new Date(room.roll_at).getTime()
     : new Date(room.reveal_at).getTime() - DIE_ROLL_DURATION_MS;
@@ -830,26 +836,14 @@ export default function AnimalRush({ onExit }) {
           )}
 
           <div className="rush-round-info">
-            {room.status === "round_result" && (
-              <div className="rush-round-result mb-3">
+            {outcome && (
+              <div className="rush-round-result mb-3" data-kind={outcome}>
                 <strong className="block text-sm">
-                  {!roundWinner
-                    ? "No one found it"
-                    : roundWinner.user_id === user?.id
-                      ? "You found it first"
-                      : `${roundWinner.player_name} found it first`}
+                  {outcome === "win" ? "You won this round" : "You lost this round"}
                 </strong>
-                <small className="mt-0.5 block opacity-70">Next animal is coming…</small>
-              </div>
-            )}
-
-            {attemptFeedback && room.status !== "round_result" && (
-              <div className="rush-feedback mb-3 rounded-2xl border px-3 py-2 text-center text-xs font-semibold" data-kind={attemptFeedback.correct ? "correct" : "wrong"}>
-                {attemptFeedback.pending
-                  ? "Checking your touch…"
-                  : attemptFeedback.correct
-                    ? <><Check className="mr-1 inline" size={14} /> Correct · {attemptFeedback.reactionMs} ms</>
-                    : <><X className="mr-1 inline" size={14} /> Wrong · {attemptFeedback.penalty === "safety" ? "safety card lost" : attemptFeedback.penalty === "won_card" ? "won card lost" : "eliminated"}</>}
+                {room.status === "round_result" && (
+                  <small className="mt-0.5 block opacity-70">Next animal is coming…</small>
+                )}
               </div>
             )}
 

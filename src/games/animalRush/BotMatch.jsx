@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Bot, Check, ChevronLeft, RotateCcw, Shield, Trophy, X } from "lucide-react";
+import { Bot, ChevronLeft, RotateCcw, Shield, Trophy } from "lucide-react";
 import AnimalDie from "./AnimalDie.jsx";
 import AnimalFace from "./AnimalFace.jsx";
 import {
@@ -10,6 +10,7 @@ import {
   applyWrongTap,
   botAnimalChoice,
   matchWinner,
+  playerRoundOutcome,
 } from "./engine.js";
 
 const WINNING_CARDS = 7;
@@ -232,11 +233,13 @@ export default function BotMatch({
     && revealed
     && !game.round.attempts.human
     && !human.eliminated;
-  const resultText = useMemo(() => {
-    if (game.round.winner === userId) return "You found it first";
-    if (game.round.winner === BOT_ID) return "Rush Bot found it first";
-    return "No one found it";
-  }, [game.round.winner, userId]);
+  const outcome = useMemo(() => playerRoundOutcome({
+    roundComplete: game.round.status === "result",
+    winnerId: game.round.winner,
+    currentUserId: userId,
+    attempted: !!feedback,
+    attemptCorrect: feedback?.isCorrect === true,
+  }), [feedback, game.round.status, game.round.winner, userId]);
 
   function restart() {
     setFeedback(null);
@@ -315,18 +318,14 @@ export default function BotMatch({
           )}
 
           <div className="rush-round-info">
-            {game.round.status === "result" && (
-              <div className="rush-round-result mb-3">
-                <strong className="block text-sm">{resultText}</strong>
-                <small className="mt-0.5 block opacity-70">Next animal is coming…</small>
-              </div>
-            )}
-
-            {feedback && game.round.status !== "result" && (
-              <div className="rush-feedback mb-3 rounded-2xl border px-3 py-2 text-center text-xs font-semibold" data-kind={feedback.isCorrect ? "correct" : "wrong"}>
-                {feedback.isCorrect
-                  ? <><Check className="mr-1 inline" size={14} /> Correct · {feedback.reactionMs} ms</>
-                  : <><X className="mr-1 inline" size={14} /> Wrong · {feedback.penalty === "safety" ? "safety card lost" : feedback.penalty === "won_card" ? "won card lost" : "eliminated"}</>}
+            {outcome && (
+              <div className="rush-round-result mb-3" data-kind={outcome}>
+                <strong className="block text-sm">
+                  {outcome === "win" ? "You won this round" : "You lost this round"}
+                </strong>
+                {game.round.status === "result" && (
+                  <small className="mt-0.5 block opacity-70">Next animal is coming…</small>
+                )}
               </div>
             )}
 

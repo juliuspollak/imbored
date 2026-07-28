@@ -88,6 +88,18 @@ export function targetIsRevealed(room, phase) {
   return phase === "open" || room?.status === "round_result" || room?.status === "finished";
 }
 
+export function playerRoundOutcome({
+  roundComplete = false,
+  winnerId = null,
+  currentUserId = null,
+  attempted = false,
+  attemptCorrect = false,
+} = {}) {
+  if (roundComplete) return winnerId === currentUserId ? "win" : "loss";
+  if (!attempted) return null;
+  return attemptCorrect ? "win" : "loss";
+}
+
 export function visibleCardOrder(room, phase) {
   const finalOrder = Array.isArray(room?.card_order) && room.card_order.length === ANIMAL_IDS.length
     ? room.card_order

@@ -31,6 +31,7 @@ export default function AnimalDie({
   rollElapsedMs = 0,
 }) {
   const [startedRound, setStartedRound] = useState(null);
+  const [finishedRound, setFinishedRound] = useState(null);
   const timingRef = useRef({ roundKey: null, durationMs: 2850, elapsedMs: 0 });
   if (timingRef.current.roundKey !== roundKey) {
     const durationMs = Math.max(0, Number(rollDurationMs) || 0);
@@ -48,13 +49,17 @@ export default function AnimalDie({
       aria-label={revealed ? `${animalById(targetId).label} animal die` : "Animal die countdown"}
       data-revealed={revealed}
       data-concealed={concealed}
-      data-spinning={startedRound === roundKey}
+      data-spinning={startedRound === roundKey && finishedRound !== roundKey}
+      data-settled={finishedRound === roundKey}
     >
       <div
         className="rush-die__cube"
         key={roundKey}
         onAnimationStart={(event) => {
           if (event.target === event.currentTarget) setStartedRound(roundKey);
+        }}
+        onAnimationEnd={(event) => {
+          if (event.target === event.currentTarget) setFinishedRound(roundKey);
         }}
         style={{
           "--rush-die-duration": `${timingRef.current.durationMs}ms`,
