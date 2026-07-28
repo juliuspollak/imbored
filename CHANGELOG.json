@@ -1,5 +1,12 @@
 [
   {
+    "id": "v151-animal-rush-synchronised-difficulty",
+    "version": "v151",
+    "date": "2026-07-28",
+    "title": "Added synchronised Animal Rush difficulty modes",
+    "body": "Animal Rush now offers Easy, Standard and Hard modes for computer and live matches. Live rooms wait until every phone is clock-synchronised, then the server sends one shared target, card order and future roll, shuffle and reveal times to every device. Hard mode keeps the cards visible during the roll, hides and reshuffles them as the die lands, then reveals the same final layout everywhere. Animation catch-up keeps delayed phones aligned, and anonymous attempt history now records per-mode reaction and error data for later balancing."
+  },
+  {
     "id": "v150-animal-rush-hidden-cards-inline-join-error",
     "version": "v150",
     "date": "2026-07-28",

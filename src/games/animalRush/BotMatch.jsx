@@ -5,6 +5,7 @@ import AnimalFace from "./AnimalFace.jsx";
 import {
   ANIMAL_IDS,
   DIE_ROLL_DURATION_MS,
+  SHUFFLE_DURATION_MS,
   animalById,
   applyWrongTap,
   botAnimalChoice,
@@ -18,12 +19,25 @@ function shuffledAnimals() {
   return [...ANIMAL_IDS].sort(() => Math.random() - 0.5);
 }
 
-function createRound(number) {
+function createRound(number, difficulty) {
+  const previewOrder = shuffledAnimals();
+  let order = previewOrder;
+  if (difficulty === "hard") {
+    do {
+      order = shuffledAnimals();
+    } while (order.every((animal, index) => animal === previewOrder[index]));
+  }
+  const rollAt = Date.now() + (number === 1 ? 3000 : 700);
+  const shuffleAt = difficulty === "hard" ? rollAt + DIE_ROLL_DURATION_MS : null;
   return {
     number,
     target: ANIMAL_IDS[Math.floor(Math.random() * ANIMAL_IDS.length)],
-    order: shuffledAnimals(),
-    revealAt: Date.now() + DIE_ROLL_DURATION_MS + (number === 1 ? 3000 : 0),
+    difficulty,
+    previewOrder,
+    order,
+    rollAt,
+    shuffleAt,
+    revealAt: (shuffleAt || rollAt + DIE_ROLL_DURATION_MS) + (shuffleAt ? SHUFFLE_DURATION_MS : 0),
     status: "playing",
     attempts: { human: false, bot: false },
     winner: null,
@@ -43,11 +57,12 @@ function createPlayer(userId, name, icon) {
   };
 }
 
-function createGame(userId, profile) {
+function createGame(userId, profile, difficulty) {
   return {
     status: "playing",
     winner: null,
-    round: createRound(1),
+    difficulty,
+    round: createRound(1, difficulty),
     players: [
       createPlayer(userId, profile?.name || "You", profile?.icon || "🙂"),
       createPlayer(BOT_ID, "Rush Bot", "🤖"),
@@ -65,8 +80,8 @@ function ScoreChip({ player, isYou }) {
   );
 }
 
-export default function BotMatch({ userId, profile, reducedMotion = false, onBack }) {
-  const [game, setGame] = useState(() => createGame(userId, profile));
+export default function BotMatch({ userId, profile, difficulty = "standard", reducedMotion = false, onBack }) {
+  const [game, setGame] = useState(() => createGame(userId, profile, difficulty));
   const [now, setNow] = useState(Date.now());
   const [feedback, setFeedback] = useState(null);
   const gameRef = useRef(game);
@@ -162,7 +177,7 @@ export default function BotMatch({ userId, profile, reducedMotion = false, onBac
       setFeedback(null);
       commitGame({
         ...current,
-        round: createRound(current.round.number + 1),
+        round: createRound(current.round.number + 1, current.difficulty),
       });
     }, 2200);
     return () => window.clearTimeout(timer);
@@ -171,15 +186,39 @@ export default function BotMatch({ userId, profile, reducedMotion = false, onBac
   const human = game.players.find((player) => player.user_id === userId);
   const bot = game.players.find((player) => player.user_id === BOT_ID);
   const target = animalById(game.round.target);
-  const introEndsAt = game.round.revealAt - DIE_ROLL_DURATION_MS;
+  const introEndsAt = game.round.rollAt;
   const introActive = game.round.number === 1
     && game.round.status === "playing"
     && now < introEndsAt;
   const introCountdown = introActive ? Math.max(1, Math.ceil((introEndsAt - now) / 1000)) : null;
+  const visualPhase = now < game.round.rollAt
+    ? "waiting"
+    : game.round.shuffleAt && now >= game.round.shuffleAt && now < game.round.revealAt
+      ? "shuffling"
+      : now < game.round.revealAt
+        ? "rolling"
+        : "open";
   const revealed = now >= game.round.revealAt;
-  const countdown = introActive || revealed
+  const targetRevealed = revealed || visualPhase === "shuffling";
+  const rollEndsAt = game.round.shuffleAt || game.round.revealAt;
+  const rollElapsedMs = Math.max(
+    0,
+    Math.min(DIE_ROLL_DURATION_MS, now - game.round.rollAt),
+  );
+  const shuffleElapsedMs = visualPhase === "shuffling"
+    ? Math.max(0, now - game.round.shuffleAt)
+    : 0;
+  const countdown = visualPhase !== "rolling"
     ? null
-    : Math.max(1, Math.ceil((game.round.revealAt - now) / 1000));
+    : Math.max(1, Math.ceil((rollEndsAt - now) / 1000));
+  const concealed = game.difficulty === "standard"
+    ? !revealed
+    : game.difficulty === "hard"
+      ? visualPhase === "shuffling"
+      : false;
+  const cardOrder = game.difficulty === "hard" && (visualPhase === "waiting" || visualPhase === "rolling")
+    ? game.round.previewOrder
+    : game.round.order;
   const canTap = game.status === "playing"
     && game.round.status === "playing"
     && revealed
@@ -193,7 +232,7 @@ export default function BotMatch({ userId, profile, reducedMotion = false, onBac
 
   function restart() {
     setFeedback(null);
-    commitGame(createGame(userId, profile));
+    commitGame(createGame(userId, profile, game.difficulty));
   }
 
   if (game.status === "finished") {
@@ -243,6 +282,7 @@ export default function BotMatch({ userId, profile, reducedMotion = false, onBac
           </button>
           <span className="rush-muted flex items-center gap-2 text-[11px] font-semibold">
             Test round {game.round.number}
+            <span className="rush-mode-badge">{game.difficulty}</span>
             {reducedMotion && <span className="rush-motion-badge">Motion reduced</span>}
           </span>
           <span className="rush-muted text-[10px]">No points</span>
@@ -281,35 +321,40 @@ export default function BotMatch({ userId, profile, reducedMotion = false, onBac
             )}
 
             <div className="rush-prompt text-center">
-              <p className="rush-kicker">{revealed ? "Find this animal" : "Get ready"}</p>
-              <div className="rush-target mt-2" data-open={revealed}>
-                {!introActive && (
+              <p className="rush-kicker">{revealed ? "Find this animal" : visualPhase === "shuffling" ? "Cards reshuffling" : "Get ready"}</p>
+              <div className="rush-target mt-2" data-open={targetRevealed}>
+                {visualPhase !== "waiting" && (
                   <AnimalDie
                     targetId={target.id}
                     countdown={countdown}
                     roundKey={game.round.number}
-                    revealed={revealed}
-                    rollDurationMs={game.round.revealAt - now}
+                    revealed={targetRevealed}
+                    rollDurationMs={DIE_ROLL_DURATION_MS}
+                    rollElapsedMs={rollElapsedMs}
                   />
                 )}
               </div>
               <strong
                 className="rush-target-label"
-                data-visible={revealed}
-                aria-hidden={!revealed}
+                data-visible={targetRevealed}
+                aria-hidden={!targetRevealed}
               >
-                {revealed ? target.label : "\u00a0"}
+                {targetRevealed ? target.label : "\u00a0"}
               </strong>
             </div>
           </div>
 
           <div
             className="rush-grid"
-            data-concealed={!revealed}
-            aria-hidden={!revealed}
+            data-concealed={concealed}
+            data-shuffling={visualPhase === "shuffling"}
+            style={visualPhase === "shuffling"
+              ? { "--rush-shuffle-delay": `-${shuffleElapsedMs}ms` }
+              : undefined}
+            aria-hidden={concealed}
             aria-label="Animal cards"
           >
-            {game.round.order.map((animalId) => {
+            {cardOrder.map((animalId) => {
               const animal = animalById(animalId);
               return (
                 <button

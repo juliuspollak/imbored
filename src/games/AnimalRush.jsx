@@ -23,14 +23,17 @@ import AnimalDie from "./animalRush/AnimalDie.jsx";
 import AnimalFace from "./animalRush/AnimalFace.jsx";
 import BotMatch from "./animalRush/BotMatch.jsx";
 import {
-  ANIMAL_IDS,
+  DIE_ROLL_DURATION_MS,
+  DIFFICULTY_MODES,
   animalById,
+  cardsConcealed,
   countdownNumber,
   inviteUrl,
   isPhoneDevice,
   matchIntroCountdown,
   rankPlayers,
   roundPhase,
+  visibleCardOrder,
 } from "./animalRush/engine.js";
 import "./animalRush/animal-rush.css";
 
@@ -68,7 +71,29 @@ function phoneSupported() {
   });
 }
 
-function PlayerRow({ player, currentUserId, winnerId }) {
+function DifficultySelector({ value, onChange, disabled = false, label = "Difficulty" }) {
+  return (
+    <fieldset className="rush-difficulty">
+      <legend>{label}</legend>
+      <div>
+        {DIFFICULTY_MODES.map((mode) => (
+          <button
+            type="button"
+            key={mode.id}
+            data-selected={value === mode.id}
+            onClick={() => onChange?.(mode.id)}
+            disabled={disabled}
+          >
+            <strong>{mode.label}</strong>
+            <small>{mode.description}</small>
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+function PlayerRow({ player, currentUserId, winnerId, synchronised }) {
   const isYou = player.user_id === currentUserId;
   const isWinner = player.user_id === winnerId;
   return (
@@ -79,9 +104,18 @@ function PlayerRow({ player, currentUserId, winnerId }) {
           {player.player_name}{isYou ? " · You" : ""}
         </strong>
         <small className="rush-muted block text-[10px]">
-          {player.left_at ? "Left the room" : player.eliminated ? "Eliminated" : `${player.rounds_won || 0} rounds won`}
+          {player.left_at
+            ? "Left the room"
+            : player.eliminated
+              ? "Eliminated"
+              : typeof synchronised === "boolean"
+                ? synchronised ? "Synchronised" : "Synchronising phone…"
+                : `${player.rounds_won || 0} rounds won`}
         </small>
       </span>
+      {typeof synchronised === "boolean" && (
+        <span className="rush-sync-dot" data-ready={synchronised} aria-hidden="true" />
+      )}
       {isWinner && <Trophy size={16} color="#F2C66D" />}
       <span className="rush-token rush-token--shield"><Shield size={11} />{player.safety_cards || 0}</span>
       <span className="rush-token rush-token--card"><span>◆</span>{player.won_cards || 0}</span>
@@ -140,6 +174,8 @@ export default function AnimalRush({ onExit }) {
   const [serverOffset, setServerOffset] = useState(0);
   const [attemptFeedback, setAttemptFeedback] = useState(null);
   const [botMode, setBotMode] = useState(false);
+  const [botDifficulty, setBotDifficulty] = useState("standard");
+  const [clockRtt, setClockRtt] = useState(null);
   const attemptRef = useRef(false);
   const roundRef = useRef(null);
   const advanceRef = useRef(null);
@@ -181,12 +217,22 @@ export default function AnimalRush({ onExit }) {
   }, [roomStorageKey]);
 
   const synchroniseClock = useCallback(async () => {
-    const sentAt = Date.now();
-    const { data } = await supabase.rpc("animal_rush_server_time");
-    const receivedAt = Date.now();
-    if (data) {
-      setServerOffset(new Date(data).getTime() - ((sentAt + receivedAt) / 2));
+    const samples = await Promise.all(Array.from({ length: 5 }, async () => {
+      const sentAt = Date.now();
+      const { data, error } = await supabase.rpc("animal_rush_server_time");
+      const receivedAt = Date.now();
+      if (error || !data) return null;
+      return {
+        rtt: receivedAt - sentAt,
+        offset: new Date(data).getTime() - ((sentAt + receivedAt) / 2),
+      };
+    }));
+    const best = samples.filter(Boolean).sort((left, right) => left.rtt - right.rtt)[0];
+    if (best) {
+      setServerOffset(best.offset);
+      setClockRtt(best.rtt);
     }
+    return best || null;
   }, []);
 
   useEffect(() => {
@@ -234,6 +280,38 @@ export default function AnimalRush({ onExit }) {
   }, [refreshRoom, room?.id, synchroniseClock]);
 
   useEffect(() => {
+    if (room?.status !== "lobby" || !room?.id || !user?.id || !supabaseReady) return undefined;
+    let disposed = false;
+    let measuredRtt = clockRtt;
+
+    const heartbeat = async (resynchronise = false) => {
+      if (resynchronise || measuredRtt === null) {
+        const sample = await synchroniseClock();
+        if (!sample || disposed) return;
+        measuredRtt = sample.rtt;
+      }
+      await supabase.rpc("animal_rush_set_ready", {
+        target_room_id: room.id,
+        measured_rtt_ms: measuredRtt,
+      });
+      if (!disposed) void refreshRoom(room.id, true);
+    };
+
+    void heartbeat(true);
+    const timer = window.setInterval(() => void heartbeat(false), 10000);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void heartbeat(true);
+      else void supabase.rpc("animal_rush_set_not_ready", { target_room_id: room.id });
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      disposed = true;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [refreshRoom, room?.id, room?.match_number, room?.status, synchroniseClock, user?.id]);
+
+  useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 50);
     return () => window.clearInterval(timer);
   }, []);
@@ -249,14 +327,25 @@ export default function AnimalRush({ onExit }) {
   const phase = roundPhase(room, serverNow);
   const introCountdown = matchIntroCountdown(room, serverNow);
   const introActive = introCountdown !== null;
+  const preparingMatch = room?.status === "countdown"
+    && Number(room?.round_number) === 1
+    && phase === "waiting"
+    && !introActive;
   const countdown = introActive ? null : countdownNumber(room, serverNow);
   const joinCodeReady = joinCode.trim().length === 6;
   const me = players.find((player) => player.user_id === user?.id);
   const roundWinner = players.find((player) => player.user_id === room?.round_winner_id);
   const matchWinner = players.find((player) => player.user_id === room?.winner_user_id);
   const activePlayers = players.filter((player) => !player.eliminated && !player.left_at);
+  const lobbyPlayers = players.filter((player) => !player.left_at);
   const orderedPlayers = rankPlayers(players);
   const isHost = room?.host_user_id === user?.id;
+  const playerIsSynchronised = useCallback((player) =>
+    !!player?.ready_at
+    && new Date(player.ready_at).getTime() > serverNow - 25000
+    && Number(player.clock_rtt_ms ?? 9999) <= 750
+  , [serverNow]);
+  const allPlayersReady = lobbyPlayers.length >= 2 && lobbyPlayers.every(playerIsSynchronised);
 
   useEffect(() => {
     if (phase !== "open" || revealBuzzRef.current === room?.round_number) return;
@@ -332,6 +421,19 @@ export default function AnimalRush({ onExit }) {
     setWorking("");
     if (error) setMessage(error.message);
     await synchroniseClock();
+    await refreshRoom(room.id, true);
+  }
+
+  async function changeDifficulty(nextDifficulty) {
+    if (!isHost || !DIFFICULTY_MODES.some((mode) => mode.id === nextDifficulty)) return;
+    setWorking("difficulty");
+    setMessage("");
+    const { error } = await supabase.rpc("animal_rush_set_difficulty", {
+      target_room_id: room.id,
+      selected_difficulty: nextDifficulty,
+    });
+    setWorking("");
+    if (error) setMessage(error.message);
     await refreshRoom(room.id, true);
   }
 
@@ -416,6 +518,7 @@ export default function AnimalRush({ onExit }) {
       <BotMatch
         userId={user?.id || "local-player"}
         profile={profile}
+        difficulty={botDifficulty}
         reducedMotion={reducedMotion}
         onBack={() => setBotMode(false)}
       />
@@ -456,6 +559,12 @@ export default function AnimalRush({ onExit }) {
                 <span>The die will use a static countdown, then reveal the animal.</span>
               </div>
             )}
+
+            <DifficultySelector
+              value={botDifficulty}
+              onChange={setBotDifficulty}
+              label="Computer match difficulty"
+            />
 
             <button type="button" className="rush-primary mt-6 w-full" onClick={() => setBotMode(true)} disabled={!!working}>
               <Bot size={18} />
@@ -540,22 +649,33 @@ export default function AnimalRush({ onExit }) {
           <section className="rush-panel mt-4 p-4">
             <div className="mb-3 flex items-center justify-between">
               <strong className="text-sm">Players</strong>
-              <span className="rush-muted text-xs">{players.length}/6</span>
+              <span className="rush-muted text-xs">{lobbyPlayers.length}/6</span>
             </div>
             <div className="space-y-2">
-              {players.map((player) => (
-                <PlayerRow key={player.user_id} player={player} currentUserId={user?.id} />
+              {lobbyPlayers.map((player) => (
+                <PlayerRow
+                  key={player.user_id}
+                  player={player}
+                  currentUserId={user?.id}
+                  synchronised={playerIsSynchronised(player)}
+                />
               ))}
             </div>
-            {players.length < 2 && (
+            {lobbyPlayers.length < 2 && (
               <p className="rush-muted mt-4 flex items-center justify-center gap-2 text-xs">
                 <Loader2 className="animate-spin" size={13} /> Waiting for another player
               </p>
             )}
+            <DifficultySelector
+              value={room.difficulty || "standard"}
+              onChange={changeDifficulty}
+              disabled={!isHost || !!working}
+              label={isHost ? "Match difficulty" : "Host-selected difficulty"}
+            />
             {isHost ? (
-              <button type="button" className="rush-primary mt-4 w-full" onClick={startGame} disabled={players.length < 2 || !!working}>
+              <button type="button" className="rush-primary mt-4 w-full" onClick={startGame} disabled={!allPlayersReady || !!working}>
                 {working === "start" ? <Loader2 className="animate-spin" size={17} /> : <Play size={17} fill="currentColor" />}
-                Start match
+                {allPlayersReady ? "Start match" : "Waiting for synced phones"}
               </button>
             ) : (
               <p className="rush-muted mt-4 text-center text-xs">The room creator will start the match.</p>
@@ -606,9 +726,19 @@ export default function AnimalRush({ onExit }) {
 
   const targetAnimal = animalById(room.target_animal);
   const canTap = phase === "open" && !attemptRef.current && !me?.eliminated && !me?.left_at;
-  const cardOrder = Array.isArray(room.card_order) && room.card_order.length === ANIMAL_IDS.length
-    ? room.card_order
-    : ANIMAL_IDS;
+  const cardOrder = visibleCardOrder(room, phase);
+  const concealed = cardsConcealed(room, phase);
+  const shuffling = phase === "shuffling";
+  const targetRevealed = phase === "open"
+    || room.status === "round_result"
+    || (room.difficulty === "hard" && shuffling);
+  const rollStartedAt = room.roll_at
+    ? new Date(room.roll_at).getTime()
+    : new Date(room.reveal_at).getTime() - DIE_ROLL_DURATION_MS;
+  const rollElapsedMs = Math.max(0, Math.min(DIE_ROLL_DURATION_MS, serverNow - rollStartedAt));
+  const shuffleElapsedMs = shuffling && room.shuffle_at
+    ? Math.max(0, serverNow - new Date(room.shuffle_at).getTime())
+    : 0;
 
   return (
     <div className="animal-rush">
@@ -617,6 +747,7 @@ export default function AnimalRush({ onExit }) {
           <button type="button" className="rush-quiet -ml-2" onClick={onExit}><Home size={16} /> Home</button>
           <span className="rush-muted flex items-center gap-2 text-[11px] font-semibold">
             Round {room.round_number}
+            <span className="rush-mode-badge">{room.difficulty || "standard"}</span>
             {reducedMotion && <span className="rush-motion-badge">Motion reduced</span>}
           </span>
           <span className="rush-muted text-[11px]">{activePlayers.length} active</span>
@@ -629,12 +760,22 @@ export default function AnimalRush({ onExit }) {
             ))}
           </div>
 
-          {introActive && (
+          {(preparingMatch || introActive) && (
             <div className="rush-start-countdown" role="status" aria-live="polite">
               <div>
-                <span>Match starts in</span>
-                <strong key={introCountdown}>{introCountdown}</strong>
-                <small>Get ready to find the animal</small>
+                {preparingMatch ? (
+                  <>
+                    <span>Synchronising players</span>
+                    <Loader2 className="rush-sync-spinner" size={40} />
+                    <small>Every phone has the same start time</small>
+                  </>
+                ) : (
+                  <>
+                    <span>Match starts in</span>
+                    <strong key={introCountdown}>{introCountdown}</strong>
+                    <small>Get ready to find the animal</small>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -664,32 +805,37 @@ export default function AnimalRush({ onExit }) {
             )}
 
             <div className="rush-prompt text-center">
-              <p className="rush-kicker">{phase === "open" ? "Find this animal" : room.status === "round_result" ? "Round complete" : "Get ready"}</p>
-              <div className="rush-target mt-2" data-open={phase === "open"}>
-                {!introActive && (
+              <p className="rush-kicker">
+                {phase === "open" ? "Find this animal" : shuffling ? "Cards reshuffling" : room.status === "round_result" ? "Round complete" : "Get ready"}
+              </p>
+              <div className="rush-target mt-2" data-open={targetRevealed}>
+                {phase !== "waiting" && (
                   <AnimalDie
                     targetId={targetAnimal.id}
                     countdown={countdown}
                     roundKey={room.round_number}
-                    revealed={phase === "open" || room.status === "round_result"}
-                    rollDurationMs={new Date(room.reveal_at).getTime() - serverNow}
+                    revealed={targetRevealed}
+                    rollDurationMs={DIE_ROLL_DURATION_MS}
+                    rollElapsedMs={rollElapsedMs}
                   />
                 )}
               </div>
               <strong
                 className="rush-target-label"
-                data-visible={phase === "open" || room.status === "round_result"}
-                aria-hidden={phase !== "open" && room.status !== "round_result"}
+                data-visible={targetRevealed}
+                aria-hidden={!targetRevealed}
               >
-                {phase === "open" || room.status === "round_result" ? targetAnimal.label : "\u00a0"}
+                {targetRevealed ? targetAnimal.label : "\u00a0"}
               </strong>
             </div>
           </div>
 
           <div
             className="rush-grid"
-            data-concealed={phase !== "open" && room.status !== "round_result"}
-            aria-hidden={phase !== "open" && room.status !== "round_result"}
+            data-concealed={concealed}
+            data-shuffling={shuffling}
+            style={shuffling ? { "--rush-shuffle-delay": `-${shuffleElapsedMs}ms` } : undefined}
+            aria-hidden={concealed}
             aria-label="Animal cards"
           >
             {cardOrder.map((animalId) => {

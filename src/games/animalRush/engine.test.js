@@ -4,6 +4,7 @@ import {
   ANIMAL_IDS,
   applyWrongTap,
   botAnimalChoice,
+  cardsConcealed,
   countdownNumber,
   inviteUrl,
   isPhoneDevice,
@@ -11,6 +12,7 @@ import {
   matchWinner,
   rankPlayers,
   roundPhase,
+  visibleCardOrder,
 } from "./engine.js";
 
 test("accepts touch phones and rejects desktop or tablet-style devices", () => {
@@ -38,8 +40,13 @@ test("bot can react correctly or choose a genuine wrong animal", () => {
 });
 
 test("opens a round only after the shared reveal time", () => {
-  const room = { status: "countdown", reveal_at: "2026-07-27T12:00:03.000Z" };
-  assert.equal(roundPhase(room, Date.parse("2026-07-27T12:00:01.000Z")), "countdown");
+  const room = {
+    status: "countdown",
+    roll_at: "2026-07-27T12:00:00.000Z",
+    reveal_at: "2026-07-27T12:00:03.000Z",
+  };
+  assert.equal(roundPhase(room, Date.parse("2026-07-27T11:59:59.000Z")), "waiting");
+  assert.equal(roundPhase(room, Date.parse("2026-07-27T12:00:01.000Z")), "rolling");
   assert.equal(countdownNumber(room, Date.parse("2026-07-27T12:00:01.000Z")), 2);
   assert.equal(roundPhase(room, Date.parse("2026-07-27T12:00:03.000Z")), "open");
 });
@@ -48,6 +55,7 @@ test("finishes the match intro before the first die starts rolling", () => {
   const room = {
     status: "countdown",
     round_number: 1,
+    roll_at: "2026-07-27T12:00:03.000Z",
     reveal_at: "2026-07-27T12:00:06.000Z",
   };
   assert.equal(matchIntroCountdown(room, Date.parse("2026-07-27T12:00:00.000Z")), 3);
@@ -55,6 +63,31 @@ test("finishes the match intro before the first die starts rolling", () => {
   assert.equal(matchIntroCountdown(room, Date.parse("2026-07-27T12:00:03.000Z")), null);
   assert.equal(countdownNumber(room, Date.parse("2026-07-27T12:00:03.000Z")), 3);
   assert.equal(matchIntroCountdown({ ...room, round_number: 2 }, Date.parse("2026-07-27T12:00:00.000Z")), null);
+});
+
+test("uses one shared hard-mode shuffle phase and final order", () => {
+  const room = {
+    status: "countdown",
+    difficulty: "hard",
+    roll_at: "2026-07-27T12:00:03.000Z",
+    shuffle_at: "2026-07-27T12:00:06.000Z",
+    reveal_at: "2026-07-27T12:00:06.800Z",
+    preview_card_order: ["fox", "panda", "owl", "rabbit", "lion", "frog"],
+    card_order: ["frog", "lion", "rabbit", "owl", "panda", "fox"],
+  };
+  assert.equal(roundPhase(room, Date.parse("2026-07-27T12:00:05.000Z")), "rolling");
+  assert.equal(roundPhase(room, Date.parse("2026-07-27T12:00:06.200Z")), "shuffling");
+  assert.equal(cardsConcealed(room, "rolling"), false);
+  assert.equal(cardsConcealed(room, "shuffling"), true);
+  assert.deepEqual(visibleCardOrder(room, "rolling"), room.preview_card_order);
+  assert.deepEqual(visibleCardOrder(room, "shuffling"), room.card_order);
+  assert.equal(roundPhase(room, Date.parse("2026-07-27T12:00:06.800Z")), "open");
+});
+
+test("standard conceals cards while easy keeps them visible", () => {
+  assert.equal(cardsConcealed({ difficulty: "standard", status: "countdown" }, "rolling"), true);
+  assert.equal(cardsConcealed({ difficulty: "easy", status: "countdown" }, "rolling"), false);
+  assert.equal(cardsConcealed({ difficulty: "standard", status: "countdown" }, "open"), false);
 });
 
 test("ranks cards before safety cards and uses join order as final tie-break", () => {
