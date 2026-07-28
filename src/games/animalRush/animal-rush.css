@@ -704,13 +704,13 @@
   font-weight: 700;
   opacity: 0;
   transform: scale(0.8);
-  transition: opacity 180ms ease, transform 180ms ease;
+  transition: none;
   pointer-events: none;
 }
 
 .rush-animal-card svg,
 .rush-animal-label {
-  transition: opacity 180ms ease;
+  transition: none;
 }
 
 .rush-animal-card:not(:disabled):active {

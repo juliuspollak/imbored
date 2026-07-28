@@ -342,6 +342,16 @@ export default function AnimalRush({ onExit }) {
   }, []);
 
   useEffect(() => {
+    if (!room?.reveal_at) return undefined;
+    const revealAt = new Date(room.reveal_at).getTime();
+    const clientRevealAt = revealAt - serverOffset;
+    const remaining = clientRevealAt - Date.now();
+    if (!Number.isFinite(remaining) || remaining <= 0) return undefined;
+    const timer = window.setTimeout(() => setNow(clientRevealAt), remaining);
+    return () => window.clearTimeout(timer);
+  }, [room?.reveal_at, serverOffset]);
+
+  useEffect(() => {
     if (roundRef.current === room?.round_number) return;
     roundRef.current = room?.round_number;
     attemptRef.current = false;

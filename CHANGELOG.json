@@ -1,5 +1,12 @@
 [
   {
+    "id": "v163-animal-rush-frame-aligned-reveal",
+    "version": "v163",
+    "date": "2026-07-28",
+    "title": "Aligned the Animal Rush cards with the die",
+    "body": "Animal cards now switch from question marks to their animal faces at the exact shared reveal deadline instead of waiting for the next 50 ms clock update and then fading in. The confirmed-working cube animation is unchanged, and live rooms and computer matches use the same immediate reveal behaviour."
+  },
+  {
     "id": "v162-animal-rush-1030-die-restore",
     "version": "v162",
     "date": "2026-07-28",
