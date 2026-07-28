@@ -14,16 +14,16 @@ const PANEL = "#FFFFFF";
 const CREAM = "#1B2129";
 
 export const GAME_META = [
-  { id: "queens", label: "Queens", desc: "One crown per row, column & region", icon: Crown, accent: "#2F6FED", available: true },
-  { id: "tango", label: "Tango", desc: "Balance sun & moon in every line", icon: Moon, accent: "#4A6FA5", available: true },
-  { id: "zip", label: "Zip", desc: "Trace one path through every cell", icon: Waypoints, accent: "#12946A", available: true },
+  { id: "queens", label: "Queens", desc: "One crown per row, column & region", icon: Crown, accent: "#2F6FED", available: true, challenge: true },
+  { id: "tango", label: "Tango", desc: "Balance sun & moon in every line", icon: Moon, accent: "#4A6FA5", available: true, challenge: true },
+  { id: "zip", label: "Zip", desc: "Trace one path through every cell", icon: Waypoints, accent: "#12946A", available: true, challenge: true },
   { id: "pinpoint", label: "Pinpoint", desc: "Guess the category from five clues", icon: Target, accent: "#8B5CF6", available: false },
   { id: "crossclimb", label: "Crossclimb", desc: "Solve the word ladder", icon: ArrowUpDown, accent: "#EA580C", available: false },
-  { id: "minisudoku", label: "Mini Sudoku", desc: "Classic sudoku, bite-sized", icon: Grid3x3, accent: "#0E7490", available: true },
+  { id: "minisudoku", label: "Mini Sudoku", desc: "Classic sudoku, bite-sized", icon: Grid3x3, accent: "#0E7490", available: true, challenge: true },
   { id: "patches", label: "Patches", desc: "Fit every shape into the frame", icon: Puzzle, accent: "#B45309", available: false },
   { id: "wend", label: "Wend", desc: "Weave hidden words through the grid", icon: Waves, accent: "#0EA5E9", available: false },
-  { id: "geo", label: "Geo", desc: "Capitals, landmarks & wildlife by continent", icon: Globe2, accent: "#DB2777", available: true },
-  { id: "zoom", label: "Zoom", desc: "Narrow it down: continent, region, country", icon: ZoomIn, accent: "#7C3AED", available: true },
+  { id: "geo", label: "Geo", desc: "Capitals, landmarks & wildlife by continent", icon: Globe2, accent: "#DB2777", available: true, challenge: true },
+  { id: "zoom", label: "Zoom", desc: "Narrow it down: continent, region, country", icon: ZoomIn, accent: "#7C3AED", available: true, challenge: true },
   { id: "animalrush", label: "Animal Rush", desc: "Live animal race for 2–6 phones", icon: PawPrint, accent: "#15966F", available: false, live: true, requiresConfig: true },
 ];
 
@@ -384,14 +384,25 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
             ...g,
             available: cfg ? cfg.available : g.available,
             visible: cfg ? cfg.visible : !g.requiresConfig,
+            challengeEnabled: typeof cfg?.challenge_enabled === "boolean"
+              ? cfg.challenge_enabled
+              : g.challenge === true,
             sortOrder: cfg ? cfg.sort_order : i,
           };
         })
         .filter((g) => g.visible)
         .sort((a, b) => a.sortOrder - b.sortOrder);
   const visibleGames = configuredGames
-    .filter((g) => g.live || playMode !== "challenge" || challengeScope?.type !== "team" || (challengeScope.gameIds || []).includes(g.id));
-  const personalGameIds = configuredGames.filter((game) => game.available && !game.live).map((game) => game.id);
+    .filter((game) => {
+      if (playMode !== "challenge") return true;
+      if (challengeScope?.type === "team") {
+        return (challengeScope.gameIds || []).includes(game.id);
+      }
+      return game.challengeEnabled;
+    });
+  const personalGameIds = configuredGames
+    .filter((game) => game.available && game.challengeEnabled)
+    .map((game) => game.id);
   const personalCompleted = challengeCompletions.personal || new Set();
   const challengeStatus = (teamChallenge) => {
     const requiredItems = teamChallenge
