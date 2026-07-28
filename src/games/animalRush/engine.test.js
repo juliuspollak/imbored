@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {
   ANIMALS,
   ANIMAL_IDS,
+  COLOUR_MODES,
+  animalColour,
   applyWrongTap,
   botAnimalChoice,
   cardsConcealed,
@@ -94,8 +96,11 @@ test("standard conceals cards while easy keeps them visible", () => {
   assert.equal(cardsConcealed({ difficulty: "standard", status: "countdown" }, "open"), false);
 });
 
-test("uses one shared colour so animal shape, not colour, determines the match", () => {
-  assert.equal(new Set(ANIMALS.map((animal) => animal.colour)).size, 1);
+test("supports a shape-only palette and an easier individual-colour palette", () => {
+  assert.deepEqual(COLOUR_MODES.map((mode) => mode.id), ["uniform", "individual"]);
+  assert.equal(new Set(ANIMALS.map((animal) => animalColour(animal.id, "uniform"))).size, 1);
+  assert.equal(new Set(ANIMALS.map((animal) => animalColour(animal.id, "individual"))).size, ANIMALS.length);
+  assert.equal(animalColour("fox", "unknown"), animalColour("fox", "uniform"));
 });
 
 test("ranks cards before safety cards and uses join order as final tie-break", () => {

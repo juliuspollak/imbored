@@ -57,11 +57,12 @@ function createPlayer(userId, name, icon) {
   };
 }
 
-function createGame(userId, profile, difficulty) {
+function createGame(userId, profile, difficulty, colourMode) {
   return {
     status: "playing",
     winner: null,
     difficulty,
+    colourMode,
     round: createRound(1, difficulty),
     players: [
       createPlayer(userId, profile?.name || "You", profile?.icon || "🙂"),
@@ -80,8 +81,15 @@ function ScoreChip({ player, isYou }) {
   );
 }
 
-export default function BotMatch({ userId, profile, difficulty = "standard", reducedMotion = false, onBack }) {
-  const [game, setGame] = useState(() => createGame(userId, profile, difficulty));
+export default function BotMatch({
+  userId,
+  profile,
+  difficulty = "standard",
+  colourMode = "uniform",
+  reducedMotion = false,
+  onBack,
+}) {
+  const [game, setGame] = useState(() => createGame(userId, profile, difficulty, colourMode));
   const [now, setNow] = useState(Date.now());
   const [feedback, setFeedback] = useState(null);
   const gameRef = useRef(game);
@@ -232,7 +240,7 @@ export default function BotMatch({ userId, profile, difficulty = "standard", red
 
   function restart() {
     setFeedback(null);
-    commitGame(createGame(userId, profile, game.difficulty));
+    commitGame(createGame(userId, profile, game.difficulty, game.colourMode));
   }
 
   if (game.status === "finished") {
@@ -282,7 +290,9 @@ export default function BotMatch({ userId, profile, difficulty = "standard", red
           </button>
           <span className="rush-muted flex items-center gap-2 text-[11px] font-semibold">
             Test round {game.round.number}
-            <span className="rush-mode-badge">{game.difficulty}</span>
+            <span className="rush-mode-badge">
+              {game.difficulty} · {game.colourMode === "individual" ? "animal colours" : "one colour"}
+            </span>
             {reducedMotion && <span className="rush-motion-badge">Motion reduced</span>}
           </span>
           <span className="rush-muted text-[10px]">No points</span>
@@ -330,6 +340,7 @@ export default function BotMatch({ userId, profile, difficulty = "standard", red
                     roundKey={game.round.number}
                     revealed={targetRevealed}
                     concealed={visualPhase === "shuffling"}
+                    colourMode={game.colourMode}
                     rollDurationMs={DIE_ROLL_DURATION_MS}
                     rollElapsedMs={rollElapsedMs}
                   />
@@ -370,7 +381,7 @@ export default function BotMatch({ userId, profile, difficulty = "standard", red
                   disabled={!canTap}
                   aria-label={animal.label}
                 >
-                  <AnimalFace animalId={animal.id} size={72} />
+                  <AnimalFace animalId={animal.id} colourMode={game.colourMode} size={72} />
                   <span className="rush-animal-label">{animal.label}</span>
                 </button>
               );

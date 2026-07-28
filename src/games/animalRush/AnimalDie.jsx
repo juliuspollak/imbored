@@ -26,6 +26,7 @@ export default function AnimalDie({
   roundKey,
   revealed,
   concealed = false,
+  colourMode = "uniform",
   rollDurationMs = 2850,
   rollElapsedMs = 0,
 }) {
@@ -63,7 +64,7 @@ export default function AnimalDie({
       >
         {DIE_FACES.map(([animalId, face]) => (
           <span className={`rush-die__face rush-die__face--${face}`} key={animalId}>
-            <AnimalFace animalId={animalId} size={58} />
+            <AnimalFace animalId={animalId} colourMode={colourMode} size={58} />
           </span>
         ))}
       </div>

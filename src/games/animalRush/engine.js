@@ -1,10 +1,10 @@
 export const ANIMALS = [
-  { id: "fox", label: "Monkey", colour: "#3B9A80" },
-  { id: "panda", label: "Snake", colour: "#3B9A80" },
-  { id: "owl", label: "Octopus", colour: "#3B9A80" },
-  { id: "rabbit", label: "Elephant", colour: "#3B9A80" },
-  { id: "lion", label: "Lion", colour: "#3B9A80" },
-  { id: "frog", label: "Spider", colour: "#3B9A80" },
+  { id: "fox", label: "Monkey", colour: "#3B9A80", individualColour: "#9B5B42" },
+  { id: "panda", label: "Snake", colour: "#3B9A80", individualColour: "#49A94E" },
+  { id: "owl", label: "Octopus", colour: "#3B9A80", individualColour: "#B83A9D" },
+  { id: "rabbit", label: "Elephant", colour: "#3B9A80", individualColour: "#1EA4B8" },
+  { id: "lion", label: "Lion", colour: "#3B9A80", individualColour: "#D58B32" },
+  { id: "frog", label: "Spider", colour: "#3B9A80", individualColour: "#56376D" },
 ];
 
 export const ANIMAL_IDS = ANIMALS.map((animal) => animal.id);
@@ -15,9 +15,18 @@ export const DIFFICULTY_MODES = [
   { id: "standard", label: "Standard", description: "Cards reveal with the animal" },
   { id: "hard", label: "Hard", description: "Cards reshuffle before reveal" },
 ];
+export const COLOUR_MODES = [
+  { id: "uniform", label: "One colour", description: "Harder · recognise the shape" },
+  { id: "individual", label: "Animal colours", description: "Easier · colour helps" },
+];
 
 export function animalById(id) {
   return ANIMALS.find((animal) => animal.id === id) || ANIMALS[0];
+}
+
+export function animalColour(id, colourMode = "uniform") {
+  const animal = animalById(id);
+  return colourMode === "individual" ? animal.individualColour : animal.colour;
 }
 
 export function isPhoneDevice({

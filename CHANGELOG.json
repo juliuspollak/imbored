@@ -1,5 +1,12 @@
 [
   {
+    "id": "v154-animal-rush-colour-modes",
+    "version": "v154",
+    "date": "2026-07-28",
+    "title": "Added selectable Animal Rush colours",
+    "body": "Animal Rush now lets players choose between One colour, where shape recognition keeps the match fair and challenging, and Animal colours, where each character has its own easier-to-spot palette. The choice is available before computer matches and in live-room lobbies; live hosts control it and the room synchronises the same palette to every phone. The die and cards always use the selected palette together, and new attempt history records the colour mode for future reaction-time comparisons."
+  },
+  {
     "id": "v153-hidden-presence-zoom-description",
     "version": "v153",
     "date": "2026-07-28",
