@@ -210,7 +210,12 @@ export default function BotMatch({
   const revealed = now >= game.round.revealAt;
   const targetRevealed = revealed;
   const rollEndsAt = game.round.shuffleAt || game.round.revealAt;
-  const rollDurationMs = Math.max(0, rollEndsAt - Math.max(now, game.round.rollAt));
+  const hardRollCoverMs = game.difficulty === "hard" ? 100 : 0;
+  const rollDurationMs = DIE_ROLL_DURATION_MS + hardRollCoverMs;
+  const rollElapsedMs = Math.max(
+    0,
+    Math.min(rollDurationMs, now - game.round.rollAt),
+  );
   const shuffleElapsedMs = visualPhase === "shuffling"
     ? Math.max(0, now - game.round.shuffleAt)
     : 0;
@@ -338,6 +343,7 @@ export default function BotMatch({
                     concealed={visualPhase === "shuffling"}
                     colourMode={game.colourMode}
                     rollDurationMs={rollDurationMs}
+                    rollElapsedMs={rollElapsedMs}
                   />
                 )}
               </div>
