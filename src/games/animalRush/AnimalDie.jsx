@@ -50,24 +50,19 @@ export default function AnimalDie({
       data-spinning={!revealed && !concealed}
     >
       <div
-        className="rush-die__spinner"
+        className="rush-die__cube"
         key={roundKey}
         style={{
+          "--rush-die-duration": `${timingRef.current.durationMs}ms`,
           "--rush-die-delay": `-${timingRef.current.elapsedMs}ms`,
+          "--rush-die-end": TARGET_ROTATIONS[targetId] || TARGET_ROTATIONS.fox,
         }}
       >
-        <div
-          className="rush-die__cube"
-          style={{
-            "--rush-die-end": TARGET_ROTATIONS[targetId] || TARGET_ROTATIONS.fox,
-          }}
-        >
-          {DIE_FACES.map(([animalId, face]) => (
-            <span className={`rush-die__face rush-die__face--${face}`} key={animalId}>
-              <AnimalFace animalId={animalId} colourMode={colourMode} size={58} />
-            </span>
-          ))}
-        </div>
+        {DIE_FACES.map(([animalId, face]) => (
+          <span className={`rush-die__face rush-die__face--${face}`} key={animalId}>
+            <AnimalFace animalId={animalId} colourMode={colourMode} size={58} />
+          </span>
+        ))}
       </div>
       <span className="rush-die__still" aria-hidden="true">?</span>
       {!revealed && countdown && <span className="rush-die__countdown">{countdown}</span>}

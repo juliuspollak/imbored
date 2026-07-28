@@ -1,5 +1,12 @@
 [
   {
+    "id": "v160-animal-rush-known-good-die",
+    "version": "v160",
+    "date": "2026-07-28",
+    "title": "Restored the known-good Animal Rush die",
+    "body": "The cube animation has been restored to the original fast version that worked correctly on iPhones before the recent reveal fixes. The only added behaviour is a final-frame concealment: the completed target face remains invisible until the existing shared reveal makes the die and cards appear together."
+  },
+  {
     "id": "v159-animal-rush-safari-cube-animation",
     "version": "v159",
     "date": "2026-07-28",
