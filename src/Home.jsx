@@ -362,7 +362,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
       await supabase.rpc("ensure_player_progress", { uid: userId });
       const { data } = await supabase
         .from("player_progress")
-        .select("available_points,current_streak")
+        .select("available_points,challenge_current_streak")
         .eq("player_id", userId)
         .maybeSingle();
       if (!cancelled) setProgress(data);
@@ -538,7 +538,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                 boxShadow: "0 4px 14px rgba(16,24,40,0.06)",
                 color: CREAM,
               }}
-              aria-label={`Open My Progress — ${(progress.available_points || 0).toLocaleString(language === "sk" ? "sk-SK" : "en")} ${t("home.points")}, ${progress.current_streak || 0} ${progress.current_streak === 1 ? t("home.day") : t("home.days")}`}
+              aria-label={`Open My Progress — ${(progress.available_points || 0).toLocaleString(language === "sk" ? "sk-SK" : "en")} ${t("home.points")}, ${progress.challenge_current_streak || 0} ${progress.challenge_current_streak === 1 ? t("home.day") : t("home.days")}`}
             >
               <span className="flex items-center gap-1 text-xs font-semibold whitespace-nowrap">
                 <Star size={13} fill="currentColor" style={{ color: "#D9AE58" }} />
@@ -547,7 +547,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
               <span className="h-3.5 w-px" style={{ background: "rgba(16,24,40,0.10)" }} />
               <span className="flex items-center gap-1 text-xs font-semibold whitespace-nowrap">
                 <Flame size={13} style={{ color: "#E05A47" }} />
-                {progress.current_streak || 0}
+                {progress.challenge_current_streak || 0}
               </span>
               <ChevronRight size={13} style={{ opacity: 0.3 }} />
             </button>
