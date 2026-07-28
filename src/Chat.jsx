@@ -120,9 +120,10 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
         .select("id,is_admin,is_approved,is_blocked,account_deleted_at")
         .eq("id", peerId)
         .maybeSingle();
-      if (!peerError && livePeer) {
+      if (!peerError) {
         setPeerAvailable(
-          !livePeer.account_deleted_at
+          !!livePeer
+          && !livePeer.account_deleted_at
           && !livePeer.is_blocked
           && (livePeer.is_admin || livePeer.is_approved !== false)
         );
@@ -431,9 +432,9 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
           <button type="button" onClick={onBack} className="gloss-button nav-btn" aria-label="Back" style={{ width:38,height:38,borderRadius:999,display:"grid",placeItems:"center",background:"#fff",border:"1px solid rgba(27,33,41,.08)" }}>
             <ArrowLeft size={18} />
           </button>
-          <div className="chat-avatar">{peerProfile?.icon || "🙂"}</div>
+          <div className="chat-avatar">{peerAvailable ? (peerProfile?.icon || "🙂") : "🙂"}</div>
           <div style={{ flex:1, minWidth:0 }}>
-            <div style={{ fontWeight:800, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{peerProfile?.name || "Player"}</div>
+            <div style={{ fontWeight:800, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{peerAvailable ? (peerProfile?.name || "Player") : "Unavailable player"}</div>
             <div style={{ fontSize:11, color:"rgba(27,33,41,.5)" }}>
               {isSystemConversation ? "challenge notifications" : `private chat · ${peer?.is_online ? "online now" : "offline"}`}
             </div>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, MessageCircle, Search, Sparkles, Users } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
+import { canDiscoverProfile } from "./lib/profileVisibility.js";
 
 function formatWhen(value) {
   if (!value) return "";
@@ -43,7 +44,7 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
           && !p.is_admin
           && p.is_approved === false;
         return (active || pendingForAdmin)
-          && (currentProfile?.is_admin || (!p.hidden_from_others && !p.is_private));
+          && canDiscoverProfile(p, { isAdmin: !!currentProfile?.is_admin });
       });
       setProfiles([{ ...currentProfile, id:currentUser.id, name:"Challenge results", icon:"🏆" }, ...visibleProfiles]);
     }
