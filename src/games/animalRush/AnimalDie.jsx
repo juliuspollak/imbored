@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import AnimalFace from "./AnimalFace.jsx";
 import { animalById } from "./engine.js";
 
@@ -30,8 +30,6 @@ export default function AnimalDie({
   rollDurationMs = 2850,
   rollElapsedMs = 0,
 }) {
-  const [startedRound, setStartedRound] = useState(null);
-  const [finishedRound, setFinishedRound] = useState(null);
   const timingRef = useRef({ roundKey: null, durationMs: 2850, elapsedMs: 0 });
   if (timingRef.current.roundKey !== roundKey) {
     const durationMs = Math.max(0, Number(rollDurationMs) || 0);
@@ -49,18 +47,11 @@ export default function AnimalDie({
       aria-label={revealed ? `${animalById(targetId).label} animal die` : "Animal die countdown"}
       data-revealed={revealed}
       data-concealed={concealed}
-      data-spinning={startedRound === roundKey && finishedRound !== roundKey}
-      data-settled={finishedRound === roundKey}
+      data-spinning={!revealed && !concealed}
     >
       <div
         className="rush-die__cube"
         key={roundKey}
-        onAnimationStart={(event) => {
-          if (event.target === event.currentTarget) setStartedRound(roundKey);
-        }}
-        onAnimationEnd={(event) => {
-          if (event.target === event.currentTarget) setFinishedRound(roundKey);
-        }}
         style={{
           "--rush-die-duration": `${timingRef.current.durationMs}ms`,
           "--rush-die-delay": `-${timingRef.current.elapsedMs}ms`,
