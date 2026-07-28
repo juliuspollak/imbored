@@ -25,6 +25,7 @@ export default function AnimalDie({
   countdown,
   roundKey,
   revealed,
+  concealed = false,
   rollDurationMs = 2850,
   rollElapsedMs = 0,
 }) {
@@ -45,6 +46,7 @@ export default function AnimalDie({
       role="img"
       aria-label={revealed ? `${animalById(targetId).label} animal die` : "Animal die countdown"}
       data-revealed={revealed}
+      data-concealed={concealed}
       data-spinning={startedRound === roundKey}
     >
       <div
@@ -66,7 +68,7 @@ export default function AnimalDie({
         ))}
       </div>
       <span className="rush-die__still" aria-hidden="true">?</span>
-      {!revealed && <span className="rush-die__countdown">{countdown || "•"}</span>}
+      {!revealed && countdown && <span className="rush-die__countdown">{countdown}</span>}
     </div>
   );
 }

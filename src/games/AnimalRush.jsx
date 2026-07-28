@@ -33,6 +33,7 @@ import {
   matchIntroCountdown,
   rankPlayers,
   roundPhase,
+  targetIsRevealed,
   visibleCardOrder,
 } from "./animalRush/engine.js";
 import "./animalRush/animal-rush.css";
@@ -729,9 +730,7 @@ export default function AnimalRush({ onExit }) {
   const cardOrder = visibleCardOrder(room, phase);
   const concealed = cardsConcealed(room, phase);
   const shuffling = phase === "shuffling";
-  const targetRevealed = phase === "open"
-    || room.status === "round_result"
-    || (room.difficulty === "hard" && shuffling);
+  const targetRevealed = targetIsRevealed(room, phase);
   const rollStartedAt = room.roll_at
     ? new Date(room.roll_at).getTime()
     : new Date(room.reveal_at).getTime() - DIE_ROLL_DURATION_MS;
@@ -815,6 +814,7 @@ export default function AnimalRush({ onExit }) {
                     countdown={countdown}
                     roundKey={room.round_number}
                     revealed={targetRevealed}
+                    concealed={shuffling}
                     rollDurationMs={DIE_ROLL_DURATION_MS}
                     rollElapsedMs={rollElapsedMs}
                   />
