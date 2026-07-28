@@ -1,5 +1,12 @@
 [
   {
+    "id": "v162-animal-rush-1030-die-restore",
+    "version": "v162",
+    "date": "2026-07-28",
+    "title": "Restored the complete 10:30am Animal Rush die",
+    "body": "The cube now uses the complete React and CSS animation lifecycle from the confirmed working 10:30am main build, including its animation-start state, keyframes, easing and synchronised timing offset. All experimental v157–v161 animation changes have been removed. Hard mode prevents the old answer flash by placing the shuffle cover before the untouched animation reaches its final face."
+  },
+  {
     "id": "v161-animal-rush-ios-roll-timing",
     "version": "v161",
     "date": "2026-07-28",
