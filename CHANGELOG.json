@@ -1,5 +1,12 @@
 [
   {
+    "id": "v164-admin-challenge-game-availability",
+    "version": "v164",
+    "date": "2026-07-28",
+    "title": "Separated live games from Challenge games",
+    "body": "Admin Games now shows and controls whether each compatible game is available in Challenges, separately from its Home visibility and playable status. Animal Rush is clearly marked Live only and no longer appears when personal Challenge mode is selected. Team challenge creation follows the same admin configuration while existing team challenges retain their already-selected games."
+  },
+  {
     "id": "v163-animal-rush-frame-aligned-reveal",
     "version": "v163",
     "date": "2026-07-28",
