@@ -225,8 +225,8 @@ export default function BotMatch({
   const revealed = now >= game.round.revealAt;
   const targetRevealed = revealed;
   const rollEndsAt = game.round.shuffleAt || game.round.revealAt;
-  const hardRollCoverMs = game.difficulty === "hard" ? 200 : 0;
-  const rollDurationMs = DIE_ROLL_DURATION_MS + hardRollCoverMs;
+  const dieCoverMs = game.difficulty === "hard" ? 200 : game.difficulty === "standard" ? 260 : 0;
+  const rollDurationMs = DIE_ROLL_DURATION_MS + dieCoverMs;
   const rollElapsedMs = Math.max(
     0,
     Math.min(rollDurationMs, now - game.round.rollAt),
@@ -242,6 +242,11 @@ export default function BotMatch({
     : game.difficulty === "hard"
       ? visualPhase === "shuffling"
       : false;
+  const dieSettling = game.difficulty === "standard"
+    && visualPhase === "rolling"
+    && game.round.revealAt - now > 0
+    && game.round.revealAt - now <= dieCoverMs;
+  const dieConcealed = game.difficulty === "hard" ? visualPhase === "shuffling" : dieSettling;
   const cardOrder = game.difficulty === "hard" && (visualPhase === "waiting" || visualPhase === "rolling")
     ? game.round.previewOrder
     : game.round.order;
@@ -355,7 +360,7 @@ export default function BotMatch({
                     countdown={countdown}
                     roundKey={game.round.number}
                     revealed={targetRevealed}
-                    concealed={visualPhase === "shuffling"}
+                    concealed={dieConcealed}
                     colourMode={game.colourMode}
                     rollDurationMs={rollDurationMs}
                     rollElapsedMs={rollElapsedMs}

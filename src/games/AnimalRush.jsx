@@ -805,12 +805,19 @@ export default function AnimalRush({ onExit }) {
   const rollStartedAt = room.roll_at
     ? new Date(room.roll_at).getTime()
     : new Date(room.reveal_at).getTime() - DIE_ROLL_DURATION_MS;
-  const hardRollCoverMs = room.difficulty === "hard" ? 200 : 0;
-  const rollDurationMs = DIE_ROLL_DURATION_MS + hardRollCoverMs;
+  const dieCoverMs = room.difficulty === "hard" ? 200 : room.difficulty === "standard" ? 260 : 0;
+  const rollDurationMs = DIE_ROLL_DURATION_MS + dieCoverMs;
   const rollElapsedMs = Math.max(0, Math.min(rollDurationMs, serverNow - rollStartedAt));
   const shuffleElapsedMs = shuffling && room.shuffle_at
     ? Math.max(0, serverNow - new Date(room.shuffle_at).getTime())
     : 0;
+  const revealAtMs = room.reveal_at ? new Date(room.reveal_at).getTime() : null;
+  const dieSettling = room.difficulty === "standard"
+    && phase === "rolling"
+    && revealAtMs !== null
+    && revealAtMs - serverNow > 0
+    && revealAtMs - serverNow <= dieCoverMs;
+  const dieConcealed = room.difficulty === "hard" ? shuffling : dieSettling;
 
   return (
     <div className="animal-rush">
@@ -878,7 +885,7 @@ export default function AnimalRush({ onExit }) {
                     countdown={countdown}
                     roundKey={room.round_number}
                     revealed={targetRevealed}
-                    concealed={concealed}
+                    concealed={dieConcealed}
                     colourMode={room.colour_mode || "uniform"}
                     rollDurationMs={rollDurationMs}
                     rollElapsedMs={rollElapsedMs}
