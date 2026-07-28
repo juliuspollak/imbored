@@ -490,11 +490,15 @@ export default function Queens({
         seed: seed || null,
       };
       if (onSolved) {
+        // Unlike the legacy onChallengeComplete path below, onSolved (the
+        // shared practice-mode handler in App.jsx) doesn't return anything -
+        // it saves the stats and reward into the parent's own state instead.
+        // Treating a resolved call as "no result" and retrying on a timer
+        // re-saved the game and re-awarded points every 1.5s forever, which is
+        // why this game alone could blow through the daily practice limit and
+        // flicker between a stale "finalising" state and a real one.
         try {
-          const result = await onSolved(payload);
-          if (result?.error || !result?.data) {
-            throw result?.error || new Error("The Queens result was not saved.");
-          }
+          await onSolved(payload);
           if (cancelled) return;
           savedOnceRef.current = true;
           saveInFlightRef.current = false;
