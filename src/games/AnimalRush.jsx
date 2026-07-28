@@ -287,7 +287,7 @@ export default function AnimalRush({ onExit }) {
         filter: `room_id=eq.${room.id}`,
       }, refresh)
       .subscribe();
-    const fallback = window.setInterval(refresh, 12000);
+    const fallback = window.setInterval(refresh, 4000);
     const onVisible = () => {
       if (document.visibilityState === "visible") {
         void synchroniseClock();
@@ -301,6 +301,12 @@ export default function AnimalRush({ onExit }) {
       void supabase.removeChannel(channel);
     };
   }, [refreshRoom, room?.id, synchroniseClock]);
+
+  useEffect(() => {
+    if (!room?.id || room.status === "lobby" || room.status === "finished") return undefined;
+    const timer = window.setInterval(() => void synchroniseClock(), 20000);
+    return () => window.clearInterval(timer);
+  }, [room?.id, room?.status, synchroniseClock]);
 
   useEffect(() => {
     if (room?.status !== "lobby" || !room?.id || !user?.id || !supabaseReady) return undefined;
@@ -507,6 +513,7 @@ export default function AnimalRush({ onExit }) {
     });
     if (error) {
       setAttemptFeedback({ error: true, text: error.message, animalId });
+      if (error.code !== "23505") attemptRef.current = false;
       void refreshRoom(room.id, true);
       return;
     }
