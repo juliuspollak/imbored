@@ -346,36 +346,16 @@ function createPuzzleForSeed(n, seedKey) {
   const memoryCached = puzzleCache.get(cacheKey);
   if (memoryCached) return memoryCached;
 
-  // Daily practice boards are stable, so keep them across page reloads as
-  // well as day changes. Version the key so generator changes can invalidate
-  // older cached shapes safely.
-  const isDailyPractice = /^queens:\d{4}-\d{2}-\d{2}:day:\d:\d+$/.test(seedKey);
-  const storageKey = `imbored:queens-puzzle:v1:${cacheKey}`;
-  if (isDailyPractice && typeof window !== "undefined") {
-    try {
-      const stored = JSON.parse(window.localStorage.getItem(storageKey));
-      const valid = stored?.solution?.length === n
-        && stored?.regionGrid?.length === n
-        && stored.regionGrid.every((row) => Array.isArray(row) && row.length === n);
-      if (valid) {
-        puzzleCache.set(cacheKey, stored);
-        return stored;
-      }
-    } catch {
-      // Ignore unavailable storage or an invalid old entry and regenerate.
-    }
-  }
-
   const generated = withSeededRandom(seedKey, () => makePuzzle(n));
   puzzleCache.set(cacheKey, generated);
-  if (isDailyPractice && typeof window !== "undefined") {
-    try {
-      window.localStorage.setItem(storageKey, JSON.stringify(generated));
-    } catch {
-      // Memory caching still keeps day switching fast when storage is blocked.
-    }
-  }
   return generated;
+}
+
+// A genuinely fresh puzzle for practice mode - unlike the deterministic,
+// day-based seed used for challenge mode (where every player must see the
+// same board), practice should never hand back the same layout twice.
+function createRandomPuzzle(n) {
+  return createPuzzleForSeed(n, `queens:${Date.now()}:${Math.random()}:${n}`);
 }
 
 function todayKey() {
@@ -417,7 +397,9 @@ export default function Queens({
   const requestedDayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
   const [dayIdx, setDayIdx] = useState(isChallenge ? forcedDayIdx ?? requestedDayIdx : requestedDayIdx);
   const n = SIZES[dayIdx];
-  const [puzzle, setPuzzle] = useState(() => createPuzzleForSeed(n, seed || `queens:${todayKey()}:day:${requestedDayIdx}:${n}`));
+  const [puzzle, setPuzzle] = useState(() => isChallenge
+    ? createPuzzleForSeed(n, seed || `queens:${todayKey()}:day:${requestedDayIdx}:${n}`)
+    : createRandomPuzzle(n));
   const [board, setBoard] = useState(() => initialBoard(n));
   const [history, setHistory] = useState([]);
   const [seconds, setSeconds] = useState(0);
@@ -558,8 +540,7 @@ export default function Queens({
       return;
     }
     const size = SIZES[dayIdx];
-    const dailySeed = `queens:${todayKey()}:day:${dayIdx}:${size}`;
-    setPuzzle(createPuzzleForSeed(size, dailySeed));
+    setPuzzle(createRandomPuzzle(size));
     setBoard(initialBoard(size));
     setHistory([]);
     setSeconds(0);
