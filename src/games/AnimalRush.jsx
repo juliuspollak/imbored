@@ -350,6 +350,16 @@ export default function AnimalRush({ onExit }) {
   }, [room?.reveal_at, serverOffset]);
 
   useEffect(() => {
+    if (!room?.shuffle_at) return undefined;
+    const shuffleAt = new Date(room.shuffle_at).getTime();
+    const clientShuffleAt = shuffleAt - serverOffset;
+    const remaining = clientShuffleAt - Date.now();
+    if (!Number.isFinite(remaining) || remaining <= 0) return undefined;
+    const timer = window.setTimeout(() => setNow(clientShuffleAt), remaining);
+    return () => window.clearTimeout(timer);
+  }, [room?.shuffle_at, serverOffset]);
+
+  useEffect(() => {
     if (roundRef.current === room?.round_number) return;
     roundRef.current = room?.round_number;
     attemptRef.current = false;
@@ -795,7 +805,7 @@ export default function AnimalRush({ onExit }) {
   const rollStartedAt = room.roll_at
     ? new Date(room.roll_at).getTime()
     : new Date(room.reveal_at).getTime() - DIE_ROLL_DURATION_MS;
-  const hardRollCoverMs = room.difficulty === "hard" ? 100 : 0;
+  const hardRollCoverMs = room.difficulty === "hard" ? 200 : 0;
   const rollDurationMs = DIE_ROLL_DURATION_MS + hardRollCoverMs;
   const rollElapsedMs = Math.max(0, Math.min(rollDurationMs, serverNow - rollStartedAt));
   const shuffleElapsedMs = shuffling && room.shuffle_at
