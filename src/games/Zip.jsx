@@ -671,7 +671,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
     <div
       ref={boardRef}
       onMouseDown={handleMouseDown}
-      className="relative w-full rounded-xl overflow-hidden select-none"
+      className="relative rounded-xl overflow-hidden select-none -mx-5 lg:-mx-6"
       style={{
         aspectRatio: "1 / 1",
         display: "grid",
@@ -679,6 +679,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
         gridTemplateRows: `repeat(${boardSize}, 1fr)`,
         background: BG,
         touchAction: "none",
+        width: "calc(100% + 40px)",
       }}
     >
       {Array.from({ length: boardSize }, (_, r) =>

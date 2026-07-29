@@ -540,7 +540,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
 
   const boardGrid = (
     <div
-      className="tg-board-shell relative w-full rounded-2xl overflow-hidden"
+      className="tg-board-shell relative rounded-2xl overflow-hidden -mx-5 lg:-mx-6"
       style={{
         aspectRatio: "1 / 1",
         display: "grid",
@@ -550,6 +550,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
         border: "6px solid rgba(255,255,255,.92)",
         boxShadow: "0 16px 34px rgba(16,24,40,.13), 0 2px 8px rgba(16,24,40,.08), inset 0 0 0 1px rgba(16,24,40,.08)",
         containerType: "inline-size",
+        width: "calc(100% + 40px)",
       }}
     >
       {board.map((row, r) =>

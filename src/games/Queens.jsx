@@ -794,7 +794,7 @@ export default function Queens({
       ref={boardRef}
       onMouseDown={handleMouseDown}
       onTouchStart={handleMouseDown}
-      className="relative w-full rounded-lg overflow-hidden select-none"
+      className="relative rounded-lg overflow-hidden select-none -mx-5 lg:-mx-6"
       style={{
         aspectRatio: "1 / 1",
         display: "grid",
@@ -802,6 +802,7 @@ export default function Queens({
         gridTemplateRows: `repeat(${boardSize}, 1fr)`,
         touchAction: "none",
         border: `2.5px solid ${BOARD_LINE}`,
+        width: "calc(100% + 40px)",
       }}
     >
       {board.map((row, r) =>
