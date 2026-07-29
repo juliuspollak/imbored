@@ -48,6 +48,10 @@ const defaultChallenge = () => ({
   durationWeeks:4,
   locked:false,
   challengeId:null,
+  stakeRewardId:null,
+  stakeRewardName:"",
+  stakeSplitMethod:"equal",
+  stakeAccepted:false,
 });
 
 export default function Teams({ onBack, initialTeamId = null, initialChallengeId = null }) {
@@ -84,8 +88,22 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
   const [leavingTeamId, setLeavingTeamId] = useState(null);
   const [expandedChallengeId, setExpandedChallengeId] = useState(null);
   const [challengeEdits, setChallengeEdits] = useState({});
+  const [myRewards, setMyRewards] = useState([]);
   const hasLoadedRef = useRef(false);
   const deepLinkAppliedRef = useRef(false);
+
+  useEffect(() => {
+    if (!supabaseReady) return;
+    supabase.rpc("list_my_available_rewards").then(({ data }) => setMyRewards(data || []));
+  }, []);
+
+  async function acceptStake(challengeKey) {
+    const edit = challengeFor(challengeKey);
+    if (!edit.challengeId) return;
+    const { error } = await supabase.rpc("accept_challenge_stake", { target_challenge_id:Number(edit.challengeId) });
+    setMsg(error?.message || "Stake accepted");
+    if (!error) await refresh();
+  }
 
   const refresh = useCallback(async () => {
     if (!supabaseReady) { setLoading(false); return; }
@@ -128,12 +146,16 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
             games:item.game_ids || DEFAULT_GAMES,
             days:item.active_days || [1,2,3,4,5,6,7],
             reward:Number(item.reward_points ?? 100),
-            rewardType:item.reward_type || "points",
+            rewardType:item.stake_reward_id ? "stake" : (item.reward_type || "points"),
             rewardLabel:item.reward_label || "",
             schedule:item.repeats_weekly ? "repeat" : "once",
             durationWeeks:Number(item.series_weeks || 1),
             locked:!!item.is_locked,
             challengeId:item.challenge_id,
+            stakeRewardId:item.stake_reward_id || null,
+            stakeRewardName:item.stake_reward_name || "",
+            stakeSplitMethod:item.stake_split_method || "equal",
+            stakeAccepted:!!item.stake_accepted,
           };
         });
         return next;
@@ -329,18 +351,27 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
   }
   async function saveTeamChallenge(team, challengeKey) {
     const edit = challengeFor(challengeKey);
-    let { error } = await supabase.rpc("set_team_weekly_challenge", {
+    const isStake = edit.rewardType === "stake";
+    let { data, error } = await supabase.rpc("set_team_weekly_challenge", {
       target_team_id:Number(team.id),
       selected_games:edit.games,
       selected_days:edit.days.map(Number),
       reward_points_in:edit.rewardType === "points" ? Number(edit.reward) || 0 : 0,
-      reward_type_in:edit.rewardType,
+      reward_type_in:isStake ? "points" : edit.rewardType,
       reward_label_in:edit.rewardType === "prize" ? edit.rewardLabel?.trim() || null : null,
       target_challenge_id:edit.challengeId ? Number(edit.challengeId) : null,
       challenge_title_in:edit.title?.trim() || "Weekly challenge",
       repeat_weekly_in:edit.schedule === "repeat",
       duration_weeks_in:edit.schedule === "repeat" ? Number(edit.durationWeeks) : 1,
     });
+    if (!error && isStake && edit.stakeRewardId) {
+      const stakeResult = await supabase.rpc("set_team_challenge_stake", {
+        target_challenge_id:Number(data),
+        target_reward_id:Number(edit.stakeRewardId),
+        split_method:edit.stakeSplitMethod,
+      });
+      error = stakeResult.error;
+    }
     setMsg(error?.message || (edit.challengeId ? "Challenge updated" : "Challenge created"));
     if (!error) {
       setExpandedChallengeId(null);
@@ -592,7 +623,21 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
                             </span>
                           </label>}
                         </fieldset>
-                        <div className="mt-4"><span className="text-[11px] font-semibold flex items-center gap-1 mb-2"><Gift size={12}/>Winner’s prize</span>{owner && <div className="flex gap-2 mb-2">{["points","prize"].map((type) => <button className="gloss-button" key={type} type="button" disabled={edit.locked} onClick={() => patchChallenge(challengeKey,{ rewardType:type })} className="rounded-full px-3 py-1.5 text-xs font-semibold" style={{ background:edit.rewardType === type ? "rgba(47,111,237,.14)" : "rgba(16,24,40,.05)",color:edit.rewardType === type ? ACCENT : INK }}>{type === "points" ? "Points" : "Real prize"}</button>)}</div>}{owner ? edit.rewardType === "points" ? <div className="flex items-center rounded-xl border px-3 bg-white"><input disabled={edit.locked} type="number" min="0" max={MAX_CHALLENGE_REWARD_POINTS} value={edit.reward} onChange={(event) => patchChallenge(challengeKey,{ reward:Math.min(Number(event.target.value) || 0, MAX_CHALLENGE_REWARD_POINTS) })} className="w-full py-2 text-base bg-transparent outline-none"/><span className="text-xs opacity-45">points (max {MAX_CHALLENGE_REWARD_POINTS})</span></div> : <input disabled={edit.locked} value={edit.rewardLabel} onChange={(event) => patchChallenge(challengeKey,{ rewardLabel:event.target.value })} placeholder="e.g. Movie ticket" className="w-full rounded-xl border px-3 py-2 text-base bg-white"/> : <div className="text-xs">{edit.rewardType === "points" ? `${edit.reward} points` : edit.rewardLabel || "Prize"}</div>}</div>
+                        <div className="mt-4"><span className="text-[11px] font-semibold flex items-center gap-1 mb-2"><Gift size={12}/>Winner’s prize</span>{owner && <div className="flex gap-2 mb-2">{["points","prize","stake"].map((type) => <button className="gloss-button" key={type} type="button" disabled={edit.locked} onClick={() => patchChallenge(challengeKey,{ rewardType:type })} className="rounded-full px-3 py-1.5 text-xs font-semibold" style={{ background:edit.rewardType === type ? "rgba(47,111,237,.14)" : "rgba(16,24,40,.05)",color:edit.rewardType === type ? ACCENT : INK }}>{type === "points" ? "Points" : type === "prize" ? "Real prize" : "Stake an item"}</button>)}</div>}
+                        {edit.rewardType === "stake" ? (owner ? <div className="space-y-2">
+                          <select disabled={edit.locked} value={edit.stakeRewardId || ""} onChange={(event) => patchChallenge(challengeKey,{ stakeRewardId:event.target.value })} className="w-full rounded-xl border px-3 py-2 text-sm bg-white">
+                            <option value="">Choose an approved item…</option>
+                            {myRewards.map((r) => <option key={r.id} value={r.id}>{r.name} · {r.points_cost} pts</option>)}
+                          </select>
+                          <div className="flex gap-2">
+                            {[["equal","Equal split"],["ranked","Ranked — last place pays most"]].map(([id,label]) => <label key={id} className="flex-1 rounded-xl p-2 text-[11px] cursor-pointer flex items-center gap-1.5" style={{ background:edit.stakeSplitMethod === id ? "rgba(47,111,237,.09)" : "#fff",border:edit.stakeSplitMethod === id ? "1px solid rgba(47,111,237,.35)" : "1px solid rgba(16,24,40,.10)" }}><input type="radio" name={`split-${challengeKey}`} checked={edit.stakeSplitMethod === id} onChange={() => patchChallenge(challengeKey,{ stakeSplitMethod:id })}/>{label}</label>)}
+                          </div>
+                          <p className="text-[9px] opacity-45">Every non-winner who accepts owes their share once the challenge closes — settled outside the app.</p>
+                        </div> : <div className="text-xs">
+                          <div>{edit.stakeRewardName || "An item"} · {edit.stakeSplitMethod === "ranked" ? "ranked split" : "equal split"}</div>
+                          {!edit.stakeAccepted && <button className="gloss-button mt-2" type="button" onClick={() => acceptStake(challengeKey)} style={{ background:"rgba(22,163,74,.1)",color:"#166534" }}>Accept — I'll pay my share if I don't win</button>}
+                          {edit.stakeAccepted && <div className="text-[10px] opacity-45 mt-1">You've accepted this stake.</div>}
+                        </div>) : owner ? edit.rewardType === "points" ? <div className="flex items-center rounded-xl border px-3 bg-white"><input disabled={edit.locked} type="number" min="0" max={MAX_CHALLENGE_REWARD_POINTS} value={edit.reward} onChange={(event) => patchChallenge(challengeKey,{ reward:Math.min(Number(event.target.value) || 0, MAX_CHALLENGE_REWARD_POINTS) })} className="w-full py-2 text-base bg-transparent outline-none"/><span className="text-xs opacity-45">points (max {MAX_CHALLENGE_REWARD_POINTS})</span></div> : <input disabled={edit.locked} value={edit.rewardLabel} onChange={(event) => patchChallenge(challengeKey,{ rewardLabel:event.target.value })} placeholder="e.g. Movie ticket" className="w-full rounded-xl border px-3 py-2 text-base bg-white"/> : <div className="text-xs">{edit.rewardType === "points" ? `${edit.reward} points` : edit.rewardLabel || "Prize"}</div>}</div>
                         {owner && <button className="gloss-button" disabled={edit.locked || !edit.title.trim() || !edit.games.length || !edit.days.length || !edit.schedule || (edit.schedule === "repeat" && (edit.durationWeeks < 2 || edit.durationWeeks > 52))} type="button" onClick={() => saveTeamChallenge(rosterTeam,challengeKey)} className="mt-3 w-full rounded-full py-2.5 text-xs font-semibold text-white disabled:opacity-35" style={{ background:ACCENT }}>{challenge.isNew ? "Create challenge" : "Save changes"}</button>}
                       </div>}
                     </div>;

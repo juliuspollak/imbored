@@ -59,6 +59,18 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   const [leaderboards, setLeaderboards] = useState({}); // date -> [{ user_id, seconds, profiles }]
   const [startError, setStartError] = useState("");
   const [startingIdx, setStartingIdx] = useState(null);
+  const [localStakeAccepted, setLocalStakeAccepted] = useState(false);
+  const [acceptingStake, setAcceptingStake] = useState(false);
+  const hasStake = challengeScope?.type === "team" && !!challengeScope.stakeRewardId;
+  const stakeAccepted = localStakeAccepted || !!challengeScope?.stakeAccepted;
+
+  async function acceptStake() {
+    setAcceptingStake(true);
+    const { error } = await supabase.rpc("accept_challenge_stake", { target_challenge_id: challengeScope.id });
+    setAcceptingStake(false);
+    if (error) { setStartError(error.message || "Could not accept the stake."); return; }
+    setLocalStakeAccepted(true);
+  }
 
   const refresh = useCallback(async () => {
     if (!supabaseReady || !userId) {
@@ -244,7 +256,17 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           </div>
         )}
 
-        {loading ? (
+        {!loading && hasStake && !stakeAccepted ? (
+          <div className="rounded-2xl p-4 text-center" style={{ background: "rgba(217,148,10,.08)" }}>
+            <div className="text-sm font-semibold mb-1" style={{ color: INK }}>This challenge is staked</div>
+            <p className="text-xs mb-3" style={{ color: INK, opacity: 0.6 }}>
+              The prize is <strong>{challengeScope.stakeRewardName || "an item"}</strong>. If you don't win, you agree to pay your {challengeScope.stakeSplitMethod === "ranked" ? "ranked" : "equal"} share — settled outside the app.
+            </p>
+            <button disabled={acceptingStake} onClick={acceptStake} className="gloss-button w-full" style={{ background: "rgba(22,163,74,.12)", color: "#166534" }}>
+              {acceptingStake ? "Accepting…" : "Accept — I'll pay my share if I don't win"}
+            </button>
+          </div>
+        ) : loading ? (
           <p style={{ color: INK, opacity: 0.4 }} className="text-sm text-center py-8">Loading…</p>
         ) : (
           <div className="flex flex-col gap-2">

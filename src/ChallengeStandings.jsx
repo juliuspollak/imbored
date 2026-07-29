@@ -53,7 +53,7 @@ function pooledChallengeScore(results, benchmarkMap) {
   ).score, 0);
 }
 
-export default function ChallengeStandings({ rows = [], roster = [], games = [], rounds = [], benchmarks = [], previousRows = [], previousRounds = [], historyRows = [], previousWeekLabel = null, isTeam = false, userId, loading = false, refreshing = false, defaultOpen = true, embedded = false, rewardPoints = 0, closed = false, winnerId = null }) {
+export default function ChallengeStandings({ rows = [], roster = [], games = [], rounds = [], benchmarks = [], previousRows = [], previousRounds = [], historyRows = [], previousWeekLabel = null, isTeam = false, userId, loading = false, refreshing = false, defaultOpen = true, embedded = false, rewardPoints = 0, closed = false, winnerId = null, stakeRewardName = null, stakeSplitMethod = null }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(defaultOpen);
   const [expandedPlayerId, setExpandedPlayerId] = useState(null);
@@ -283,6 +283,22 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
     ? standings.find((standing) => standing.id === winnerId)
     : null) || standings.find((standing) => standing.rank === 1);
   const challengeComplete = isTeam && closed;
+  const stakeShares = useMemo(() => {
+    if (!challengeComplete || !stakeRewardName || !winnerId) return [];
+    // Only players who actually played could have — the backend refuses to
+    // start a staked round without accepting first, so "played" implies
+    // "accepted" here.
+    const contributors = standings.filter((standing) => standing.completed > 0 && standing.id !== winnerId);
+    if (contributors.length === 0) return [];
+    if (stakeSplitMethod === "ranked") {
+      const weightTotal = contributors.reduce((sum, standing) => sum + (standing.rank || contributors.length), 0);
+      return contributors
+        .map((standing) => ({ ...standing, sharePercent:Math.round(((standing.rank || contributors.length) / weightTotal) * 100) }))
+        .sort((a,b) => b.sharePercent - a.sharePercent);
+    }
+    const evenShare = Math.round(100 / contributors.length);
+    return contributors.map((standing) => ({ ...standing, sharePercent:evenShare }));
+  }, [challengeComplete, stakeRewardName, stakeSplitMethod, standings, winnerId]);
 
   const heading = challengeComplete ? "Final results" : isTeam ? t("standings.title") : "Today’s standings";
   const summary = challengeComplete
@@ -327,6 +343,20 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
               {rewardPoints > 0 && (
                 <span className="challenge-complete-points">+{rewardPoints}<small>Winner’s prize</small></span>
               )}
+            </div>
+          )}
+          {!loading && challengeComplete && stakeRewardName && stakeShares.length > 0 && (
+            <div className="rounded-2xl px-3 py-3 mb-3" style={{ background:"rgba(217,148,10,.07)" }}>
+              <div className="text-[11px] font-bold" style={{ color:INK }}>Stake: {stakeRewardName}</div>
+              <div className="text-[10px] opacity-50 mb-2">{stakeSplitMethod === "ranked" ? "Ranked split — settle outside the app" : "Equal split — settle outside the app"}</div>
+              <div className="space-y-1">
+                {stakeShares.map((standing) => (
+                  <div key={standing.id} className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5"><span>{standing.icon || "🙂"}</span>{standing.name}</span>
+                    <span className="font-semibold">{standing.sharePercent}%</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
           {!loading && myStanding && myStanding.completed > 0 && (

@@ -497,6 +497,10 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         activeDays:teamChallenge.active_days,
         gameIds:teamChallenge.game_ids,
       }),
+      stakeRewardId:teamChallenge.stake_reward_id,
+      stakeRewardName:teamChallenge.stake_reward_name,
+      stakeSplitMethod:teamChallenge.stake_split_method,
+      stakeAccepted:teamChallenge.stake_accepted,
     });
   }
 
@@ -736,6 +740,8 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                                 rewardPoints={challengeScope?.rewardPoints || 0}
                                 closed={!!challengeLifecycle[String(challengeScope.id)]?.closed_at}
                                 winnerId={challengeLifecycle[String(challengeScope.id)]?.winner_id}
+                                stakeRewardName={challengeScope?.stakeRewardName || null}
+                                stakeSplitMethod={challengeScope?.stakeSplitMethod || null}
                               />
                             )}
                           </div>
