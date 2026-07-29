@@ -151,7 +151,8 @@ $$;
 revoke all on function public.get_my_reward_teams() from public;
 grant execute on function public.get_my_reward_teams() to authenticated;
 
-create or replace function public.propose_reward(
+drop function if exists public.propose_reward(bigint,text,text,text,bigint,int);
+create function public.propose_reward(
   target_team_id bigint,reward_name text,reward_description text,reward_image_url text,
   reward_points_cost bigint,reward_stock_quantity int
 ) returns bigint language plpgsql security definer set search_path=public as $$
