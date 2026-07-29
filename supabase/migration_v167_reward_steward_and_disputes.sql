@@ -150,6 +150,10 @@ revoke all on function public.set_user_reward_steward(uuid,boolean) from public;
 grant execute on function public.set_user_reward_steward(uuid,boolean) to authenticated;
 
 -- ---------- admin_list_players: surface is_reward_steward ----------
+-- The return row shape is changing (new is_reward_steward column), which
+-- create-or-replace cannot do for a table-returning function.
+drop function if exists public.admin_list_players();
+
 create or replace function public.admin_list_players()
 returns table(
   id uuid,
