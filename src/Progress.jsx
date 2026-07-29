@@ -266,7 +266,7 @@ export default function Progress({ onBack, onOpenRewardRequests }) {
       {tab==="rewards"&&proposeOpen&&<form onSubmit={submitProposal} className="p-4 mb-2" style={card}>
         <select value={proposal.circle_id} onChange={e=>setProposal({...proposal,circle_id:e.target.value})} className="w-full rounded-lg border px-3 py-2 text-sm mb-2" required>
           <option value="">Choose circle</option>
-          {circles.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+          {circles.map(c=><option key={c.circle_id} value={c.circle_id}>{c.circle_name}</option>)}
         </select>
         <input value={proposal.name} onChange={e=>setProposal({...proposal,name:e.target.value})} placeholder="What would make your day?" className="w-full rounded-lg border px-3 py-2 text-sm mb-2" required/>
         <textarea value={proposal.description} onChange={e=>setProposal({...proposal,description:e.target.value})} placeholder="💭 Add a note, size, colour or idea" className="w-full rounded-lg border px-3 py-2 text-sm mb-2"/>
