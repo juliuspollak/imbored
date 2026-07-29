@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { withSeededRandom } from "../lib/seededRandom.js";
+import { withSeededRandom, shuffle } from "../lib/seededRandom.js";
+import { useGameTimer } from "../lib/useGameTimer.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
@@ -12,15 +13,6 @@ import DaySelector from "../DaySelector.jsx";
 /* ---------------- puzzle generation ---------------- */
 
 const DEFAULT_GRID_SIZES = [7, 7, 7, 7, 7, 7, 7];
-
-function shuffle(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
 
 const DIRS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 
@@ -343,7 +335,6 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
   const [hintCell, setHintCell] = useState(null);
   const [history, setHistory] = useState([]);
   const [showHelp, setShowHelp] = useState(false);
-  const timerRef = useRef(null);
   const boardRef = useRef(null);
   const dragRef = useRef({ active: false, historyPushed: false, lastKey: null, startCell: null, moved: false, rollbackCounted: false });
   const suppressClickRef = useRef(false);
@@ -378,12 +369,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayIdx]);
 
-  useEffect(() => {
-    if (running && !solved) {
-      timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
-    }
-    return () => clearInterval(timerRef.current);
-  }, [running, solved]);
+  useGameTimer(running, solved, setSeconds);
 
   useEffect(() => {
     if (!puzzle || !path) return;

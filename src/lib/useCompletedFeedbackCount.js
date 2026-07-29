@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
 import { supabase, supabaseReady } from "./supabase.js";
-import { attachRealtimeRefresh } from "./realtimeRefresh.js";
+import { useSupabaseWatchedState } from "./useSupabaseWatchedState.js";
 
 const storageKey = (userId) => `queens-seen-closed-feedback-${userId}`;
 
@@ -33,48 +32,26 @@ export function markClosedFeedbackSeen(userId, ids) {
   }
 }
 
+async function compute(userId) {
+  const { data, error } = await supabase
+    .from("feedback")
+    .select("id,user_seen_at")
+    .eq("user_id", userId)
+    .eq("status", "closed");
+
+  if (error) {
+    console.error("Unable to load completed feedback notifications:", error.message);
+    return 0;
+  }
+  return (data || []).filter((item) => !item.user_seen_at).length;
+}
+
 export function useCompletedFeedbackCount(userId) {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (!supabaseReady || !userId) {
-      setCount(0);
-      return undefined;
-    }
-
-    let cancelled = false;
-
-    async function refresh() {
-      const { data, error } = await supabase
-        .from("feedback")
-        .select("id,user_seen_at")
-        .eq("user_id", userId)
-        .eq("status", "closed");
-
-      if (cancelled) return;
-      if (error) {
-        console.error("Unable to load completed feedback notifications:", error.message);
-        setCount(0);
-        return;
-      }
-
-      setCount((data || []).filter((item) => !item.user_seen_at).length);
-    }
-
-    refresh();
-    const detach = attachRealtimeRefresh({
-      channelName: `completed-feedback-${userId}`,
-      tables: [{ name: "feedback", filter: `user_id=eq.${userId}` }],
-      refresh,
-    });
-    window.addEventListener("closed-feedback-seen", refresh);
-
-    return () => {
-      cancelled = true;
-      detach();
-      window.removeEventListener("closed-feedback-seen", refresh);
-    };
-  }, [userId]);
-
-  return count;
+  return useSupabaseWatchedState(userId, {
+    compute,
+    tables: [{ name: "feedback", filter: `user_id=eq.${userId}` }],
+    channelName: `completed-feedback-${userId}`,
+    seenEvent: "closed-feedback-seen",
+    emptyValue: 0,
+  });
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { withSeededRandom } from "../lib/seededRandom.js";
+import { withSeededRandom, shuffle } from "../lib/seededRandom.js";
+import { useGameTimer } from "../lib/useGameTimer.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
@@ -10,15 +11,6 @@ import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
 
 /* ---------------- puzzle generation ---------------- */
-
-function shuffle(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
 
 function generateSolution(n) {
   const solution = new Array(n).fill(-1);
@@ -437,11 +429,7 @@ export default function Queens({
     setRunning(false);
   }, [challengeName, isChallenge, isIncluded]);
 
-  useEffect(() => {
-    if (!running || solved) return;
-    const id = setInterval(() => setSeconds((s) => s + 1), 1000);
-    return () => clearInterval(id);
-  }, [running, solved]);
+  useGameTimer(running, solved, setSeconds);
 
   useEffect(() => {
     statsRef.current = { seconds, mistakes, hintsUsed };

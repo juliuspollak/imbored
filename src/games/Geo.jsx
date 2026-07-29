@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
+import { useGameTimer } from "../lib/useGameTimer.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
@@ -56,7 +57,6 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
   const [hintsUsed, setHintsUsed] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
   const [difficultyRating, setDifficultyRating] = useState(null);
-  const timerRef = useRef(null);
   const stateKey = `imbored:geo:i18n-v1:${mode}:${userId || "guest"}:${challengeDate || dayIdx}:${seed || "practice"}`;
 
   const newQuiz = useCallback((dIdx, forceFresh = false) => {
@@ -105,12 +105,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayIdx]);
 
-  useEffect(() => {
-    if (running && !solved) {
-      timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
-    }
-    return () => clearInterval(timerRef.current);
-  }, [running, solved]);
+  useGameTimer(running, solved, setSeconds);
 
   useEffect(() => {
     if (!questions || solved) return;

@@ -11,15 +11,7 @@ import {
   COUNTRIES,
 } from "./geoData.js";
 import { buildHistoryIndex } from "./geoHistory.js";
-
-function shuffle(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
+import { shuffle } from "../../lib/seededRandom.js";
 
 // Mon..Sun: difficulty ceiling ramps from "easy only" to "anything goes".
 const HISTORY_LIMIT = 5000;

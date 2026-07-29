@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { withSeededRandom } from "../lib/seededRandom.js";
+import { withSeededRandom, shuffle } from "../lib/seededRandom.js";
+import { useGameTimer } from "../lib/useGameTimer.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
@@ -54,15 +55,6 @@ function ModernMoonIcon({ size = 24, className = "", style, isConflict = false, 
 const SIZE = 6;
 const HALF = SIZE / 2;
 const EMPTY = 0, SUN = 1, MOON = 2;
-
-function shuffle(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
 
 function allPositions(size) {
   const p = [];
@@ -357,7 +349,6 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
   const [showHelp, setShowHelp] = useState(false);
   const [celebratingLines, setCelebratingLines] = useState([]);
   const [displayedConflicts, setDisplayedConflicts] = useState(new Set());
-  const timerRef = useRef(null);
   const completedLinesRef = useRef(new Set());
   const celebrationTimerRef = useRef(null);
   const conflictDebounceRef = useRef(null);
@@ -387,12 +378,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayIdx]);
 
-  useEffect(() => {
-    if (running && !solved) {
-      timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
-    }
-    return () => clearInterval(timerRef.current);
-  }, [running, solved]);
+  useGameTimer(running, solved, setSeconds);
 
   useEffect(() => {
     if (!board || !puzzle) return;
@@ -576,7 +562,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                 <span className="tg-symbol tg-symbol-disc tg-symbol-disc--sun"><SunIcon key={`sun-${r}-${c}`} size={Math.max(28, 50 - SIZE)} isConflict={isConflict} /></span>
               )}
               {val === MOON && (
-                <span className="tg-symbol tg-symbol-disc tg-symbol-disc--moon"><ModernMoonIcon key={`moon-${r}-${c}`} size={Math.max(28, 44 - SIZE)} isConflict={isConflict} /></span>
+                <span className="tg-symbol tg-symbol-disc tg-symbol-disc--moon"><ModernMoonIcon key={`moon-${r}-${c}`} size={Math.max(28, 50 - SIZE)} isConflict={isConflict} /></span>
               )}
               {/* The pulsing border alone doesn't say what belongs here —
                   show a faint preview of the actual symbol. For an empty
@@ -719,6 +705,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           content: "";
           position: absolute;
           inset: 5px;
+
           border-radius: 10px;
           border: 1px solid transparent;
           transition: border-color .18s ease, background .18s ease, transform .18s ease;

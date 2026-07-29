@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
+import { useGameTimer } from "../lib/useGameTimer.js";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import { ZoomIn, RotateCcw, Timer as TimerIcon, HelpCircle } from "lucide-react";
@@ -45,7 +46,6 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
   const [correctLog, setCorrectLog] = useState([]); // per-step booleans, for the "rounds nailed" stat
   const [showHelp, setShowHelp] = useState(false);
   const [difficultyRating, setDifficultyRating] = useState(null);
-  const timerRef = useRef(null);
   const stateKey = `imbored:zoom:i18n-v1:${mode}:${userId || "guest"}:${challengeDate || dayIdx}:${seed || "practice"}`;
 
   const newQuiz = useCallback((dIdx, forceFresh = false) => {
@@ -89,12 +89,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayIdx]);
 
-  useEffect(() => {
-    if (running && !solved) {
-      timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
-    }
-    return () => clearInterval(timerRef.current);
-  }, [running, solved]);
+  useGameTimer(running, solved, setSeconds);
 
   useEffect(() => {
     if (!steps || solved) return;

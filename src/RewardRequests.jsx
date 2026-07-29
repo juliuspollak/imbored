@@ -1,21 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
-import { ClipboardCheck, AlertTriangle } from "lucide-react";
+import { ClipboardCheck } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
+import { reviewRedemption } from "./lib/rewardRedemptions.js";
+import { RedemptionStatusPill, RedemptionDisputeBanner, RedemptionActions } from "./RedemptionActions.jsx";
 
 const BG="#F1F3F7",PANEL="#fff",INK="#1B2129",ACCENT="#2F6FED";
 const box={background:PANEL,border:"1px solid rgba(16,24,40,.09)",borderRadius:14};
 const DISPUTE_WINDOW_MS=48*60*60*1000;
-
-const STATUS_LABEL={
-  requested:{text:"Requested",color:"#B5730E",bg:"rgba(217,148,10,.10)"},
-  approved:{text:"Approved",color:"#2F6FED",bg:"rgba(47,111,237,.09)"},
-  declined:{text:"Declined",color:"#B5433A",bg:"rgba(181,67,58,.09)"},
-  fulfilled:{text:"Delivered",color:"#12946A",bg:"rgba(18,148,106,.09)"},
-  disputed:{text:"Disputed",color:"#B5433A",bg:"rgba(181,67,58,.09)"},
-  cancelled:{text:"Cancelled",color:"#6B7280",bg:"rgba(107,114,128,.09)"},
-};
 
 export default function RewardRequests({onBack}){
   const {user,profile}=useAuth();
@@ -45,7 +38,7 @@ export default function RewardRequests({onBack}){
   },[refresh,user?.id]);
 
   async function review(id,status){
-    const {error}=await supabase.rpc("review_redemption",{target_id:id,new_status:status,admin_note_in:null});
+    const {error}=await reviewRedemption(id,status);
     setMsg(error?.message||"Request updated");
     refresh();
   }
@@ -73,19 +66,11 @@ export default function RewardRequests({onBack}){
       :reds.map(r=><div key={r.id} className="p-3 mb-2" style={box}>
         <div className="flex items-center justify-between gap-2">
           <div className="font-semibold text-sm">{r.player_icon} {r.player_name} · {r.reward_name}</div>
-          <span className="rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0" style={{color:STATUS_LABEL[r.status]?.color,background:STATUS_LABEL[r.status]?.bg}}>{STATUS_LABEL[r.status]?.text||r.status}</span>
+          <RedemptionStatusPill status={r.status}/>
         </div>
         <div className="text-xs opacity-50 mt-1 mb-2">{r.points_cost.toLocaleString()} Points · requested {new Date(r.requested_at).toLocaleDateString()}{r.reviewed_by_name&&["approved","declined","fulfilled","disputed"].includes(r.status)?` · by ${r.reviewed_by_icon||""} ${r.reviewed_by_name}`:""}</div>
-        {r.status==="disputed"&&r.dispute_reason&&<div className="flex items-start gap-1.5 text-xs mb-2 rounded-lg px-2 py-1.5" style={{background:"rgba(181,67,58,.08)",color:"#B5433A"}}><AlertTriangle size={12} className="shrink-0 mt-0.5"/>{r.dispute_reason}</div>}
-        {isRewardManager&&r.status==="requested"&&<div className="flex gap-2">
-          <button onClick={()=>review(r.id,"approved")} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{background:"rgba(22,163,74,.1)",color:"#166534"}}>Approve</button>
-          <button onClick={()=>review(r.id,"declined")} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{background:"rgba(181,67,58,.08)",color:"#B5433A"}}>Decline &amp; refund</button>
-        </div>}
-        {isRewardManager&&r.status==="approved"&&<button onClick={()=>review(r.id,"fulfilled")} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{background:"rgba(47,111,237,.09)",color:ACCENT}}>Mark delivered</button>}
-        {isRewardManager&&r.status==="disputed"&&<div className="flex gap-2">
-          <button onClick={()=>review(r.id,"fulfilled")} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{background:"rgba(22,163,74,.1)",color:"#166534"}}>Confirm delivered</button>
-          <button onClick={()=>review(r.id,"approved")} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{background:"rgba(47,111,237,.09)",color:ACCENT}}>Reopen for delivery</button>
-        </div>}
+        <RedemptionDisputeBanner redemption={r}/>
+        {isRewardManager&&<RedemptionActions status={r.status} onReview={(status)=>review(r.id,status)}/>}
         {canDispute(r)&&<button onClick={()=>setDisputeTarget(r)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{background:"rgba(181,67,58,.08)",color:"#B5433A"}}>Dispute this</button>}
       </div>)}
     </div>

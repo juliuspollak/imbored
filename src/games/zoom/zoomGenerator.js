@@ -1,7 +1,7 @@
 import { CONTINENTS } from "../geo/geoRegions.js";
 import { COUNTRIES } from "../geo/geoData.js";
 import { SUBREGIONS_BY_CONTINENT, subregionsFor } from "../geo/geoSubregions.js";
-import { shuffle } from "../geo/geoGenerator.js";
+import { shuffle } from "../../lib/seededRandom.js";
 
 // Mon..Sun: same ramp Geo uses, so the two games feel consistent about
 // which day is "easy" and which is "anything goes".

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { withSeededRandom } from "../lib/seededRandom.js";
+import { withSeededRandom, shuffle } from "../lib/seededRandom.js";
+import { useGameTimer } from "../lib/useGameTimer.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
@@ -12,15 +13,6 @@ import DaySelector from "../DaySelector.jsx";
 /* ---------------- puzzle generation ---------------- */
 
 const N = 6, BOX_R = 2, BOX_C = 3;
-
-function shuffle(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
 
 function isValid(grid, r, c, val) {
   for (let cc = 0; cc < N; cc++) if (grid[r][cc] === val) return false;
@@ -250,7 +242,6 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   const [showHelp, setShowHelp] = useState(false);
   const [celebratingCells, setCelebratingCells] = useState(new Set());
   const prevCompleteSectionsRef = useRef(new Set());
-  const timerRef = useRef(null);
 
   const newPuzzle = useCallback((dIdx) => {
     const gen = () => generatePuzzle(GIVEN_TARGETS[dIdx]);
@@ -275,12 +266,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayIdx]);
 
-  useEffect(() => {
-    if (running && !solved) {
-      timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
-    }
-    return () => clearInterval(timerRef.current);
-  }, [running, solved]);
+  useGameTimer(running, solved, setSeconds);
 
   useEffect(() => {
     if (!board || !puzzle) return;
