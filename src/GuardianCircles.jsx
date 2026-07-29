@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Users, Plus, ShieldCheck, UserPlus, Mail, Check, X, Clock } from "lucide-react";
+import { Users, Plus, ShieldCheck, UserPlus, Mail, Check, X, Clock, Trash2 } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
@@ -20,6 +20,7 @@ export default function GuardianCircles({onBack}){
   const [inviteQuery,setInviteQuery]=useState("");
   const [inviteResults,setInviteResults]=useState([]);
   const [inviteSearching,setInviteSearching]=useState(false);
+  const [deleteConfirmId,setDeleteConfirmId]=useState(null);
 
   const refresh=useCallback(async()=>{
     setLoading(true);
@@ -81,6 +82,12 @@ export default function GuardianCircles({onBack}){
     setMsg(error?.message||"Invitation cancelled");
     refresh();
   }
+  async function deleteCircle(circleId){
+    const {error}=await supabase.rpc("delete_guardian_circle",{target_circle_id:circleId});
+    setMsg(error?.message||"Circle deleted");
+    setDeleteConfirmId(null);
+    refresh();
+  }
 
   return <div style={{background:BG,minHeight:"100vh",fontFamily:"'Inter',sans-serif"}} className="p-4 pt-10 flex justify-center">
     <div className="w-full max-w-xl">
@@ -114,9 +121,19 @@ export default function GuardianCircles({onBack}){
           return <div key={c.circle_id} className="p-4" style={card}>
             <div className="flex items-center justify-between gap-2 mb-1">
               <div className="font-semibold text-sm truncate">{c.circle_name}</div>
-              {c.can_approve&&<span className="rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0 flex items-center gap-1" style={{color:"#166534",background:"rgba(22,163,74,.1)"}}><ShieldCheck size={10}/>Approver</span>}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {c.can_approve&&<span className="rounded-full px-2 py-0.5 text-[10px] font-bold flex items-center gap-1" style={{color:"#166534",background:"rgba(22,163,74,.1)"}}><ShieldCheck size={10}/>Approver</span>}
+                {c.can_approve&&<button onClick={()=>setDeleteConfirmId(deleteConfirmId===c.circle_id?null:c.circle_id)} className="grid place-items-center rounded-full" style={{width:22,height:22,background:"rgba(181,67,58,.08)",color:"#B5433A"}} aria-label={`Delete ${c.circle_name}`}><Trash2 size={11}/></button>}
+              </div>
             </div>
             <div className="text-xs opacity-45 mb-3">{c.approver_count} approver{c.approver_count===1?"":"s"} · {c.member_count} member{c.member_count===1?"":"s"}</div>
+            {deleteConfirmId===c.circle_id&&<div className="rounded-xl px-3 py-2.5 mb-3 text-xs" style={{background:"rgba(181,67,58,.08)",color:"#B5433A"}}>
+              <div className="mb-2">Delete "{c.circle_name}"? This removes all members and invitations. Circles with reward items can't be deleted.</div>
+              <div className="flex gap-2">
+                <button onClick={()=>deleteCircle(c.circle_id)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-white" style={{background:"#B5433A"}}>Delete circle</button>
+                <button onClick={()=>setDeleteConfirmId(null)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{background:"rgba(16,24,40,.06)",color:INK}}>Cancel</button>
+              </div>
+            </div>}
             <div className="space-y-1.5">
               {roster.map(m=><div key={m.user_id} className="flex items-center gap-2">
                 <span className="text-base">{m.icon||"🙂"}</span>
