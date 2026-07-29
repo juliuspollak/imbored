@@ -606,6 +606,41 @@
     color: #ff8d91 !important;
   }
 
+  /* Roster/invite rows: plain class overrides, not attribute-value matching
+     against the inline style — browsers normalize inline hex colors to
+     rgb() on read-back, so [style*="background:#F8F9FC"] never actually
+     matches the live DOM and silently does nothing. */
+  .circle-member-row,
+  .circle-invite-candidate-row {
+    background: rgba(255, 255, 255, 0.045) !important;
+  }
+
+  .circle-member-row--me {
+    background: rgba(109, 156, 255, 0.14) !important;
+  }
+
+  .circle-blocked-row {
+    background: rgba(247, 107, 107, 0.10) !important;
+  }
+
+  .circle-invite-panel {
+    background: linear-gradient(155deg, rgba(35, 45, 60, 0.94), rgba(23, 30, 42, 0.96)) !important;
+    border-color: rgba(255, 255, 255, 0.11) !important;
+    color: #f4f7fb !important;
+  }
+
+  .circle-search-box {
+    background: rgba(255, 255, 255, 0.06) !important;
+  }
+
+  .circle-search-box input {
+    color: #f4f7fb !important;
+  }
+
+  .circle-search-box input::placeholder {
+    color: rgba(232, 238, 247, 0.42) !important;
+  }
+
   .profile-privacy-card {
     background: rgba(255, 255, 255, 0.055) !important;
     border-color: rgba(255, 255, 255, 0.13) !important;

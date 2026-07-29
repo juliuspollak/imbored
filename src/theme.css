@@ -104,14 +104,17 @@ select {
     color: var(--app-text) !important;
   }
 
+  [style*="background: rgb(247, 248, 251)"],
   [style*="background: #F7F8FB"],
   [style*="background:#F7F8FB"],
   [style*="background: #f7f8fb"],
   [style*="background:#f7f8fb"],
+  [style*="background: rgb(248, 249, 252)"],
   [style*="background: #F8F9FC"],
   [style*="background:#F8F9FC"],
   [style*="background: #f8f9fc"],
   [style*="background:#f8f9fc"],
+  [style*="background: rgb(244, 246, 250)"],
   [style*="background: #F4F6FA"],
   [style*="background:#F4F6FA"],
   [style*="background: #f4f6fa"],
@@ -121,6 +124,7 @@ select {
   }
 
   /* Warm alert banners (join requests, invitations, pending states). */
+  [style*="background: rgb(255, 248, 231)"],
   [style*="background: #FFF8E7"],
   [style*="background:#FFF8E7"],
   [style*="background: #fff8e7"],
