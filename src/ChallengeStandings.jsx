@@ -298,14 +298,14 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
         <span className="flex-1 min-w-0">
           <span className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-bold">{heading}</span>
-            {(loading || refreshing) && <span className="inline-flex items-center gap-1 text-[10px] font-semibold" style={{ color:"rgba(27,33,41,.42)" }}><span className="inline-block rounded-full animate-pulse" style={{ width:6,height:6,background:"#2F6FED" }}/>{t(refreshing ? "standings.updating" : "standings.loadingShort")}</span>}
+            {(loading || refreshing) && <span className="challenge-standing-muted inline-flex items-center gap-1 text-[10px] font-semibold"><span className="challenge-accent-dot inline-block rounded-full animate-pulse" style={{ width:6,height:6,background:"#2F6FED" }}/>{t(refreshing ? "standings.updating" : "standings.loadingShort")}</span>}
             {!loading && leader && (
               <span className="truncate text-[10px] font-semibold rounded-full px-2 py-0.5" style={{ background:challengeComplete ? "rgba(22,163,74,.11)" : "rgba(217,174,88,.13)",color:challengeComplete ? "#137A3A" : "#80601D" }}>
                 {leader.icon || "🙂"} {challengeComplete ? `${leader.name} won` : t("standings.leads", { name:leader.name })}
               </span>
             )}
           </span>
-          <span className="block text-[11px] mt-0.5" style={{ color:"rgba(27,33,41,.48)" }}>{summary}</span>
+          <span className="challenge-standing-muted block text-[11px] mt-0.5">{summary}</span>
         </span>
         {open ? <ChevronUp size={16} style={{ opacity:.35 }}/> : <ChevronDown size={16} style={{ opacity:.35 }}/>} 
       </button>
@@ -333,16 +333,16 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
             <div className="challenge-my-summary rounded-2xl px-3 py-3 mb-3" style={{ background:"linear-gradient(135deg,rgba(47,111,237,.10),rgba(124,58,237,.055))",border:"1px solid rgba(47,111,237,.14)" }}>
               <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="challenge-summary-muted text-[9px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.42)" }}>{isTeam ? "Your week" : "Your result"}</div>
+                  <div className="challenge-summary-muted text-[9px] font-bold uppercase tracking-[.12em]">{isTeam ? "Your week" : "Your result"}</div>
                   <div className="flex items-baseline gap-2 mt-0.5">
                     <span className="text-base font-bold">{myStanding.rank ? `#${myStanding.rank}` : "—"}</span>
-                    <span className="challenge-summary-muted text-[10px]" style={{ color:"rgba(27,33,41,.46)" }}>
+                    <span className="challenge-summary-muted text-[10px]">
                       {isTeam
                         ? `of ${standings.filter((item) => item.rank).length}`
                         : `of ${playedCount} active today`}
                     </span>
                   </div>
-                  <div className="challenge-summary-muted text-[10px] mt-1" style={{ color:"rgba(27,33,41,.50)" }}>
+                  <div className="challenge-summary-muted text-[10px] mt-1">
                     {myStanding.completed}/{rounds.length || games.length} played · {formatDuration(myStanding.adjustedSeconds)} adjusted
                     {isTeam && myStanding.missed ? ` · ${myStanding.missed} missed` : ""}
                   </div>
@@ -354,7 +354,11 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
               <div className="flex items-center gap-2 mt-2.5 pt-2.5" style={{ borderTop:"1px solid rgba(47,111,237,.10)" }}>
                 {previousComparison ? (
                   <>
-                    <span className="grid place-items-center rounded-full" style={{ width:22,height:22,background:previousComparison.delta > 0 ? "rgba(18,148,106,.12)" : previousComparison.delta < 0 ? "rgba(181,67,58,.10)" : "rgba(16,24,40,.06)",color:previousComparison.delta > 0 ? "#0B7C58" : previousComparison.delta < 0 ? "#B5433A" : "rgba(27,33,41,.55)" }}>
+                    <span
+                      className="challenge-delta-dot grid place-items-center rounded-full"
+                      data-tone={previousComparison.delta > 0 ? "good" : previousComparison.delta < 0 ? "bad" : "flat"}
+                      style={{ width:22,height:22,background:previousComparison.delta > 0 ? "rgba(18,148,106,.12)" : previousComparison.delta < 0 ? "rgba(181,67,58,.10)" : "rgba(16,24,40,.06)",color:previousComparison.delta > 0 ? "#0B7C58" : previousComparison.delta < 0 ? "#B5433A" : "rgba(27,33,41,.55)" }}
+                    >
                       {previousComparison.delta > 0 ? <ArrowUp size={12}/> : previousComparison.delta < 0 ? <ArrowDown size={12}/> : <Minus size={12}/>}
                     </span>
                     <span className="text-[10px] font-semibold">
@@ -364,12 +368,12 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                           ? `${Math.abs(previousComparison.delta)} points behind last week`
                           : "Level with last week"}
                     </span>
-                    <span className="ml-auto text-[9px]" style={{ color:"rgba(27,33,41,.38)" }}>
+                    <span className="challenge-standing-faint ml-auto text-[9px]">
                       same {previousComparison.rounds} {isTeam ? `round${previousComparison.rounds === 1 ? "" : "s"}` : `game${previousComparison.rounds === 1 ? "" : "s"}`}
                     </span>
                   </>
                 ) : (
-                  <span className="challenge-summary-muted text-[10px]" style={{ color:"rgba(27,33,41,.44)" }}>
+                  <span className="challenge-summary-muted text-[10px]">
                     {previousWeekLabel ? (isTeam ? "Comparison starts after your first scheduled round." : "No matching result from last week.") : "No previous result to compare."}
                   </span>
                 )}
@@ -378,18 +382,18 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
           )}
           {!loading && displayedStandings.length > 0 && (
             <div className="flex items-center justify-between px-1 mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.38)" }}>{isTeam ? "Team standings" : "Challenge standings"}</span>
-              <span className="text-[9px]" style={{ color:"rgba(27,33,41,.38)" }}>{isTeam ? "Highest score first" : "Completed, then overall score"}</span>
+              <span className="challenge-standing-faint text-[10px] font-bold uppercase tracking-[.12em]">{isTeam ? "Team standings" : "Challenge standings"}</span>
+              <span className="challenge-standing-faint text-[9px]">{isTeam ? "Highest score first" : "Completed, then overall score"}</span>
             </div>
           )}
           {loading ? (
             <div className="space-y-2" role="status" aria-label={t("standings.loading")}>
-              {[0,1,2].map((item) => <div key={item} className="h-[58px] rounded-2xl animate-pulse" style={{ background:"linear-gradient(90deg,#F4F5F8,#FAFAFC,#F4F5F8)" }}/>) }
+              {[0,1,2].map((item) => <div key={item} className="challenge-loading-skeleton h-[58px] rounded-2xl animate-pulse" style={{ background:"linear-gradient(90deg,#F4F5F8,#FAFAFC,#F4F5F8)" }}/>) }
             </div>
           ) : standings.length === 0 ? (
-            <div className="rounded-2xl py-5 px-4 text-center" style={{ background:"#F7F8FB" }}>
+            <div className="challenge-surface-muted rounded-2xl py-5 px-4 text-center">
               <div className="text-sm font-semibold">{t("standings.emptyTitle")}</div>
-              <div className="text-[11px] mt-1" style={{ color:"rgba(27,33,41,.48)" }}>{t("standings.emptyBody")}</div>
+              <div className="challenge-standing-muted text-[11px] mt-1">{t("standings.emptyBody")}</div>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
@@ -410,7 +414,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                     aria-expanded={isExpanded}
                   >
                     <span className="flex items-center gap-2.5">
-                      <span className="w-5 text-center text-xs font-bold" style={{ color:standing.rank === 1 ? "#9A721F" : "rgba(27,33,41,.35)" }}>{standing.rank || "—"}</span>
+                      <span className={`w-5 text-center text-xs font-bold${standing.rank === 1 ? " challenge-rank-leading" : " challenge-standing-faint"}`} style={{ color:standing.rank === 1 ? "#9A721F" : undefined }}>{standing.rank || "—"}</span>
                       <span className="challenge-standing-avatar grid place-items-center rounded-full text-sm shrink-0" style={{ width:32,height:32,background:"#fff" }}>{standing.icon || "🙂"}</span>
                       <span className="flex-1 min-w-0">
                         <span className="flex items-center gap-1.5">
@@ -422,10 +426,10 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                           )}
                         </span>
                         {standing.privateStats ? (
-                          <span className="flex items-center gap-1 text-[10px] mt-0.5" style={{ color:"rgba(27,33,41,.42)" }}><LockKeyhole size={10}/>{t("standings.private")}</span>
+                          <span className="challenge-standing-muted flex items-center gap-1 text-[10px] mt-0.5"><LockKeyhole size={10}/>{t("standings.private")}</span>
                         ) : (
                           <span className="block h-1.5 rounded-full mt-1.5 overflow-hidden" style={{ background:"rgba(16,24,40,.08)" }}>
-                            <span className="block h-full rounded-full" style={{ width:`${progress}%`,background:finished ? "#12946A" : "#2F6FED" }}/>
+                            <span className="challenge-progress-fill block h-full rounded-full" data-done={finished ? "true" : "false"} style={{ width:`${progress}%`,background:finished ? "#12946A" : "#2F6FED" }}/>
                           </span>
                         )}
                       </span>
@@ -434,7 +438,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                           <span className="block text-xs font-bold">
                             {`${standing.challengeScore} pts`}
                           </span>
-                          <span className="flex items-center justify-end gap-1 text-[10px] mt-0.5" style={{ color:"rgba(27,33,41,.48)" }}>
+                          <span className="challenge-standing-muted flex items-center justify-end gap-1 text-[10px] mt-0.5">
                             {isTeam
                               ? `${standing.completed}/${requiredCount} played${standing.missed ? ` · ${standing.missed} missed` : ""}`
                               : standing.completed > 0
@@ -460,7 +464,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                                 {isTeam ? `${new Date(`${item.date}T12:00:00`).toLocaleDateString(undefined,{ weekday:"short" })} · ` : ""}{game.label}
                               </span>
                               {result ? (
-                                <span className="text-[10px] font-semibold flex items-center gap-1.5" style={{ color:INK }}>
+                                <span className="challenge-round-value text-[10px] font-semibold flex items-center gap-1.5" style={{ color:INK }}>
                                   <Clock3 size={10}/>{formatDuration(result.seconds)}
                                   {(Number(result.hints) || 0) > 0 && <><Lightbulb size={10}/>{result.hints}</>}
                                   {game.id === "zip" && result.zip_required_moves
@@ -474,7 +478,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                               ) : isTeam && item.missed ? (
                                 <span className="text-[10px] font-semibold" style={{ color:"#B5433A" }}>Missed {item.score}</span>
                               ) : (
-                                <span className="text-[10px] font-semibold" style={{ color:"rgba(27,33,41,.32)" }}>{isTeam ? "Upcoming" : t("standings.notPlayed")}</span>
+                                <span className="challenge-standing-faint text-[10px] font-semibold">{isTeam ? "Upcoming" : t("standings.notPlayed")}</span>
                               )}
                             </span>
                           );
@@ -484,7 +488,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                   </button>
                 );
               })}
-              <div className="px-2 pt-1 text-[9px] text-center" style={{ color:"rgba(27,33,41,.34)" }}>
+              <div className="challenge-standing-faint px-2 pt-1 text-[9px] text-center">
                 {isTeam
                   ? "Highest total wins · missed round −100 · hint +30s · mistake/reset +15s"
                   : displayedStandings.length < playedCount
@@ -492,21 +496,21 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                     : "Games completed first · pooled time, hints and mistakes"}
               </div>
               {!isTeam && (
-                <details className="mt-3 pt-3" style={{ borderTop:"1px solid rgba(16,24,40,.08)" }}>
+                <details className="challenge-history-panel mt-3 pt-3">
                   <summary className="flex items-center gap-3 px-1 py-1 cursor-pointer list-none">
                     <span className="flex-1">
-                      <span className="block text-[10px] font-bold uppercase tracking-[.12em]" style={{ color:"rgba(27,33,41,.42)" }}>7-day overview</span>
-                      <span className="block text-[9px] mt-0.5" style={{ color:"rgba(27,33,41,.40)" }}>Weekly leaders and your recent results</span>
+                      <span className="challenge-standing-muted block text-[10px] font-bold uppercase tracking-[.12em]">7-day overview</span>
+                      <span className="challenge-standing-faint block text-[9px] mt-0.5">Weekly leaders and your recent results</span>
                     </span>
-                    {myHistory && <span className="text-[10px] font-bold" style={{ color:"#2F6FED" }}>#{myHistory.rank} · {myHistory.challengeScore} pts</span>}
+                    {myHistory && <span className="challenge-history-rankpts text-[10px] font-bold">#{myHistory.rank} · {myHistory.challengeScore} pts</span>}
                     <ChevronDown size={14} style={{ opacity:.36 }}/>
                   </summary>
                   <div className="pt-2">
                     {displayedHistoryStandings.length > 0 ? (
-                      <div className="rounded-2xl overflow-hidden" style={{ background:"#F7F8FB" }}>
+                      <div className="challenge-history-list rounded-2xl overflow-hidden">
                         {displayedHistoryStandings.map((item,index) => (
-                          <div key={item.id} className="flex items-center gap-2 px-3 py-2 text-[10px]" style={{ borderTop:index ? "1px solid rgba(16,24,40,.06)" : "none" }}>
-                            <span className="w-4 text-center font-bold" style={{ color:item.rank === 1 ? "#9A721F" : "rgba(27,33,41,.40)" }}>{item.rank}</span>
+                          <div key={item.id} className="challenge-history-row flex items-center gap-2 px-3 py-2 text-[10px]" style={{ borderTop:index ? "1px solid rgba(16,24,40,.06)" : "none" }}>
+                            <span className={`w-4 text-center font-bold${item.rank === 1 ? " challenge-rank-leading" : " challenge-standing-faint"}`} style={{ color:item.rank === 1 ? "#9A721F" : undefined }}>{item.rank}</span>
                             <span aria-hidden="true">{item.icon || "🙂"}</span>
                             <span className="flex-1 font-semibold truncate">{item.name}{item.id === userId ? " · You" : ""}</span>
                             <span className="font-bold">{item.challengeScore} pts · {item.days}d</span>
@@ -514,17 +518,17 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                         ))}
                       </div>
                     ) : (
-                      <div className="rounded-xl px-3 py-3 text-[10px] text-center" style={{ background:"#F7F8FB",color:"rgba(27,33,41,.45)" }}>No results in the last 7 days.</div>
+                      <div className="challenge-surface-muted rounded-xl px-3 py-3 text-[10px] text-center">No results in the last 7 days.</div>
                     )}
                     {personalHistoryByDate.length > 0 && (
                       <div className="mt-2">
-                        <div className="text-[9px] font-bold uppercase tracking-[.1em] px-1 mb-1.5" style={{ color:"rgba(27,33,41,.36)" }}>Your recent days</div>
+                        <div className="challenge-standing-faint text-[9px] font-bold uppercase tracking-[.1em] px-1 mb-1.5">Your recent days</div>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                           {personalHistoryByDate.slice(0,4).map((item) => (
-                            <div key={item.date} className="rounded-xl px-2.5 py-2" style={{ background:"rgba(47,111,237,.06)",border:"1px solid rgba(47,111,237,.10)" }}>
-                              <div className="text-[9px] font-semibold" style={{ color:"rgba(27,33,41,.46)" }}>{new Date(`${item.date}T12:00:00`).toLocaleDateString(undefined,{ weekday:"short",day:"numeric" })}</div>
+                            <div key={item.date} className="challenge-history-day rounded-xl px-2.5 py-2" style={{ background:"rgba(47,111,237,.06)",border:"1px solid rgba(47,111,237,.10)" }}>
+                              <div className="challenge-standing-muted text-[9px] font-semibold">{new Date(`${item.date}T12:00:00`).toLocaleDateString(undefined,{ weekday:"short",day:"numeric" })}</div>
                               <div className="text-[11px] font-bold mt-0.5">{item.score} pts</div>
-                              <div className="text-[8px]" style={{ color:"rgba(27,33,41,.38)" }}>{item.games} game{item.games === 1 ? "" : "s"}</div>
+                              <div className="challenge-standing-faint text-[8px]">{item.games} game{item.games === 1 ? "" : "s"}</div>
                             </div>
                           ))}
                         </div>

@@ -21,64 +21,124 @@
     color: rgba(232, 238, 247, 0.64) !important;
   }
 
+  /* Challenge panel token system: one background scale, two text tiers,
+   * one accent, and semantic colours reserved for a single meaning each
+   * (gold = leader, green = positive/finished, red = negative/behind). */
   .challenge-standings-card {
-    background: rgba(21, 29, 40, 0.92) !important;
-    border-color: rgba(255, 255, 255, 0.12) !important;
-    color: #f4f7fb !important;
+    --cs-row: #1d2333;
+    --cs-ink-2: rgba(243, 246, 251, 0.62);
+    --cs-ink-3: rgba(243, 246, 251, 0.34);
+    --cs-accent: #6d8bff;
+    --cs-accent-soft: rgba(109, 139, 255, 0.16);
+    --cs-gold: #f2c14e;
+    --cs-good: #34d399;
+    --cs-bad: #f76b6b;
+    background: #161d29 !important;
+    border-color: rgba(255, 255, 255, 0.07) !important;
+    color: #f3f6fb !important;
   }
 
   .challenge-my-summary {
-    background: linear-gradient(135deg, rgba(58, 108, 210, 0.25), rgba(103, 70, 176, 0.18)) !important;
-    border-color: rgba(109, 156, 255, 0.30) !important;
+    background: #1a2233 !important;
+    border-color: rgba(109, 139, 255, 0.22) !important;
   }
 
-  .challenge-summary-muted {
-    color: rgba(232, 238, 247, 0.68) !important;
+  .challenge-summary-muted,
+  .challenge-standing-muted {
+    color: var(--cs-ink-2) !important;
   }
 
-  .challenge-summary-points {
-    background: rgba(10, 18, 31, 0.66) !important;
-    color: #8eb2ff !important;
-    border: 1px solid rgba(109, 156, 255, 0.20);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+  .challenge-standing-faint {
+    color: var(--cs-ink-3) !important;
+  }
+
+  .challenge-surface-muted,
+  .challenge-loading-skeleton {
+    background: var(--cs-row) !important;
+    color: var(--cs-ink-2) !important;
+  }
+
+  .challenge-summary-points,
+  .challenge-history-rankpts {
+    background: var(--cs-accent-soft) !important;
+    color: #a9bcff !important;
+    border: 1px solid rgba(109, 139, 255, 0.20);
+    box-shadow: none !important;
+  }
+
+  .challenge-delta-dot[data-tone="good"] {
+    background: rgba(52, 211, 153, 0.16) !important;
+    color: var(--cs-good) !important;
+  }
+
+  .challenge-delta-dot[data-tone="bad"] {
+    background: rgba(247, 107, 107, 0.14) !important;
+    color: var(--cs-bad) !important;
+  }
+
+  .challenge-delta-dot[data-tone="flat"] {
+    background: rgba(255, 255, 255, 0.07) !important;
+    color: var(--cs-ink-2) !important;
+  }
+
+  .challenge-rank-leading {
+    color: var(--cs-gold) !important;
+  }
+
+  .challenge-progress-fill {
+    background: var(--cs-accent) !important;
+  }
+
+  .challenge-progress-fill[data-done="true"] {
+    background: var(--cs-good) !important;
   }
 
   .challenge-standing-row {
-    background: rgba(255, 255, 255, 0.055) !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
-    color: #f4f7fb !important;
+    background: var(--cs-row) !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+    color: #f3f6fb !important;
   }
 
   .challenge-standing-row[data-current="true"] {
-    background: rgba(71, 112, 199, 0.18) !important;
+    background: rgba(109, 139, 255, 0.14) !important;
   }
 
   .challenge-standing-row[data-leading="true"] {
-    border-color: rgba(245, 213, 131, 0.36) !important;
+    background: #1d2233 !important;
+    border-color: rgba(242, 193, 78, 0.30) !important;
   }
 
   .challenge-standing-avatar,
   .challenge-round-result {
-    background: rgba(255, 255, 255, 0.075) !important;
-    color: #f4f7fb !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #f3f6fb !important;
   }
 
-  .challenge-history-list {
-    background: rgba(255, 255, 255, 0.035) !important;
-    border-color: rgba(255, 255, 255, 0.10) !important;
+  .challenge-round-value {
+    color: #f3f6fb !important;
+  }
+
+  .challenge-history-panel {
+    border-top-color: rgba(255, 255, 255, 0.07) !important;
+  }
+
+  .challenge-history-list,
+  .challenge-history-day {
+    background: var(--cs-row) !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
   }
 
   .challenge-history-row {
-    color: #f4f7fb !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #f3f6fb !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
   }
 
   .challenge-history-row:nth-child(even) {
-    background: rgba(255, 255, 255, 0.035) !important;
+    background: rgba(255, 255, 255, 0.03) !important;
   }
 
   .challenge-history-muted {
-    color: rgba(232, 238, 247, 0.60) !important;
+    color: var(--cs-ink-2) !important;
   }
 
   .challenge-history-result[data-result="none"] {
