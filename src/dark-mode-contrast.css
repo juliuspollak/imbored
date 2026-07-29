@@ -690,4 +690,48 @@
   .chats-page .chat-search svg {
     color: #a99cff !important;
   }
+
+  /* Member-row action buttons are plain .gloss-button pills tinted for a
+     light row background; on the dark circle-member-row surface their
+     dark-on-light colours (#9A6A12, #B5433A, near-black default text)
+     lose almost all contrast. Each variant gets its own readable tint. */
+  .circle-action-btn[data-variant="owner"] {
+    background: rgba(217, 174, 88, 0.22) !important;
+    color: #f0c975 !important;
+  }
+
+  .circle-action-btn[data-variant="approver-active"] {
+    background: rgba(18, 148, 106, 0.22) !important;
+    color: #6ee7a0 !important;
+  }
+
+  .circle-action-btn[data-variant="approver"],
+  .circle-action-btn[data-variant="remove"] {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #dfe7f2 !important;
+  }
+
+  .circle-action-btn[data-variant="block"],
+  .circle-action-btn[data-variant="delete"] {
+    background: rgba(247, 107, 107, 0.16) !important;
+    color: #ff8d91 !important;
+  }
+
+  .circle-action-btn[data-variant="unblock"] {
+    background: rgba(109, 156, 255, 0.16) !important;
+    color: #8fb4ff !important;
+  }
+
+  /* Same light-tuned-color bug as the row action buttons above: this confirm
+     panel's gold background and dark-brown text (and the Cancel button that
+     inherits it) were never meant to sit on a dark surface. */
+  .circle-owner-confirm {
+    background: rgba(217, 174, 88, 0.16) !important;
+    color: #f0c975 !important;
+  }
+
+  .circle-action-btn[data-variant="cancel"] {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #dfe7f2 !important;
+  }
 }

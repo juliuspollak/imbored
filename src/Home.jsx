@@ -666,7 +666,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                           className="w-full flex items-center gap-3 p-3 text-left"
                           aria-expanded={expanded}
                         >
-                          <span className="grid place-items-center rounded-xl text-lg shrink-0" style={{ width:40,height:40,background:"#fff" }}>{item.circle_emoji || "⭐"}</span>
+                          <span className="circle-icon-control grid place-items-center rounded-xl text-lg shrink-0" style={{ width:40,height:40,background:"#fff" }}>{item.circle_emoji || "⭐"}</span>
                           <span className="flex-1 min-w-0">
                             <span className="flex items-center gap-1.5">
                               <span className="text-xs font-bold truncate">{item.challenge_title || item.circle_name}</span>
