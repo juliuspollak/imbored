@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { Users, Plus, ShieldCheck, UserPlus, Mail, Check, X } from "lucide-react";
+import { Users, Plus, ShieldCheck, UserPlus, Mail, Check, X, Clock } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
-import { isCommunityVisibleProfile } from "./lib/profileVisibility.js";
 
 const BG="#F1F3F7",PANEL="#fff",INK="#1B2129",ACCENT="#2F6FED";
 const card={background:PANEL,border:"1px solid rgba(16,24,40,.09)",borderRadius:16};
@@ -12,32 +11,47 @@ export default function GuardianCircles({onBack}){
   const {user}=useAuth();
   const [circles,setCircles]=useState([]);
   const [rosters,setRosters]=useState({});
+  const [pendingByCircle,setPendingByCircle]=useState({});
   const [invitations,setInvitations]=useState([]);
-  const [players,setPlayers]=useState([]);
   const [loading,setLoading]=useState(true);
   const [msg,setMsg]=useState("");
   const [newName,setNewName]=useState("");
   const [inviteFor,setInviteFor]=useState(null);
   const [inviteQuery,setInviteQuery]=useState("");
+  const [inviteResults,setInviteResults]=useState([]);
+  const [inviteSearching,setInviteSearching]=useState(false);
 
   const refresh=useCallback(async()=>{
     setLoading(true);
-    const [{data:c},{data:inv},{data:p}]=await Promise.all([
+    const [{data:c},{data:inv}]=await Promise.all([
       supabase.rpc("get_my_circles"),
       supabase.rpc("get_my_pending_circle_invitations"),
-      supabase.from("profiles").select("id,name,icon,is_private,hidden_from_others,account_deleted_at").neq("id",user.id).order("name"),
     ]);
     setCircles(c||[]);
     setInvitations(inv||[]);
-    setPlayers((p||[]).filter(isCommunityVisibleProfile));
     const rosterEntries=await Promise.all((c||[]).map(async circle=>{
-      const {data}=await supabase.rpc("get_circle_roster",{target_circle_id:circle.circle_id});
-      return [circle.circle_id,data||[]];
+      const [{data:roster},{data:pending}]=await Promise.all([
+        supabase.rpc("get_circle_roster",{target_circle_id:circle.circle_id}),
+        supabase.rpc("get_circle_pending_invitations",{target_circle_id:circle.circle_id}),
+      ]);
+      return [circle.circle_id,{roster:roster||[],pending:pending||[]}];
     }));
-    setRosters(Object.fromEntries(rosterEntries));
+    setRosters(Object.fromEntries(rosterEntries.map(([id,v])=>[id,v.roster])));
+    setPendingByCircle(Object.fromEntries(rosterEntries.map(([id,v])=>[id,v.pending])));
     setLoading(false);
   },[user.id]);
   useEffect(()=>{refresh()},[refresh]);
+
+  useEffect(()=>{
+    if(!inviteFor||inviteQuery.trim().length<2){setInviteResults([]);return;}
+    let cancelled=false;
+    setInviteSearching(true);
+    const timeout=setTimeout(async()=>{
+      const {data}=await supabase.rpc("search_invitable_players",{search_query:inviteQuery.trim(),exclude_circle_id:inviteFor});
+      if(!cancelled){setInviteResults(data||[]);setInviteSearching(false);}
+    },250);
+    return()=>{cancelled=true;clearTimeout(timeout);};
+  },[inviteFor,inviteQuery]);
 
   async function createCircle(e){
     e.preventDefault();
@@ -54,7 +68,7 @@ export default function GuardianCircles({onBack}){
   async function invite(circleId,playerId){
     const {error}=await supabase.rpc("invite_to_circle",{target_circle_id:circleId,target_user_id:playerId});
     setMsg(error?.message||"Invited");
-    if(!error)setInviteFor(null);
+    if(!error){setInviteFor(null);setInviteQuery("");}
     refresh();
   }
   async function decide(invitationId,accept){
@@ -62,10 +76,6 @@ export default function GuardianCircles({onBack}){
     setMsg(error?.message||(accept?"Joined circle":"Invitation declined"));
     refresh();
   }
-
-  const inviteCandidates=inviteFor
-    ? players.filter(p=>!(rosters[inviteFor]||[]).some(m=>m.user_id===p.id) && p.name.toLowerCase().includes(inviteQuery.toLowerCase()))
-    : [];
 
   return <div style={{background:BG,minHeight:"100vh",fontFamily:"'Inter',sans-serif"}} className="p-4 pt-10 flex justify-center">
     <div className="w-full max-w-xl">
@@ -85,9 +95,9 @@ export default function GuardianCircles({onBack}){
         </div>)}
       </div>}
 
-      <form onSubmit={createCircle} className="p-4 mb-4 flex gap-2" style={card}>
-        <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="New circle name, e.g. The Smiths" className="flex-1 min-w-0 border rounded-lg px-3 py-2 text-sm" style={{borderColor:"rgba(16,24,40,.12)"}} required/>
-        <button className="rounded-xl px-4 text-white text-sm font-semibold flex items-center gap-1.5" style={{background:ACCENT}}><Plus size={14}/>Create</button>
+      <form onSubmit={createCircle} className="p-4 mb-4 flex gap-2 items-center" style={card}>
+        <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="New circle name, e.g. The Smiths" className="flex-1 min-w-0 border rounded-lg px-3 py-2.5 text-sm" style={{borderColor:"rgba(16,24,40,.12)"}} required/>
+        <button className="rounded-xl px-4 py-2.5 text-white text-sm font-semibold flex items-center gap-1.5 shrink-0" style={{background:ACCENT}}><Plus size={14}/>Create</button>
       </form>
 
       {loading?<p className="text-sm text-center opacity-45 py-10">Loading…</p>
@@ -95,6 +105,7 @@ export default function GuardianCircles({onBack}){
       :<div className="space-y-3">
         {circles.map(c=>{
           const roster=rosters[c.circle_id]||[];
+          const pending=pendingByCircle[c.circle_id]||[];
           return <div key={c.circle_id} className="p-4" style={card}>
             <div className="flex items-center justify-between gap-2 mb-1">
               <div className="font-semibold text-sm truncate">{c.circle_name}</div>
@@ -108,8 +119,13 @@ export default function GuardianCircles({onBack}){
                 {c.can_approve&&m.user_id!==user.id&&<button onClick={()=>toggleApprove(c.circle_id,m.user_id,!m.can_approve)} className="rounded-full px-2.5 py-1 text-[10px] font-semibold" style={{background:m.can_approve?"rgba(22,163,74,.1)":"rgba(16,24,40,.05)",color:m.can_approve?"#166534":INK}}>{m.can_approve?"Approver":"Make approver"}</button>}
                 {!c.can_approve&&m.can_approve&&<span className="text-[10px] opacity-45">Approver</span>}
               </div>)}
+              {pending.map(p=><div key={`pending-${p.invitation_id}`} className="flex items-center gap-2 opacity-60">
+                <span className="text-base">{p.invited_icon||"🙂"}</span>
+                <span className="flex-1 min-w-0 text-xs font-medium truncate">{p.invited_name}</span>
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold flex items-center gap-1" style={{background:"rgba(217,148,10,.10)",color:"#B5730E"}}><Clock size={9}/>Invited</span>
+              </div>)}
             </div>
-            {c.can_approve&&<button onClick={()=>{setInviteFor(c.circle_id);setInviteQuery("");}} className="w-full mt-3 rounded-xl py-2 text-xs font-semibold flex items-center justify-center gap-1.5" style={{background:"rgba(47,111,237,.08)",color:ACCENT}}><UserPlus size={13}/>Invite someone</button>}
+            {c.can_approve&&<button onClick={()=>{setInviteFor(c.circle_id);setInviteQuery("");setInviteResults([]);}} className="w-full mt-3 rounded-xl py-2 text-xs font-semibold flex items-center justify-center gap-1.5" style={{background:"rgba(47,111,237,.08)",color:ACCENT}}><UserPlus size={13}/>Invite someone</button>}
           </div>;
         })}
       </div>}
@@ -117,10 +133,13 @@ export default function GuardianCircles({onBack}){
 
     {inviteFor&&<div className="fixed inset-0 z-50 grid place-items-center p-4" style={{background:"rgba(16,24,40,.45)"}}>
       <div className="w-full max-w-sm rounded-3xl p-5 max-h-[80vh] flex flex-col" style={{background:"#fff",boxShadow:"0 24px 60px rgba(16,24,40,.22)"}}>
-        <div className="flex items-center justify-between mb-3"><h2 className="font-bold">Invite to circle</h2><button onClick={()=>setInviteFor(null)}><X size={16}/></button></div>
-        <input value={inviteQuery} onChange={e=>setInviteQuery(e.target.value)} placeholder="Search players" className="w-full rounded-xl border px-3 py-2 text-sm mb-3" style={{borderColor:"rgba(16,24,40,.12)"}}/>
+        <div className="flex items-center justify-between mb-3"><h2 className="font-bold">Invite to circle</h2><button onClick={()=>setInviteFor(null)} aria-label="Close"><X size={16}/></button></div>
+        <input autoFocus value={inviteQuery} onChange={e=>setInviteQuery(e.target.value)} placeholder="Search players by name…" className="w-full rounded-xl border px-3 py-2.5 text-sm mb-3" style={{borderColor:"rgba(16,24,40,.12)"}}/>
         <div className="overflow-y-auto flex-1 space-y-1.5">
-          {inviteCandidates.length===0?<p className="text-xs text-center opacity-40 py-6">No players found.</p>:inviteCandidates.map(p=><button key={p.id} onClick={()=>invite(inviteFor,p.id)} className="w-full flex items-center gap-2.5 rounded-xl px-2 py-2 text-left" style={{background:"rgba(16,24,40,.03)"}}>
+          {inviteQuery.trim().length<2?<p className="text-xs text-center opacity-40 py-6">Type at least 2 letters to search.</p>
+          :inviteSearching?<p className="text-xs text-center opacity-40 py-6">Searching…</p>
+          :inviteResults.length===0?<p className="text-xs text-center opacity-40 py-6">No players found.</p>
+          :inviteResults.map(p=><button key={p.id} onClick={()=>invite(inviteFor,p.id)} className="w-full flex items-center gap-2.5 rounded-xl px-2 py-2 text-left" style={{background:"rgba(16,24,40,.03)"}}>
             <span className="text-lg">{p.icon||"🙂"}</span><span className="text-sm font-medium flex-1 min-w-0 truncate">{p.name}</span><UserPlus size={14} style={{color:ACCENT}}/>
           </button>)}
         </div>
