@@ -131,25 +131,21 @@ export default function GuardianCircles({onBack}){
                 {c.can_approve&&<button onClick={()=>cancelInvitation(p.invitation_id)} className="grid place-items-center rounded-full shrink-0" style={{width:22,height:22,background:"rgba(181,67,58,.08)",color:"#B5433A"}} aria-label={`Cancel invitation to ${p.invited_name}`}><X size={11}/></button>}
               </div>)}
             </div>
-            {c.can_approve&&<button onClick={()=>{setInviteFor(c.circle_id);setInviteQuery("");setInviteResults([]);}} className="w-full mt-3 rounded-xl py-2 text-xs font-semibold flex items-center justify-center gap-1.5" style={{background:"rgba(47,111,237,.08)",color:ACCENT}}><UserPlus size={13}/>Invite someone</button>}
+            {c.can_approve&&<button onClick={()=>{const opening=inviteFor!==c.circle_id;setInviteFor(opening?c.circle_id:null);setInviteQuery("");setInviteResults([]);}} className="w-full mt-3 rounded-xl py-2 text-xs font-semibold flex items-center justify-center gap-1.5" style={{background:inviteFor===c.circle_id?"rgba(16,24,40,.06)":"rgba(47,111,237,.08)",color:inviteFor===c.circle_id?INK:ACCENT}}>{inviteFor===c.circle_id?<><X size={13}/>Close</>:<><UserPlus size={13}/>Invite someone</>}</button>}
+            {inviteFor===c.circle_id&&<div className="mt-3 pt-3" style={{borderTop:"1px solid rgba(16,24,40,.07)"}}>
+              <input autoFocus value={inviteQuery} onChange={e=>setInviteQuery(e.target.value)} placeholder="Search players by name…" className="w-full rounded-xl border px-3 py-2.5 text-sm mb-2" style={{borderColor:"rgba(16,24,40,.12)"}}/>
+              <div className="space-y-1.5">
+                {inviteQuery.trim().length<2?<p className="text-xs text-center opacity-40 py-4">Type at least 2 letters to search.</p>
+                :inviteSearching?<p className="text-xs text-center opacity-40 py-4">Searching…</p>
+                :inviteResults.length===0?<p className="text-xs text-center opacity-40 py-4">No players found.</p>
+                :inviteResults.map(p=><button key={p.id} onClick={()=>invite(c.circle_id,p.id)} className="w-full flex items-center gap-2.5 rounded-xl px-2 py-2 text-left" style={{background:"rgba(16,24,40,.03)"}}>
+                  <span className="text-lg">{p.icon||"🙂"}</span><span className="text-sm font-medium flex-1 min-w-0 truncate">{p.name}</span><UserPlus size={14} style={{color:ACCENT}}/>
+                </button>)}
+              </div>
+            </div>}
           </div>;
         })}
       </div>}
     </div>
-
-    {inviteFor&&<div className="fixed inset-0 z-50 grid place-items-center p-4" style={{background:"rgba(16,24,40,.45)"}}>
-      <div className="w-full max-w-sm rounded-3xl p-5 max-h-[80vh] flex flex-col" style={{background:"#fff",boxShadow:"0 24px 60px rgba(16,24,40,.22)"}}>
-        <div className="flex items-center justify-between mb-3"><h2 className="font-bold">Invite to circle</h2><button onClick={()=>setInviteFor(null)} aria-label="Close"><X size={16}/></button></div>
-        <input autoFocus value={inviteQuery} onChange={e=>setInviteQuery(e.target.value)} placeholder="Search players by name…" className="w-full rounded-xl border px-3 py-2.5 text-sm mb-3" style={{borderColor:"rgba(16,24,40,.12)"}}/>
-        <div className="overflow-y-auto flex-1 space-y-1.5">
-          {inviteQuery.trim().length<2?<p className="text-xs text-center opacity-40 py-6">Type at least 2 letters to search.</p>
-          :inviteSearching?<p className="text-xs text-center opacity-40 py-6">Searching…</p>
-          :inviteResults.length===0?<p className="text-xs text-center opacity-40 py-6">No players found.</p>
-          :inviteResults.map(p=><button key={p.id} onClick={()=>invite(inviteFor,p.id)} className="w-full flex items-center gap-2.5 rounded-xl px-2 py-2 text-left" style={{background:"rgba(16,24,40,.03)"}}>
-            <span className="text-lg">{p.icon||"🙂"}</span><span className="text-sm font-medium flex-1 min-w-0 truncate">{p.name}</span><UserPlus size={14} style={{color:ACCENT}}/>
-          </button>)}
-        </div>
-      </div>
-    </div>}
   </div>;
 }
