@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Star, Flame, Trophy, Gift, Send, Plus, ShieldCheck, ExternalLink, PartyPopper, X, Pencil, Save, Sparkles, Lock, Gamepad2, ArrowDownLeft, ArrowUpRight, RotateCcw, Info, ChevronDown } from "lucide-react";
+import { Star, Flame, Trophy, Gift, Send, Plus, ShieldCheck, ExternalLink, PartyPopper, X, Pencil, Save, Sparkles, Lock, Gamepad2, ArrowDownLeft, ArrowUpRight, RotateCcw, Info, ChevronDown, ChevronRight, ClipboardCheck } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase } from "./lib/supabase.js";
 import { isCommunityVisibleProfile } from "./lib/profileVisibility.js";
@@ -267,7 +267,11 @@ export default function Progress({ onBack, onOpenRewardRequests }) {
       {message&&<div className="rounded-xl p-3 mb-3 text-xs" style={{background:"rgba(47,111,237,.08)",color:INK}}>{message}</div>}
       <div className="game-mode-switch mb-3" style={{width:"100%",justifyContent:"flex-start"}}>{[["rewards","Rewards",Gift],["wish","Wish",Plus],["transfer","Transfer",Send]].map(([id,label,Icon])=>{const locked=id!=="rewards"&&!socialUnlocked;return <button key={id} disabled={locked} onClick={()=>setTab(id)} className={`gloss-button ${tab===id?"is-active":""}`} style={{flex:1}}>{locked?<Lock size={12}/>:<Icon size={14}/>} {label}</button>})}</div>
       {!socialUnlocked&&<div className="rounded-2xl p-3 mb-3 text-xs flex items-start gap-2" style={{background:"rgba(217,174,88,.10)",color:"#775B1D"}}><Lock size={14} style={{marginTop:1,flexShrink:0}}/><span>Reach Level 2 to submit reward wishes and transfer points. Rewards, streak protection, gameplay, teams you join, chat, and feedback remain available.</span></div>}
-      {tab==="rewards"&&onOpenRewardRequests&&<button onClick={onOpenRewardRequests} className="w-full mb-2 rounded-xl px-3 py-2.5 text-xs font-semibold flex items-center justify-between" style={{background:"rgba(47,111,237,.07)",color:ACCENT}}><span>Track my requests</span><span>→</span></button>}
+      {tab==="rewards"&&onOpenRewardRequests&&<button onClick={onOpenRewardRequests} className="w-full mb-2 rounded-2xl p-3 flex items-center gap-3 text-left" style={card}>
+        <span className="grid place-items-center rounded-xl shrink-0" style={{width:36,height:36,background:"rgba(47,111,237,.09)",color:ACCENT}}><ClipboardCheck size={16}/></span>
+        <span className="flex-1 min-w-0"><span className="block text-sm font-semibold" style={{color:INK}}>Track my requests</span><span className="block text-[11px] opacity-45">See status and deliveries for what you've redeemed</span></span>
+        <ChevronRight size={16} style={{opacity:.35}}/>
+      </button>}
       {tab==="rewards"&&<div className="grid grid-cols-2 gap-2">{rewards.length===0?<p className="col-span-2 text-sm text-center opacity-40 py-8">No rewards yet.</p>:rewards.map(r=>{
         const affordable=progress.available_points>=r.points_cost;
         const short=r.points_cost-progress.available_points;

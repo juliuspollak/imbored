@@ -82,6 +82,7 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
   const [rosterTeam, setRosterTeam] = useState(null);
   const [rosterQuery, setRosterQuery] = useState("");
   const [moderationBusy, setModerationBusy] = useState(null);
+  const [transferConfirmId, setTransferConfirmId] = useState(null);
   const [deleteTeamTarget, setDeleteTeamTarget] = useState(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -320,6 +321,20 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
     });
     setModerationBusy(null);
     setMsg(error?.message || `${member.name} is ${member.can_approve_rewards ? "no longer" : "now"} a reward approver for ${team.name}`);
+    if (!error) await refresh();
+  }
+
+  async function transferOwnership(team, member) {
+    if (moderationBusy) return;
+    const key = `${team.id}:${member.id}:transfer`;
+    setModerationBusy(key);
+    const { error } = await supabase.rpc("transfer_team_ownership", {
+      target_team_id:Number(team.id),
+      new_owner_user_id:member.id,
+    });
+    setModerationBusy(null);
+    setTransferConfirmId(null);
+    setMsg(error?.message || `${member.name} is now the owner of ${team.name}`);
     if (!error) await refresh();
   }
 
@@ -674,11 +689,19 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
                         <div className="text-[10px] opacity-40 truncate">{teamOwner ? "Team owner" : member.mood || "Team member"}{member.can_approve_rewards && !teamOwner ? " · Reward approver" : ""}</div>
                       </div>
                       {manager && !teamOwner && !isMe && <div className="flex gap-1">
+                        <button className="gloss-button" disabled={!!moderationBusy} onClick={() => setTransferConfirmId(transferConfirmId === member.id ? null : member.id)} className="grid place-items-center rounded-full" style={{ width:32,height:32,background:"rgba(217,174,88,.14)",color:"#9A6A12" }} aria-label={`Make ${member.name} team owner`} title="Make owner"><Crown size={13}/></button>
                         <button className="gloss-button" disabled={!!moderationBusy} onClick={() => toggleRewardApprover(rosterTeam,member)} className="grid place-items-center rounded-full" style={{ width:32,height:32,background:member.can_approve_rewards ? "rgba(18,148,106,.12)" : "rgba(16,24,40,.05)",color:member.can_approve_rewards ? "#12946A" : undefined }} aria-label={member.can_approve_rewards ? `Remove ${member.name} as reward approver` : `Make ${member.name} a reward approver`} title="Reward approver"><ShieldCheck size={13}/></button>
                         <button className="gloss-button" disabled={!!moderationBusy} onClick={() => moderateMember(rosterTeam,member,"remove")} className="grid place-items-center rounded-full" style={{ width:32,height:32,background:"rgba(16,24,40,.05)" }} aria-label={`Remove ${member.name}`} title="Remove"><UserMinus size={13}/></button>
                         <button className="gloss-button" disabled={!!moderationBusy} onClick={() => moderateMember(rosterTeam,member,"block")} className="grid place-items-center rounded-full" style={{ width:32,height:32,background:"rgba(181,67,58,.09)",color:"#B5433A" }} aria-label={`Block ${member.name}`} title="Block"><Ban size={13}/></button>
                       </div>}
                     </div>
+                    {transferConfirmId === member.id && <div className="rounded-xl px-3 py-2.5 mt-2 text-xs" style={{ background:"rgba(217,174,88,.12)",color:"#775B1D" }}>
+                      <div className="mb-2">Make {member.name} the owner of {rosterTeam.name}? You'll remain a member, but lose owner-only controls.</div>
+                      <div className="flex gap-2">
+                        <button onClick={() => transferOwnership(rosterTeam,member)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-white" style={{ background:"#9A6A12" }}>Make owner</button>
+                        <button onClick={() => setTransferConfirmId(null)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ background:"rgba(16,24,40,.06)" }}>Cancel</button>
+                      </div>
+                    </div>}
                   </div>;
                 })}
                 {manager && blocked.length > 0 && <div className="pt-3">
