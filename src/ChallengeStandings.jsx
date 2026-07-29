@@ -47,17 +47,10 @@ function dailyChallengeScore(result, benchmark) {
 function pooledChallengeScore(results, benchmarkMap) {
   const played = results.filter(Boolean);
   if (played.length === 0) return 0;
-  const adjusted = played.reduce((total, result) => total + dailyChallengeScore(
+  return played.reduce((total, result) => total + dailyChallengeScore(
     result,
     benchmarkMap[`${result.game}:${isoDayIndex(result.challenge_date)}`]
-  ).adjusted, 0);
-  const benchmarkSeconds = played.reduce((total, result) =>
-    total + Math.max(1, Number(benchmarkMap[`${result.game}:${isoDayIndex(result.challenge_date)}`]) || 100)
-  , 0);
-  // Pool the full set so one unusually fast game cannot distort the result.
-  // Each adjusted second above/below the combined benchmark changes the score
-  // by one point, keeping both the ranking and displayed points transparent.
-  return Math.max(0, Math.round((100 * played.length) + benchmarkSeconds - adjusted));
+  ).score, 0);
 }
 
 export default function ChallengeStandings({ rows = [], roster = [], games = [], rounds = [], benchmarks = [], previousRows = [], previousRounds = [], historyRows = [], previousWeekLabel = null, isTeam = false, userId, loading = false, refreshing = false, defaultOpen = true, embedded = false, rewardPoints = 0, closed = false, winnerId = null }) {
