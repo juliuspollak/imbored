@@ -86,7 +86,7 @@ export default function Progress({ onBack, onOpenRewardRequests }) {
     const [{data:p},{data:r},{data:rw},{data:w},{data:ps},{data:tx},{data:transfers}] = await Promise.all([
       supabase.from("player_progress").select("*").eq("player_id",user.id).single(),
       supabase.from("reward_rules").select("*").eq("is_active",true).maybeSingle(),
-      supabase.from("rewards").select("*").eq("is_active",true).order("points_cost"),
+      supabase.rpc("list_my_available_rewards"),
       supabase.from("reward_wishes").select("*").eq("player_id",user.id).order("created_at",{ascending:false}),
       supabase.from("profiles").select("id,name,icon,is_admin,is_approved,is_blocked,hidden_from_others,account_deleted_at").neq("id",user.id).order("name"),
       supabase.from("points_transactions").select("id,points,reason_code,game_stat_id,related_player_id,reward_id,metadata,created_at,seen_at")

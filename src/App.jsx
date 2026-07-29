@@ -36,6 +36,7 @@ const Chat = lazy(() => import("./Chat.jsx"));
 const Chats = lazy(() => import("./Chats.jsx"));
 const AdminRewards = lazy(() => import("./AdminRewards.jsx"));
 const RewardRequests = lazy(() => import("./RewardRequests.jsx"));
+const GuardianCircles = lazy(() => import("./GuardianCircles.jsx"));
 import { saveStats } from "./lib/saveStats.js";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useOnlinePlayers } from "./lib/useOnlinePlayers.js";
@@ -299,6 +300,7 @@ function AppShell() {
       onOpenAdminGames={() => openAccountSection("admingames")}
       onOpenAdminRewards={() => openAccountSection("adminrewards")}
       onOpenRewardRequests={() => openAccountSection("rewardrequests")}
+      onOpenGuardianCircles={() => openAccountSection("guardiancircles")}
       players={players}
       userId={user?.id}
       openFeedbackCount={openFeedbackCount}
@@ -413,7 +415,15 @@ function AppShell() {
   if (active === "adminrewards") {
     return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
-        <AdminRewards onBack={() => setActive(null)} />
+        <AdminRewards onBack={() => setActive(null)} onOpenGuardianCircles={() => setActive("guardiancircles")} />
+      </Suspense>
+    );
+  }
+
+  if (active === "guardiancircles") {
+    return withAccountMenu(
+      <Suspense fallback={<FullScreenMessage text="Loading…" />}>
+        <GuardianCircles onBack={() => setActive(null)} />
       </Suspense>
     );
   }
@@ -586,7 +596,7 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
   );
 }
 
-function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenTeams, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, onOpenRewardRequests, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
+function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenTeams, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, onOpenRewardRequests, onOpenGuardianCircles, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
   const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -621,6 +631,7 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
     { id:"progress", icon:Star, label:t("account.progress"), onClick:onOpenProgress, badge:newTransfersCount },
     { id:"teams", icon:Users, label:t("account.teams"), onClick:onOpenTeams, badge:sectionSignals.teams ? 1 : 0 },
     { id:"rewardrequests", icon:Gift, label:t("account.rewardRequests"), onClick:onOpenRewardRequests, badge:myRedemptionUpdates + openRewardRequestsCount },
+    { id:"guardiancircles", icon:Users, label:t("account.circles"), onClick:onOpenGuardianCircles },
   ];
   const adminItems = [];
   if (isAdmin) {
