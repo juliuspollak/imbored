@@ -254,9 +254,8 @@ export default function Feedback({ onBack }) {
                 <button className="gloss-button" onClick={() => setMessage(null)} aria-label="Dismiss"><X size={13} /></button>
               </div>
             )}
-            <button className="gloss-button"
+            <button className="gloss-button w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold mb-4"
               onClick={() => setShowForm((s) => !s)}
-              className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold mb-4"
               style={{ background: showForm ? "rgba(16,24,40,0.06)" : ACCENT, color: showForm ? INK : "#FFFFFF" }}
             >
               <Plus size={15} />
@@ -289,10 +288,9 @@ export default function Feedback({ onBack }) {
 
             <div className="flex gap-1.5 mb-4">
               {["open", "closed", "all", ...(isAdmin ? ["deleted"] : [])].map((f) => (
-                <button className="gloss-button"
+                <button className="gloss-button rounded-full px-3 py-1 text-xs font-medium capitalize"
                   key={f}
                   onClick={() => setFilter(f)}
-                  className="rounded-full px-3 py-1 text-xs font-medium capitalize"
                   style={{
                     background: filter === f ? INK : "rgba(16,24,40,0.06)",
                     color: filter === f ? "#FFFFFF" : INK,
@@ -316,9 +314,8 @@ export default function Feedback({ onBack }) {
                   const createdAt = formatCreatedAt(it.created_at);
                   return (
                     <div key={it.id} className="rounded-2xl p-3.5 flex gap-3" style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)" }}>
-                      <button className="gloss-button"
+                      <button className="gloss-button flex flex-col items-center justify-center rounded-lg px-2.5 py-1.5 flex-shrink-0"
                         onClick={() => toggleVote(it.id, voted)}
-                        className="flex flex-col items-center justify-center rounded-lg px-2.5 py-1.5 flex-shrink-0"
                         style={{ background: voted ? "rgba(47,111,237,0.12)" : "rgba(16,24,40,0.05)", height: "fit-content" }}
                       >
                         <ThumbsUp size={13} style={{ color: voted ? ACCENT : INK, opacity: voted ? 1 : 0.4 }} />
@@ -332,8 +329,8 @@ export default function Feedback({ onBack }) {
                               <div className="text-[10px] font-semibold uppercase tracking-wide mb-2" style={{color:ACCENT}}>Update your feedback</div>
                               <textarea autoFocus value={editTitle} onChange={(e) => setEditTitle(e.target.value)} rows={3} maxLength={300} className="w-full rounded-xl px-3 py-2 text-sm outline-none resize-none" style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK, background:PANEL }} />
                               <div className="flex justify-end gap-2 mt-2">
-                                <button className="gloss-button" onClick={() => { setEditingId(null); setEditTitle(""); }} className="rounded-lg px-3 py-1.5 text-xs" style={{ color: INK, background:"rgba(16,24,40,.06)" }}>Cancel</button>
-                                <button className="gloss-button" onClick={() => handleUpdate(it.id)} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white" style={{ background: ACCENT }}>Save changes</button>
+                                <button className="gloss-button rounded-lg px-3 py-1.5 text-xs" onClick={() => { setEditingId(null); setEditTitle(""); }} style={{ color: INK, background:"rgba(16,24,40,.06)" }}>Cancel</button>
+                                <button className="gloss-button rounded-lg px-3 py-1.5 text-xs font-semibold text-white" onClick={() => handleUpdate(it.id)} style={{ background: ACCENT }}>Save changes</button>
                               </div>
                             </div>
                           ) : (
@@ -368,7 +365,7 @@ export default function Feedback({ onBack }) {
                         )}
 
                         {it.user_id === user?.id && it.status === "open" && !it.deleted_at && editingId !== it.id && (
-                          <button className="gloss-button" onClick={() => { setEditingId(it.id); setEditTitle(it.title); }} className="mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold" style={{ color: ACCENT, background:"rgba(47,111,237,.09)", border:"1px solid rgba(47,111,237,.16)" }}>
+                          <button className="gloss-button mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold" onClick={() => { setEditingId(it.id); setEditTitle(it.title); }} style={{ color: ACCENT, background:"rgba(47,111,237,.09)", border:"1px solid rgba(47,111,237,.16)" }}>
                             <Pencil size={12} /> Make changes
                           </button>
                         )}
@@ -381,25 +378,24 @@ export default function Feedback({ onBack }) {
                         {isAdmin && (
                           <div className="mt-2 flex flex-wrap items-center gap-3">
                             {it.deleted_at ? (
-                              <button className="gloss-button" onClick={() => handleSoftDelete(it.id, false)} className="flex items-center gap-1 text-xs font-medium" style={{ color: ACCENT }}>
+                              <button className="gloss-button flex items-center gap-1 text-xs font-medium" onClick={() => handleSoftDelete(it.id, false)} style={{ color: ACCENT }}>
                                 <RotateCcw size={12} /> Restore
                               </button>
                             ) : it.status === "open" ? (
-                              <button className="gloss-button"
+                              <button className="gloss-button flex items-center gap-1 text-xs font-medium disabled:opacity-45"
                                 disabled={completingId === it.id}
                                 onClick={() => handleClose(it.id)}
-                                className="flex items-center gap-1 text-xs font-medium disabled:opacity-45"
                                 style={{ color: GREEN }}
                               >
                                 <Check size={12} /> {completingId === it.id ? "Marking…" : "Mark done"}
                               </button>
                             ) : (
-                              <button className="gloss-button" onClick={() => handleReopen(it.id)} className="flex items-center gap-1 text-xs font-medium" style={{ color: INK, opacity: 0.5 }}>
+                              <button className="gloss-button flex items-center gap-1 text-xs font-medium" onClick={() => handleReopen(it.id)} style={{ color: INK, opacity: 0.5 }}>
                                 <X size={12} /> Reopen
                               </button>
                             )}
                             {!it.deleted_at && (
-                              <button className="gloss-button" onClick={() => handleSoftDelete(it.id, true)} className="flex items-center gap-1 text-xs font-medium" style={{ color: "#B5433A" }}>
+                              <button className="gloss-button flex items-center gap-1 text-xs font-medium" onClick={() => handleSoftDelete(it.id, true)} style={{ color: "#B5433A" }}>
                                 <Trash2 size={12} /> Delete
                               </button>
                             )}
