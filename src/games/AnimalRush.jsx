@@ -384,6 +384,7 @@ export default function AnimalRush({ onExit }) {
   const joinCodeReady = joinCode.trim().length === 6;
   const me = players.find((player) => player.user_id === user?.id);
   const matchWinner = players.find((player) => player.user_id === room?.winner_user_id);
+  const hostPlayer = players.find((player) => player.user_id === room?.host_user_id);
   const activePlayers = players.filter((player) => !player.eliminated && !player.left_at);
   const lobbyPlayers = players.filter((player) => !player.left_at);
   const orderedPlayers = rankPlayers(players);
@@ -697,7 +698,7 @@ export default function AnimalRush({ onExit }) {
       <div className="animal-rush">
         <main className="rush-shell">
           <div className="mb-3 flex items-center justify-between">
-            <GameHomeButton onClick={onExit} />
+            <GameHomeButton onClick={leaveRoom} />
             <span aria-hidden="true" style={{ width:36, height:36 }} />
             <button type="button" className="rush-quiet -mr-2" onClick={leaveRoom} disabled={working === "leave"}>
               <LogOut size={15} /> Leave
@@ -763,7 +764,7 @@ export default function AnimalRush({ onExit }) {
     return (
       <div className="animal-rush">
         <main className="rush-shell">
-          <GameHomeButton onClick={onExit} />
+          <GameHomeButton onClick={leaveRoom} />
           <section className="rush-panel p-6 text-center">
             <span className="rush-icon-panel rush-icon-panel--gold mx-auto grid h-16 w-16 place-items-center rounded-3xl">
               <Trophy size={31} />
@@ -780,11 +781,15 @@ export default function AnimalRush({ onExit }) {
                 <PlayerRow key={player.user_id} player={player} currentUserId={user?.id} winnerId={room.winner_user_id} />
               ))}
             </div>
-            {isHost && (
+            {isHost ? (
               <button type="button" className="rush-primary mt-4 w-full" onClick={rematch} disabled={!!working}>
                 {working === "rematch" ? <Loader2 className="animate-spin" size={17} /> : <RotateCcw size={17} />}
                 Play again
               </button>
+            ) : (
+              <p className="rush-muted mt-4 text-center text-xs">
+                Stick around and you'll rejoin automatically if {hostPlayer?.player_name || "the room creator"} starts a rematch — or leave whenever you like.
+              </p>
             )}
             <button type="button" className="rush-secondary mt-3 w-full" onClick={leaveRoom}>
               Leave room
@@ -830,7 +835,7 @@ export default function AnimalRush({ onExit }) {
     <div className="animal-rush">
       <main className="rush-shell rush-shell--play">
         <div className="rush-topbar mb-3 flex items-center justify-between">
-          <GameHomeButton onClick={onExit} />
+          <GameHomeButton onClick={leaveRoom} />
           <span aria-hidden="true" style={{ width:36, height:36 }} />
           <span className="rush-muted flex items-center gap-2 text-[11px] font-semibold">
             Round {room.round_number}
