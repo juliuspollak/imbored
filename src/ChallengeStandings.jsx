@@ -53,7 +53,7 @@ function pooledChallengeScore(results, benchmarkMap) {
   ).score, 0);
 }
 
-export default function ChallengeStandings({ rows = [], roster = [], games = [], rounds = [], benchmarks = [], previousRows = [], previousRounds = [], historyRows = [], previousWeekLabel = null, isTeam = false, userId, loading = false, refreshing = false, defaultOpen = true, embedded = false, rewardPoints = 0, closed = false, winnerId = null, stakeRewardName = null, stakeSplitMethod = null }) {
+export default function ChallengeStandings({ rows = [], roster = [], games = [], rounds = [], benchmarks = [], previousRows = [], previousRounds = [], historyRows = [], previousWeekLabel = null, isCircle = false, userId, loading = false, refreshing = false, defaultOpen = true, embedded = false, rewardPoints = 0, closed = false, winnerId = null, stakeRewardName = null, stakeSplitMethod = null }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(defaultOpen);
   const [expandedPlayerId, setExpandedPlayerId] = useState(null);
@@ -64,7 +64,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
       (grouped[row.user_id] ||= []).push(row);
       return grouped;
     }, {});
-    if (isTeam && rounds.length > 0) {
+    if (isCircle && rounds.length > 0) {
       const benchmarkMap = Object.fromEntries(
         benchmarks.map((item) => [`${item.game}:${item.day_index}`,Number(item.effective_seconds) || 100])
       );
@@ -166,7 +166,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
       ...standing,
       rank: !standing.privateStats && standing.completed > 0 ? ++visibleRank : null,
     }));
-  }, [benchmarks, closed, gameIds, isTeam, roster, rounds, rows, userId]);
+  }, [benchmarks, closed, gameIds, isCircle, roster, rounds, rows, userId]);
 
   const myStanding = standings.find((standing) => standing.id === userId) || null;
   const previousComparison = useMemo(() => {
@@ -176,7 +176,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
     );
     const myPreviousRows = previousRows.filter((row) => row.user_id === userId);
 
-    if (isTeam) {
+    if (isCircle) {
       if (previousRounds.length === 0) return null;
       const comparableCount = closed
         ? rounds.length
@@ -212,10 +212,10 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
       currentScore,
       delta:currentScore-priorScore,
     };
-  }, [benchmarks, closed, isTeam, myStanding, previousRounds, previousRows, rounds.length, userId]);
+  }, [benchmarks, closed, isCircle, myStanding, previousRounds, previousRows, rounds.length, userId]);
 
   const historyStandings = useMemo(() => {
-    if (isTeam || historyRows.length === 0) return [];
+    if (isCircle || historyRows.length === 0) return [];
     const benchmarkMap = Object.fromEntries(
       benchmarks.map((item) => [`${item.game}:${item.day_index}`,Number(item.effective_seconds) || 100])
     );
@@ -242,10 +242,10 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
         if (a.completed !== b.completed) return b.completed-a.completed;
         return (a.name || "").localeCompare(b.name || "");
       }).map((item,index) => ({ ...item,rank:item.privateStats ? null : index+1 }));
-  },[benchmarks,gameIds,historyRows,isTeam,roster,userId]);
+  },[benchmarks,gameIds,historyRows,isCircle,roster,userId]);
   const myHistory = historyStandings.find((item) => item.id === userId) || null;
   const personalHistoryByDate = useMemo(() => {
-    if (isTeam) return [];
+    if (isCircle) return [];
     const benchmarkMap = Object.fromEntries(
       benchmarks.map((item) => [`${item.game}:${item.day_index}`,Number(item.effective_seconds) || 100])
     );
@@ -263,16 +263,16 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
         ...item,
         score:pooledChallengeScore(item.rows,benchmarkMap),
       })).sort((a,b) => b.date.localeCompare(a.date));
-  },[benchmarks,historyRows,isTeam,userId]);
+  },[benchmarks,historyRows,isCircle,userId]);
 
   const playedCount = standings.filter((standing) => standing.completed > 0).length;
   const displayedStandings = useMemo(() => {
-    if (isTeam) return standings;
+    if (isCircle) return standings;
     const active = standings.filter((standing) => standing.completed > 0 && !standing.privateStats);
     const top = active.slice(0,3);
     const mine = active.find((standing) => standing.id === userId);
     return mine && !top.some((standing) => standing.id === userId) ? [...top,mine] : top;
-  },[isTeam,standings,userId]);
+  },[isCircle,standings,userId]);
   const displayedHistoryStandings = useMemo(() => {
     const visible = historyStandings.filter((standing) => !standing.privateStats);
     const top = visible.slice(0,3);
@@ -282,7 +282,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
   const leader = (closed && winnerId
     ? standings.find((standing) => standing.id === winnerId)
     : null) || standings.find((standing) => standing.rank === 1);
-  const challengeComplete = isTeam && closed;
+  const challengeComplete = isCircle && closed;
   const stakeShares = useMemo(() => {
     if (!challengeComplete || !stakeRewardName || !winnerId) return [];
     // Only players who actually played could have — the backend refuses to
@@ -300,10 +300,10 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
     return contributors.map((standing) => ({ ...standing, sharePercent:evenShare }));
   }, [challengeComplete, stakeRewardName, stakeSplitMethod, standings, winnerId]);
 
-  const heading = challengeComplete ? "Final results" : isTeam ? t("standings.title") : "Today’s standings";
+  const heading = challengeComplete ? "Final results" : isCircle ? t("standings.title") : "Today’s standings";
   const summary = challengeComplete
     ? `${rounds.length || games.length} rounds · missed round −${Math.abs(MISSED_ROUND_SCORE)}`
-    : isTeam
+    : isCircle
       ? `${playedCount} of ${roster.length} started · ${rounds.length || games.length} daily rounds`
       : `${playedCount} of ${roster.length} players started · ${games.length} games today`;
 
@@ -328,7 +328,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
 
       {open && (
         <div className="px-3 pb-3">
-          {!loading && isTeam && challengeComplete && (
+          {!loading && isCircle && challengeComplete && (
             <div className="challenge-complete-card rounded-2xl mb-3" role="status">
               <span className="challenge-complete-icon" aria-hidden="true">🏆</span>
               <span className="challenge-complete-copy">
@@ -363,18 +363,18 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
             <div className="challenge-my-summary rounded-2xl px-3 py-3 mb-3" style={{ background:"linear-gradient(135deg,rgba(47,111,237,.10),rgba(124,58,237,.055))",border:"1px solid rgba(47,111,237,.14)" }}>
               <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="challenge-summary-muted text-[9px] font-bold uppercase tracking-[.12em]">{isTeam ? "Your week" : "Your result"}</div>
+                  <div className="challenge-summary-muted text-[9px] font-bold uppercase tracking-[.12em]">{isCircle ? "Your week" : "Your result"}</div>
                   <div className="flex items-baseline gap-2 mt-0.5">
                     <span className="text-base font-bold">{myStanding.rank ? `#${myStanding.rank}` : "—"}</span>
                     <span className="challenge-summary-muted text-[10px]">
-                      {isTeam
+                      {isCircle
                         ? `of ${standings.filter((item) => item.rank).length}`
                         : `of ${playedCount} active today`}
                     </span>
                   </div>
                   <div className="challenge-summary-muted text-[10px] mt-1">
                     {myStanding.completed}/{rounds.length || games.length} played · {formatDuration(myStanding.adjustedSeconds)} adjusted
-                    {isTeam && myStanding.missed ? ` · ${myStanding.missed} missed` : ""}
+                    {isCircle && myStanding.missed ? ` · ${myStanding.missed} missed` : ""}
                   </div>
                 </div>
                 <div className="challenge-summary-points rounded-full px-3 py-1.5 text-sm font-bold shrink-0" style={{ background:"#fff",color:"#2F6FED",boxShadow:"0 4px 12px rgba(47,111,237,.10)" }}>
@@ -399,12 +399,12 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                           : "Level with last week"}
                     </span>
                     <span className="challenge-standing-faint ml-auto text-[9px]">
-                      same {previousComparison.rounds} {isTeam ? `round${previousComparison.rounds === 1 ? "" : "s"}` : `game${previousComparison.rounds === 1 ? "" : "s"}`}
+                      same {previousComparison.rounds} {isCircle ? `round${previousComparison.rounds === 1 ? "" : "s"}` : `game${previousComparison.rounds === 1 ? "" : "s"}`}
                     </span>
                   </>
                 ) : (
                   <span className="challenge-summary-muted text-[10px]">
-                    {previousWeekLabel ? (isTeam ? "Comparison starts after your first scheduled round." : "No matching result from last week.") : "No previous result to compare."}
+                    {previousWeekLabel ? (isCircle ? "Comparison starts after your first scheduled round." : "No matching result from last week.") : "No previous result to compare."}
                   </span>
                 )}
               </div>
@@ -412,8 +412,8 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
           )}
           {!loading && displayedStandings.length > 0 && (
             <div className="flex items-center justify-between px-1 mb-2">
-              <span className="challenge-standing-faint text-[10px] font-bold uppercase tracking-[.12em]">{isTeam ? "Team standings" : "Challenge standings"}</span>
-              <span className="challenge-standing-faint text-[9px]">{isTeam ? "Highest score first" : "Completed, then overall score"}</span>
+              <span className="challenge-standing-faint text-[10px] font-bold uppercase tracking-[.12em]">{isCircle ? "Circle standings" : "Challenge standings"}</span>
+              <span className="challenge-standing-faint text-[9px]">{isCircle ? "Highest score first" : "Completed, then overall score"}</span>
             </div>
           )}
           {loading ? (
@@ -429,7 +429,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
             <div className="flex flex-col gap-2">
               {displayedStandings.map((standing) => {
                 const isExpanded = expandedPlayerId === standing.id;
-                const requiredCount = isTeam && rounds.length ? rounds.length : games.length;
+                const requiredCount = isCircle && rounds.length ? rounds.length : games.length;
                 const progress = requiredCount ? Math.round((standing.completed / requiredCount) * 100) : 0;
                 const finished = requiredCount > 0 && standing.completed === requiredCount;
                 return (
@@ -469,7 +469,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                             {`${standing.challengeScore} pts`}
                           </span>
                           <span className="challenge-standing-muted flex items-center justify-end gap-1 text-[10px] mt-0.5">
-                            {isTeam
+                            {isCircle
                               ? `${standing.completed}/${requiredCount} played${standing.missed ? ` · ${standing.missed} missed` : ""}`
                               : standing.completed > 0
                                 ? `${standing.completed}/${requiredCount} played · ${formatDuration(standing.adjustedSeconds)} adjusted`
@@ -481,17 +481,17 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
 
                     {isExpanded && (
                       <span className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mt-3 pt-3" style={{ borderTop:"1px solid rgba(16,24,40,.07)" }}>
-                        {(isTeam ? standing.dailyResults : games).map((item) => {
-                          const game = isTeam
+                        {(isCircle ? standing.dailyResults : games).map((item) => {
+                          const game = isCircle
                             ? games.find((candidate) => candidate.id === item.game) || { id:item.game,label:item.game,icon:Clock3,accent:"#2F6FED" }
                             : item;
-                          const result = isTeam ? item.result : standing.rows.find((row) => row.game === game.id);
+                          const result = isCircle ? item.result : standing.rows.find((row) => row.game === game.id);
                           const GameIcon = game.icon;
                           return (
-                            <span key={isTeam ? item.date : game.id} className="challenge-round-result flex items-center gap-2 rounded-xl px-2.5 py-2" style={{ background:"#fff" }}>
+                            <span key={isCircle ? item.date : game.id} className="challenge-round-result flex items-center gap-2 rounded-xl px-2.5 py-2" style={{ background:"#fff" }}>
                               <GameIcon size={13} style={{ color:game.accent }}/>
                               <span className="text-[11px] font-medium flex-1">
-                                {isTeam ? `${new Date(`${item.date}T12:00:00`).toLocaleDateString(undefined,{ weekday:"short" })} · ` : ""}{game.label}
+                                {isCircle ? `${new Date(`${item.date}T12:00:00`).toLocaleDateString(undefined,{ weekday:"short" })} · ` : ""}{game.label}
                               </span>
                               {result ? (
                                 <span className="challenge-round-value text-[10px] font-semibold flex items-center gap-1.5" style={{ color:INK }}>
@@ -503,12 +503,12 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                                       {(Number(result.mistakes) || 0) > 0 && <><TriangleAlert size={10}/>{result.mistakes}</>}
                                     </>
                                     : (Number(result.mistakes) || 0) > 0 && <><TriangleAlert size={10}/>{result.mistakes}</>}
-                                  {isTeam && <strong style={{ color:item.score >= 100 ? "#137A3A" : "#9F2F2A" }}>{item.score > 0 ? "+" : ""}{item.score}</strong>}
+                                  {isCircle && <strong style={{ color:item.score >= 100 ? "#137A3A" : "#9F2F2A" }}>{item.score > 0 ? "+" : ""}{item.score}</strong>}
                                 </span>
-                              ) : isTeam && item.missed ? (
+                              ) : isCircle && item.missed ? (
                                 <span className="text-[10px] font-semibold" style={{ color:"#B5433A" }}>Missed {item.score}</span>
                               ) : (
-                                <span className="challenge-standing-faint text-[10px] font-semibold">{isTeam ? "Upcoming" : t("standings.notPlayed")}</span>
+                                <span className="challenge-standing-faint text-[10px] font-semibold">{isCircle ? "Upcoming" : t("standings.notPlayed")}</span>
                               )}
                             </span>
                           );
@@ -519,13 +519,13 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
                 );
               })}
               <div className="challenge-standing-faint px-2 pt-1 text-[9px] text-center">
-                {isTeam
+                {isCircle
                   ? "Highest total wins · missed round −100 · hint +30s · mistake/reset +15s"
                   : displayedStandings.length < playedCount
                     ? `Top 3 + your position · ${playedCount} active today`
                     : "Games completed first · pooled time, hints and mistakes"}
               </div>
-              {!isTeam && (
+              {!isCircle && (
                 <details className="challenge-history-panel mt-3 pt-3">
                   <summary className="flex items-center gap-3 px-1 py-1 cursor-pointer list-none">
                     <span className="flex-1">

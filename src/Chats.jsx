@@ -14,7 +14,7 @@ function formatWhen(value) {
   return new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" }).format(date);
 }
 
-export default function Chats({ currentUser, currentProfile, onBack, onOpenChat, onOpenAdminPlayers, onOpenFeedback, onOpenTeams }) {
+export default function Chats({ currentUser, currentProfile, onBack, onOpenChat, onOpenAdminPlayers, onOpenFeedback, onOpenCircles }) {
   const [messages, setMessages] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [presence, setPresence] = useState(new Set());
@@ -97,8 +97,8 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
   }
 
   async function open(profile, latest = null) {
-    if (latest?.activity_type === "team_invitation") {
-      onOpenTeams?.();
+    if (latest?.activity_type === "circle_invitation") {
+      onOpenCircles?.();
       return;
     }
     if (latest?.activity_type === "feedback_completed") {
@@ -164,7 +164,7 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
             {filteredConversations.map(({peerId,profile,latest,unread}) => (
               <button type="button" className="conversation" key={peerId} onClick={()=>open(profile,latest)}>
                 <div className="conversation-avatar">{profile.icon||"🙂"}{presence.has(peerId)&&<span className="online-dot"/>}</div>
-                <div style={{flex:1,minWidth:0}}><div style={{display:"flex",justifyContent:"space-between",gap:8}}><strong style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile.name||"Player"}</strong><span style={{fontSize:10,opacity:.45}}>{formatWhen(latest.created_at)}</span></div><div style={{fontSize:12,opacity:unread?.85:.5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:unread?700:400}}>{latest.activity_type==="user_approval_required" ? "" : latest.activity_type==="feedback_completed" ? "Feedback update · " : latest.activity_type==="team_invitation" ? "Team invitation · " : latest.activity_type==="team_challenge_winner" ? "Challenge result · " : latest.system_generated ? "Team update · " : latest.sender_id===currentUser.id?"You: ":""}{latest.body}</div></div>
+                <div style={{flex:1,minWidth:0}}><div style={{display:"flex",justifyContent:"space-between",gap:8}}><strong style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile.name||"Player"}</strong><span style={{fontSize:10,opacity:.45}}>{formatWhen(latest.created_at)}</span></div><div style={{fontSize:12,opacity:unread?.85:.5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:unread?700:400}}>{latest.activity_type==="user_approval_required" ? "" : latest.activity_type==="feedback_completed" ? "Feedback update · " : latest.activity_type==="circle_invitation" ? "Circle invitation · " : latest.activity_type==="circle_challenge_winner" ? "Challenge result · " : latest.system_generated ? "Circle update · " : latest.sender_id===currentUser.id?"You: ":""}{latest.body}</div></div>
                 {latest.activity_type==="user_approval_required"
                   ? <span className="rounded-full px-2.5 py-1 text-[10px] font-bold" style={{background:"#FFF0C2",color:"#8A5C00"}}>Review</span>
                   : unread>0&&<span className="unread-pill">{unread}</span>}

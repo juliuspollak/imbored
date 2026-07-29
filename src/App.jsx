@@ -14,7 +14,7 @@ import PokeOverlay from "./PokeOverlay.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import { AuthProvider, useAuth } from "./lib/AuthContext.jsx";
 
-// Games and the less-frequently-visited screens (teams/stats/admin/etc.) are
+// Games and the less-frequently-visited screens (circles/stats/admin/etc.) are
 // code-split so a first-time visitor's initial bundle only has to include
 // Home + Login + auth plumbing, not all five puzzle games and every admin
 // tool. Each chunk loads on demand the first time its screen is opened.
@@ -25,7 +25,7 @@ const MiniSudokuGame = lazy(() => import("./games/MiniSudoku.jsx"));
 const GeoGame = lazy(() => import("./games/Geo.jsx"));
 const ZoomGame = lazy(() => import("./games/Zoom.jsx"));
 const AnimalRushGame = lazy(() => import("./games/AnimalRush.jsx"));
-const Teams = lazy(() => import("./Teams.jsx"));
+const Circles = lazy(() => import("./Circles.jsx"));
 const Stats = lazy(() => import("./Stats.jsx"));
 const Feedback = lazy(() => import("./Feedback.jsx"));
 const ReleaseNotes = lazy(() => import("./ReleaseNotes.jsx"));
@@ -83,7 +83,7 @@ function AppShell() {
   }); // null | profile screens | a game id
   const [chatPlayer, setChatPlayer] = useState(null);
   const [chatReturn, setChatReturn] = useState(null);
-  const [teamsTarget, setTeamsTarget] = useState(null);
+  const [circlesTarget, setCirclesTarget] = useState(null);
   // Challenge mode needs an account to mean anything (once-per-day + history
   // are tied to a user) — default to it when logged in, otherwise practice
   // is the only real option.
@@ -204,7 +204,7 @@ function AppShell() {
   const isRewardManager = !!(profile?.is_admin || profile?.is_reward_steward);
   const openRewardRequestsCount = useOpenRewardRequestsCount(isRewardManager ? user?.id : undefined);
   const unreadMessages = useUnreadMessages(user?.id);
-  const [sectionSignals, setSectionSignals] = useState({ whatsnew: false, teams: false });
+  const [sectionSignals, setSectionSignals] = useState({ whatsnew: false, circles: false });
 
   function openSection(section) {
     setSectionSignals((current) => ({ ...current, [section]: false }));
@@ -218,9 +218,9 @@ function AppShell() {
       });
   }
 
-  function openTeams(target = null) {
-    setTeamsTarget(target?.teamId ? target : null);
-    openSection("teams");
+  function openCircles(target = null) {
+    setCirclesTarget(target?.circleId ? target : null);
+    openSection("circles");
   }
 
   function openAccountSection(section, markViewed = false) {
@@ -256,20 +256,20 @@ function AppShell() {
         // optional release-note visibility and soft-delete columns. The full
         // release-notes screen applies those filters when the columns exist.
         supabase.from("release_notes").select("created_at").order("created_at", { ascending:false }).limit(1),
-        // RLS already limits this table to the requester and the team owner.
+        // RLS already limits this table to the requester and the circle owner.
         // Its schema uses user_id/requested_at (not requester_id/created_at).
-        supabase.from("team_join_requests").select("requested_at,decided_at,status,user_id,team_id"),
-        supabase.rpc("get_my_pending_team_invitations")
+        supabase.from("circle_join_requests").select("requested_at,decided_at,status,user_id,circle_id"),
+        supabase.rpc("get_my_pending_circle_invitations")
       ]);
       if (cancelled) return;
       const vm = Object.fromEntries((views || []).map(v => [v.section, new Date(v.viewed_at).getTime()]));
       const latestNote = notes?.[0]?.created_at ? new Date(notes[0].created_at).getTime() : 0;
-      const latestTeam = Math.max(
+      const latestCircle = Math.max(
         0,
         ...(requests || []).map(r => new Date(r.decided_at || r.requested_at).getTime()),
         ...(invitations || []).map(i => new Date(i.created_at).getTime())
       );
-      setSectionSignals({ whatsnew: latestNote > (vm.whatsnew || 0), teams: latestTeam > (vm.teams || 0) });
+      setSectionSignals({ whatsnew: latestNote > (vm.whatsnew || 0), circles: latestCircle > (vm.circles || 0) });
     })();
     return () => { cancelled = true; };
   }, [user?.id]);
@@ -289,7 +289,7 @@ function AppShell() {
       profile={profile}
       onSignOut={signOut}
       onOpenProfile={() => openAccountSection("profile")}
-      onOpenTeams={() => openAccountSection("teams", true)}
+      onOpenCircles={() => openAccountSection("circles", true)}
       onOpenChats={() => openAccountSection("chats")}
       onOpenStats={() => openAccountSection("stats")}
       onOpenProgress={() => openAccountSection("progress")}
@@ -340,23 +340,23 @@ function AppShell() {
           onOpenChat={(player) => { setChatReturn("chats"); setChatPlayer(player); }}
           onOpenAdminPlayers={() => setActive("adminplayers")}
           onOpenFeedback={() => setActive("feedback")}
-          onOpenTeams={() => openSection("teams")}
+          onOpenCircles={() => openSection("circles")}
         />
       </Suspense>
     );
   }
 
   if (active === "profile") {
-    return withAccountMenu(<ProfileSetup onDone={() => setActive(null)} onOpenTeams={() => openSection("teams")} />);
+    return withAccountMenu(<ProfileSetup onDone={() => setActive(null)} onOpenCircles={() => openSection("circles")} />);
   }
 
-  if (active === "teams") {
+  if (active === "circles") {
     return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
-        <Teams
-          onBack={() => { setTeamsTarget(null);setActive(null); }}
-          initialTeamId={teamsTarget?.teamId}
-          initialChallengeId={teamsTarget?.challengeId}
+        <Circles
+          onBack={() => { setCirclesTarget(null);setActive(null); }}
+          initialCircleId={circlesTarget?.circleId}
+          initialChallengeId={circlesTarget?.challengeId}
         />
       </Suspense>
     );
@@ -413,7 +413,7 @@ function AppShell() {
   if (active === "adminrewards") {
     return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
-        <AdminRewards onBack={() => setActive(null)} onOpenTeams={() => openTeams()} />
+        <AdminRewards onBack={() => setActive(null)} onOpenCircles={() => openCircles()} />
       </Suspense>
     );
   }
@@ -439,7 +439,7 @@ function AppShell() {
           players={players}
           userId={user?.id}
           onOpenProgress={() => setActive("progress")}
-          onOpenTeams={openTeams}
+          onOpenCircles={openCircles}
           challengeScope={challengeScope}
           onChallengeScopeChange={setChallengeScope}
         />
@@ -535,9 +535,9 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
   }
 
   function switchToChallenge() {
-    const teamDoesNotIncludeGame = challengeScope?.type === "team"
+    const circleDoesNotIncludeGame = challengeScope?.type === "circle"
       && !(challengeScope.gameIds || []).includes(gameId);
-    if (teamDoesNotIncludeGame) {
+    if (circleDoesNotIncludeGame) {
       setShowChallengeChoice(true);
       return;
     }
@@ -545,7 +545,7 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
   }
 
   function playPersonalChallenge() {
-    onChallengeScopeChange?.({ type:"personal", teamId:null, teamName:null, gameIds:null });
+    onChallengeScopeChange?.({ type:"personal", circleId:null, circleName:null, gameIds:null });
     setShowChallengeChoice(false);
     onSwitchMode?.();
   }
@@ -574,7 +574,7 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
             <div className="text-3xl mb-2">👑</div>
             <h2 className="text-lg font-bold">{t("challenge.notIncluded", { game:gameLabel })}</h2>
             <p className="text-sm mt-1 mb-4" style={{ color:"rgba(27,33,41,.58)" }}>
-              {t("challenge.notIncludedBody", { team:challengeScope?.teamName || t("account.teams") })}
+              {t("challenge.notIncludedBody", { circle:challengeScope?.circleName || t("account.circles") })}
             </p>
             <button type="button" onClick={playPersonalChallenge} className="w-full rounded-full py-3 text-sm font-semibold text-white" style={{ background:"#2F6FED" }}>{t("challenge.playMine")}</button>
             <button type="button" onClick={chooseChallenge} className="w-full rounded-full py-3 mt-2 text-sm font-semibold" style={{ background:"rgba(16,24,40,.06)" }}>{t("challenge.chooseAnother")}</button>
@@ -586,7 +586,7 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
   );
 }
 
-function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenTeams, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, onOpenRewardRequests, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
+function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenCircles, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, onOpenRewardRequests, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
   const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -594,7 +594,7 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
   const isRewardManager = !!(profile.is_admin || profile.is_reward_steward);
   const feedbackBadgeCount = isAdmin ? openFeedbackCount : completedFeedbackCount;
   const totalNotifications = feedbackBadgeCount + newTransfersCount + myRedemptionUpdates + openRewardRequestsCount + unreadMessages.total
-    + (sectionSignals.whatsnew ? 1 : 0) + (sectionSignals.teams ? 1 : 0);
+    + (sectionSignals.whatsnew ? 1 : 0) + (sectionSignals.circles ? 1 : 0);
 
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -619,7 +619,7 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
     { id:"feedback", icon:MessageSquare, label:t("account.feedback"), onClick:onOpenFeedback, badge:feedbackBadgeCount },
     { id:"stats", icon:BarChart3, label:t("account.stats"), onClick:onOpenStats },
     { id:"progress", icon:Star, label:t("account.progress"), onClick:onOpenProgress, badge:newTransfersCount },
-    { id:"teams", icon:Users, label:t("account.teams"), onClick:onOpenTeams, badge:sectionSignals.teams ? 1 : 0 },
+    { id:"circles", icon:Users, label:t("account.circles"), onClick:onOpenCircles, badge:sectionSignals.circles ? 1 : 0 },
     { id:"rewardrequests", icon:Gift, label:t("account.rewardRequests"), onClick:onOpenRewardRequests, badge:myRedemptionUpdates + openRewardRequestsCount },
   ];
   const adminItems = [];

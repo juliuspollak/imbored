@@ -778,7 +778,7 @@ export default function Queens({
         <div className="w-full max-w-sm rounded-3xl p-6 text-center" style={{ background:PANEL,border:"1px solid rgba(16,24,40,.09)",boxShadow:"0 16px 38px rgba(16,24,40,.10)" }}>
           <span className="grid place-items-center rounded-2xl mx-auto mb-3" style={{ width:54,height:54,background:"rgba(47,111,237,.09)",color:GOLD }}><Lock size={23}/></span>
           <h1 className="text-xl font-bold" style={{ fontFamily:"'Fredoka',sans-serif",color:INK }}>{t("challenge.notIncluded", { game:"Queens" })}</h1>
-          <p className="text-xs mt-2" style={{ color:"rgba(27,33,41,.50)" }}>{t("challenge.notIncludedBody", { team:challengeName || "This team" })}</p>
+          <p className="text-xs mt-2" style={{ color:"rgba(27,33,41,.50)" }}>{t("challenge.notIncludedBody", { circle:challengeName || "This circle" })}</p>
           <div className="flex flex-col gap-2 mt-5">
             <button type="button" onClick={onPlayPersonalChallenge} className="gloss-button rounded-full py-2.5 text-xs font-semibold" style={{ background:GOLD,color:"#fff" }}>{t("challenge.playMine")}</button>
             <button type="button" onClick={onChooseAnotherChallenge} className="gloss-button rounded-full py-2.5 text-xs font-semibold" style={{ background:"rgba(16,24,40,.05)",color:INK }}>{t("challenge.chooseAnother")}</button>

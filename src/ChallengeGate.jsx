@@ -6,7 +6,7 @@ import { saveStats } from "./lib/saveStats.js";
 import { weekDates, weekDayLabels } from "./lib/week.js";
 import ModePill from "./ModePill.jsx";
 import GameHomeButton from "./GameHomeButton.jsx";
-import { buildTeamChallengeRounds, localDateString } from "./lib/teamChallengeRounds.js";
+import { buildCircleChallengeRounds, localDateString } from "./lib/circleChallengeRounds.js";
 
 const BG = "#F1F3F7";
 const PANEL = "#FFFFFF";
@@ -30,16 +30,16 @@ function describeAvg(avg) {
 export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId, onExit, onSwitchMode, hintCooldownConfig, weekStartsOn = 1, challengeScope = { type: "personal" } }) {
   const dates = weekDates(new Date(), weekStartsOn);
   const dayLabels = weekDayLabels(weekStartsOn);
-  const teamRounds = challengeScope?.type === "team"
+  const circleRounds = challengeScope?.type === "circle"
     ? challengeScope.dailyRounds?.length
       ? challengeScope.dailyRounds
-      : buildTeamChallengeRounds({
+      : buildCircleChallengeRounds({
         activeDays:challengeScope.activeDays,
         gameIds:challengeScope.gameIds,
       })
     : [];
-  const scheduledDateEntries = challengeScope?.type === "team"
-    ? teamRounds
+  const scheduledDateEntries = challengeScope?.type === "circle"
+    ? circleRounds
       .filter((round) => round.game === gameId)
       .map((round) => ({ date:round.date,index:(round.isoDay || (new Date(`${round.date}T12:00:00`).getDay() || 7)) - 1 }))
     : dates.map((date, index) => ({ date,index }));
@@ -61,7 +61,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   const [startingIdx, setStartingIdx] = useState(null);
   const [localStakeAccepted, setLocalStakeAccepted] = useState(false);
   const [acceptingStake, setAcceptingStake] = useState(false);
-  const hasStake = challengeScope?.type === "team" && !!challengeScope.stakeRewardId;
+  const hasStake = challengeScope?.type === "circle" && !!challengeScope.stakeRewardId;
   const stakeAccepted = localStakeAccepted || !!challengeScope?.stakeAccepted;
 
   async function acceptStake() {
@@ -78,9 +78,9 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
       return;
     }
     setLoading(true);
-    const scopeQuery = (query) => challengeScope?.type === "team"
-      ? query.eq("team_challenge_id", challengeScope.id)
-      : query.is("team_challenge_id", null);
+    const scopeQuery = (query) => challengeScope?.type === "circle"
+      ? query.eq("circle_challenge_id", challengeScope.id)
+      : query.is("circle_challenge_id", null);
     const [{ data }, { data: allRatings }, { data: allTimes }] = await Promise.all([
       scopeQuery(supabase.from("game_stats").select("*")
         .eq("user_id", userId).eq("game", gameId).eq("mode", "challenge").in("challenge_date", scheduledDates)),
@@ -128,21 +128,21 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   async function startChallenge(index, selectedDate = null) {
     const date = selectedDate || dates[index];
     setStartError("");
-    if (challengeScope?.type !== "team") {
+    if (challengeScope?.type !== "circle") {
       setSavedStatId(null);
       setPlayingIdx(index);
       setPlayingDate(date);
       return;
     }
     setStartingIdx(index);
-    const { error } = await supabase.rpc("start_team_challenge_game", {
+    const { error } = await supabase.rpc("start_circle_challenge_game", {
       target_challenge_id: challengeScope.id,
       target_game: gameId,
       target_challenge_date: date,
     });
     setStartingIdx(null);
     if (error) {
-      setStartError(error.message || "This team challenge cannot be started.");
+      setStartError(error.message || "This circle challenge cannot be started.");
       return;
     }
     setSavedStatId(null);
@@ -155,7 +155,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
     setSaveError("");
     setPointsRetryStatId(null);
     setSavedStatId(null);
-    const res = await saveStats({ ...stats, teamChallengeId: challengeScope?.type === "team" ? challengeScope.id : null, teamId: challengeScope?.type === "team" ? challengeScope.teamId : null });
+    const res = await saveStats({ ...stats, circleChallengeId: challengeScope?.type === "circle" ? challengeScope.id : null, circleId: challengeScope?.type === "circle" ? challengeScope.circleId : null });
     if (res?.alreadyPlayed) {
       setAlreadyPlayedNotice(true);
       setPlayingIdx(null);
@@ -192,7 +192,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
 
   if (playingIdx !== null) {
     const date = playingDate || dates[playingIdx];
-    const forcedDayIndex = challengeScope?.type === "team"
+    const forcedDayIndex = challengeScope?.type === "circle"
       ? ((new Date(`${date}T12:00:00`).getDay() || 7) - 1)
       : playingIdx;
     return (
@@ -203,7 +203,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           onSolved={handleSolved}
           mode="challenge"
           forcedDayIdx={forcedDayIndex}
-          seed={`${gameId}-${date}${challengeScope?.type === "team" ? `-team-${challengeScope.id}` : ""}`}
+          seed={`${gameId}-${date}${challengeScope?.type === "circle" ? `-circle-${challengeScope.id}` : ""}`}
           challengeDate={date}
           hintCooldownConfig={hintCooldownConfig}
           savedStatId={savedStatId}
@@ -237,10 +237,10 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
             {gameLabel}
           </h1>
           <div className="inline-flex items-center rounded-full px-3 py-1 mt-2 text-xs font-semibold" style={{ background: "rgba(217,174,88,0.16)", color: "#9A6A12" }}>
-            {challengeScope?.type === "team" ? `${challengeScope.emoji || "⭐"} ${challengeScope.name}` : "My Weekly Challenge"}
+            {challengeScope?.type === "circle" ? `${challengeScope.emoji || "⭐"} ${challengeScope.name}` : "My Weekly Challenge"}
           </div>
           <p style={{ color: INK, opacity: 0.45 }} className="text-xs mt-2">
-            {challengeScope?.type === "team" ? "one attempt for this team challenge" : "one personal attempt per day"}
+            {challengeScope?.type === "circle" ? "one attempt for this circle challenge" : "one personal attempt per day"}
           </p>
         </div>
 
@@ -275,8 +275,8 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
               const isToday = date === localDateString();
               const result = results[date];
               const isExpanded = viewingIdx === i;
-              const isPlayable = !result && (challengeScope?.type === "team" ? isToday : !isFuture);
-              const isMissedTeamRound = challengeScope?.type === "team" && date < localDateString() && !result;
+              const isPlayable = !result && (challengeScope?.type === "circle" ? isToday : !isFuture);
+              const isMissedCircleRound = challengeScope?.type === "circle" && date < localDateString() && !result;
 
               return (
                 <div key={date}>
@@ -314,7 +314,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                     </div>
                     <div className="flex-1">
                       <div style={{ color: INK, fontWeight: 600 }} className="text-sm">
-                        {challengeScope?.type === "team"
+                        {challengeScope?.type === "circle"
                           ? new Date(`${date}T12:00:00`).toLocaleDateString(undefined,{ weekday:"short" })
                           : dayLabels[i]}{isToday ? " · Today" : ""}
                       </div>
@@ -327,7 +327,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                           ? communityRatings[date]
                             ? `Tap to play — ${describeAvg(communityRatings[date].avg).toLowerCase()} so far`
                             : "Tap to play"
-                          : isMissedTeamRound
+                          : isMissedCircleRound
                           ? "Missed · −100 challenge score"
                           : "Missed — tap to catch up"}
                       </div>

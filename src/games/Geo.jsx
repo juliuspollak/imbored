@@ -79,7 +79,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
         }
       } catch {}
     }
-    // Personal/team challenges are deterministic within their challenge, but
+    // Personal/circle challenges are deterministic within their challenge, but
     // history still helps practice avoid serving the same facts immediately.
     const history = isChallenge ? [] : getQuestionHistory(userId);
     const gen = () => generateQuiz(dIdx, history);

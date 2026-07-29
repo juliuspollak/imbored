@@ -276,32 +276,32 @@ export function AuthProvider({ children }) {
     return { data: row, error };
   }
 
-  async function createTeam(name, emoji = "⭐") {
+  async function createCircle(name, emoji = "⭐") {
     if (!supabaseReady || !session) return { error: new Error("Not logged in") };
-    const { data, error } = await supabase.rpc("create_team", {
-      team_name: name,
-      team_emoji: emoji,
+    const { data, error } = await supabase.rpc("create_circle", {
+      circle_name: name,
+      circle_emoji: emoji,
     });
     return { data, error };
   }
 
   // Adding someone ELSE goes through a server-side function rather than a
   // direct insert, so a private profile can never be added by anyone but
-  // themselves — see migration_multiteam.sql for the check. Joining
-  // yourself is a plain insert, which RLS already allows directly.
-  async function addPlayerToTeam(targetUserId, teamId) {
+  // themselves. Joining yourself is a plain insert, which RLS already
+  // allows directly.
+  async function addPlayerToCircle(targetUserId, circleId) {
     if (!supabaseReady) return { error: new Error("Not logged in") };
-    return supabase.rpc("invite_player_to_team", { target_user_id: targetUserId, target_team_id: teamId });
+    return supabase.rpc("invite_player_to_circle", { target_user_id: targetUserId, target_circle_id: circleId });
   }
 
-  async function joinTeam(teamId) {
+  async function joinCircle(circleId) {
     if (!supabaseReady || !session) return { error: new Error("Not logged in") };
-    return supabase.rpc("request_team_join", { target_team_id: teamId });
+    return supabase.rpc("request_circle_join", { target_circle_id: circleId });
   }
 
-  async function leaveTeam(teamId) {
+  async function leaveCircle(circleId) {
     if (!supabaseReady || !session) return { error: new Error("Not logged in") };
-    return supabase.rpc("leave_team", { target_team_id: teamId });
+    return supabase.rpc("leave_circle", { target_circle_id: circleId });
   }
 
   // Admin-only: hides a player from everyone but themselves and other
@@ -332,10 +332,10 @@ export function AuthProvider({ children }) {
     adminAccountAction,
     signOut,
     saveProfile,
-    createTeam,
-    addPlayerToTeam,
-    joinTeam,
-    leaveTeam,
+    createCircle,
+    addPlayerToCircle,
+    joinCircle,
+    leaveCircle,
     setUserHidden,
     refreshProfile,
   };

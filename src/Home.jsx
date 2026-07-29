@@ -5,7 +5,7 @@ import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useI18n } from "./lib/i18n.jsx";
 import { challengeProgress, groupChallengeCompletions } from "./lib/challengeProgress.js";
 import ChallengeStandings from "./ChallengeStandings.jsx";
-import { buildTeamChallengeRounds, localDateString } from "./lib/teamChallengeRounds.js";
+import { buildCircleChallengeRounds, localDateString } from "./lib/circleChallengeRounds.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
 
 const BG = "#F1F3F7";
@@ -64,13 +64,13 @@ function challengeWeekLabel(weekStart) {
   return `${format(monday)} – ${format(sunday)}`;
 }
 
-export default function Home({ onSelect, playMode, onPlayModeChange, players = [], userId, onOpenProgress, onOpenTeams, challengeScope, onChallengeScopeChange }) {
+export default function Home({ onSelect, playMode, onPlayModeChange, players = [], userId, onOpenProgress, onOpenCircles, challengeScope, onChallengeScopeChange }) {
   const { t, language } = useI18n();
   const { config: gameConfig, loading: gameConfigLoading } = useGameConfig();
   const [progress, setProgress] = useState(null);
-  const [teamChallenges, setTeamChallenges] = useState([]);
+  const [circleChallenges, setCircleChallenges] = useState([]);
   const [challengeHistory, setChallengeHistory] = useState([]);
-  const [teamRosters, setTeamRosters] = useState({});
+  const [circleRosters, setCircleRosters] = useState({});
   const [challengeLifecycle, setChallengeLifecycle] = useState({});
   const [challengeCompletions, setChallengeCompletions] = useState({ personal: new Set() });
   const [challengesLoaded, setChallengesLoaded] = useState(false);
@@ -90,82 +90,82 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   const standingsCacheRef = useRef({});
 
   useEffect(() => {
-    if (challengeScope?.type === "team" && challengeScope.id != null) {
+    if (challengeScope?.type === "circle" && challengeScope.id != null) {
       setExpandedChallengeId(challengeScope.id);
     }
   }, [challengeScope?.id, challengeScope?.type]);
 
   useEffect(() => {
-    if (!challengesLoaded || challengeScope?.type !== "team") return;
-    const stillActive = teamChallenges.some(
+    if (!challengesLoaded || challengeScope?.type !== "circle") return;
+    const stillActive = circleChallenges.some(
       (item) => String(item.challenge_id) === String(challengeScope.id)
     );
     if (!stillActive) {
       onChallengeScopeChange?.({ type:"personal",id:null,name:"My Challenge",gameIds:null });
       setExpandedChallengeId(null);
     }
-  }, [challengeScope?.id, challengeScope?.type, challengesLoaded, onChallengeScopeChange, teamChallenges]);
+  }, [challengeScope?.id, challengeScope?.type, challengesLoaded, onChallengeScopeChange, circleChallenges]);
 
   useEffect(() => {
     let cancelled = false;
-    async function loadTeamChallenges() {
+    async function loadCircleChallenges() {
       if (!supabaseReady || !userId) return;
       const week = currentWeekRange();
       // Finalise expired occurrences before active and history are read. Doing
       // all three calls concurrently caused a just-ended challenge to appear
       // in neither list on Monday until the next refresh.
-      await supabase.rpc("finalize_due_team_challenges");
+      await supabase.rpc("finalize_due_circle_challenges");
       if (cancelled) return;
-      const [{ data }, { data: personalRows }, { data: teamRows }, { data: rosterData }, { data: lifecycleData }, { data: historyData }] = await Promise.all([
-        supabase.rpc("get_my_active_team_challenges"),
+      const [{ data }, { data: personalRows }, { data: circleRows }, { data: rosterData }, { data: lifecycleData }, { data: historyData }] = await Promise.all([
+        supabase.rpc("get_my_active_circle_challenges"),
         supabase
           .from("game_stats")
-          .select("game,team_challenge_id,challenge_date")
+          .select("game,circle_challenge_id,challenge_date")
           .eq("user_id", userId)
           .eq("mode", "challenge")
-          .is("team_challenge_id", null)
+          .is("circle_challenge_id", null)
           .eq("challenge_date", todayString()),
         supabase
           .from("game_stats")
-          .select("game,team_challenge_id,challenge_date")
+          .select("game,circle_challenge_id,challenge_date")
           .eq("user_id", userId)
           .eq("mode", "challenge")
-          .not("team_challenge_id", "is", null)
+          .not("circle_challenge_id", "is", null)
           .gte("challenge_date", week.start)
           .lte("challenge_date", week.end),
-        supabase.rpc("get_my_team_rosters"),
-        supabase.rpc("get_my_team_challenge_lifecycle"),
-        supabase.rpc("get_my_team_challenge_history", { history_limit_in:30 }),
+        supabase.rpc("get_my_circle_rosters"),
+        supabase.rpc("get_my_circle_challenge_lifecycle"),
+        supabase.rpc("get_my_circle_challenge_history", { history_limit_in:30 }),
       ]);
       const challenges = data || [];
-      const completionRows = [...(personalRows || []), ...(teamRows || [])];
+      const completionRows = [...(personalRows || []), ...(circleRows || [])];
       if (cancelled) return;
-      setTeamChallenges(challenges);
+      setCircleChallenges(challenges);
       setChallengeHistory(historyData || []);
       setChallengesLoaded(true);
       setChallengeCompletions(groupChallengeCompletions(completionRows));
       setChallengeLifecycle(Object.fromEntries((lifecycleData || []).map((item) => [String(item.challenge_id), item])));
       if (challenges.length > 0) {
-        const teamIds = new Set(challenges.map((item) => Number(item.team_id)));
+        const circleIds = new Set(challenges.map((item) => Number(item.circle_id)));
         if (!cancelled) {
           const grouped = {};
           (rosterData || []).forEach((member) => {
-            if (!teamIds.has(Number(member.team_id))) return;
-            if (!grouped[member.team_id]) grouped[member.team_id] = [];
-            grouped[member.team_id].push({
+            if (!circleIds.has(Number(member.circle_id))) return;
+            if (!grouped[member.circle_id]) grouped[member.circle_id] = [];
+            grouped[member.circle_id].push({
               id:member.user_id,
               name:member.member_name,
               icon:member.member_icon,
               show_stats_to_others:member.show_stats_to_others,
             });
           });
-          setTeamRosters(grouped);
+          setCircleRosters(grouped);
         }
       } else {
-        setTeamRosters({});
+        setCircleRosters({});
       }
     }
-    loadTeamChallenges();
+    loadCircleChallenges();
     return () => { cancelled = true; };
   }, [userId]);
 
@@ -195,13 +195,13 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         setStandingsRefreshing(false);
         return;
       }
-      const cacheKey = challengeScope?.type === "team" ? `team:${challengeScope.id}` : "personal";
-      const activeChallenge = challengeScope?.type === "team"
-        ? teamChallenges.find((item) => String(item.challenge_id) === String(challengeScope.id))
+      const cacheKey = challengeScope?.type === "circle" ? `circle:${challengeScope.id}` : "personal";
+      const activeChallenge = challengeScope?.type === "circle"
+        ? circleChallenges.find((item) => String(item.challenge_id) === String(challengeScope.id))
         : null;
       const previousChallenge = activeChallenge
         ? challengeHistory.find((item) =>
-            Number(item.team_id) === Number(activeChallenge.team_id)
+            Number(item.circle_id) === Number(activeChallenge.circle_id)
             && item.challenge_title === activeChallenge.challenge_title
           )
         : null;
@@ -212,7 +212,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
       setPreviousChallengeLabel(
         previousChallenge
           ? challengeWeekLabel(previousChallenge.week_start)
-          : challengeScope?.type !== "team"
+          : challengeScope?.type !== "circle"
             ? "Same day last week"
             : null
       );
@@ -233,11 +233,11 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         .from("game_stats")
         .select("user_id,game,challenge_date,seconds,mistakes,hints,zip_backtracked_cells,zip_required_moves,completed_at,profiles(name,icon,show_stats_to_others)")
         .eq("mode", "challenge");
-      query = challengeScope?.type === "team"
-        ? query.eq("team_challenge_id", challengeScope.id).gte("challenge_date", week.start).lte("challenge_date", week.end)
-        : query.is("team_challenge_id", null).eq("challenge_date", todayString());
+      query = challengeScope?.type === "circle"
+        ? query.eq("circle_challenge_id", challengeScope.id).gte("challenge_date", week.start).lte("challenge_date", week.end)
+        : query.is("circle_challenge_id", null).eq("challenge_date", todayString());
       let { data:resultRows,error } = await query;
-      if (challengeScope?.type !== "team") {
+      if (challengeScope?.type !== "circle") {
         const personalResult = await supabase.rpc("get_personal_challenge_standings", {
           start_date_in:todayString(),
           end_date_in:todayString(),
@@ -252,8 +252,8 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
       }
       if (cancelled) return;
       const [{ data:roundRows }, { data:benchmarkRows }, { data:personalProfiles }, { data:historyRows }] = await Promise.all([
-        challengeScope?.type === "team"
-          ? supabase.from("team_challenge_rounds")
+        challengeScope?.type === "circle"
+          ? supabase.from("circle_challenge_rounds")
             .select("challenge_date,game,round_number")
             .eq("challenge_id",challengeScope.id)
             .order("round_number")
@@ -261,13 +261,13 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         supabase.from("game_time_benchmarks")
           .select("game,day_index,effective_seconds")
           .eq("mode","challenge"),
-        challengeScope?.type !== "team"
+        challengeScope?.type !== "circle"
           ? supabase.from("profiles")
             .select("id,name,icon,show_stats_to_others")
             .eq("is_approved",true)
             .eq("hidden_from_others",false)
           : Promise.resolve({ data:[] }),
-        challengeScope?.type !== "team"
+        challengeScope?.type !== "circle"
           ? supabase.rpc("get_personal_challenge_standings", {
             start_date_in:daysAgoDate(7),
             end_date_in:daysAgoDate(1),
@@ -283,8 +283,8 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
           supabase.from("game_stats")
             .select("user_id,game,challenge_date,seconds,mistakes,hints,zip_backtracked_cells,zip_required_moves,completed_at")
             .eq("mode","challenge")
-            .eq("team_challenge_id",previousChallenge.challenge_id),
-          supabase.from("team_challenge_rounds")
+            .eq("circle_challenge_id",previousChallenge.challenge_id),
+          supabase.from("circle_challenge_rounds")
             .select("challenge_date,game,round_number")
             .eq("challenge_id",previousChallenge.challenge_id)
             .order("round_number"),
@@ -292,12 +292,12 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         if (cancelled) return;
         previousRows = priorResults || [];
         previousRoundRows = priorRounds || [];
-      } else if (challengeScope?.type !== "team") {
+      } else if (challengeScope?.type !== "circle") {
         const { data:priorResults } = await supabase.from("game_stats")
           .select("user_id,game,challenge_date,seconds,mistakes,hints,zip_backtracked_cells,zip_required_moves,completed_at")
           .eq("user_id",userId)
           .eq("mode","challenge")
-          .is("team_challenge_id",null)
+          .is("circle_challenge_id",null)
           .eq("challenge_date",previousWeekDate());
         if (cancelled) return;
         previousRows = priorResults || [];
@@ -310,9 +310,9 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
           .from("game_stats")
           .select("user_id,game,challenge_date,seconds,mistakes,hints,zip_backtracked_cells,zip_required_moves,completed_at")
           .eq("mode", "challenge");
-        fallback = challengeScope?.type === "team"
-          ? fallback.eq("team_challenge_id", challengeScope.id).gte("challenge_date", week.start).lte("challenge_date", week.end)
-          : fallback.is("team_challenge_id", null).eq("challenge_date", todayString());
+        fallback = challengeScope?.type === "circle"
+          ? fallback.eq("circle_challenge_id", challengeScope.id).gte("challenge_date", week.start).lte("challenge_date", week.end)
+          : fallback.is("circle_challenge_id", null).eq("challenge_date", todayString());
         const { data } = await fallback;
         if (cancelled) return;
         rows = data || [];
@@ -352,7 +352,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
     }
     loadChallengeStandings();
     return () => { cancelled = true; };
-  }, [userId, playMode, challengeScope?.type, challengeScope?.id, challengeHistory, teamChallenges, standingsRefreshKey]);
+  }, [userId, playMode, challengeScope?.type, challengeScope?.id, challengeHistory, circleChallenges, standingsRefreshKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -394,7 +394,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   const visibleGames = configuredGames
     .filter((game) => {
       if (playMode !== "challenge") return true;
-      if (challengeScope?.type === "team") {
+      if (challengeScope?.type === "circle") {
         return (challengeScope.gameIds || []).includes(game.id);
       }
       return game.challengeEnabled;
@@ -403,25 +403,25 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
     .filter((game) => game.available && game.challengeEnabled)
     .map((game) => game.id);
   const personalCompleted = challengeCompletions.personal || new Set();
-  const challengeStatus = (teamChallenge) => {
-    const requiredItems = teamChallenge
-      ? buildTeamChallengeRounds({
-        activeDays:teamChallenge.active_days,
-        gameIds:teamChallenge.game_ids,
+  const challengeStatus = (circleChallenge) => {
+    const requiredItems = circleChallenge
+      ? buildCircleChallengeRounds({
+        activeDays:circleChallenge.active_days,
+        gameIds:circleChallenge.game_ids,
       }).map((round) => round.date)
       : personalGameIds;
-    const completed = teamChallenge
-      ? challengeCompletions[String(teamChallenge.challenge_id)] || new Set()
+    const completed = circleChallenge
+      ? challengeCompletions[String(circleChallenge.challenge_id)] || new Set()
       : personalCompleted;
     return challengeProgress(requiredItems, completed);
   };
   const personalStatus = challengeStatus(null);
-  const teamStatusLabel = (teamChallenge, status) => {
-    const lifecycle = challengeLifecycle[String(teamChallenge.challenge_id)];
+  const circleStatusLabel = (circleChallenge, status) => {
+    const lifecycle = challengeLifecycle[String(circleChallenge.challenge_id)];
     if (lifecycle?.winner_id) {
       return lifecycle.winner_id === userId
         ? "Finished · You won"
-        : `Finished · ${lifecycle.winner_name || "A teammate"} won`;
+        : `Finished · ${lifecycle.winner_name || "A circlemate"} won`;
     }
     if (lifecycle?.current_user_finished || status.done) {
       const waiting = Math.max(0, Number(lifecycle?.member_count || 0) - Number(lifecycle?.finished_count || 0));
@@ -432,10 +432,10 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   };
   const challengeItems = [
     { key:"personal", type:"personal", active_today:true, status:personalStatus },
-    ...teamChallenges.map((item) => ({
+    ...circleChallenges.map((item) => ({
       ...item,
       key:String(item.challenge_id),
-      type:"team",
+      type:"circle",
       status:challengeStatus(item),
       today_done:(challengeCompletions[String(item.challenge_id)] || new Set()).has(todayString()),
     })),
@@ -443,64 +443,64 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   const pendingChallenges = challengeItems.filter((item) =>
     item.active_today && item.status.remaining > 0 && !item.today_done
   );
-  const selectedTeam = challengeScope?.type === "team"
-    ? teamChallenges.find((item) => String(item.challenge_id) === String(challengeScope.id))
+  const selectedCircle = challengeScope?.type === "circle"
+    ? circleChallenges.find((item) => String(item.challenge_id) === String(challengeScope.id))
     : null;
-  const todayCompletions = challengeScope?.type === "team"
+  const todayCompletions = challengeScope?.type === "circle"
     ? challengeCompletions[String(challengeScope.id)] || new Set()
     : personalCompleted;
-  const selectedRoster = selectedTeam ? teamRosters[selectedTeam.team_id] || [] : [];
-  const selectedChallengeGameIds = challengeScope?.type === "team"
-    ? selectedTeam?.game_ids || challengeScope.gameIds || []
+  const selectedRoster = selectedCircle ? circleRosters[selectedCircle.circle_id] || [] : [];
+  const selectedChallengeGameIds = challengeScope?.type === "circle"
+    ? selectedCircle?.game_ids || challengeScope.gameIds || []
     : personalGameIds;
   const selectedChallengeGames = selectedChallengeGameIds
     .map((id) => configuredGames.find((game) => game.id === id) || GAME_META.find((game) => game.id === id))
     .filter(Boolean);
-  const standingsRoster = challengeScope?.type === "team"
+  const standingsRoster = challengeScope?.type === "circle"
     ? selectedRoster
     : Object.values(challengeProfiles);
-  const selectedChallengeStatus = selectedTeam ? challengeStatus(selectedTeam) : null;
-  const selectedRounds = selectedTeam
+  const selectedChallengeStatus = selectedCircle ? challengeStatus(selectedCircle) : null;
+  const selectedRounds = selectedCircle
     ? challengeRounds.length
       ? challengeRounds
-      : buildTeamChallengeRounds({
-        activeDays:selectedTeam.active_days,
-        gameIds:selectedTeam.game_ids,
+      : buildCircleChallengeRounds({
+        activeDays:selectedCircle.active_days,
+        gameIds:selectedCircle.game_ids,
       })
     : [];
   const todayRound = selectedRounds.find((round) => round.date === localDateString());
   const todayRoundDone = !!todayRound && todayCompletions.has(todayRound.date);
-  const teamChallengeIsActive = playMode === "challenge" && challengeScope?.type === "team";
-  const selectedChallengePlayable = !teamChallengeIsActive
-    || (selectedTeam?.active_today && !!todayRound && !todayRoundDone);
+  const circleChallengeIsActive = playMode === "challenge" && challengeScope?.type === "circle";
+  const selectedChallengePlayable = !circleChallengeIsActive
+    || (selectedCircle?.active_today && !!todayRound && !todayRoundDone);
 
   function choosePersonalChallenge() {
-    const alreadySelected = challengeScope?.type !== "team";
+    const alreadySelected = challengeScope?.type !== "circle";
     onChallengeScopeChange({ type:"personal",id:null,name:"My Challenge",gameIds:null });
     setPersonalExpanded(alreadySelected ? (value) => !value : true);
     setExpandedChallengeId(null);
   }
 
-  function chooseTeamChallenge(teamChallenge) {
+  function chooseCircleChallenge(circleChallenge) {
     onChallengeScopeChange({
-      type:"team",
-      id:teamChallenge.challenge_id,
-      teamId:teamChallenge.team_id,
-      name:teamChallenge.challenge_title || teamChallenge.team_name,
-      teamName:teamChallenge.team_name,
-      challengeTitle:teamChallenge.challenge_title || "Weekly challenge",
-      emoji:teamChallenge.team_emoji,
-      gameIds:teamChallenge.game_ids,
-      rewardPoints:teamChallenge.reward_points,
-      activeDays:teamChallenge.active_days,
-      dailyRounds:buildTeamChallengeRounds({
-        activeDays:teamChallenge.active_days,
-        gameIds:teamChallenge.game_ids,
+      type:"circle",
+      id:circleChallenge.challenge_id,
+      circleId:circleChallenge.circle_id,
+      name:circleChallenge.challenge_title || circleChallenge.circle_name,
+      circleName:circleChallenge.circle_name,
+      challengeTitle:circleChallenge.challenge_title || "Weekly challenge",
+      emoji:circleChallenge.circle_emoji,
+      gameIds:circleChallenge.game_ids,
+      rewardPoints:circleChallenge.reward_points,
+      activeDays:circleChallenge.active_days,
+      dailyRounds:buildCircleChallengeRounds({
+        activeDays:circleChallenge.active_days,
+        gameIds:circleChallenge.game_ids,
       }),
-      stakeRewardId:teamChallenge.stake_reward_id,
-      stakeRewardName:teamChallenge.stake_reward_name,
-      stakeSplitMethod:teamChallenge.stake_split_method,
-      stakeAccepted:teamChallenge.stake_accepted,
+      stakeRewardId:circleChallenge.stake_reward_id,
+      stakeRewardName:circleChallenge.stake_reward_name,
+      stakeSplitMethod:circleChallenge.stake_split_method,
+      stakeAccepted:circleChallenge.stake_accepted,
     });
   }
 
@@ -597,8 +597,8 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
               onClick={choosePersonalChallenge}
               className="w-full flex items-center gap-3 rounded-2xl p-3 text-left"
               style={{
-                background:challengeScope?.type !== "team" ? "rgba(47,111,237,.08)" : "transparent",
-                border:challengeScope?.type !== "team" ? "1px solid rgba(47,111,237,.18)" : "1px solid transparent",
+                background:challengeScope?.type !== "circle" ? "rgba(47,111,237,.08)" : "transparent",
+                border:challengeScope?.type !== "circle" ? "1px solid rgba(47,111,237,.18)" : "1px solid transparent",
               }}
             >
               <span className="personal-challenge-icon grid place-items-center rounded-xl text-xl shrink-0" style={{ width:42,height:42,background:"#F1F5FF" }}>🎯</span>
@@ -615,7 +615,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
               </span>
             </button>
 
-            {challengeScope?.type !== "team" && personalExpanded && (
+            {challengeScope?.type !== "circle" && personalExpanded && (
               <ChallengeStandings
                 rows={challengeRows}
                 roster={standingsRoster}
@@ -632,26 +632,26 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
               />
             )}
 
-            {teamChallenges.length > 0 && (
+            {circleChallenges.length > 0 && (
               <div className="mt-3 pt-3" style={{ borderTop:"1px solid rgba(16,24,40,.07)" }}>
                 <div className="flex items-center px-1 mb-2">
-                  <span className="text-xs font-bold flex-1" style={{ color:CREAM }}>{t("home.teamChallenges")}</span>
-                  <span className="text-[10px] font-semibold rounded-full px-2 py-0.5" style={{ background:"rgba(16,24,40,.05)",color:"rgba(27,33,41,.48)" }}>{teamChallenges.length}</span>
+                  <span className="text-xs font-bold flex-1" style={{ color:CREAM }}>{t("home.circleChallenges")}</span>
+                  <span className="text-[10px] font-semibold rounded-full px-2 py-0.5" style={{ background:"rgba(16,24,40,.05)",color:"rgba(27,33,41,.48)" }}>{circleChallenges.length}</span>
                 </div>
                 <div className="space-y-2">
-                  {teamChallenges.map((item) => {
+                  {circleChallenges.map((item) => {
                     const status = challengeStatus(item);
                     const lifecycle = challengeLifecycle[String(item.challenge_id)];
-                    const lifecycleLabel = teamStatusLabel(item, status);
+                    const lifecycleLabel = circleStatusLabel(item, status);
                     const challengeFinished = !!lifecycle?.winner_id;
                     const playerFinished = !!lifecycle?.current_user_finished || status.done;
-                    const selected = challengeScope?.type === "team" && String(challengeScope.id) === String(item.challenge_id);
+                    const selected = challengeScope?.type === "circle" && String(challengeScope.id) === String(item.challenge_id);
                     const expanded = String(expandedChallengeId) === String(item.challenge_id);
-                    const roster = teamRosters[item.team_id] || [];
+                    const roster = circleRosters[item.circle_id] || [];
                     const games = (item.game_ids || [])
                       .map((id) => configuredGames.find((game) => game.id === id) || GAME_META.find((game) => game.id === id))
                       .filter(Boolean);
-                    const itemRounds = buildTeamChallengeRounds({
+                    const itemRounds = buildCircleChallengeRounds({
                       activeDays:item.active_days,
                       gameIds:item.game_ids,
                     });
@@ -661,22 +661,22 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                           type="button"
                           onClick={() => {
                             setExpandedChallengeId(expanded ? null : item.challenge_id);
-                            chooseTeamChallenge(item);
+                            chooseCircleChallenge(item);
                           }}
                           className="w-full flex items-center gap-3 p-3 text-left"
                           aria-expanded={expanded}
                         >
-                          <span className="grid place-items-center rounded-xl text-lg shrink-0" style={{ width:40,height:40,background:"#fff" }}>{item.team_emoji || "⭐"}</span>
+                          <span className="grid place-items-center rounded-xl text-lg shrink-0" style={{ width:40,height:40,background:"#fff" }}>{item.circle_emoji || "⭐"}</span>
                           <span className="flex-1 min-w-0">
                             <span className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold truncate">{item.challenge_title || item.team_name}</span>
+                              <span className="text-xs font-bold truncate">{item.challenge_title || item.circle_name}</span>
                               {selected && <Check size={12} strokeWidth={3} style={{ color:"#12946A" }}/>}
                             </span>
-                            <span className="block text-[10px] mt-0.5 truncate" style={{ color:"rgba(27,33,41,.45)" }}>{item.team_name}</span>
+                            <span className="block text-[10px] mt-0.5 truncate" style={{ color:"rgba(27,33,41,.45)" }}>{item.circle_name}</span>
                           </span>
                           <span className="text-right shrink-0">
                             <span
-                              className="team-challenge-status block text-[10px] font-bold"
+                              className="circle-challenge-status block text-[10px] font-bold"
                               data-status={challengeFinished ? "finished" : playerFinished ? "complete" : status.completed === 0 ? "idle" : "remaining"}
                               style={{ color:challengeFinished ? "#7A5711" : playerFinished ? "#137A3A" : status.completed === 0 ? "#6B7280" : "#A9363B" }}
                             >
@@ -709,14 +709,14 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                                 </div>
                                 <span className="text-[10px]" style={{ color:"rgba(27,33,41,.48)" }}>{t("home.members", { count:roster.length })}</span>
                                 <span className="ml-auto text-[10px] font-semibold" style={{ color:"#9A721F" }}>+{item.reward_points || 0} {t("home.points")}</span>
-                                {onOpenTeams && (
+                                {onOpenCircles && (
                                   <button
                                     type="button"
-                                    onClick={() => onOpenTeams({ teamId:item.team_id,challengeId:item.challenge_id })}
+                                    onClick={() => onOpenCircles({ circleId:item.circle_id,challengeId:item.challenge_id })}
                                     className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[10px] font-semibold"
                                     style={{ background:"rgba(18,148,106,.09)",color:"#0B7C58" }}
                                   >
-                                    <Users size={12}/>{t("home.teamDetails")}
+                                    <Users size={12}/>{t("home.circleDetails")}
                                   </button>
                                 )}
                               </div>
@@ -731,9 +731,9 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                                 previousRows={previousChallengeRows}
                                 previousRounds={previousChallengeRounds}
                                 previousWeekLabel={previousChallengeLabel}
-                                isTeam
+                                isCircle
                                 userId={userId}
-                                loading={standingsLoading || !selectedTeam}
+                                loading={standingsLoading || !selectedCircle}
                                 refreshing={standingsRefreshing}
                                 defaultOpen
                                 embedded
@@ -759,7 +759,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                   <span className="flex-1 min-w-0">
                     <span className="block text-xs font-bold">Challenge history</span>
                     <span className="block text-[9px] mt-0.5" style={{ color:"rgba(27,33,41,.43)" }}>
-                      Your latest team results
+                      Your latest circle results
                     </span>
                   </span>
                   <span className="text-[9px] font-semibold" style={{ color:"rgba(27,33,41,.42)" }}>
@@ -776,7 +776,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                     const resultLabel = isWinner
                       ? "You won"
                       : hasWinner
-                        ? `${item.winner_name || "Teammate"} won`
+                        ? `${item.winner_name || "Circlemate"} won`
                         : "No winner";
                     return (
                       <div
@@ -785,9 +785,9 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                         style={{ borderTop:index ? "1px solid rgba(16,24,40,.06)" : "none" }}
                       >
                         <span className="flex-1 min-w-0">
-                          <span className="block text-[11px] font-semibold truncate">{item.challenge_title || item.team_name}</span>
+                          <span className="block text-[11px] font-semibold truncate">{item.challenge_title || item.circle_name}</span>
                           <span className="challenge-history-muted block text-[9px] mt-0.5 truncate" style={{ color:"rgba(27,33,41,.44)" }}>
-                            {item.team_name} · {challengeWeekLabel(item.week_start)}
+                            {item.circle_name} · {challengeWeekLabel(item.week_start)}
                           </span>
                         </span>
                         <span className="text-right shrink-0">
@@ -814,7 +814,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
           </div>
         )}
 
-        {playMode === "challenge" && challengeScope?.type === "team" && (
+        {playMode === "challenge" && challengeScope?.type === "circle" && (
           <div className="challenge-games-heading mb-3 rounded-2xl px-4 py-3 flex items-center gap-3" style={{ background:"rgba(47,111,237,.08)",border:"1px solid rgba(47,111,237,.16)" }}>
             <span className="text-xl">{challengeScope.emoji || "⭐"}</span>
             <span className="min-w-0">
@@ -830,7 +830,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {visibleGames
-            .filter((g) => g.live || !teamChallengeIsActive || (!!todayRound && g.id === todayRound.game))
+            .filter((g) => g.live || !circleChallengeIsActive || (!!todayRound && g.id === todayRound.game))
             .map((g) => {
             const Icon = g.icon;
             const playingCount = players.filter((p) => p.game === g.id && p.mode === (g.live ? "live" : playMode)).length;
@@ -846,7 +846,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                   cursor: canOpenGame ? "pointer" : "default",
                 }}
               >
-                {!g.live && challengesLoaded && (challengeScope?.type === "team" ? todayRoundDone : todayCompletions.has(g.id)) && (
+                {!g.live && challengesLoaded && (challengeScope?.type === "circle" ? todayRoundDone : todayCompletions.has(g.id)) && (
                   <span
                     className={`home-tile-check home-tile-check--${g.id} absolute top-3 left-3 flex items-center justify-center rounded-full`}
                     style={{ width: 18, height: 18, background: "rgba(47,111,237,0.12)" }}

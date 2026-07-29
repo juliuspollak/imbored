@@ -14,7 +14,7 @@ function addDays(dateString, days) {
   return localDateString(date);
 }
 
-function buildTeamChallengeRounds({ activeDays = [], gameIds = [], weekStart = null } = {}) {
+function buildCircleChallengeRounds({ activeDays = [], gameIds = [], weekStart = null } = {}) {
   const games = [...new Set(gameIds.filter(Boolean))];
   if (!games.length) return [];
   const monday = weekStart || currentMondayString();
@@ -28,4 +28,4 @@ function buildTeamChallengeRounds({ activeDays = [], gameIds = [], weekStart = n
     }));
 }
 
-export { addDays, buildTeamChallengeRounds, currentMondayString, localDateString };
+export { addDays, buildCircleChallengeRounds, currentMondayString, localDateString };

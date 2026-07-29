@@ -16,9 +16,9 @@ const passkeySupported = typeof window !== "undefined" && !!window.PublicKeyCred
 // Used both as the mandatory first-login screen (no `onDone`/`onBack`
 // passed — nothing to go back to yet) and later as an editable "my
 // profile" screen reached from the home page.
-export default function ProfileSetup({ onDone, onOpenTeams }) {
+export default function ProfileSetup({ onDone, onOpenCircles }) {
   const { t, language, setLanguage } = useI18n();
-  const { profile, user, saveProfile, leaveTeam, registerPasskey, listPasskeys, deletePasskey, listIdentities, linkGoogleIdentity, unlinkIdentity } = useAuth();
+  const { profile, user, saveProfile, leaveCircle, registerPasskey, listPasskeys, deletePasskey, listIdentities, linkGoogleIdentity, unlinkIdentity } = useAuth();
   const isFirstTime = !profile;
 
   const [name, setName] = useState(profile?.name || "");
@@ -429,12 +429,12 @@ export default function ProfileSetup({ onDone, onOpenTeams }) {
           {!isFirstTime && (
             <button
               type="button"
-              onClick={onOpenTeams}
+              onClick={onOpenCircles}
               className="gloss-button w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold mb-3"
               style={{ color: INK }}
             >
               <Users size={15} />
-              {t("profile.teams")}
+              {t("profile.circles")}
             </button>
           )}
 

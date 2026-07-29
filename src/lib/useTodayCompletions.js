@@ -10,7 +10,7 @@ function todayString() {
 }
 
 // Completion badges are scoped. A personal completion must never mark the
-// same game complete in Team A or Team B.
+// same game complete in Circle A or Circle B.
 export function useTodayCompletions(userId, challengeScope = { type: "personal" }) {
   const [completed, setCompleted] = useState(new Set());
 
@@ -23,9 +23,9 @@ export function useTodayCompletions(userId, challengeScope = { type: "personal" 
       .eq("user_id", userId)
       .eq("mode", "challenge")
       .eq("challenge_date", todayString());
-    query = challengeScope?.type === "team"
-      ? query.eq("team_challenge_id", challengeScope.id)
-      : query.is("team_challenge_id", null);
+    query = challengeScope?.type === "circle"
+      ? query.eq("circle_challenge_id", challengeScope.id)
+      : query.is("circle_challenge_id", null);
     query.then(({ data }) => {
       if (!cancelled) setCompleted(new Set((data || []).map((r) => r.game)));
     });
