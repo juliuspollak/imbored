@@ -41,6 +41,14 @@ alter table public.game_stats rename column team_challenge_id to circle_challeng
 -- 3. Drop every old team-named function/trigger before recreating
 --    under the new name (old bodies would reference renamed tables).
 -- ============================================================
+-- These policies reference is_team_reward_approver/etc. in their USING/CHECK
+-- expressions; they must be dropped before the functions below, or the
+-- function drops fail with "cannot drop function because other objects
+-- depend on it". Equivalent circle-named policies are recreated in step 4.
+drop policy if exists "team members and admins view rewards" on public.rewards;
+drop policy if exists "team reward approvers update rewards" on public.rewards;
+drop policy if exists "team members can view approvals" on public.reward_approvals;
+
 drop trigger if exists sync_team_challenge_rounds_trigger on public.circle_weekly_challenges;
 drop trigger if exists team_challenge_reward_cap_trigger on public.circle_weekly_challenges;
 drop trigger if exists validate_team_challenge_games_trigger on public.circle_weekly_challenges;
@@ -1820,6 +1828,17 @@ returns boolean language sql stable set search_path=public as $$
   );
 $$;
 grant execute on function public.is_circle_reward_approver(bigint,uuid) to authenticated;
+
+create policy "circle members and admins view rewards" on public.rewards
+  for select using (is_admin(auth.uid()) or exists(select 1 from circle_members where circle_id=rewards.circle_id and user_id=auth.uid()));
+create policy "circle reward approvers update rewards" on public.rewards
+  for update using (is_circle_reward_approver(circle_id,auth.uid())) with check (is_circle_reward_approver(circle_id,auth.uid()));
+
+create policy "circle members can view approvals" on public.reward_approvals
+  for select using (
+    is_admin(auth.uid())
+    or exists(select 1 from rewards rw join circle_members cm on cm.circle_id=rw.circle_id where rw.id=reward_approvals.reward_id and cm.user_id=auth.uid())
+  );
 
 create or replace function public.get_my_reward_circles()
 returns table(circle_id bigint,circle_name text,can_approve boolean,member_count int,approver_count int)
