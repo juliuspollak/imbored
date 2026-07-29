@@ -72,6 +72,10 @@ drop function if exists public.get_my_team_rosters();
 drop function if exists public.get_my_managed_team_blocks();
 drop function if exists public.invite_player_to_team(uuid,bigint);
 drop function if exists public.get_my_pending_team_invitations();
+-- Leftover from the old guardian-circles feature (migration_v170); v179's
+-- merge into teams missed dropping this one, and its OUT columns differ
+-- from the team-invitations version recreated below under the same name.
+drop function if exists public.get_my_pending_circle_invitations();
 drop function if exists public.decide_team_invitation(bigint,boolean);
 drop function if exists public.get_my_active_team_challenges();
 drop function if exists public.get_my_team_challenge_lifecycle();
