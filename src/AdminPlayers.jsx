@@ -1,7 +1,7 @@
 
 const CREAM = "#1B2129";import { useState, useEffect, useCallback } from "react";
 import {
-  CheckCircle2, Crown, Ellipsis, EyeOff, Lock,
+  CheckCircle2, Crown, Ellipsis, EyeOff, Gift, Lock,
   RotateCcw, ShieldBan, UserX, X,
 } from "lucide-react";
 import BackButton from "./BackButton.jsx";
@@ -52,7 +52,7 @@ export default function AdminPlayers({ onBack }) {
     if (profilesResult.error?.code === "PGRST202" || /admin_list_players/i.test(profilesResult.error?.message || "")) {
       profilesResult = await supabase
         .from("profiles")
-        .select("id,name,icon,is_private,is_admin,hidden_from_others,is_approved,is_blocked,account_deleted_at,auth_deleted_at")
+        .select("id,name,icon,is_private,is_admin,is_reward_steward,hidden_from_others,is_approved,is_blocked,account_deleted_at,auth_deleted_at")
         .order("name");
     }
     if (profilesResult.error?.code === "42703") {
@@ -114,6 +114,14 @@ export default function AdminPlayers({ onBack }) {
     refresh();
   }
 
+  async function handleToggleRewardSteward(player) {
+    setNotice("");
+    const { error } = await supabase.rpc("set_user_reward_steward", { target_user_id: player.id, steward: !player.is_reward_steward });
+    setExpandedId(null);
+    if (error) setNotice(error.message || "Could not update reward steward status.");
+    refresh();
+  }
+
   async function handleAccountAction(action, player) {
     setActionBusy(true);
     setActionError(null);
@@ -146,6 +154,7 @@ export default function AdminPlayers({ onBack }) {
             <div className="flex items-center gap-1.5">
               <span className="font-semibold text-sm truncate" style={{ color: INK }}>{player.name}</span>
               {player.is_admin && <Crown size={11} style={{ color: "#D9AE58" }} />}
+              {player.is_reward_steward && <Gift size={11} style={{ color: "#7C3AED" }} />}
               {player.is_private && <Lock size={10} style={{ opacity: .35 }} />}
             </div>
             <div className="text-[11px]" style={{ color: online ? GREEN : "rgba(27,33,41,.42)" }}>
@@ -171,6 +180,7 @@ export default function AdminPlayers({ onBack }) {
               {player.is_blocked ? "Unblock" : "Block"}
             </button>
             <button onClick={() => handleToggleHidden(player)} className="rounded-full px-3 py-1.5 text-[11px] font-medium flex items-center gap-1" style={{ background: "rgba(16,24,40,.05)" }}><EyeOff size={11}/>{player.hidden_from_others ? "Show" : "Hide"}</button>
+            <button onClick={() => handleToggleRewardSteward(player)} className="rounded-full px-3 py-1.5 text-[11px] font-medium flex items-center gap-1" style={{ background: player.is_reward_steward ? "rgba(124,58,237,.10)" : "rgba(16,24,40,.05)", color: player.is_reward_steward ? "#7C3AED" : undefined }}><Gift size={11}/>{player.is_reward_steward ? "Remove reward steward" : "Make reward steward"}</button>
             <button onClick={() => setActionTarget({ type: "delete", player, reason: "" })} className="rounded-full px-3 py-1.5 text-[11px] font-medium flex items-center gap-1" style={{ background: "rgba(181,67,58,.08)", color: "#B5433A" }}><UserX size={11}/>Delete</button>
           </div>
         )}

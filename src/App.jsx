@@ -35,6 +35,7 @@ const Progress = lazy(() => import("./Progress.jsx"));
 const Chat = lazy(() => import("./Chat.jsx"));
 const Chats = lazy(() => import("./Chats.jsx"));
 const AdminRewards = lazy(() => import("./AdminRewards.jsx"));
+const RewardRequests = lazy(() => import("./RewardRequests.jsx"));
 import { saveStats } from "./lib/saveStats.js";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useOnlinePlayers } from "./lib/useOnlinePlayers.js";
@@ -43,6 +44,8 @@ import { usePresence } from "./lib/usePresence.js";
 import { useOpenFeedbackCount } from "./lib/useOpenFeedbackCount.js";
 import { useCompletedFeedbackCount } from "./lib/useCompletedFeedbackCount.js";
 import { useNewTransfersCount } from "./lib/useNewTransfers.js";
+import { useMyRedemptionUpdates } from "./lib/useMyRedemptionUpdates.js";
+import { useOpenRewardRequestsCount } from "./lib/useOpenRewardRequestsCount.js";
 import { usePokes } from "./lib/pokes.js";
 import { useUnreadMessages } from "./lib/useUnreadMessages.js";
 import { useI18n } from "./lib/i18n.jsx";
@@ -197,6 +200,9 @@ function AppShell() {
   const openFeedbackCount = useOpenFeedbackCount(profile?.is_admin ? user?.id : undefined);
   const completedFeedbackCount = useCompletedFeedbackCount(profile?.is_admin ? undefined : user?.id);
   const newTransfersCount = useNewTransfersCount(user?.id);
+  const myRedemptionUpdates = useMyRedemptionUpdates(user?.id);
+  const isRewardManager = !!(profile?.is_admin || profile?.is_reward_steward);
+  const openRewardRequestsCount = useOpenRewardRequestsCount(isRewardManager ? user?.id : undefined);
   const unreadMessages = useUnreadMessages(user?.id);
   const [sectionSignals, setSectionSignals] = useState({ whatsnew: false, teams: false });
 
@@ -292,11 +298,14 @@ function AppShell() {
       onOpenAdminPlayers={() => openAccountSection("adminplayers")}
       onOpenAdminGames={() => openAccountSection("admingames")}
       onOpenAdminRewards={() => openAccountSection("adminrewards")}
+      onOpenRewardRequests={() => openAccountSection("rewardrequests")}
       players={players}
       userId={user?.id}
       openFeedbackCount={openFeedbackCount}
       completedFeedbackCount={completedFeedbackCount}
       newTransfersCount={newTransfersCount}
+      myRedemptionUpdates={myRedemptionUpdates}
+      openRewardRequestsCount={openRewardRequestsCount}
       unreadMessages={unreadMessages}
       sectionSignals={sectionSignals}
       incognito={incognito === true}
@@ -364,7 +373,7 @@ function AppShell() {
   if (active === "progress") {
     return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
-        <Progress onBack={() => setActive(null)} />
+        <Progress onBack={() => setActive(null)} onOpenRewardRequests={() => openAccountSection("rewardrequests")} />
       </Suspense>
     );
   }
@@ -405,6 +414,14 @@ function AppShell() {
     return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
         <AdminRewards onBack={() => setActive(null)} />
+      </Suspense>
+    );
+  }
+
+  if (active === "rewardrequests") {
+    return withAccountMenu(
+      <Suspense fallback={<FullScreenMessage text="Loading…" />}>
+        <RewardRequests onBack={() => setActive(null)} />
       </Suspense>
     );
   }
@@ -569,13 +586,14 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
   );
 }
 
-function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenTeams, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
+function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenTeams, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, onOpenRewardRequests, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
   const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const isAdmin = !!profile.is_admin;
+  const isRewardManager = !!(profile.is_admin || profile.is_reward_steward);
   const feedbackBadgeCount = isAdmin ? openFeedbackCount : completedFeedbackCount;
-  const totalNotifications = feedbackBadgeCount + newTransfersCount + unreadMessages.total
+  const totalNotifications = feedbackBadgeCount + newTransfersCount + myRedemptionUpdates + openRewardRequestsCount + unreadMessages.total
     + (sectionSignals.whatsnew ? 1 : 0) + (sectionSignals.teams ? 1 : 0);
 
   useEffect(() => {
@@ -602,12 +620,14 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
     { id:"stats", icon:BarChart3, label:t("account.stats"), onClick:onOpenStats },
     { id:"progress", icon:Star, label:t("account.progress"), onClick:onOpenProgress, badge:newTransfersCount },
     { id:"teams", icon:Users, label:t("account.teams"), onClick:onOpenTeams, badge:sectionSignals.teams ? 1 : 0 },
+    { id:"rewardrequests", icon:Gift, label:t("account.rewardRequests"), onClick:onOpenRewardRequests, badge:myRedemptionUpdates + openRewardRequestsCount },
   ];
-  const adminItems = [
-    { id:"adminplayers", icon:Shield, label:t("common.players"), onClick:onOpenAdminPlayers },
-    { id:"admingames", icon:Grid3x3, label:t("common.games"), onClick:onOpenAdminGames },
-    { id:"adminrewards", icon:Gift, label:t("common.rewards"), onClick:onOpenAdminRewards },
-  ];
+  const adminItems = [];
+  if (isAdmin) {
+    adminItems.push({ id:"adminplayers", icon:Shield, label:t("common.players"), onClick:onOpenAdminPlayers });
+    adminItems.push({ id:"admingames", icon:Grid3x3, label:t("common.games"), onClick:onOpenAdminGames });
+  }
+  if (isRewardManager) adminItems.push({ id:"adminrewards", icon:Gift, label:t("common.rewards"), onClick:onOpenAdminRewards });
 
   function openItem(item) {
     setMenuOpen(false);
@@ -743,7 +763,7 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
             ))}
           </div>
 
-          {isAdmin && (
+          {adminItems.length > 0 && (
             <div className="px-2 pb-2">
               <div className="mx-2 mb-2 border-t" style={{ borderColor:"rgba(16,24,40,.08)" }}/>
               <div className="px-3 pb-1 text-[9px] font-bold uppercase tracking-[.14em]" style={{ color:"rgba(27,33,41,.35)" }}>{t("account.adminTools")}</div>
