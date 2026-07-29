@@ -263,7 +263,8 @@ export default function Progress({ onBack, onOpenRewardRequests }) {
         <span className="flex-1 min-w-0"><span className="block text-sm font-semibold" style={{color:INK}}>Suggest an item</span><span className="block text-[11px] opacity-45">Any circle member can propose — an approver will price it</span></span>
         <ChevronDown size={16} style={{opacity:.35,transform:proposeOpen?"rotate(180deg)":"none"}}/>
       </button>}
-      {tab==="rewards"&&proposeOpen&&<form onSubmit={submitProposal} className="p-4 mb-2" style={card}>
+      {tab==="rewards"&&proposeOpen&&circles.length===0&&<div className="rounded-2xl px-3 py-2.5 mb-2 text-xs" style={{background:"rgba(217,148,10,.10)",color:"#8A5C00"}}>You're not on a circle yet — join or create one to suggest an item.</div>}
+      {tab==="rewards"&&proposeOpen&&circles.length>0&&<form onSubmit={submitProposal} className="p-4 mb-2" style={card}>
         <select value={proposal.circle_id} onChange={e=>setProposal({...proposal,circle_id:e.target.value})} className="w-full rounded-lg border px-3 py-2 text-sm mb-2" required>
           <option value="">Choose circle</option>
           {circles.map(c=><option key={c.circle_id} value={c.circle_id}>{c.circle_name}</option>)}
