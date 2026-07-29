@@ -576,7 +576,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                 <span className="tg-symbol tg-symbol-disc tg-symbol-disc--sun"><SunIcon key={`sun-${r}-${c}`} size={Math.max(28, 50 - SIZE)} isConflict={isConflict} /></span>
               )}
               {val === MOON && (
-                <span className="tg-symbol tg-symbol-disc tg-symbol-disc--moon"><ModernMoonIcon key={`moon-${r}-${c}`} size={Math.max(28, 38 - SIZE)} isConflict={isConflict} /></span>
+                <span className="tg-symbol tg-symbol-disc tg-symbol-disc--moon"><ModernMoonIcon key={`moon-${r}-${c}`} size={Math.max(28, 50 - SIZE)} isConflict={isConflict} /></span>
               )}
               {/* The pulsing border alone doesn't say what belongs here —
                   show a faint preview of the actual symbol. For an empty
@@ -726,8 +726,8 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
         }
         .tg-cell:not(:disabled):hover::after { border-color: rgba(74,111,165,.18); background: rgba(255,255,255,.4); transform: scale(.96); }
         .tg-symbol-disc {
-          width: clamp(31px, 10cqw, 46px);
-          height: clamp(31px, 10cqw, 46px);
+          width: clamp(38px, 13cqw, 56px);
+          height: clamp(38px, 13cqw, 56px);
           display: grid;
           place-items: center;
           border-radius: 999px;
