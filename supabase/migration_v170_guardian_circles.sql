@@ -156,23 +156,6 @@ $$;
 revoke all on function public.get_circle_roster(bigint) from public;
 grant execute on function public.get_circle_roster(bigint) to authenticated;
 
-create or replace function public.get_pending_reward_proposals()
-returns table(id bigint,circle_id bigint,circle_name text,name text,description text,image_url text,points_cost bigint,stock_quantity int,created_by uuid,creator_name text,creator_icon text,approve_count int,reject_count int,required_count int)
-language sql security definer stable set search_path=public as $$
-  select rw.id,rw.circle_id,gc.name::text,rw.name::text,rw.description::text,rw.image_url::text,rw.points_cost,rw.stock_quantity,
-    rw.created_by,creator.name::text,creator.icon::text,
-    (select count(*)::int from reward_approvals ra where ra.reward_id=rw.id and ra.decision='approve'),
-    (select count(*)::int from reward_approvals ra where ra.reward_id=rw.id and ra.decision='reject'),
-    (floor((select count(*)::int from guardian_circle_members m where m.circle_id=rw.circle_id and m.can_approve=true)::numeric/2)+1)::int
-  from rewards rw
-  join guardian_circles gc on gc.id=rw.circle_id
-  join profiles creator on creator.id=rw.created_by
-  where rw.status='pending' and is_circle_member(rw.circle_id,auth.uid())
-  order by rw.created_at desc;
-$$;
-revoke all on function public.get_pending_reward_proposals() from public;
-grant execute on function public.get_pending_reward_proposals() to authenticated;
-
 -- ---------- rewards: circle scoping and approval status ----------
 alter table public.rewards add column if not exists circle_id bigint references public.guardian_circles(id);
 alter table public.rewards add column if not exists status text;
@@ -194,6 +177,23 @@ create policy "circle members can view approvals" on public.reward_approvals
     is_admin(auth.uid())
     or exists(select 1 from rewards rw where rw.id=reward_approvals.reward_id and is_circle_member(rw.circle_id,auth.uid()))
   );
+
+create or replace function public.get_pending_reward_proposals()
+returns table(id bigint,circle_id bigint,circle_name text,name text,description text,image_url text,points_cost bigint,stock_quantity int,created_by uuid,creator_name text,creator_icon text,approve_count int,reject_count int,required_count int)
+language sql security definer stable set search_path=public as $$
+  select rw.id,rw.circle_id,gc.name::text,rw.name::text,rw.description::text,rw.image_url::text,rw.points_cost,rw.stock_quantity,
+    rw.created_by,creator.name::text,creator.icon::text,
+    (select count(*)::int from reward_approvals ra where ra.reward_id=rw.id and ra.decision='approve'),
+    (select count(*)::int from reward_approvals ra where ra.reward_id=rw.id and ra.decision='reject'),
+    (floor((select count(*)::int from guardian_circle_members m where m.circle_id=rw.circle_id and m.can_approve=true)::numeric/2)+1)::int
+  from rewards rw
+  join guardian_circles gc on gc.id=rw.circle_id
+  join profiles creator on creator.id=rw.created_by
+  where rw.status='pending' and is_circle_member(rw.circle_id,auth.uid())
+  order by rw.created_at desc;
+$$;
+revoke all on function public.get_pending_reward_proposals() from public;
+grant execute on function public.get_pending_reward_proposals() to authenticated;
 
 -- ---------- Backfill: one Default circle owns every current reward ----------
 do $$
