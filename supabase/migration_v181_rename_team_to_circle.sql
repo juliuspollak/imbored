@@ -2020,7 +2020,10 @@ end; $$;
 revoke all on function public.review_reward_proposal(bigint,text) from public;
 grant execute on function public.review_reward_proposal(bigint,text) to authenticated;
 
-create or replace function public.get_pending_reward_proposals()
+-- OUT columns rename team_id/team_name -> circle_id/circle_name, which
+-- create-or-replace rejects ("cannot change return type"); drop first.
+drop function if exists public.get_pending_reward_proposals();
+create function public.get_pending_reward_proposals()
 returns table(id bigint,circle_id bigint,circle_name text,name text,description text,image_url text,points_cost bigint,stock_quantity int,created_by uuid,creator_name text,creator_icon text,approve_count int,reject_count int,required_count int)
 language sql security definer stable set search_path=public as $$
   select rw.id,rw.circle_id,c.name::text,rw.name::text,rw.description::text,rw.image_url::text,rw.points_cost,rw.stock_quantity,
@@ -2037,7 +2040,8 @@ $$;
 revoke all on function public.get_pending_reward_proposals() from public;
 grant execute on function public.get_pending_reward_proposals() to authenticated;
 
-create or replace function public.list_my_available_rewards()
+drop function if exists public.list_my_available_rewards();
+create function public.list_my_available_rewards()
 returns table(id bigint,circle_id bigint,circle_name text,name text,description text,image_url text,points_cost bigint,stock_quantity int)
 language sql security definer stable set search_path=public as $$
   select rw.id,rw.circle_id,c.name::text,rw.name::text,rw.description::text,rw.image_url::text,rw.points_cost,rw.stock_quantity
