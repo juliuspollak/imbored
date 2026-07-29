@@ -8,7 +8,7 @@ begin;
 create or replace function public.search_circle_members(target_circle_id bigint, search_query text)
 returns table(user_id uuid,name text,icon text,can_approve boolean,status text)
 language sql security definer stable set search_path=public as $$
-  select p.id,p.name::text,p.icon::text,gcm.can_approve,'member'::text
+  select p.id as user_id,p.name::text as name,p.icon::text as icon,gcm.can_approve as can_approve,'member'::text as status
   from guardian_circle_members gcm
   join profiles p on p.id=gcm.user_id
   where gcm.circle_id=target_circle_id
@@ -18,7 +18,7 @@ language sql security definer stable set search_path=public as $$
     and nullif(trim(search_query),'') is not null
     and p.name ilike '%'||trim(search_query)||'%'
   union all
-  select p.id,p.name::text,p.icon::text,false,'invited'::text
+  select p.id as user_id,p.name::text as name,p.icon::text as icon,false as can_approve,'invited'::text as status
   from guardian_circle_invitations i
   join profiles p on p.id=i.invited_user_id
   where i.circle_id=target_circle_id and i.status='pending'
