@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Users, Plus, ShieldCheck, UserPlus, Mail, Check, X, Clock } from "lucide-react";
+import { Users, Plus, ShieldCheck, UserPlus, Mail, Check, X, Clock, Search } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
@@ -7,11 +7,44 @@ import { useAuth } from "./lib/AuthContext.jsx";
 const BG="#F1F3F7",PANEL="#fff",INK="#1B2129",ACCENT="#2F6FED";
 const card={background:PANEL,border:"1px solid rgba(16,24,40,.09)",borderRadius:16};
 
+function CircleMemberSearch({circle,user,onToggleApprove}){
+  const [query,setQuery]=useState("");
+  const [results,setResults]=useState([]);
+  const [searching,setSearching]=useState(false);
+
+  useEffect(()=>{
+    if(query.trim().length<1){setResults([]);return;}
+    let cancelled=false;
+    setSearching(true);
+    const timeout=setTimeout(async()=>{
+      const {data}=await supabase.rpc("search_circle_members",{target_circle_id:circle.circle_id,search_query:query.trim()});
+      if(!cancelled){setResults(data||[]);setSearching(false);}
+    },200);
+    return()=>{cancelled=true;clearTimeout(timeout);};
+  },[circle.circle_id,query]);
+
+  return <div>
+    <label className="flex items-center gap-2 rounded-xl px-3 py-2 mb-2" style={{background:"rgba(16,24,40,.04)"}}>
+      <Search size={13} style={{opacity:.4}}/>
+      <input value={query} onChange={e=>setQuery(e.target.value)} placeholder={`Search this circle's members…`} className="flex-1 min-w-0 bg-transparent outline-none text-xs"/>
+    </label>
+    {query.trim().length>0&&<div className="space-y-1.5">
+      {searching?<p className="text-[11px] opacity-40 py-2 text-center">Searching…</p>
+      :results.length===0?<p className="text-[11px] opacity-40 py-2 text-center">No match in this circle.</p>
+      :results.map(m=><div key={m.user_id} className="flex items-center gap-2">
+        <span className="text-base">{m.icon||"🙂"}</span>
+        <span className="flex-1 min-w-0 text-xs font-medium truncate">{m.name}{m.user_id===user.id?" (you)":""}</span>
+        {m.status==="invited"&&<span className="rounded-full px-2 py-0.5 text-[10px] font-semibold flex items-center gap-1" style={{background:"rgba(217,148,10,.10)",color:"#B5730E"}}><Clock size={9}/>Invited</span>}
+        {m.status==="member"&&circle.can_approve&&m.user_id!==user.id&&<button onClick={()=>onToggleApprove(circle.circle_id,m.user_id,!m.can_approve)} className="rounded-full px-2.5 py-1 text-[10px] font-semibold" style={{background:m.can_approve?"rgba(22,163,74,.1)":"rgba(16,24,40,.05)",color:m.can_approve?"#166534":INK}}>{m.can_approve?"Approver":"Make approver"}</button>}
+        {m.status==="member"&&!circle.can_approve&&m.can_approve&&<span className="text-[10px] opacity-45">Approver</span>}
+      </div>)}
+    </div>}
+  </div>;
+}
+
 export default function GuardianCircles({onBack}){
   const {user}=useAuth();
   const [circles,setCircles]=useState([]);
-  const [rosters,setRosters]=useState({});
-  const [pendingByCircle,setPendingByCircle]=useState({});
   const [invitations,setInvitations]=useState([]);
   const [loading,setLoading]=useState(true);
   const [msg,setMsg]=useState("");
@@ -29,15 +62,6 @@ export default function GuardianCircles({onBack}){
     ]);
     setCircles(c||[]);
     setInvitations(inv||[]);
-    const rosterEntries=await Promise.all((c||[]).map(async circle=>{
-      const [{data:roster},{data:pending}]=await Promise.all([
-        supabase.rpc("get_circle_roster",{target_circle_id:circle.circle_id}),
-        supabase.rpc("get_circle_pending_invitations",{target_circle_id:circle.circle_id}),
-      ]);
-      return [circle.circle_id,{roster:roster||[],pending:pending||[]}];
-    }));
-    setRosters(Object.fromEntries(rosterEntries.map(([id,v])=>[id,v.roster])));
-    setPendingByCircle(Object.fromEntries(rosterEntries.map(([id,v])=>[id,v.pending])));
     setLoading(false);
   },[user.id]);
   useEffect(()=>{refresh()},[refresh]);
@@ -103,31 +127,15 @@ export default function GuardianCircles({onBack}){
       {loading?<p className="text-sm text-center opacity-45 py-10">Loading…</p>
       :circles.length===0?<div className="p-6 text-center rounded-2xl" style={card}><Users size={22} style={{color:ACCENT,margin:"0 auto 8px"}}/><div className="text-sm font-semibold">No circles yet</div><div className="text-xs opacity-45 mt-1">Create one to start proposing reward items with other guardians.</div></div>
       :<div className="space-y-3">
-        {circles.map(c=>{
-          const roster=rosters[c.circle_id]||[];
-          const pending=pendingByCircle[c.circle_id]||[];
-          return <div key={c.circle_id} className="p-4" style={card}>
-            <div className="flex items-center justify-between gap-2 mb-1">
-              <div className="font-semibold text-sm truncate">{c.circle_name}</div>
-              {c.can_approve&&<span className="rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0 flex items-center gap-1" style={{color:"#166534",background:"rgba(22,163,74,.1)"}}><ShieldCheck size={10}/>Approver</span>}
-            </div>
-            <div className="text-xs opacity-45 mb-3">{c.approver_count} approver{c.approver_count===1?"":"s"} · {c.member_count} member{c.member_count===1?"":"s"}</div>
-            <div className="space-y-1.5">
-              {roster.map(m=><div key={m.user_id} className="flex items-center gap-2">
-                <span className="text-base">{m.icon||"🙂"}</span>
-                <span className="flex-1 min-w-0 text-xs font-medium truncate">{m.name}{m.user_id===user.id?" (you)":""}</span>
-                {c.can_approve&&m.user_id!==user.id&&<button onClick={()=>toggleApprove(c.circle_id,m.user_id,!m.can_approve)} className="rounded-full px-2.5 py-1 text-[10px] font-semibold" style={{background:m.can_approve?"rgba(22,163,74,.1)":"rgba(16,24,40,.05)",color:m.can_approve?"#166534":INK}}>{m.can_approve?"Approver":"Make approver"}</button>}
-                {!c.can_approve&&m.can_approve&&<span className="text-[10px] opacity-45">Approver</span>}
-              </div>)}
-              {pending.map(p=><div key={`pending-${p.invitation_id}`} className="flex items-center gap-2 opacity-60">
-                <span className="text-base">{p.invited_icon||"🙂"}</span>
-                <span className="flex-1 min-w-0 text-xs font-medium truncate">{p.invited_name}</span>
-                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold flex items-center gap-1" style={{background:"rgba(217,148,10,.10)",color:"#B5730E"}}><Clock size={9}/>Invited</span>
-              </div>)}
-            </div>
-            {c.can_approve&&<button onClick={()=>{setInviteFor(c.circle_id);setInviteQuery("");setInviteResults([]);}} className="w-full mt-3 rounded-xl py-2 text-xs font-semibold flex items-center justify-center gap-1.5" style={{background:"rgba(47,111,237,.08)",color:ACCENT}}><UserPlus size={13}/>Invite someone</button>}
-          </div>;
-        })}
+        {circles.map(c=><div key={c.circle_id} className="p-4" style={card}>
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <div className="font-semibold text-sm truncate">{c.circle_name}</div>
+            {c.can_approve&&<span className="rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0 flex items-center gap-1" style={{color:"#166534",background:"rgba(22,163,74,.1)"}}><ShieldCheck size={10}/>Approver</span>}
+          </div>
+          <div className="text-xs opacity-45 mb-3">{c.approver_count} approver{c.approver_count===1?"":"s"} · {c.member_count} member{c.member_count===1?"":"s"}</div>
+          <CircleMemberSearch circle={c} user={user} onToggleApprove={toggleApprove}/>
+          {c.can_approve&&<button onClick={()=>{setInviteFor(c.circle_id);setInviteQuery("");setInviteResults([]);}} className="w-full mt-3 rounded-xl py-2 text-xs font-semibold flex items-center justify-center gap-1.5" style={{background:"rgba(47,111,237,.08)",color:ACCENT}}><UserPlus size={13}/>Invite someone</button>}
+        </div>)}
       </div>}
     </div>
 
