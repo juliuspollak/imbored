@@ -73,14 +73,20 @@ export default function RewardRequests({onBack}){
       :reds.map(r=><div key={r.id} className="p-3 mb-2" style={box}>
         <div className="flex items-center justify-between gap-2">
           <div className="font-semibold text-sm">{r.player_icon} {r.player_name} · {r.reward_name}</div>
-          <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{color:STATUS_LABEL[r.status]?.color,background:STATUS_LABEL[r.status]?.bg}}>{STATUS_LABEL[r.status]?.text||r.status}</span>
+          <span className="rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0" style={{color:STATUS_LABEL[r.status]?.color,background:STATUS_LABEL[r.status]?.bg}}>{STATUS_LABEL[r.status]?.text||r.status}</span>
         </div>
-        <div className="text-xs opacity-50 mt-1 mb-2">{r.points_cost.toLocaleString()} Points · requested {new Date(r.requested_at).toLocaleDateString()}</div>
+        <div className="text-xs opacity-50 mt-1 mb-2">{r.points_cost.toLocaleString()} Points · requested {new Date(r.requested_at).toLocaleDateString()}{r.reviewed_by_name&&["approved","declined","fulfilled","disputed"].includes(r.status)?` · by ${r.reviewed_by_icon||""} ${r.reviewed_by_name}`:""}</div>
         {r.status==="disputed"&&r.dispute_reason&&<div className="flex items-start gap-1.5 text-xs mb-2 rounded-lg px-2 py-1.5" style={{background:"rgba(181,67,58,.08)",color:"#B5433A"}}><AlertTriangle size={12} className="shrink-0 mt-0.5"/>{r.dispute_reason}</div>}
-        {isRewardManager&&r.status==="requested"&&<div className="flex gap-2"><button className="gloss-button text-xs" onClick={()=>review(r.id,"approved")}>Approve</button><button className="gloss-button text-xs" onClick={()=>review(r.id,"declined")}>Decline & refund</button></div>}
-        {isRewardManager&&r.status==="approved"&&<button className="gloss-button text-xs" onClick={()=>review(r.id,"fulfilled")}>Mark delivered</button>}
-        {isRewardManager&&r.status==="disputed"&&<div className="flex gap-2"><button className="gloss-button text-xs" onClick={()=>review(r.id,"fulfilled")}>Confirm delivered</button><button className="gloss-button text-xs" onClick={()=>review(r.id,"approved")}>Reopen for delivery</button></div>}
-        {canDispute(r)&&<button className="gloss-button text-xs" onClick={()=>setDisputeTarget(r)} style={{color:"#B5433A"}}>Dispute this</button>}
+        {isRewardManager&&r.status==="requested"&&<div className="flex gap-2">
+          <button onClick={()=>review(r.id,"approved")} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{background:"rgba(22,163,74,.1)",color:"#166534"}}>Approve</button>
+          <button onClick={()=>review(r.id,"declined")} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{background:"rgba(181,67,58,.08)",color:"#B5433A"}}>Decline &amp; refund</button>
+        </div>}
+        {isRewardManager&&r.status==="approved"&&<button onClick={()=>review(r.id,"fulfilled")} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{background:"rgba(47,111,237,.09)",color:ACCENT}}>Mark delivered</button>}
+        {isRewardManager&&r.status==="disputed"&&<div className="flex gap-2">
+          <button onClick={()=>review(r.id,"fulfilled")} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{background:"rgba(22,163,74,.1)",color:"#166534"}}>Confirm delivered</button>
+          <button onClick={()=>review(r.id,"approved")} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{background:"rgba(47,111,237,.09)",color:ACCENT}}>Reopen for delivery</button>
+        </div>}
+        {canDispute(r)&&<button onClick={()=>setDisputeTarget(r)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{background:"rgba(181,67,58,.08)",color:"#B5433A"}}>Dispute this</button>}
       </div>)}
     </div>
     {disputeTarget&&<div className="fixed inset-0 z-50 grid place-items-center p-4" style={{background:"rgba(16,24,40,.45)"}}>
