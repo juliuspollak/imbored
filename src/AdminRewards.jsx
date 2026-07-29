@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Settings, Gift, Lightbulb, ClipboardCheck, Plus, Sparkles, AlertTriangle } from "lucide-react";
+import { Settings, Gift, Lightbulb, ClipboardCheck, Plus, Sparkles, AlertTriangle, ChevronRight, Trash2, Users } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
@@ -47,6 +47,7 @@ export default function AdminRewards({onBack,onOpenGuardianCircles}){
   const [adjust,setAdjust]=useState({player:"",amount:"",reason:""});
   const [priceTarget,setPriceTarget]=useState(null);
   const [priceValue,setPriceValue]=useState("");
+  const [deleteConfirmId,setDeleteConfirmId]=useState(null);
 
   const refresh=useCallback(async()=>{
     if(!isRewardManager)return;
@@ -55,7 +56,7 @@ export default function AdminRewards({onBack,onOpenGuardianCircles}){
       supabase.from("reward_rules").select("*").eq("is_active",true).maybeSingle(),
       supabase.rpc("get_my_practice_reward_usage"),
       supabase.rpc("get_my_circles"),
-      supabase.from("rewards").select("*").neq("status","pending").order("created_at",{ascending:false}),
+      supabase.from("rewards").select("*,profiles(name,icon),guardian_circles(name)").neq("status","pending").order("created_at",{ascending:false}),
       supabase.rpc("get_pending_reward_proposals"),
       supabase.from("reward_wishes").select("*,profiles(name,icon)").order("created_at",{ascending:false}),
       supabase.from("reward_redemptions").select("*,profiles(name,icon),rewards(name)").order("requested_at",{ascending:false}),
@@ -94,6 +95,12 @@ export default function AdminRewards({onBack,onOpenGuardianCircles}){
   }
   async function toggleRewardActive(r){
     await supabase.from("rewards").update({status:r.status==="active"?"rejected":"active"}).eq("id",r.id);
+    refresh();
+  }
+  async function deleteReward(id){
+    const {error}=await supabase.rpc("delete_reward",{target_reward_id:id});
+    setMsg(error?.message||"Item deleted");
+    setDeleteConfirmId(null);
     refresh();
   }
   function openPriceWish(w){setPriceTarget(w);setPriceValue(w.points_cost||"");}
@@ -156,7 +163,11 @@ export default function AdminRewards({onBack,onOpenGuardianCircles}){
       </div>}
 
       {tab==="rewards"&&<div className="space-y-3">
-        {onOpenGuardianCircles&&<button onClick={onOpenGuardianCircles} className="w-full rounded-xl px-3 py-2.5 text-xs font-semibold flex items-center justify-between" style={{background:"rgba(47,111,237,.07)",color:ACCENT}}><span>Manage circles &amp; approvers</span><span>→</span></button>}
+        {onOpenGuardianCircles&&<button onClick={onOpenGuardianCircles} className="w-full rounded-2xl p-3 flex items-center gap-3 text-left" style={card}>
+          <span className="grid place-items-center rounded-xl shrink-0" style={{width:36,height:36,background:"rgba(47,111,237,.09)",color:ACCENT}}><Users size={16}/></span>
+          <span className="flex-1 min-w-0"><span className="block text-sm font-semibold" style={{color:INK}}>Manage circles &amp; approvers</span><span className="block text-[11px] opacity-45">Create circles, invite guardians, grant approvals</span></span>
+          <ChevronRight size={16} style={{opacity:.35}}/>
+        </button>}
 
         {circles.length===0?<div className="rounded-2xl px-3 py-2.5 text-xs" style={{background:"rgba(217,148,10,.10)",color:"#8A5C00"}}>You're not in a circle yet — create one to start proposing items.</div>:<form onSubmit={addReward} className="p-4 grid grid-cols-2 gap-2" style={card}>
           <div className="col-span-2 text-xs font-semibold mb-1" style={{color:INK}}>Propose an item</div>
@@ -188,13 +199,26 @@ export default function AdminRewards({onBack,onOpenGuardianCircles}){
 
         <div className="space-y-2">
           {rewards.length>0&&<div className="text-xs font-bold uppercase tracking-wide opacity-40 px-1">Items</div>}
-          {rewards.map(r=><div key={r.id} className="p-3 flex items-center gap-3" style={card}>
-            <div className="grid place-items-center rounded-xl shrink-0" style={{width:40,height:40,background:"rgba(217,174,88,.14)"}}>{r.image_url?<img src={r.image_url} alt="" className="w-full h-full object-cover rounded-xl"/>:<Gift size={18} style={{color:"#D9AE58"}}/>}</div>
-            <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sm truncate" style={{color:INK}}>{r.name}</div>
-              <div className="text-xs opacity-45">{r.points_cost.toLocaleString()} Points · {r.stock_quantity??"Unlimited"} stock · {r.status}</div>
+          {rewards.map(r=><div key={r.id} className="p-3" style={card}>
+            <div className="flex items-center gap-3">
+              <div className="grid place-items-center rounded-xl shrink-0" style={{width:40,height:40,background:"rgba(217,174,88,.14)"}}>{r.image_url?<img src={r.image_url} alt="" className="w-full h-full object-cover rounded-xl"/>:<Gift size={18} style={{color:"#D9AE58"}}/>}</div>
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-sm truncate" style={{color:INK}}>{r.name}</div>
+                <div className="text-xs opacity-45">{r.points_cost.toLocaleString()} Points · {r.stock_quantity??"Unlimited"} stock · {r.status}</div>
+                <div className="text-[11px] opacity-40 mt-0.5 truncate">{r.guardian_circles?.name||"Unknown circle"} · by {r.profiles?.icon||"🙂"} {r.profiles?.name||"Unknown"}</div>
+              </div>
+              <div className="flex flex-col gap-1.5 shrink-0">
+                <button onClick={()=>toggleRewardActive(r)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{background:r.status==="active"?"rgba(16,24,40,.05)":"rgba(22,163,74,.1)",color:r.status==="active"?INK:"#15803D"}}>{r.status==="active"?"Deactivate":"Reactivate"}</button>
+                <button onClick={()=>setDeleteConfirmId(deleteConfirmId===r.id?null:r.id)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold flex items-center justify-center gap-1" style={{background:"rgba(181,67,58,.08)",color:"#B5433A"}}><Trash2 size={11}/>Delete</button>
+              </div>
             </div>
-            {r.status!=="rejected"&&<button onClick={()=>toggleRewardActive(r)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold shrink-0" style={{background:r.status==="active"?"rgba(16,24,40,.05)":"rgba(22,163,74,.1)",color:r.status==="active"?INK:"#15803D"}}>{r.status==="active"?"Deactivate":"Reactivate"}</button>}
+            {deleteConfirmId===r.id&&<div className="rounded-xl px-3 py-2.5 mt-2 text-xs" style={{background:"rgba(181,67,58,.08)",color:"#B5433A"}}>
+              <div className="mb-2">Delete "{r.name}"? This can't be undone, and only works if no one has ever redeemed it.</div>
+              <div className="flex gap-2">
+                <button onClick={()=>deleteReward(r.id)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-white" style={{background:"#B5433A"}}>Delete item</button>
+                <button onClick={()=>setDeleteConfirmId(null)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{background:"rgba(16,24,40,.06)",color:INK}}>Cancel</button>
+              </div>
+            </div>}
           </div>)}
         </div>
       </div>}
