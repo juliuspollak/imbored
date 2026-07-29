@@ -65,8 +65,8 @@ export default function RewardRequests({onBack}){
 
   return <div style={{background:BG,minHeight:"100vh",fontFamily:"'Inter',sans-serif"}} className="p-4 pt-10 flex justify-center">
     <div className="w-full max-w-xl">
-      <div className="flex gap-3 items-center mb-1"><BackButton onClick={onBack}/><h1 className="text-2xl font-bold" style={{fontFamily:"'Fredoka',sans-serif",color:INK}}>Reward requests</h1></div>
-      <p className="text-xs opacity-45 mb-4 px-1">Every player's item requests, in one place — from request to delivery.</p>
+      <div className="flex gap-3 items-center mb-1"><BackButton onClick={onBack}/><h1 className="text-2xl font-bold" style={{fontFamily:"'Fredoka',sans-serif",color:INK}}>{isRewardManager?"Reward requests":"My reward requests"}</h1></div>
+      <p className="text-xs opacity-45 mb-4 px-1">{isRewardManager?"Every player's item requests, in one place — from request to delivery.":"Track your requests from request to delivery, and dispute one if it's marked delivered by mistake."}</p>
       {msg&&<div className="p-3 mb-3 rounded-xl text-xs" style={{background:"rgba(47,111,237,.08)"}}>{msg}</div>}
       {loading?<p className="text-sm text-center opacity-45 py-10">Loading…</p>
       :reds.length===0?<div className="p-6 text-center rounded-2xl" style={box}><ClipboardCheck size={22} style={{color:ACCENT,margin:"0 auto 8px"}}/><div className="text-sm font-semibold">No requests yet</div></div>
