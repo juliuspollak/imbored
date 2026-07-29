@@ -76,6 +76,11 @@ export default function GuardianCircles({onBack}){
     setMsg(error?.message||(accept?"Joined circle":"Invitation declined"));
     refresh();
   }
+  async function cancelInvitation(invitationId){
+    const {error}=await supabase.rpc("cancel_circle_invitation",{target_invitation_id:invitationId});
+    setMsg(error?.message||"Invitation cancelled");
+    refresh();
+  }
 
   return <div style={{background:BG,minHeight:"100vh",fontFamily:"'Inter',sans-serif"}} className="p-4 pt-10 flex justify-center">
     <div className="w-full max-w-xl">
@@ -123,6 +128,7 @@ export default function GuardianCircles({onBack}){
                 <span className="text-base">{p.invited_icon||"🙂"}</span>
                 <span className="flex-1 min-w-0 text-xs font-medium truncate">{p.invited_name}</span>
                 <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold flex items-center gap-1" style={{background:"rgba(217,148,10,.10)",color:"#B5730E"}}><Clock size={9}/>Invited</span>
+                {c.can_approve&&<button onClick={()=>cancelInvitation(p.invitation_id)} className="grid place-items-center rounded-full shrink-0" style={{width:22,height:22,background:"rgba(181,67,58,.08)",color:"#B5433A"}} aria-label={`Cancel invitation to ${p.invited_name}`}><X size={11}/></button>}
               </div>)}
             </div>
             {c.can_approve&&<button onClick={()=>{setInviteFor(c.circle_id);setInviteQuery("");setInviteResults([]);}} className="w-full mt-3 rounded-xl py-2 text-xs font-semibold flex items-center justify-center gap-1.5" style={{background:"rgba(47,111,237,.08)",color:ACCENT}}><UserPlus size={13}/>Invite someone</button>}
