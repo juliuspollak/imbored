@@ -462,7 +462,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
 
   const boardGrid = (
     <div
-      className="ms-board w-full rounded-xl overflow-hidden"
+      className="ms-board rounded-xl overflow-hidden -mx-5 lg:-mx-6"
       style={{
         aspectRatio: "1 / 1",
         display: "grid",
@@ -470,6 +470,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         gridTemplateRows: `repeat(${N}, 1fr)`,
         background: PANEL,
         border: "2px solid #6B6B70",
+        width: "calc(100% + 40px)",
       }}
     >
       {board.map((row, r) =>
