@@ -269,7 +269,7 @@
   /* Tango and Zip were designed as light puzzle sheets. Keep those canvases
      light and restore their dark grid lines, while the outer card remains dark. */
   .tg-card .tg-board-shell,
-  .zp-card .relative.w-full.rounded-xl.overflow-hidden[style*="aspect-ratio"] {
+  .zp-card .zp-board-shell {
     background: #e9edf4 !important;
     border: 1px solid rgba(255, 255, 255, 0.16);
     box-shadow:

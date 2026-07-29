@@ -657,7 +657,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
     <div
       ref={boardRef}
       onMouseDown={handleMouseDown}
-      className="relative rounded-xl overflow-hidden select-none -mx-5 lg:-mx-6"
+      className="zp-board-shell relative rounded-xl overflow-hidden select-none -mx-5 lg:-mx-6"
       style={{
         aspectRatio: "1 / 1",
         display: "grid",
