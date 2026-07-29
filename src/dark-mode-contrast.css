@@ -58,12 +58,15 @@
     color: var(--cs-ink-2) !important;
   }
 
-  .challenge-summary-points,
-  .challenge-history-rankpts {
+  .challenge-summary-points {
     background: var(--cs-accent-soft) !important;
     color: #a9bcff !important;
     border: 1px solid rgba(109, 139, 255, 0.20);
     box-shadow: none !important;
+  }
+
+  .challenge-history-rankpts {
+    color: #a9bcff !important;
   }
 
   .challenge-delta-dot[data-tone="good"] {
