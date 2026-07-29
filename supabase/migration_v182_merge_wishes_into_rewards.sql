@@ -64,8 +64,10 @@ revoke all on function public.price_reward_proposal(bigint,bigint) from public;
 grant execute on function public.price_reward_proposal(bigint,bigint) to authenticated;
 
 -- get_pending_reward_proposals now also surfaces 'suggested' (unpriced)
--- items so approvers can price them from the same list.
-create or replace function public.get_pending_reward_proposals()
+-- items so approvers can price them from the same list. Adding the status
+-- column changes the return row type, which create-or-replace rejects.
+drop function if exists public.get_pending_reward_proposals();
+create function public.get_pending_reward_proposals()
 returns table(id bigint,circle_id bigint,circle_name text,name text,description text,image_url text,points_cost bigint,stock_quantity int,status text,created_by uuid,creator_name text,creator_icon text,approve_count int,reject_count int,required_count int)
 language sql security definer stable set search_path=public as $$
   select rw.id,rw.circle_id,c.name::text,rw.name::text,rw.description::text,rw.image_url::text,rw.points_cost,rw.stock_quantity,rw.status,
