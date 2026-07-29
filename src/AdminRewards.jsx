@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Settings, Gift, Lightbulb, ClipboardCheck, Plus, Sparkles, AlertTriangle, ChevronRight, Trash2, Users } from "lucide-react";
+import { Settings, Gift, Lightbulb, ClipboardCheck, Plus, Sparkles, AlertTriangle, ChevronRight, Trash2, Users, ShieldCheck } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
@@ -41,7 +41,7 @@ export default function AdminRewards({onBack,onOpenTeams}){
   const {profile}=useAuth();
   const isRewardManager=!!(profile?.is_admin||profile?.is_reward_steward);
   const [tab,setTab]=useState(profile?.is_admin?"rules":"rewards");
-  const [rules,setRules]=useState(null),[practiceUsage,setPracticeUsage]=useState(null),[teams,setTeams]=useState([]),[rewards,setRewards]=useState([]),[pending,setPending]=useState([]),[wishes,setWishes]=useState([]),[reds,setReds]=useState([]),[players,setPlayers]=useState([]);
+  const [rules,setRules]=useState(null),[practiceUsage,setPracticeUsage]=useState(null),[teams,setTeams]=useState([]),[rosters,setRosters]=useState([]),[rewards,setRewards]=useState([]),[pending,setPending]=useState([]),[wishes,setWishes]=useState([]),[reds,setReds]=useState([]),[players,setPlayers]=useState([]);
   const [msg,setMsg]=useState(""),[loading,setLoading]=useState(true);
   const [newReward,setNewReward]=useState({team_id:"",name:"",description:"",image_url:"",points_cost:"",stock_quantity:""});
   const [adjust,setAdjust]=useState({player:"",amount:"",reason:""});
@@ -52,17 +52,18 @@ export default function AdminRewards({onBack,onOpenTeams}){
   const refresh=useCallback(async()=>{
     if(!isRewardManager)return;
     setLoading(true);
-    const [{data:r},{data:usage},{data:t},{data:rw},{data:pr},{data:w},{data:rd},{data:p}]=await Promise.all([
+    const [{data:r},{data:usage},{data:t},{data:ro},{data:rw},{data:pr},{data:w},{data:rd},{data:p}]=await Promise.all([
       supabase.from("reward_rules").select("*").eq("is_active",true).maybeSingle(),
       supabase.rpc("get_my_practice_reward_usage"),
       supabase.rpc("get_my_reward_teams"),
+      supabase.rpc("get_my_team_rosters"),
       supabase.from("rewards").select("*,profiles(name,icon),teams(name)").neq("status","pending").order("created_at",{ascending:false}),
       supabase.rpc("get_pending_reward_proposals"),
       supabase.from("reward_wishes").select("*,profiles(name,icon)").order("created_at",{ascending:false}),
       supabase.from("reward_redemptions").select("*,profiles(name,icon),rewards(name)").order("requested_at",{ascending:false}),
       supabase.from("profiles").select("id,name,icon").order("name"),
     ]);
-    setRules(r);setPracticeUsage(usage);setTeams(t||[]);setRewards(rw||[]);setPending(pr||[]);setWishes(w||[]);setReds(rd||[]);setPlayers(p||[]);
+    setRules(r);setPracticeUsage(usage);setTeams(t||[]);setRosters(ro||[]);setRewards(rw||[]);setPending(pr||[]);setWishes(w||[]);setReds(rd||[]);setPlayers(p||[]);
     setNewReward(cur=>cur.team_id?cur:{...cur,team_id:t?.[0]?.team_id||""});
     setLoading(false);
   },[isRewardManager]);
@@ -174,6 +175,11 @@ export default function AdminRewards({onBack,onOpenTeams}){
           <select required value={newReward.team_id} onChange={e=>setNewReward({...newReward,team_id:e.target.value})} className="col-span-2 border rounded-lg px-3 py-2 text-sm" style={{borderColor:"rgba(16,24,40,.12)"}}>
             {teams.map(t=><option key={t.team_id} value={t.team_id}>{t.team_name} · {t.member_count} member{t.member_count===1?"":"s"}</option>)}
           </select>
+          {newReward.team_id&&<div className="col-span-2 flex flex-wrap gap-1.5 -mt-1">
+            {rosters.filter(m=>String(m.team_id)===String(newReward.team_id)).map(m=><span key={m.user_id} className="rounded-full pl-1 pr-2 py-1 text-[11px] font-medium flex items-center gap-1" style={{background:"rgba(16,24,40,.04)",color:INK}}>
+              <span>{m.member_icon||"🙂"}</span>{m.member_name}{m.can_approve_rewards&&<ShieldCheck size={10} style={{color:"#12946A"}}/>}
+            </span>)}
+          </div>}
           <input className="col-span-2 border rounded-lg px-3 py-2 text-sm" style={{borderColor:"rgba(16,24,40,.12)"}} placeholder="Reward name" value={newReward.name} onChange={e=>setNewReward({...newReward,name:e.target.value})} required/>
           <input className="col-span-2 border rounded-lg px-3 py-2 text-sm" style={{borderColor:"rgba(16,24,40,.12)"}} placeholder="Description" value={newReward.description} onChange={e=>setNewReward({...newReward,description:e.target.value})}/>
           <input className="col-span-2 border rounded-lg px-3 py-2 text-sm" style={{borderColor:"rgba(16,24,40,.12)"}} placeholder="Image URL" value={newReward.image_url} onChange={e=>setNewReward({...newReward,image_url:e.target.value})}/>
