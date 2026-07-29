@@ -25,8 +25,8 @@ drop function if exists public.set_circle_approver(bigint,uuid,boolean);
 drop table if exists public.guardian_circle_invitations cascade;
 drop table if exists public.guardian_circle_members cascade;
 drop table if exists public.guardian_circles cascade;
--- is_circle_member/is_circle_approver dropped after the functions that
--- reference them are replaced below.
+-- is_circle_member/is_circle_approver are dropped further down, right
+-- before rewards.circle_id — see that section for why the ordering matters.
 
 -- ---------- teams: no more global unique name ----------
 alter table public.teams drop constraint if exists teams_name_key;
@@ -112,21 +112,24 @@ revoke all on function public.get_my_team_rosters() from public;
 grant execute on function public.get_my_team_rosters() to authenticated;
 
 -- ---------- rewards: team-scoped instead of circle-scoped ----------
+-- Drop everything that still depends on rewards.circle_id (policies on
+-- both rewards and reward_approvals reference it) before dropping the
+-- column itself, or Postgres refuses with "other objects depend on it".
+drop policy if exists "circle members and admins view rewards" on public.rewards;
+drop policy if exists "circle approvers update rewards" on public.rewards;
+drop policy if exists "circle members can view approvals" on public.reward_approvals;
+drop function if exists public.is_circle_member(bigint,uuid);
+drop function if exists public.is_circle_approver(bigint,uuid);
+
 alter table public.rewards drop column if exists circle_id;
 alter table public.rewards add column team_id bigint references public.teams(id);
 alter table public.rewards alter column team_id set not null;
 
-drop function if exists public.is_circle_member(bigint,uuid);
-drop function if exists public.is_circle_approver(bigint,uuid);
-
-drop policy if exists "circle members and admins view rewards" on public.rewards;
-drop policy if exists "circle approvers update rewards" on public.rewards;
 create policy "team members and admins view rewards" on public.rewards
   for select using (is_admin(auth.uid()) or exists(select 1 from team_members where team_id=rewards.team_id and user_id=auth.uid()));
 create policy "team reward approvers update rewards" on public.rewards
   for update using (is_team_reward_approver(team_id,auth.uid())) with check (is_team_reward_approver(team_id,auth.uid()));
 
-drop policy if exists "circle members can view approvals" on public.reward_approvals;
 create policy "team members can view approvals" on public.reward_approvals
   for select using (
     is_admin(auth.uid())
