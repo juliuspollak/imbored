@@ -44,6 +44,14 @@ export default function GuardianCircles({onBack}){
   useEffect(()=>{refresh()},[refresh]);
 
   useEffect(()=>{
+    supabase.from("user_section_views").upsert({user_id:user.id,section:"guardiancircles",viewed_at:new Date().toISOString()})
+      .then(({error})=>{
+        if(error) console.error("Unable to mark Circles as viewed:",error);
+        else window.dispatchEvent(new CustomEvent("guardiancircles-section-seen"));
+      });
+  },[user.id]);
+
+  useEffect(()=>{
     if(!inviteFor||inviteQuery.trim().length<2){setInviteResults([]);return;}
     let cancelled=false;
     setInviteSearching(true);
