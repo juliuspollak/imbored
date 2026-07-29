@@ -576,7 +576,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                 <span className="tg-symbol tg-symbol-disc tg-symbol-disc--sun"><SunIcon key={`sun-${r}-${c}`} size={Math.max(28, 50 - SIZE)} isConflict={isConflict} /></span>
               )}
               {val === MOON && (
-                <span className="tg-symbol tg-symbol-disc tg-symbol-disc--moon"><ModernMoonIcon key={`moon-${r}-${c}`} size={Math.max(28, 46 - SIZE)} isConflict={isConflict} /></span>
+                <span className="tg-symbol tg-symbol-disc tg-symbol-disc--moon"><ModernMoonIcon key={`moon-${r}-${c}`} size={Math.max(28, 44 - SIZE)} isConflict={isConflict} /></span>
               )}
               {/* The pulsing border alone doesn't say what belongs here —
                   show a faint preview of the actual symbol. For an empty
