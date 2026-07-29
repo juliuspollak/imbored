@@ -36,9 +36,6 @@ alter table public.circle_weekly_challenges rename column team_id to circle_id;
 alter table public.rewards rename column team_id to circle_id;
 alter table public.game_stats rename column team_id to circle_id;
 alter table public.game_stats rename column team_challenge_id to circle_challenge_id;
-alter table public.circle_challenge_starts rename column challenge_id to challenge_id; -- unchanged, kept for clarity
-alter table public.circle_challenge_reward_awards rename column challenge_id to challenge_id; -- unchanged
-alter table public.circle_challenge_stake_acceptances rename column challenge_id to challenge_id; -- unchanged
 
 -- ============================================================
 -- 3. Drop every old team-named function/trigger before recreating
