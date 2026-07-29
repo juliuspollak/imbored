@@ -107,8 +107,25 @@ select {
   [style*="background: #F7F8FB"],
   [style*="background:#F7F8FB"],
   [style*="background: #f7f8fb"],
-  [style*="background:#f7f8fb"] {
+  [style*="background:#f7f8fb"],
+  [style*="background: #F8F9FC"],
+  [style*="background:#F8F9FC"],
+  [style*="background: #f8f9fc"],
+  [style*="background:#f8f9fc"],
+  [style*="background: #F4F6FA"],
+  [style*="background:#F4F6FA"],
+  [style*="background: #f4f6fa"],
+  [style*="background:#f4f6fa"] {
     background: var(--app-bg-elevated) !important;
+    color: var(--app-text) !important;
+  }
+
+  /* Warm alert banners (join requests, invitations, pending states). */
+  [style*="background: #FFF8E7"],
+  [style*="background:#FFF8E7"],
+  [style*="background: #fff8e7"],
+  [style*="background:#fff8e7"] {
+    background: linear-gradient(145deg, rgba(116, 84, 24, 0.24), rgba(54, 43, 24, 0.28)) !important;
     color: var(--app-text) !important;
   }
 

@@ -543,8 +543,8 @@
 @media (prefers-color-scheme: dark) {
   /* Purpose-built surfaces avoid relying on fragile inline-style matching. */
   .personal-challenge-icon,
-  .team-icon-control,
-  .team-member-icon {
+  .circle-icon-control,
+  .circle-member-icon {
     background: linear-gradient(145deg, rgba(85, 104, 135, 0.42), rgba(35, 45, 60, 0.94)) !important;
     border: 1px solid rgba(255, 255, 255, 0.13) !important;
     color: #f4f7fb !important;
@@ -561,48 +561,48 @@
     color: #66d9a6 !important;
   }
 
-  .team-challenges-panel,
-  .team-members-panel {
+  .circle-challenges-panel,
+  .circle-members-panel {
     background: linear-gradient(155deg, rgba(35, 45, 60, 0.94), rgba(23, 30, 42, 0.96)) !important;
     border-color: rgba(255, 255, 255, 0.11) !important;
     color: #f4f7fb !important;
     box-shadow: 0 14px 34px rgba(0, 0, 0, 0.25);
   }
 
-  .team-join-requests {
+  .circle-join-requests {
     background: linear-gradient(145deg, rgba(116, 84, 24, 0.24), rgba(54, 43, 24, 0.28)) !important;
     border-color: rgba(245, 213, 131, 0.22) !important;
   }
 
-  .team-join-requests-title {
+  .circle-join-requests-title {
     color: #f5d583 !important;
   }
 
-  .team-join-request + .team-join-request {
+  .circle-join-request + .circle-join-request {
     border-top: 1px solid rgba(245, 213, 131, 0.12);
   }
 
-  .team-join-request-icon {
+  .circle-join-request-icon {
     width: 30px;
     height: 30px;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.10);
   }
 
-  .team-join-action {
+  .circle-join-action {
     min-height: 30px;
     padding-inline: 9px;
   }
 
-  .team-join-action--approve {
+  .circle-join-action--approve {
     color: #6ee7a0 !important;
   }
 
-  .team-join-action--decline {
+  .circle-join-action--decline {
     color: #f5d583 !important;
   }
 
-  .team-join-action--block {
+  .circle-join-action--block {
     color: #ff8d91 !important;
   }
 
@@ -639,10 +639,10 @@
   }
 
   /* Manage is a full-page layer, so both the viewport and centered shell must
-     own the dark background instead of exposing the light Teams page below. */
-  .teams-page,
-  .teams-manage-page,
-  .teams-manage-shell {
+     own the dark background instead of exposing the light Circles page below. */
+  .circles-page,
+  .circles-manage-page,
+  .circles-manage-shell {
     background: radial-gradient(circle at 50% -8%, rgba(74,105,156,.2), transparent 38%), #0d1118 !important;
     color: #f4f7fb !important;
   }
