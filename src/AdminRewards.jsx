@@ -37,13 +37,13 @@ function StatusPill({status}){
   return <span className="rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0" style={{color:s.color,background:s.bg}}>{s.text}</span>;
 }
 
-export default function AdminRewards({onBack,onOpenGuardianCircles}){
+export default function AdminRewards({onBack,onOpenTeams}){
   const {profile}=useAuth();
   const isRewardManager=!!(profile?.is_admin||profile?.is_reward_steward);
   const [tab,setTab]=useState(profile?.is_admin?"rules":"rewards");
-  const [rules,setRules]=useState(null),[practiceUsage,setPracticeUsage]=useState(null),[circles,setCircles]=useState([]),[rewards,setRewards]=useState([]),[pending,setPending]=useState([]),[wishes,setWishes]=useState([]),[reds,setReds]=useState([]),[players,setPlayers]=useState([]);
+  const [rules,setRules]=useState(null),[practiceUsage,setPracticeUsage]=useState(null),[teams,setTeams]=useState([]),[rewards,setRewards]=useState([]),[pending,setPending]=useState([]),[wishes,setWishes]=useState([]),[reds,setReds]=useState([]),[players,setPlayers]=useState([]);
   const [msg,setMsg]=useState(""),[loading,setLoading]=useState(true);
-  const [newReward,setNewReward]=useState({circle_id:"",name:"",description:"",image_url:"",points_cost:"",stock_quantity:""});
+  const [newReward,setNewReward]=useState({team_id:"",name:"",description:"",image_url:"",points_cost:"",stock_quantity:""});
   const [adjust,setAdjust]=useState({player:"",amount:"",reason:""});
   const [priceTarget,setPriceTarget]=useState(null);
   const [priceValue,setPriceValue]=useState("");
@@ -52,18 +52,18 @@ export default function AdminRewards({onBack,onOpenGuardianCircles}){
   const refresh=useCallback(async()=>{
     if(!isRewardManager)return;
     setLoading(true);
-    const [{data:r},{data:usage},{data:c},{data:rw},{data:pr},{data:w},{data:rd},{data:p}]=await Promise.all([
+    const [{data:r},{data:usage},{data:t},{data:rw},{data:pr},{data:w},{data:rd},{data:p}]=await Promise.all([
       supabase.from("reward_rules").select("*").eq("is_active",true).maybeSingle(),
       supabase.rpc("get_my_practice_reward_usage"),
-      supabase.rpc("get_my_circles"),
-      supabase.from("rewards").select("*,profiles(name,icon),guardian_circles(name)").neq("status","pending").order("created_at",{ascending:false}),
+      supabase.rpc("get_my_reward_teams"),
+      supabase.from("rewards").select("*,profiles(name,icon),teams(name)").neq("status","pending").order("created_at",{ascending:false}),
       supabase.rpc("get_pending_reward_proposals"),
       supabase.from("reward_wishes").select("*,profiles(name,icon)").order("created_at",{ascending:false}),
       supabase.from("reward_redemptions").select("*,profiles(name,icon),rewards(name)").order("requested_at",{ascending:false}),
       supabase.from("profiles").select("id,name,icon").order("name"),
     ]);
-    setRules(r);setPracticeUsage(usage);setCircles(c||[]);setRewards(rw||[]);setPending(pr||[]);setWishes(w||[]);setReds(rd||[]);setPlayers(p||[]);
-    setNewReward(cur=>cur.circle_id?cur:{...cur,circle_id:c?.[0]?.circle_id||""});
+    setRules(r);setPracticeUsage(usage);setTeams(t||[]);setRewards(rw||[]);setPending(pr||[]);setWishes(w||[]);setReds(rd||[]);setPlayers(p||[]);
+    setNewReward(cur=>cur.team_id?cur:{...cur,team_id:t?.[0]?.team_id||""});
     setLoading(false);
   },[isRewardManager]);
   useEffect(()=>{refresh()},[refresh]);
@@ -77,15 +77,15 @@ export default function AdminRewards({onBack,onOpenGuardianCircles}){
   async function addReward(e){
     e.preventDefault();
     const {error}=await supabase.rpc("propose_reward",{
-      target_circle_id:Number(newReward.circle_id),
+      target_team_id:Number(newReward.team_id),
       reward_name:newReward.name,
       reward_description:newReward.description,
       reward_image_url:newReward.image_url,
       reward_points_cost:Number(newReward.points_cost),
       reward_stock_quantity:newReward.stock_quantity===""?null:Number(newReward.stock_quantity),
     });
-    setMsg(error?.message||"Proposed — waiting on approval from this circle");
-    if(!error)setNewReward(cur=>({circle_id:cur.circle_id,name:"",description:"",image_url:"",points_cost:"",stock_quantity:""}));
+    setMsg(error?.message||"Proposed — waiting on approval from this team");
+    if(!error)setNewReward(cur=>({team_id:cur.team_id,name:"",description:"",image_url:"",points_cost:"",stock_quantity:""}));
     refresh();
   }
   async function reviewProposal(id,decision){
@@ -163,16 +163,16 @@ export default function AdminRewards({onBack,onOpenGuardianCircles}){
       </div>}
 
       {tab==="rewards"&&<div className="space-y-3">
-        {onOpenGuardianCircles&&<button onClick={onOpenGuardianCircles} className="w-full rounded-2xl p-3 flex items-center gap-3 text-left" style={card}>
+        {onOpenTeams&&<button onClick={onOpenTeams} className="w-full rounded-2xl p-3 flex items-center gap-3 text-left" style={card}>
           <span className="grid place-items-center rounded-xl shrink-0" style={{width:36,height:36,background:"rgba(47,111,237,.09)",color:ACCENT}}><Users size={16}/></span>
-          <span className="flex-1 min-w-0"><span className="block text-sm font-semibold" style={{color:INK}}>Manage circles &amp; approvers</span><span className="block text-[11px] opacity-45">Create circles, invite guardians, grant approvals</span></span>
+          <span className="flex-1 min-w-0"><span className="block text-sm font-semibold" style={{color:INK}}>Manage teams &amp; approvers</span><span className="block text-[11px] opacity-45">Rosters, invites, and who can approve reward items</span></span>
           <ChevronRight size={16} style={{opacity:.35}}/>
         </button>}
 
-        {circles.length===0?<div className="rounded-2xl px-3 py-2.5 text-xs" style={{background:"rgba(217,148,10,.10)",color:"#8A5C00"}}>You're not in a circle yet — create one to start proposing items.</div>:<form onSubmit={addReward} className="p-4 grid grid-cols-2 gap-2" style={card}>
+        {teams.length===0?<div className="rounded-2xl px-3 py-2.5 text-xs" style={{background:"rgba(217,148,10,.10)",color:"#8A5C00"}}>You're not on a team yet — join or create one to start proposing items.</div>:<form onSubmit={addReward} className="p-4 grid grid-cols-2 gap-2" style={card}>
           <div className="col-span-2 text-xs font-semibold mb-1" style={{color:INK}}>Propose an item</div>
-          <select required value={newReward.circle_id} onChange={e=>setNewReward({...newReward,circle_id:e.target.value})} className="col-span-2 border rounded-lg px-3 py-2 text-sm" style={{borderColor:"rgba(16,24,40,.12)"}}>
-            {circles.map(c=><option key={c.circle_id} value={c.circle_id}>{c.circle_name} · {c.member_count} member{c.member_count===1?"":"s"}</option>)}
+          <select required value={newReward.team_id} onChange={e=>setNewReward({...newReward,team_id:e.target.value})} className="col-span-2 border rounded-lg px-3 py-2 text-sm" style={{borderColor:"rgba(16,24,40,.12)"}}>
+            {teams.map(t=><option key={t.team_id} value={t.team_id}>{t.team_name} · {t.member_count} member{t.member_count===1?"":"s"}</option>)}
           </select>
           <input className="col-span-2 border rounded-lg px-3 py-2 text-sm" style={{borderColor:"rgba(16,24,40,.12)"}} placeholder="Reward name" value={newReward.name} onChange={e=>setNewReward({...newReward,name:e.target.value})} required/>
           <input className="col-span-2 border rounded-lg px-3 py-2 text-sm" style={{borderColor:"rgba(16,24,40,.12)"}} placeholder="Description" value={newReward.description} onChange={e=>setNewReward({...newReward,description:e.target.value})}/>
@@ -186,7 +186,7 @@ export default function AdminRewards({onBack,onOpenGuardianCircles}){
           <div className="text-xs font-bold uppercase tracking-wide opacity-40 px-1">Needs approval</div>
           {pending.map(p=><div key={p.id} className="p-3" style={{...card,border:"1px solid rgba(217,148,10,.25)"}}>
             <div className="flex items-center justify-between gap-2">
-              <div className="font-semibold text-sm truncate">{p.name} · {p.circle_name}</div>
+              <div className="font-semibold text-sm truncate">{p.name} · {p.team_name}</div>
               <span className="rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0" style={{color:"#B5730E",background:"rgba(217,148,10,.10)"}}>{p.approve_count}/{p.required_count} approved</span>
             </div>
             <div className="text-xs opacity-50 mt-1 mb-2">{p.points_cost.toLocaleString()} Points · proposed by {p.creator_icon} {p.creator_name}</div>
@@ -205,7 +205,7 @@ export default function AdminRewards({onBack,onOpenGuardianCircles}){
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-sm truncate" style={{color:INK}}>{r.name}</div>
                 <div className="text-xs opacity-45">{r.points_cost.toLocaleString()} Points · {r.stock_quantity??"Unlimited"} stock · {r.status}</div>
-                <div className="text-[11px] opacity-40 mt-0.5 truncate">{r.guardian_circles?.name||"Unknown circle"} · by {r.profiles?.icon||"🙂"} {r.profiles?.name||"Unknown"}</div>
+                <div className="text-[11px] opacity-40 mt-0.5 truncate">{r.teams?.name||"Unknown team"} · by {r.profiles?.icon||"🙂"} {r.profiles?.name||"Unknown"}</div>
               </div>
               <div className="flex flex-col gap-1.5 shrink-0">
                 <button onClick={()=>toggleRewardActive(r)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{background:r.status==="active"?"rgba(16,24,40,.05)":"rgba(22,163,74,.1)",color:r.status==="active"?INK:"#15803D"}}>{r.status==="active"?"Deactivate":"Reactivate"}</button>

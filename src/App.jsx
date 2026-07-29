@@ -36,7 +36,6 @@ const Chat = lazy(() => import("./Chat.jsx"));
 const Chats = lazy(() => import("./Chats.jsx"));
 const AdminRewards = lazy(() => import("./AdminRewards.jsx"));
 const RewardRequests = lazy(() => import("./RewardRequests.jsx"));
-const GuardianCircles = lazy(() => import("./GuardianCircles.jsx"));
 import { saveStats } from "./lib/saveStats.js";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useOnlinePlayers } from "./lib/useOnlinePlayers.js";
@@ -47,7 +46,6 @@ import { useCompletedFeedbackCount } from "./lib/useCompletedFeedbackCount.js";
 import { useNewTransfersCount } from "./lib/useNewTransfers.js";
 import { useMyRedemptionUpdates } from "./lib/useMyRedemptionUpdates.js";
 import { useOpenRewardRequestsCount } from "./lib/useOpenRewardRequestsCount.js";
-import { usePendingCircleInvitationCount } from "./lib/usePendingCircleInvitations.js";
 import { usePokes } from "./lib/pokes.js";
 import { useUnreadMessages } from "./lib/useUnreadMessages.js";
 import { useI18n } from "./lib/i18n.jsx";
@@ -205,7 +203,6 @@ function AppShell() {
   const myRedemptionUpdates = useMyRedemptionUpdates(user?.id);
   const isRewardManager = !!(profile?.is_admin || profile?.is_reward_steward);
   const openRewardRequestsCount = useOpenRewardRequestsCount(isRewardManager ? user?.id : undefined);
-  const pendingCircleInvitationCount = usePendingCircleInvitationCount(user?.id);
   const unreadMessages = useUnreadMessages(user?.id);
   const [sectionSignals, setSectionSignals] = useState({ whatsnew: false, teams: false });
 
@@ -302,7 +299,6 @@ function AppShell() {
       onOpenAdminGames={() => openAccountSection("admingames")}
       onOpenAdminRewards={() => openAccountSection("adminrewards")}
       onOpenRewardRequests={() => openAccountSection("rewardrequests")}
-      onOpenGuardianCircles={() => openAccountSection("guardiancircles")}
       players={players}
       userId={user?.id}
       openFeedbackCount={openFeedbackCount}
@@ -310,7 +306,6 @@ function AppShell() {
       newTransfersCount={newTransfersCount}
       myRedemptionUpdates={myRedemptionUpdates}
       openRewardRequestsCount={openRewardRequestsCount}
-      pendingCircleInvitationCount={pendingCircleInvitationCount}
       unreadMessages={unreadMessages}
       sectionSignals={sectionSignals}
       incognito={incognito === true}
@@ -418,15 +413,7 @@ function AppShell() {
   if (active === "adminrewards") {
     return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
-        <AdminRewards onBack={() => setActive(null)} onOpenGuardianCircles={() => setActive("guardiancircles")} />
-      </Suspense>
-    );
-  }
-
-  if (active === "guardiancircles") {
-    return withAccountMenu(
-      <Suspense fallback={<FullScreenMessage text="Loading…" />}>
-        <GuardianCircles onBack={() => setActive(null)} />
+        <AdminRewards onBack={() => setActive(null)} onOpenTeams={() => openTeams()} />
       </Suspense>
     );
   }
@@ -599,14 +586,14 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
   );
 }
 
-function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenTeams, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, onOpenRewardRequests, onOpenGuardianCircles, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, pendingCircleInvitationCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
+function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenTeams, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, onOpenRewardRequests, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
   const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const isAdmin = !!profile.is_admin;
   const isRewardManager = !!(profile.is_admin || profile.is_reward_steward);
   const feedbackBadgeCount = isAdmin ? openFeedbackCount : completedFeedbackCount;
-  const totalNotifications = feedbackBadgeCount + newTransfersCount + myRedemptionUpdates + openRewardRequestsCount + pendingCircleInvitationCount + unreadMessages.total
+  const totalNotifications = feedbackBadgeCount + newTransfersCount + myRedemptionUpdates + openRewardRequestsCount + unreadMessages.total
     + (sectionSignals.whatsnew ? 1 : 0) + (sectionSignals.teams ? 1 : 0);
 
   useEffect(() => {
@@ -634,7 +621,6 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
     { id:"progress", icon:Star, label:t("account.progress"), onClick:onOpenProgress, badge:newTransfersCount },
     { id:"teams", icon:Users, label:t("account.teams"), onClick:onOpenTeams, badge:sectionSignals.teams ? 1 : 0 },
     { id:"rewardrequests", icon:Gift, label:t("account.rewardRequests"), onClick:onOpenRewardRequests, badge:myRedemptionUpdates + openRewardRequestsCount },
-    { id:"guardiancircles", icon:Users, label:t("account.circles"), onClick:onOpenGuardianCircles, badge:pendingCircleInvitationCount },
   ];
   const adminItems = [];
   if (isAdmin) {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
   ArrowLeft, Ban, CalendarDays, Check, ChevronDown, Crown, Gift,
-  Lock, Mail, Plus, RotateCcw, Search, Trash2,
+  Lock, Mail, Plus, RotateCcw, Search, ShieldCheck, Trash2,
   UserMinus, UserPlus, Users, X,
 } from "lucide-react";
 import BackButton from "./BackButton.jsx";
@@ -132,7 +132,7 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
       setMembers([...mergedMembers.values()]);
       setMemberProfiles(Object.fromEntries((rosterResult.data || []).map((item) => [
         `${item.team_id}:${item.user_id}`,
-        { id:item.user_id,name:item.member_name,icon:item.member_icon,mood:item.member_mood,is_owner:item.is_owner },
+        { id:item.user_id,name:item.member_name,icon:item.member_icon,mood:item.member_mood,is_owner:item.is_owner,can_approve_rewards:item.can_approve_rewards },
       ])));
       setRequests(requestsResult.data || []);
       setTeamBlocks(blocksResult.data || []);
@@ -306,6 +306,20 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
     setModerationBusy(null);
     const verbs = { remove:"removed from", block:"blocked from", unblock:"unblocked for" };
     setMsg(error?.message || `${member.name} was ${verbs[action]} ${team.name}`);
+    if (!error) await refresh();
+  }
+
+  async function toggleRewardApprover(team, member) {
+    if (moderationBusy || member.id === team.created_by) return;
+    const key = `${team.id}:${member.id}:approver`;
+    setModerationBusy(key);
+    const { error } = await supabase.rpc("set_team_reward_approver", {
+      target_team_id:Number(team.id),
+      target_user_id:member.id,
+      approve:!member.can_approve_rewards,
+    });
+    setModerationBusy(null);
+    setMsg(error?.message || `${member.name} is ${member.can_approve_rewards ? "no longer" : "now"} a reward approver for ${team.name}`);
     if (!error) await refresh();
   }
 
@@ -656,10 +670,11 @@ export default function Teams({ onBack, initialTeamId = null, initialChallengeId
                     <div className="flex items-center gap-3">
                       <span className="team-member-icon grid place-items-center rounded-xl text-xl" style={{ width:38,height:38,background:"#fff" }}>{member.icon || "🙂"}</span>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5"><span className="text-sm font-semibold truncate">{isMe ? `${member.name} (you)` : member.name}</span>{teamOwner && <Crown size={11} style={{ color:"#D9AE58" }}/>}</div>
-                        <div className="text-[10px] opacity-40 truncate">{teamOwner ? "Team owner" : member.mood || "Team member"}</div>
+                        <div className="flex items-center gap-1.5"><span className="text-sm font-semibold truncate">{isMe ? `${member.name} (you)` : member.name}</span>{teamOwner && <Crown size={11} style={{ color:"#D9AE58" }}/>}{(teamOwner || member.can_approve_rewards) && <ShieldCheck size={11} style={{ color:"#12946A" }}/>}</div>
+                        <div className="text-[10px] opacity-40 truncate">{teamOwner ? "Team owner" : member.mood || "Team member"}{member.can_approve_rewards && !teamOwner ? " · Reward approver" : ""}</div>
                       </div>
                       {manager && !teamOwner && !isMe && <div className="flex gap-1">
+                        <button className="gloss-button" disabled={!!moderationBusy} onClick={() => toggleRewardApprover(rosterTeam,member)} className="grid place-items-center rounded-full" style={{ width:32,height:32,background:member.can_approve_rewards ? "rgba(18,148,106,.12)" : "rgba(16,24,40,.05)",color:member.can_approve_rewards ? "#12946A" : undefined }} aria-label={member.can_approve_rewards ? `Remove ${member.name} as reward approver` : `Make ${member.name} a reward approver`} title="Reward approver"><ShieldCheck size={13}/></button>
                         <button className="gloss-button" disabled={!!moderationBusy} onClick={() => moderateMember(rosterTeam,member,"remove")} className="grid place-items-center rounded-full" style={{ width:32,height:32,background:"rgba(16,24,40,.05)" }} aria-label={`Remove ${member.name}`} title="Remove"><UserMinus size={13}/></button>
                         <button className="gloss-button" disabled={!!moderationBusy} onClick={() => moderateMember(rosterTeam,member,"block")} className="grid place-items-center rounded-full" style={{ width:32,height:32,background:"rgba(181,67,58,.09)",color:"#B5433A" }} aria-label={`Block ${member.name}`} title="Block"><Ban size={13}/></button>
                       </div>}
