@@ -754,7 +754,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
       `}</style>
 
       <div
-        className="tg-card w-full max-w-sm sm:max-w-md lg:max-w-lg rounded-2xl p-5 lg:p-6 relative"
+        className="tg-card w-full max-w-md sm:max-w-lg lg:max-w-xl rounded-2xl p-5 lg:p-6 relative"
         style={{ background: PANEL, boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}
       >
         <button
