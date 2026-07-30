@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
-import { Lock, Unlock, Users, ArrowLeft, Fingerprint, Trash2, Plus, Link2, Unlink, Mail, Languages, Monitor, Sun, Moon } from "lucide-react";
+import { Lock, Unlock, Users, Fingerprint, Trash2, Plus, Link2, Unlink, Mail, Languages, Monitor, Sun, Moon } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { PROFILE_ICONS } from "./lib/icons.js";
 import { useI18n } from "./lib/i18n.jsx";
 import { applyThemePreference } from "./lib/theme.js";
-
-const BG = "#F1F3F7";
-const PANEL = "#FFFFFF";
-const INK = "#1B2129";
-const ACCENT = "#2F6FED";
-const CREAM = "#1B2129";
+import Page from "./components/Page.jsx";
+import PageHeader from "./components/PageHeader.jsx";
+import Button from "./components/Button.jsx";
+import Card from "./components/Card.jsx";
+import TextInput from "./components/TextInput.jsx";
+import StatusBanner from "./components/StatusBanner.jsx";
 
 const passkeySupported = typeof window !== "undefined" && !!window.PublicKeyCredential;
 
@@ -18,7 +18,7 @@ const passkeySupported = typeof window !== "undefined" && !!window.PublicKeyCred
 // profile" screen reached from the home page.
 export default function ProfileSetup({ onDone, onOpenCircles }) {
   const { t, language, setLanguage } = useI18n();
-  const { profile, user, saveProfile, leaveCircle, registerPasskey, listPasskeys, deletePasskey, listIdentities, linkGoogleIdentity, unlinkIdentity } = useAuth();
+  const { profile, user, saveProfile, registerPasskey, listPasskeys, deletePasskey, listIdentities, linkGoogleIdentity, unlinkIdentity } = useAuth();
   const isFirstTime = !profile;
 
   const [name, setName] = useState(profile?.name || "");
@@ -139,317 +139,237 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
     else if (onDone) onDone();
   }
 
+  const themeOptions = [
+    { value: "system", label: t("profile.themeSystem"), Icon: Monitor },
+    { value: "light", label: t("profile.themeLight"), Icon: Sun },
+    { value: "dark", label: t("profile.themeDark"), Icon: Moon },
+  ];
+
   return (
-    <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="profile-page flex justify-center p-4 pt-10">
-      <div className="w-full max-w-md">
-        <div className="profile-header flex items-center gap-3 mb-6">
-          {onDone && (
-            <button
-              onClick={onDone}
-              className="nav-btn flex items-center justify-center rounded-full shrink-0"
-              style={{ "--nav-glow": "rgba(47,111,237,0.3)", "--nav-border": "rgba(47,111,237,0.4)", color: INK, background: "rgba(16,24,40,0.05)", width: 34, height: 34 }}
-              aria-label="Back to home"
-            >
-              <ArrowLeft size={16} />
-            </button>
-          )}
+    <Page>
+      <PageHeader
+        title={isFirstTime ? t("profile.welcome") : t("profile.title")}
+        subtitle={isFirstTime ? t("profile.firstHint", { email: user?.email || "" }) : user?.email}
+        onBack={onDone}
+        backAriaLabel="Back to home"
+        action={
           <button
             type="button"
             onClick={() => setShowIconPicker((value) => !value)}
-            className="flex items-center justify-center rounded-full transition-transform active:scale-95 shrink-0"
-            style={{
-              width: 46,
-              height: 46,
-              background: showIconPicker ? "rgba(47,111,237,0.16)" : "rgba(47,111,237,0.1)",
-              border: showIconPicker ? "2px solid rgba(47,111,237,0.45)" : "2px solid transparent",
-              fontSize: 23,
-            }}
             aria-label={showIconPicker ? "Close avatar picker" : "Change avatar"}
             aria-expanded={showIconPicker}
+            className="profile-avatar-button"
+            style={{ width: 46, height: 46, display: "grid", placeItems: "center", borderRadius: "50%", border: showIconPicker ? "2px solid var(--color-primary)" : "1px solid var(--color-border)", background: showIconPicker ? "var(--color-primary-subtle)" : "var(--color-surface)", boxShadow: "var(--shadow-control)", color: "var(--color-text-primary)", fontSize: 23, cursor: "pointer" }}
           >
             {icon}
           </button>
-          <div className="flex-1 min-w-0">
-            <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-2xl">
-              {isFirstTime ? t("profile.welcome") : t("profile.title")}
-            </h1>
-            <p style={{ color: INK, opacity: 0.5 }} className="text-xs mt-0.5 truncate">
-              {isFirstTime ? t("profile.firstHint", { email:user?.email || "" }) : user?.email}
-            </p>
-          </div>
-        </div>
+        }
+      />
 
-        <form
-          onSubmit={handleSubmit}
-          className="profile-panel"
-        >
-          <div className="profile-section rounded-2xl p-5 mb-3" style={{ background:PANEL, border:"1px solid rgba(16,24,40,.09)" }}>
-          <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
-            {t("profile.name")}
-          </label>
-          <input
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t("profile.namePlaceholder")}
-            className="w-full rounded-lg px-3 py-2.5 text-sm mb-4 outline-none"
-            style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
-          />
+      <form onSubmit={handleSubmit} style={{ paddingBottom: "var(--space-8)" }}>
+        <Card style={{ marginBottom: "var(--space-3)" }}>
+          <FormField label={t("profile.name")}>
+            <TextInput required value={name} onChange={(event) => setName(event.target.value)} placeholder={t("profile.namePlaceholder")} autoComplete="name" />
+          </FormField>
 
           {showIconPicker && (
-            <div className="grid grid-cols-6 gap-2 rounded-xl p-3 mb-4" style={{ background: "rgba(16,24,40,0.04)", border: "1px solid rgba(16,24,40,0.08)" }}>
-              {PROFILE_ICONS.map((ic) => (
+            <div role="group" aria-label="Choose avatar" style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: "var(--space-2)", marginBottom: "var(--space-4)", padding: "var(--space-3)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)" }}>
+              {PROFILE_ICONS.map((candidate) => (
                 <button
                   type="button"
-                  key={ic}
-                  onClick={() => { setIcon(ic); setShowIconPicker(false); }}
-                  className="flex items-center justify-center rounded-full transition-transform active:scale-95"
-                  aria-label={`Use ${ic} as avatar`}
-                  style={{
-                    width: 38, height: 38, fontSize: 20,
-                    background: icon === ic ? "rgba(47,111,237,0.14)" : "#FFFFFF",
-                    border: icon === ic ? "2px solid #2F6FED" : "1px solid rgba(16,24,40,0.08)",
-                    boxShadow: "0 2px 6px rgba(16,24,40,0.05)",
-                  }}
-                >{ic}</button>
-              ))}
-            </div>
-          )}
-
-          <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
-            {t("profile.mood")}
-          </label>
-          <input
-            value={mood}
-            onChange={(e) => setMood(e.target.value)}
-            placeholder={t("profile.moodPlaceholder")}
-            maxLength={40}
-            className="w-full rounded-lg px-3 py-2.5 text-sm mb-4 outline-none"
-            style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
-          />
-
-          <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
-            {t("profile.defaultMode")}
-          </label>
-          <div className="flex rounded-lg p-1 mb-4" style={{ background: "rgba(16,24,40,0.05)" }}>
-            {["challenge", "practice"].map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setDefaultMode(m)}
-                className="flex-1 rounded-md py-1.5 text-xs font-semibold capitalize"
-                style={{
-                  background: defaultMode === m ? "#FFFFFF" : "transparent",
-                  color: defaultMode === m ? INK : "rgba(27,33,41,0.5)",
-                  boxShadow: defaultMode === m ? "0 2px 6px rgba(16,24,40,0.10)" : "none",
-                }}
-              >
-                {t(`common.${m}`)}
-              </button>
-            ))}
-          </div>
-
-
-          <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
-            {t("profile.theme")}
-          </label>
-          <div className="grid grid-cols-3 rounded-lg p-1 mb-4" style={{ background: "rgba(16,24,40,0.05)" }}>
-            {[
-              { value: "system", label: t("profile.themeSystem"), Icon: Monitor },
-              { value: "light", label: t("profile.themeLight"), Icon: Sun },
-              { value: "dark", label: t("profile.themeDark"), Icon: Moon },
-            ].map(({ value, label, Icon }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => { setThemePreference(value); applyThemePreference(value); }}
-                className="flex items-center justify-center gap-1 rounded-md py-1.5 text-xs font-semibold"
-                style={{
-                  background: themePreference === value ? "var(--app-panel-solid)" : "transparent",
-                  color: themePreference === value ? "var(--app-text)" : "var(--app-text-muted)",
-                  boxShadow: themePreference === value ? "0 2px 6px rgba(16,24,40,0.10)" : "none",
-                }}
-                aria-pressed={themePreference === value}
-              >
-                <Icon size={13} /> {label}
-              </button>
-            ))}
-          </div>
-
-
-          <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
-            {t("profile.weekStarts")}
-          </label>
-          <div className="flex rounded-lg p-1 mb-4" style={{ background: "rgba(16,24,40,0.05)" }}>
-            {[{ value: 1, label: t("profile.monday") }, { value: 0, label: t("profile.sunday") }].map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setWeekStartsOn(option.value)}
-                className="flex-1 rounded-md py-1.5 text-xs font-semibold"
-                style={{
-                  background: weekStartsOn === option.value ? "#FFFFFF" : "transparent",
-                  color: weekStartsOn === option.value ? INK : "rgba(27,33,41,0.5)",
-                  boxShadow: weekStartsOn === option.value ? "0 2px 6px rgba(16,24,40,0.10)" : "none",
-                }}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowStatsToOthers((value) => !value)}
-            className="profile-privacy-card w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 mb-3 text-left"
-            style={{ border: "1px solid rgba(16,24,40,0.14)", background:PANEL }}
-          >
-            {showStatsToOthers ? <Unlock size={15} style={{ color: INK, opacity: 0.4 }} /> : <Lock size={15} style={{ color: INK }} />}
-            <div className="flex-1">
-              <div style={{ color: INK }} className="text-xs font-medium">{t("profile.showStats")}</div>
-              <div style={{ color: INK, opacity: 0.5 }} className="text-[11px]">
-                {showStatsToOthers ? t("profile.statsPublic") : t("profile.statsPrivate")}
-              </div>
-            </div>
-            <div
-              className="rounded-full flex-shrink-0"
-              style={{ width: 32, height: 18, background: showStatsToOthers ? ACCENT : "rgba(16,24,40,0.15)", position: "relative", transition: "background 0.15s" }}
-            >
-              <div
-                className="rounded-full absolute"
-                style={{ width: 14, height: 14, top: 2, left: showStatsToOthers ? 16 : 2, background: "#FFFFFF", transition: "left 0.15s" }}
-              />
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsPrivate((p) => !p)}
-            className="profile-privacy-card w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 mb-4 text-left"
-            style={{ border: "1px solid rgba(16,24,40,0.14)", background:PANEL }}
-          >
-            {isPrivate ? <Lock size={15} style={{ color: INK }} /> : <Unlock size={15} style={{ color: INK, opacity: 0.4 }} />}
-            <div className="flex-1">
-              <div style={{ color: INK }} className="text-xs font-medium">{t("profile.private")}</div>
-              <div style={{ color: INK, opacity: 0.5 }} className="text-[11px]">
-                {isPrivate ? t("profile.privateOn") : t("profile.privateOff")}
-              </div>
-            </div>
-            <div
-              className="rounded-full flex-shrink-0"
-              style={{ width: 32, height: 18, background: isPrivate ? ACCENT : "rgba(16,24,40,0.15)", position: "relative", transition: "background 0.15s" }}
-            >
-              <div
-                className="rounded-full absolute"
-                style={{ width: 14, height: 14, top: 2, left: isPrivate ? 16 : 2, background: "#FFFFFF", transition: "left 0.15s" }}
-              />
-            </div>
-          </button>
-
-          <div className="profile-section rounded-xl p-3 mb-4" style={{ border:"1px solid rgba(16,24,40,.14)", background:PANEL }}>
-            <div className="flex items-center gap-2 mb-2">
-              <Languages size={15} style={{ color:ACCENT }}/>
-              <div className="text-xs font-semibold" style={{ color:INK }}>{t("language.label")}</div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {[["en","🇬🇧",t("language.english")],["sk","🇸🇰",t("language.slovak")]].map(([code,flag,label]) => (
-                <button
-                  key={code}
-                  type="button"
-                  onClick={() => setLanguage(code)}
-                  className="rounded-xl px-3 py-2.5 text-left transition-colors"
-                  style={{
-                    background: language === code ? "#fff" : "rgba(16,24,40,.035)",
-                    border: language === code ? "1px solid rgba(47,111,237,.35)" : "1px solid transparent",
-                    boxShadow: language === code ? "0 4px 12px rgba(47,111,237,.08)" : "none",
-                  }}
+                  key={candidate}
+                  onClick={() => { setIcon(candidate); setShowIconPicker(false); }}
+                  aria-label={`Use ${candidate} as avatar`}
+                  aria-pressed={icon === candidate}
+                  className="profile-avatar-option"
+                  style={{ width: 40, height: 40, display: "grid", placeItems: "center", justifySelf: "center", borderRadius: "50%", border: icon === candidate ? "2px solid var(--color-primary)" : "1px solid var(--color-border)", background: icon === candidate ? "var(--color-primary-subtle)" : "var(--color-surface)", color: "var(--color-text-primary)", boxShadow: "var(--shadow-control)", fontSize: 20, cursor: "pointer" }}
                 >
-                  <span className="mr-2">{flag}</span>
-                  <span className="text-xs font-semibold">{label}</span>
+                  {candidate}
                 </button>
               ))}
             </div>
-            <p className="text-[10px] mt-2 leading-4" style={{ color:"rgba(27,33,41,.45)" }}>{t("language.autoHint")}</p>
-          </div>
+          )}
 
-          {!isFirstTime && (
-            <div className="profile-section rounded-xl px-3 py-3 mb-3" style={{ border: "1px solid rgba(16,24,40,0.14)", background:PANEL }}>
-              <div className="flex items-center gap-2 mb-2"><Link2 size={15} style={{color:ACCENT}}/><span className="text-xs font-semibold" style={{color:INK}}>Sign-in methods</span></div>
-              <div className="space-y-2">
-                {identities.map((identity) => {
-                  const provider = identity.provider || identity.identity_data?.provider || "email";
-                  const label = provider === "google" ? "Google" : "Email";
-                  const detail = identity.identity_data?.email || user?.email || "Connected";
-                  return <div key={identity.id} className="flex items-center gap-2 rounded-lg px-2.5 py-2" style={{background:"rgba(16,24,40,.04)"}}>
-                    {provider === "email" ? <Mail size={14}/> : <span className="text-sm">G</span>}
-                    <div className="flex-1 min-w-0"><div className="text-xs font-medium" style={{color:INK}}>{label}</div><div className="text-[10px] truncate" style={{color:"rgba(27,33,41,.5)"}}>{detail}</div></div>
-                    {identities.length > 1 && <button type="button" disabled={identityBusy} onClick={() => handleUnlinkIdentity(identity)} className="rounded-full p-1.5" style={{color:"#B5433A",background:"rgba(181,67,58,.08)"}} aria-label={`Unlink ${label}`}><Unlink size={12}/></button>}
-                  </div>;
-                })}
-              </div>
-              {!identities.some((i) => (i.provider || i.identity_data?.provider) === "google") && <button type="button" onClick={handleLinkGoogle} disabled={identityBusy} className="mt-2 w-full rounded-full py-2 text-xs font-semibold" style={{background:"rgba(47,111,237,.1)",color:ACCENT}}>{identityBusy ? "Connecting…" : "Connect Google"}</button>}
-              <p className="text-[10px] mt-2" style={{color:"rgba(27,33,41,.45)"}}>Google can be linked to this player. Supabase does not support multiple separate email-OTP addresses on one account; changing the primary email is a different action.</p>
-              {identityError && <p className="text-[11px] mt-1.5" style={{color:"#B5433A"}}>{identityError}</p>}
+          <FormField label={t("profile.mood")}>
+            <TextInput value={mood} onChange={(event) => setMood(event.target.value)} placeholder={t("profile.moodPlaceholder")} maxLength={40} />
+          </FormField>
+
+          <FormField label={t("profile.defaultMode")}>
+            <SegmentedControl
+              value={defaultMode}
+              onChange={setDefaultMode}
+              options={[
+                { value: "challenge", label: t("common.challenge") },
+                { value: "practice", label: t("common.practice") },
+              ]}
+            />
+          </FormField>
+
+          <FormField label={t("profile.theme")}>
+            <SegmentedControl
+              value={themePreference}
+              onChange={(value) => { setThemePreference(value); applyThemePreference(value); }}
+              options={themeOptions}
+            />
+          </FormField>
+
+          <FormField label={t("profile.weekStarts")} last>
+            <SegmentedControl
+              value={weekStartsOn}
+              onChange={setWeekStartsOn}
+              options={[
+                { value: 1, label: t("profile.monday") },
+                { value: 0, label: t("profile.sunday") },
+              ]}
+            />
+          </FormField>
+        </Card>
+
+        <Card style={{ marginBottom: "var(--space-3)", padding: 0, overflow: "hidden" }}>
+          <ToggleRow icon={showStatsToOthers ? Unlock : Lock} label={t("profile.showStats")} description={showStatsToOthers ? t("profile.statsPublic") : t("profile.statsPrivate")} checked={showStatsToOthers} onChange={setShowStatsToOthers} />
+          <ToggleRow icon={isPrivate ? Lock : Unlock} label={t("profile.private")} description={isPrivate ? t("profile.privateOn") : t("profile.privateOff")} checked={isPrivate} onChange={setIsPrivate} divided />
+        </Card>
+
+        <Card style={{ marginBottom: "var(--space-3)" }}>
+          <SectionTitle icon={Languages}>{t("language.label")}</SectionTitle>
+          <SegmentedControl
+            value={language}
+            onChange={setLanguage}
+            options={[
+              { value: "en", label: `🇬🇧 ${t("language.english")}` },
+              { value: "sk", label: `🇸🇰 ${t("language.slovak")}` },
+            ]}
+          />
+          <p style={{ margin: "var(--space-2) 0 0", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", lineHeight: "var(--text-body-line)" }}>{t("language.autoHint")}</p>
+        </Card>
+
+        {!isFirstTime && (
+          <Card style={{ marginBottom: "var(--space-3)" }}>
+            <SectionTitle icon={Link2}>Sign-in methods</SectionTitle>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+              {identities.map((identity) => {
+                const provider = identity.provider || identity.identity_data?.provider || "email";
+                const label = provider === "google" ? "Google" : "Email";
+                const detail = identity.identity_data?.email || user?.email || "Connected";
+                return (
+                  <div key={identity.id} style={{ minHeight: 52, display: "flex", alignItems: "center", gap: "var(--space-3)", padding: "var(--space-2) var(--space-3)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)" }}>
+                    {provider === "email" ? <Mail size={17} style={{ color: "var(--color-icon-subtle)" }} /> : <span aria-hidden="true" style={{ fontWeight: 700, color: "var(--color-primary)" }}>G</span>}
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <strong style={{ display: "block", color: "var(--color-text-primary)", fontSize: "var(--text-body-secondary-size)" }}>{label}</strong>
+                      <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{detail}</span>
+                    </span>
+                    {identities.length > 1 && <Button variant="icon" disabled={identityBusy} onClick={() => handleUnlinkIdentity(identity)} aria-label={`Unlink ${label}`} style={{ color: "var(--color-danger-text)" }}><Unlink size={16} /></Button>}
+                  </div>
+                );
+              })}
             </div>
-          )}
+            {!identities.some((identity) => (identity.provider || identity.identity_data?.provider) === "google") && <Button variant="secondary" fullWidth loading={identityBusy} onClick={handleLinkGoogle} style={{ marginTop: "var(--space-3)" }}>{identityBusy ? "Connecting…" : "Connect Google"}</Button>}
+            <p style={{ margin: "var(--space-2) 0 0", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", lineHeight: "var(--text-body-line)" }}>Google can be linked to this player. Changing the primary email is a separate action.</p>
+            {identityError && <StatusBanner variant="error" style={{ marginTop: "var(--space-3)" }}>{identityError}</StatusBanner>}
+          </Card>
+        )}
 
-          {!isFirstTime && passkeySupported && (
-            <div className="profile-section rounded-lg px-3 py-2.5 mb-3" style={{ border: "1px solid rgba(16,24,40,0.14)", background:PANEL }}>
-              <div className="flex items-center gap-2.5 mb-2">
-                <Fingerprint size={15} style={{ color: INK, opacity: 0.6 }} />
-                <div style={{ color: INK }} className="text-xs font-medium">Passkeys</div>
+        {!isFirstTime && passkeySupported && (
+          <Card style={{ marginBottom: "var(--space-3)" }}>
+            <SectionTitle icon={Fingerprint}>Passkeys</SectionTitle>
+            {passkeys.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", marginBottom: "var(--space-3)" }}>
+                {passkeys.map((passkey) => (
+                  <div key={passkey.id} style={{ minHeight: 48, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-2)", padding: "var(--space-2) var(--space-3)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)" }}>
+                    <span style={{ color: "var(--color-text-primary)", fontSize: "var(--text-body-secondary-size)" }}>{passkey.friendly_name || "Passkey"}</span>
+                    <Button variant="icon" onClick={() => handleDeletePasskey(passkey.id)} aria-label={`Delete ${passkey.friendly_name || "passkey"}`} style={{ color: "var(--color-danger-text)" }}><Trash2 size={16} /></Button>
+                  </div>
+                ))}
               </div>
-              {passkeys.length > 0 && (
-                <div className="flex flex-col gap-1 mb-2">
-                  {passkeys.map((pk) => (
-                    <div key={pk.id} className="flex items-center justify-between rounded-md px-2 py-1.5" style={{ background: "rgba(16,24,40,0.04)" }}>
-                      <span style={{ color: INK }} className="text-xs">{pk.friendly_name || "Passkey"}</span>
-                      <button type="button" onClick={() => handleDeletePasskey(pk.id)} style={{ color: "#B5433A", opacity: 0.7 }}>
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={handleAddPasskey}
-                disabled={passkeyBusy}
-                className="flex items-center gap-1.5 text-xs font-medium"
-                style={{ color: ACCENT, opacity: passkeyBusy ? 0.6 : 1 }}
-              >
-                <Plus size={12} />
-                {passkeyBusy ? "Waiting for device…" : "Add a passkey for this device"}
-              </button>
-              {passkeyError && <p className="text-[11px] mt-1.5" style={{ color: "#B5433A" }}>{passkeyError}</p>}
-            </div>
-          )}
+            )}
+            <Button variant="secondary" before={<Plus size={16} />} loading={passkeyBusy} onClick={handleAddPasskey}>{passkeyBusy ? "Waiting for device…" : "Add a passkey"}</Button>
+            {passkeyError && <StatusBanner variant="error" style={{ marginTop: "var(--space-3)" }}>{passkeyError}</StatusBanner>}
+          </Card>
+        )}
 
-          {!isFirstTime && (
-            <button
-              type="button"
-              onClick={onOpenCircles}
-              className="gloss-button w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold mb-3"
-              style={{ color: INK }}
-            >
-              <Users size={15} />
-              {t("profile.circles")}
-            </button>
-          )}
+        {!isFirstTime && onOpenCircles && <Button type="button" variant="secondary" fullWidth before={<Users size={17} />} onClick={onOpenCircles} style={{ marginBottom: "var(--space-3)" }}>{t("profile.circles")}</Button>}
+        {error && <StatusBanner variant="error" style={{ marginBottom: "var(--space-3)" }}>{error}</StatusBanner>}
+        <Button type="submit" fullWidth loading={saving} disabled={!name.trim()}>{saving ? t("profile.saving") : isFirstTime ? t("profile.start") : t("profile.save")}</Button>
+      </form>
 
-          {error && <p className="text-xs mb-3" style={{ color: "#B5433A" }}>{error}</p>}
+      <style>{`
+        .profile-avatar-button:focus-visible,
+        .profile-avatar-option:focus-visible,
+        .profile-segment-button:focus-visible,
+        .profile-toggle-row:focus-visible {
+          outline: 2px solid var(--color-primary);
+          outline-offset: 2px;
+        }
+        @media (max-width: 380px) {
+          .profile-segment-label { font-size: 12px !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .profile-switch-thumb { transition: none !important; }
+        }
+      `}</style>
+    </Page>
+  );
+}
 
+function FormField({ label, children, last = false }) {
+  return (
+    <label style={{ display: "block", marginBottom: last ? 0 : "var(--space-4)" }}>
+      <span style={{ display: "block", marginBottom: "var(--space-2)", color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)", fontWeight: 600 }}>{label}</span>
+      {children}
+    </label>
+  );
+}
+
+function SegmentedControl({ value, onChange, options }) {
+  return (
+    <div role="group" style={{ display: "grid", gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))`, gap: 2, padding: 3, border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)" }}>
+      {options.map(({ value: optionValue, label, Icon }) => {
+        const selected = value === optionValue;
+        return (
           <button
-            type="submit"
-            disabled={saving}
-            className="gloss-button w-full rounded-lg py-2.5 text-sm font-semibold"
-            style={{ color: saving ? "rgba(27,33,41,0.4)" : CREAM, cursor: saving ? "default" : "pointer", opacity: saving ? 0.5 : 1 }}
+            type="button"
+            key={optionValue}
+            onClick={() => onChange(optionValue)}
+            aria-pressed={selected}
+            className="profile-segment-button"
+            style={{ minHeight: "var(--control-height-sm)", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5, padding: "0 var(--space-2)", border: selected ? "1px solid var(--color-primary-subtle-border)" : "1px solid transparent", borderRadius: "var(--radius-sm)", background: selected ? "var(--color-surface)" : "transparent", boxShadow: selected ? "var(--shadow-control)" : "none", color: selected ? "var(--color-primary)" : "var(--color-text-secondary)", font: "inherit", fontSize: "var(--text-body-secondary-size)", fontWeight: 600, cursor: "pointer" }}
           >
-            {saving ? t("profile.saving") : isFirstTime ? t("profile.start") : t("profile.save")}
+            {Icon && <Icon size={15} />}
+            <span className="profile-segment-label">{label}</span>
           </button>
-        </form>
-      </div>
+        );
+      })}
     </div>
+  );
+}
+
+function ToggleRow({ icon: Icon, label, description, checked, onChange, divided = false }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="profile-toggle-row"
+      style={{ width: "100%", minHeight: 68, display: "flex", alignItems: "center", gap: "var(--space-3)", padding: "var(--space-3) var(--space-4)", border: 0, borderTop: divided ? "1px solid var(--color-border)" : 0, background: "transparent", color: "inherit", font: "inherit", textAlign: "left", cursor: "pointer" }}
+    >
+      <Icon size={18} style={{ flexShrink: 0, color: checked ? "var(--color-primary)" : "var(--color-icon-subtle)" }} />
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <strong style={{ display: "block", color: "var(--color-text-primary)", fontSize: "var(--text-body-size)", fontWeight: 600 }}>{label}</strong>
+        <span style={{ display: "block", marginTop: 2, color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", lineHeight: 1.4 }}>{description}</span>
+      </span>
+      <span aria-hidden="true" style={{ width: 42, height: 24, position: "relative", flexShrink: 0, borderRadius: "var(--radius-full)", background: checked ? "var(--color-primary)" : "var(--color-disabled-bg)", transition: "background var(--transition-fast)" }}>
+        <span className="profile-switch-thumb" style={{ width: 20, height: 20, position: "absolute", top: 2, left: checked ? 20 : 2, borderRadius: "50%", background: "var(--color-primary-text)", boxShadow: "var(--shadow-control)", transition: "left var(--transition-fast)" }} />
+      </span>
+    </button>
+  );
+}
+
+function SectionTitle({ icon: Icon, children }) {
+  return (
+    <h2 style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", margin: "0 0 var(--space-3)", color: "var(--color-text-primary)", fontSize: "var(--text-section-title-size)", fontWeight: "var(--text-section-title-weight)" }}>
+      <Icon size={18} style={{ color: "var(--color-primary)" }} />
+      {children}
+    </h2>
   );
 }
