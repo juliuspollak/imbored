@@ -18,13 +18,13 @@ import DaySelector from "../DaySelector.jsx";
 
 /* ---------------- design tokens ---------------- */
 
-const BG = "#F1F3F7";
-const PANEL = "#FFFFFF";
-const INK = "#1B2129";
-const ACCENT = "#2F6FED";
+const BG = "var(--color-page-bg)";
+const PANEL = "var(--color-surface)";
+const INK = "var(--color-text-primary)";
+const ACCENT = "var(--color-primary)";
 const RED = "#E5484D";
-const GREEN = "#16A34A";
-const CREAM = "#1B2129";
+const GREEN = "var(--color-success-text)";
+const CREAM = "var(--color-text-primary)";
 function fmtTime(s) {
   const m = Math.floor(s / 60);
   const ss = s % 60;

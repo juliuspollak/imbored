@@ -253,10 +253,10 @@ function processStep(prevPath, r, c, wallSet, numberGrid, tunnelMap, blockedSet,
 
 /* ---------------- design tokens ---------------- */
 
-const BG = "#F1F3F7";
-const PANEL = "#FFFFFF";
-const CREAM = "#1B2129";
-const GOLD = "#2F6FED";
+const BG = "var(--color-page-bg)";
+const PANEL = "var(--color-surface)";
+const CREAM = "var(--color-text-primary)";
+const GOLD = "var(--color-primary)";
 const RED = "#E5484D";
 const ZIP_GREEN = "#12946A";
 const WALL_COLOR = "#E5484D";

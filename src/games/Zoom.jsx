@@ -11,13 +11,13 @@ import { useI18n } from "../lib/i18n.jsx";
 import { localizeZoomValue, localizeZoomPrompt } from "./zoom/zoomLocalization.js";
 import DaySelector from "../DaySelector.jsx";
 
-const BG = "#F1F3F7";
-const PANEL = "#FFFFFF";
-const INK = "#1B2129";
+const BG = "var(--color-page-bg)";
+const PANEL = "var(--color-surface)";
+const INK = "var(--color-text-primary)";
 const ACCENT = "#7C3AED";
 const RED = "#E5484D";
-const GREEN = "#16A34A";
-const CREAM = "#1B2129";
+const GREEN = "var(--color-success-text)";
+const CREAM = "var(--color-text-primary)";
 
 function fmtTime(s) {
   const m = Math.floor(s / 60);

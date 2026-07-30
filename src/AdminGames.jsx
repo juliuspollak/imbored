@@ -5,9 +5,9 @@ import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { GAME_META } from "./Home.jsx";
 
-const BG = "#F1F3F7";
-const INK = "#1B2129";
-const ACCENT = "#2F6FED";
+const BG = "var(--color-page-bg)";
+const INK = "var(--color-text-primary)";
+const ACCENT = "var(--color-primary)";
 const ZIP_DEFAULTS = {
   zip_grid_sizes: [7, 7, 7, 7, 7, 7, 7],
   zip_checkpoint_counts: [4, 6, 8, 10, 12, 14, 16],

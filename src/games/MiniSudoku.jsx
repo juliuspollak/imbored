@@ -182,10 +182,10 @@ function getConflicts(board) {
 
 /* ---------------- design tokens ---------------- */
 
-const BG = "#F1F3F7";
-const PANEL = "#FFFFFF";
-const CREAM = "#1B2129";
-const GOLD = "#2F6FED";
+const BG = "var(--color-page-bg)";
+const PANEL = "var(--color-surface)";
+const CREAM = "var(--color-text-primary)";
+const GOLD = "var(--color-primary)";
 const RED = "#E5484D";
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const GIVEN_TARGETS = [24, 22, 20, 18, 16, 14, 12];
