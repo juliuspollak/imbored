@@ -1,5 +1,4 @@
-
-const CREAM = "#1B2129";import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Lock, Check, Play, X } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { saveStats } from "./lib/saveStats.js";

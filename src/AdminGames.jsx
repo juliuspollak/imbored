@@ -1,5 +1,4 @@
-
-const CREAM = "#1B2129";import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ChevronUp, ChevronDown, Eye, EyeOff, Lock, Unlock, Wrench, Eraser, RotateCcw, Trophy } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
