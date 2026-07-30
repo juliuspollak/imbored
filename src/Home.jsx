@@ -7,10 +7,21 @@ import { challengeProgress, groupChallengeCompletions } from "./lib/challengePro
 import ChallengeStandings from "./ChallengeStandings.jsx";
 import { buildCircleChallengeRounds, localDateString } from "./lib/circleChallengeRounds.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
+import Page from "./components/Page.jsx";
+import Button from "./components/Button.jsx";
+import Card from "./components/Card.jsx";
+import AvatarGroup from "./components/AvatarGroup.jsx";
 
-const BG = "var(--color-page-bg)";
-const PANEL = "var(--color-surface)";
-const CREAM = "var(--color-text-primary)";
+const buttonReset = {
+  appearance: "none",
+  font: "inherit",
+  color: "inherit",
+  cursor: "pointer",
+};
+
+function accentSurface(accent, amount = 12) {
+  return `color-mix(in srgb, ${accent} ${amount}%, transparent)`;
+}
 
 export const GAME_META = [
   { id: "queens", label: "Queens", desc: "One crown per row, column & region", icon: Crown, accent: "#2F6FED", available: true, challenge: true },
@@ -534,140 +545,140 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   }
 
   return (
-    <div style={{ background: BG, minHeight: "100vh" }} className="flex items-start justify-center p-4 pt-6 sm:pt-8">
-      <style>{`
-        @media (hover: hover) and (pointer: fine) {
-          .home-tile:not(:disabled):hover { transform: translateY(-2px); filter: brightness(1.08); }
-        }
-        .home-tile { transition: transform 0.15s ease, filter 0.15s ease; }
-        .home-status-row { display:flex; align-items:stretch; gap:8px; margin-bottom:8px; }
-        .home-progress-pill { flex:0 0 auto; min-height:48px; }
-      `}</style>
-      <div className="w-full max-w-2xl" style={{ fontFamily: "'Inter', sans-serif" }}>
-        <div className="flex items-center gap-2 mb-2 pr-14">
-          <span className="text-xl leading-none shrink-0" aria-hidden="true">🧩</span>
-          <h1
-            style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }}
-            className="text-lg sm:text-xl truncate"
-          >
-            I'mBoredToday
-          </h1>
-        </div>
+    <Page style={{ alignItems: "flex-start" }}>
+      <main style={{ padding: "var(--space-5) 0 var(--space-8)" }}>
+        <header style={{ marginBottom: "var(--space-5)", paddingRight: "56px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+            <span aria-hidden="true" style={{ fontSize: 22 }}>🧩</span>
+            <h1 style={{ margin: 0, color: "var(--color-text-primary)", fontSize: "var(--text-page-title-size)", lineHeight: "var(--text-page-title-line)", fontWeight: "var(--text-page-title-weight)" }}>
+              I&apos;mBoredToday
+            </h1>
+          </div>
+          <p style={{ margin: "var(--space-1) 0 0", color: "var(--color-text-secondary)", fontSize: "var(--text-page-subtitle-size)" }}>{t("home.tagline")}</p>
+        </header>
 
-        <div className="home-status-row">
-          {progress && onOpenProgress && (
-            <button
-              onClick={onOpenProgress}
-              className="home-progress-pill flex items-center gap-2 rounded-full pl-3 pr-2 py-1.5"
-              style={{
-                background: PANEL,
-                border: "1px solid rgba(16,24,40,0.09)",
-                boxShadow: "0 4px 14px rgba(16,24,40,0.06)",
-                color: CREAM,
-              }}
-              aria-label={`Open My Progress — ${(progress.available_points || 0).toLocaleString(language === "sk" ? "sk-SK" : "en")} ${t("home.points")}, ${progress.challenge_current_streak || 0} ${progress.challenge_current_streak === 1 ? t("home.day") : t("home.days")}`}
-            >
-              <span className="flex items-center gap-1 text-xs font-semibold whitespace-nowrap">
-                <Star size={13} fill="currentColor" style={{ color: "#D9AE58" }} />
-                {(progress.available_points || 0).toLocaleString(language === "sk" ? "sk-SK" : "en")}
-              </span>
-              <span className="h-3.5 w-px" style={{ background: "rgba(16,24,40,0.10)" }} />
-              <span className="flex items-center gap-1 text-xs font-semibold whitespace-nowrap">
-                <Flame size={13} style={{ color: "#E05A47" }} />
-                {progress.challenge_current_streak || 0}
-              </span>
-              <ChevronRight size={13} style={{ opacity: 0.3 }} />
-            </button>
-          )}
-        </div>
-        <p style={{ color: CREAM, opacity: 0.4 }} className="text-[11px] mb-4">
-          {t("home.tagline")}
-        </p>
+        {progress && onOpenProgress && (
+          <button
+            type="button"
+            onClick={onOpenProgress}
+            className="home-progress-control"
+            style={{
+              ...buttonReset,
+              minHeight: "var(--control-height-md)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "var(--space-2)",
+              marginBottom: "var(--space-4)",
+              padding: "0 var(--space-3)",
+              border: "1px solid var(--color-border)",
+              borderRadius: "var(--radius-full)",
+              background: "var(--color-surface)",
+              boxShadow: "var(--shadow-control)",
+              color: "var(--color-text-primary)",
+            }}
+            aria-label={`Open My Progress — ${(progress.available_points || 0).toLocaleString(language === "sk" ? "sk-SK" : "en")} ${t("home.points")}, ${progress.challenge_current_streak || 0} ${progress.challenge_current_streak === 1 ? t("home.day") : t("home.days")}`}
+          >
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "var(--text-caption-size)", fontWeight: 600 }}>
+              <Star size={15} fill="currentColor" style={{ color: "var(--color-warning-gold)" }} />
+              {(progress.available_points || 0).toLocaleString(language === "sk" ? "sk-SK" : "en")}
+            </span>
+            <span aria-hidden="true" style={{ width: 1, height: 16, background: "var(--color-border)" }} />
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "var(--text-caption-size)", fontWeight: 600 }}>
+              <Flame size={15} style={{ color: "var(--color-danger-solid)" }} />
+              {progress.challenge_current_streak || 0}
+            </span>
+            <ChevronRight size={15} style={{ color: "var(--color-icon-subtle)" }} />
+          </button>
+        )}
 
         {onPlayModeChange && (
-          <div className="flex justify-center mb-2">
-            <div className="inline-flex rounded-full p-1" style={{ background: "rgba(16,24,40,0.06)" }}>
-              {["challenge", "practice"].map((m) => (
-                <button
-                  key={m}
-                  onClick={() => onPlayModeChange(m)}
-                  className={`gloss-button rounded-full px-4 py-1.5 text-xs font-semibold capitalize ${playMode === m ? "" : "!bg-transparent !box-shadow-none !border-none"}`}
-                  style={playMode === m ? {} : {
-                    background: "transparent",
-                    boxShadow: "none",
-                    border: "none",
-                    color: "rgba(27,33,41,0.5)",
-                  }}
-                >
-                  {t(`common.${m}`)}
-                  {m === "challenge" && pendingChallenges.length > 0 && (
-                    <span
-                      className="ml-1.5 inline-flex items-center justify-center rounded-full text-[9px]"
-                      style={{ minWidth:17,height:17,padding:"0 5px",background:"#E5484D",color:"#fff" }}
-                      aria-label={t("home.pendingChallenges", { count:pendingChallenges.length })}
-                    >
-                      {pendingChallenges.length}
-                    </span>
-                  )}
-                </button>
-              ))}
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "var(--space-2)" }}>
+            <div role="group" aria-label="Play mode" style={{ display: "inline-flex", gap: 2, padding: 3, borderRadius: "var(--radius-full)", background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)" }}>
+              {["challenge", "practice"].map((mode) => {
+                const active = playMode === mode;
+                return (
+                  <button
+                    type="button"
+                    key={mode}
+                    onClick={() => onPlayModeChange(mode)}
+                    aria-pressed={active}
+                    style={{
+                      ...buttonReset,
+                      minHeight: "var(--control-height-sm)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "var(--space-1)",
+                      padding: "0 var(--space-4)",
+                      border: active ? "1px solid var(--color-primary-subtle-border)" : "1px solid transparent",
+                      borderRadius: "var(--radius-full)",
+                      background: active ? "var(--color-surface)" : "transparent",
+                      boxShadow: active ? "var(--shadow-control)" : "none",
+                      color: active ? "var(--color-primary)" : "var(--color-text-secondary)",
+                      fontSize: "var(--text-button-size)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {t(`common.${mode}`)}
+                    {mode === "challenge" && pendingChallenges.length > 0 && (
+                      <span aria-label={t("home.pendingChallenges", { count: pendingChallenges.length })} style={{ minWidth: 20, height: 20, display: "grid", placeItems: "center", padding: "0 6px", borderRadius: "var(--radius-full)", background: "var(--color-danger-solid)", color: "var(--color-primary-text)", fontSize: 11, fontWeight: 700 }}>
+                        {pendingChallenges.length}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
-        <p style={{ color: CREAM, opacity: 0.4 }} className="text-[11px] text-center mb-5">
-          {playMode === "challenge"
-            ? t("home.challengeHint")
-            : t("home.practiceHint")}
+
+        <p style={{ margin: "0 0 var(--space-5)", textAlign: "center", color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)" }}>
+          {playMode === "challenge" ? t("home.challengeHint") : t("home.practiceHint")}
         </p>
+
         {playMode === "challenge" && onChallengeScopeChange && (
-          <div className="mb-6 rounded-3xl p-3" style={{ background:PANEL,border:"1px solid rgba(16,24,40,.09)",boxShadow:"0 8px 24px rgba(16,24,40,.06)" }}>
+          <Card style={{ marginBottom: "var(--space-6)", padding: "var(--space-3)" }}>
             <button
               type="button"
               onClick={choosePersonalChallenge}
-              className="w-full flex items-center gap-3 rounded-2xl p-3 text-left"
+              aria-expanded={challengeScope?.type !== "circle" && personalExpanded}
               style={{
-                background:challengeScope?.type !== "circle" ? "rgba(47,111,237,.08)" : "transparent",
-                border:challengeScope?.type !== "circle" ? "1px solid rgba(47,111,237,.18)" : "1px solid transparent",
+                ...buttonReset,
+                width: "100%",
+                minHeight: 68,
+                display: "flex",
+                alignItems: "center",
+                gap: "var(--space-3)",
+                padding: "var(--space-3)",
+                textAlign: "left",
+                border: challengeScope?.type !== "circle" ? "1px solid var(--color-primary-subtle-border)" : "1px solid transparent",
+                borderRadius: "var(--radius-md)",
+                background: challengeScope?.type !== "circle" ? "var(--color-primary-subtle)" : "transparent",
               }}
             >
-              <span className="personal-challenge-icon grid place-items-center rounded-xl text-xl shrink-0" style={{ width:42,height:42,background:"#F1F5FF" }}>🎯</span>
-              <span className="flex-1 min-w-0">
-                <span className="flex items-center gap-2">
-                  <span className="text-sm font-bold">{t("home.myChallenge")}</span>
-                </span>
-                <span className="block h-1.5 rounded-full mt-2 overflow-hidden" style={{ background:"rgba(16,24,40,.07)" }}>
-                  <span className="block h-full rounded-full" style={{ width:`${personalStatus.total ? (personalStatus.completed / personalStatus.total) * 100 : 0}%`,background:personalStatus.done ? "#16A34A" : "#2F6FED" }}/>
+              <span aria-hidden="true" style={{ width: 44, height: 44, display: "grid", placeItems: "center", flexShrink: 0, borderRadius: "var(--radius-md)", background: "var(--color-info-bg)", fontSize: 21 }}>🎯</span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <strong style={{ display: "block", color: "var(--color-text-primary)", fontSize: "var(--text-body-size)" }}>{t("home.myChallenge")}</strong>
+                <span style={{ display: "block", height: 7, marginTop: "var(--space-2)", overflow: "hidden", borderRadius: "var(--radius-full)", background: "var(--color-border)" }}>
+                  <span style={{ display: "block", width: `${personalStatus.total ? (personalStatus.completed / personalStatus.total) * 100 : 0}%`, height: "100%", borderRadius: "inherit", background: personalStatus.done ? "var(--color-success-text)" : "var(--color-primary)" }} />
                 </span>
               </span>
-              <span className="rounded-full px-2.5 py-1 text-[10px] font-bold shrink-0" style={{ background:personalStatus.done ? "rgba(22,163,74,.11)" : "rgba(47,111,237,.10)",color:personalStatus.done ? "#137A3A" : "#2F6FED" }}>
-                {personalStatus.done ? "Completed today" : t("home.gamesLeft", { count:personalStatus.remaining })}
+              <span style={{ flexShrink: 0, padding: "5px 9px", borderRadius: "var(--radius-full)", background: personalStatus.done ? "var(--color-success-bg)" : "var(--color-info-bg)", color: personalStatus.done ? "var(--color-success-text)" : "var(--color-info-text)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>
+                {personalStatus.done ? "Completed today" : t("home.gamesLeft", { count: personalStatus.remaining })}
               </span>
             </button>
 
             {challengeScope?.type !== "circle" && personalExpanded && (
-              <ChallengeStandings
-                rows={challengeRows}
-                roster={standingsRoster}
-                games={selectedChallengeGames}
-                benchmarks={challengeBenchmarks}
-                previousRows={previousChallengeRows}
-                historyRows={personalHistoryRows}
-                previousWeekLabel={previousChallengeLabel}
-                userId={userId}
-                loading={standingsLoading}
-                refreshing={standingsRefreshing}
-                defaultOpen
-                embedded
-              />
+              <ChallengeStandings rows={challengeRows} roster={standingsRoster} games={selectedChallengeGames} benchmarks={challengeBenchmarks} previousRows={previousChallengeRows} historyRows={personalHistoryRows} previousWeekLabel={previousChallengeLabel} userId={userId} loading={standingsLoading} refreshing={standingsRefreshing} defaultOpen embedded />
             )}
 
             {circleChallenges.length > 0 && (
-              <div className="mt-3 pt-3" style={{ borderTop:"1px solid rgba(16,24,40,.07)" }}>
-                <div className="flex items-center px-1 mb-2">
-                  <span className="text-xs font-bold flex-1" style={{ color:CREAM }}>{t("home.circleChallenges")}</span>
-                  <span className="text-[10px] font-semibold rounded-full px-2 py-0.5" style={{ background:"rgba(16,24,40,.05)",color:"rgba(27,33,41,.48)" }}>{circleChallenges.length}</span>
+              <section style={{ marginTop: "var(--space-3)", paddingTop: "var(--space-3)", borderTop: "1px solid var(--color-border)" }}>
+                <div style={{ display: "flex", alignItems: "center", marginBottom: "var(--space-2)" }}>
+                  <h2 style={{ flex: 1, margin: 0, color: "var(--color-text-primary)", fontSize: "var(--text-section-title-size)", fontWeight: "var(--text-section-title-weight)" }}>{t("home.circleChallenges")}</h2>
+                  <span style={{ padding: "3px 8px", borderRadius: "var(--radius-full)", background: "var(--color-surface-elevated)", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>{circleChallenges.length}</span>
                 </div>
-                <div className="space-y-2">
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
                   {circleChallenges.map((item) => {
                     const status = challengeStatus(item);
                     const lifecycle = challengeLifecycle[String(item.challenge_id)];
@@ -677,162 +688,98 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                     const selected = challengeScope?.type === "circle" && String(challengeScope.id) === String(item.challenge_id);
                     const expanded = String(expandedChallengeId) === String(item.challenge_id);
                     const roster = circleRosters[item.circle_id] || [];
-                    const games = (item.game_ids || [])
-                      .map((id) => configuredGames.find((game) => game.id === id) || GAME_META.find((game) => game.id === id))
-                      .filter(Boolean);
-                    const itemRounds = buildCircleChallengeRounds({
-                      activeDays:item.active_days,
-                      gameIds:item.game_ids,
-                    });
+                    const games = (item.game_ids || []).map((id) => configuredGames.find((game) => game.id === id) || GAME_META.find((game) => game.id === id)).filter(Boolean);
+                    const itemRounds = buildCircleChallengeRounds({ activeDays: item.active_days, gameIds: item.game_ids });
+                    const statusTone = challengeFinished ? "warning" : playerFinished ? "success" : status.completed === 0 ? "muted" : "danger";
+                    const tone = {
+                      warning: ["var(--color-warning-bg)", "var(--color-warning-text)"],
+                      success: ["var(--color-success-bg)", "var(--color-success-text)"],
+                      danger: ["var(--color-danger-bg)", "var(--color-danger-text)"],
+                      muted: ["var(--color-surface-elevated)", "var(--color-text-secondary)"],
+                    }[statusTone];
+
                     return (
-                      <div key={item.challenge_id} className="gloss-button rounded-2xl overflow-hidden" style={{ opacity: selected ? 1 : 0.9 }}>
+                      <div key={item.challenge_id} style={{ overflow: "hidden", border: `1px solid ${selected ? "var(--color-primary-subtle-border)" : "var(--color-border)"}`, borderRadius: "var(--radius-md)", background: selected ? "var(--color-primary-subtle)" : "var(--color-surface-elevated)" }}>
                         <button
                           type="button"
-                          onClick={() => {
-                            setExpandedChallengeId(expanded ? null : item.challenge_id);
-                            chooseCircleChallenge(item);
-                          }}
-                          className="w-full flex items-center gap-3 p-3 text-left"
+                          onClick={() => { setExpandedChallengeId(expanded ? null : item.challenge_id); chooseCircleChallenge(item); }}
                           aria-expanded={expanded}
+                          style={{ ...buttonReset, width: "100%", minHeight: 64, display: "flex", alignItems: "center", gap: "var(--space-3)", padding: "var(--space-3)", textAlign: "left", border: 0, background: "transparent" }}
                         >
-                          <span className="circle-icon-control grid place-items-center rounded-xl text-lg shrink-0" style={{ width:40,height:40,background:"#fff" }}>{item.circle_emoji || "⭐"}</span>
-                          <span className="flex-1 min-w-0">
-                            <span className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold truncate">{item.challenge_title || item.circle_name}</span>
-                              {selected && <Check size={12} strokeWidth={3} style={{ color:"#12946A" }}/>}
+                          <span aria-hidden="true" style={{ width: 42, height: 42, display: "grid", placeItems: "center", flexShrink: 0, borderRadius: "var(--radius-md)", background: "var(--color-surface)", fontSize: 20 }}>{item.circle_emoji || "⭐"}</span>
+                          <span style={{ flex: 1, minWidth: 0 }}>
+                            <span style={{ display: "flex", alignItems: "center", gap: "var(--space-1)", color: "var(--color-text-primary)", fontSize: "var(--text-body-size)", fontWeight: 700 }}>
+                              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.challenge_title || item.circle_name}</span>
+                              {selected && <Check size={14} strokeWidth={3} style={{ flexShrink: 0, color: "var(--color-primary)" }} />}
                             </span>
-                            <span className="block text-[10px] mt-0.5 truncate" style={{ color:"rgba(27,33,41,.45)" }}>{item.circle_name}</span>
+                            <span style={{ display: "block", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{item.circle_name}</span>
                           </span>
-                          <span className="text-right shrink-0">
-                            <span
-                              className="circle-challenge-status block text-[10px] font-bold"
-                              data-status={challengeFinished ? "finished" : playerFinished ? "complete" : status.completed === 0 ? "idle" : "remaining"}
-                              style={{ color:challengeFinished ? "#7A5711" : playerFinished ? "#137A3A" : status.completed === 0 ? "#6B7280" : "#A9363B" }}
-                            >
-                              {lifecycleLabel}
-                            </span>
-                            {!item.active_today && <span className="block text-[9px] mt-0.5" style={{ color:"rgba(27,33,41,.40)" }}>Not scheduled today</span>}
+                          <span style={{ flexShrink: 0, textAlign: "right" }}>
+                            <span style={{ display: "inline-flex", padding: "4px 8px", borderRadius: "var(--radius-full)", background: tone[0], color: tone[1], fontSize: "var(--text-caption-size)", fontWeight: 600 }}>{lifecycleLabel}</span>
+                            {!item.active_today && <span style={{ display: "block", marginTop: 3, color: "var(--color-text-muted)", fontSize: "var(--text-caption-size)" }}>Not scheduled today</span>}
                           </span>
-                          <ChevronDown size={15} style={{ opacity:.35,transform:expanded ? "rotate(180deg)" : "none",transition:"transform .15s ease" }}/>
+                          <ChevronDown size={17} style={{ flexShrink: 0, color: "var(--color-icon-subtle)", transform: expanded ? "rotate(180deg)" : "none", transition: "transform var(--transition-fast)" }} />
                         </button>
 
                         {expanded && (
-                          <div className="px-3 pb-3">
-                            <div className="rounded-2xl p-3" style={{ background:"#fff" }}>
-                              <div className="flex flex-wrap gap-1.5">
+                          <div style={{ padding: "0 var(--space-3) var(--space-3)" }}>
+                            <div style={{ padding: "var(--space-3)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface)" }}>
+                              <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-1)" }}>
                                 {games.map((game) => {
                                   const GameIcon = game.icon;
-                                  return <span key={game.id} className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold" style={{ background:`${game.accent}13`,color:game.accent }}><GameIcon size={11}/>{game.label}</span>;
+                                  return <span key={game.id} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 8px", borderRadius: "var(--radius-full)", background: accentSurface(game.accent), color: game.accent, fontSize: "var(--text-caption-size)", fontWeight: 600 }}><GameIcon size={13} />{game.label}</span>;
                                 })}
                               </div>
-                              <div className="flex flex-wrap gap-1.5 mt-2">
-                                {itemRounds.map((round) => <span key={round.date} className="rounded-full px-2 py-1 text-[9px] font-semibold capitalize" style={{ background:"#F5F7FB",color:"rgba(27,33,41,.66)" }}>{DAY_LABELS[round.isoDay-1]} · {round.game}</span>)}
+                              <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-1)", marginTop: "var(--space-2)" }}>
+                                {itemRounds.map((round) => <span key={round.date} style={{ padding: "4px 7px", borderRadius: "var(--radius-full)", background: "var(--color-surface-elevated)", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>{DAY_LABELS[round.isoDay - 1]} · {round.game}</span>)}
                               </div>
-                              <div className="text-[10px] mt-1" style={{ color:"rgba(27,33,41,.48)" }}>
+                              <p style={{ margin: "var(--space-2) 0 0", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>
                                 {item.repeats_weekly ? `Week ${item.occurrence_number} of ${item.series_weeks}` : "One week only"}
-                                {item.closes_on ? ` · closes after ${new Date(`${item.closes_on}T00:00:00`).toLocaleDateString(undefined,{ weekday:"short",day:"numeric",month:"short" })}` : ""}
-                              </div>
-                              <div className="flex items-center gap-2 mt-3">
-                                <div className="flex">
-                                  {roster.slice(0,4).map((member,index) => <span key={member.id} className="grid place-items-center rounded-full text-[9px]" style={{ width:22,height:22,background:"#F1F3F7",border:"2px solid white",marginLeft:index ? -5 : 0 }}>{member.icon || "🙂"}</span>)}
-                                </div>
-                                <span className="text-[10px]" style={{ color:"rgba(27,33,41,.48)" }}>{t("home.members", { count:roster.length })}</span>
-                                <span className="ml-auto text-[10px] font-semibold" style={{ color:"#9A721F" }}>+{item.reward_points || 0} {t("home.points")}</span>
-                                {onOpenCircles && (
-                                  <button
-                                    type="button"
-                                    onClick={() => onOpenCircles({ circleId:item.circle_id,challengeId:item.challenge_id })}
-                                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[10px] font-semibold"
-                                    style={{ background:"rgba(18,148,106,.09)",color:"#0B7C58" }}
-                                  >
-                                    <Users size={12}/>{t("home.circleDetails")}
-                                  </button>
-                                )}
+                                {item.closes_on ? ` · closes after ${new Date(`${item.closes_on}T00:00:00`).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })}` : ""}
+                              </p>
+                              <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "var(--space-2)", marginTop: "var(--space-3)" }}>
+                                <AvatarGroup members={roster} />
+                                <span style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{t("home.members", { count: roster.length })}</span>
+                                <span style={{ marginLeft: "auto", color: "var(--color-warning-text)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>+{item.reward_points || 0} {t("home.points")}</span>
+                                {onOpenCircles && <Button variant="secondary" size="sm" before={<Users size={14} />} onClick={() => onOpenCircles({ circleId: item.circle_id, challengeId: item.challenge_id })}>{t("home.circleDetails")}</Button>}
                               </div>
                             </div>
-                            {selected && (
-                              <ChallengeStandings
-                                rows={challengeRows}
-                                roster={standingsRoster}
-                                games={selectedChallengeGames}
-                                rounds={challengeRounds.length ? challengeRounds : selectedRounds}
-                                benchmarks={challengeBenchmarks}
-                                previousRows={previousChallengeRows}
-                                previousRounds={previousChallengeRounds}
-                                previousWeekLabel={previousChallengeLabel}
-                                isCircle
-                                userId={userId}
-                                loading={standingsLoading || !selectedCircle}
-                                refreshing={standingsRefreshing}
-                                defaultOpen
-                                embedded
-                                rewardPoints={challengeScope?.rewardPoints || 0}
-                                closed={!!challengeLifecycle[String(challengeScope.id)]?.closed_at}
-                                winnerId={challengeLifecycle[String(challengeScope.id)]?.winner_id}
-                                stakeRewardName={challengeScope?.stakeRewardName || null}
-                                stakeSplitMethod={challengeScope?.stakeSplitMethod || null}
-                              />
-                            )}
+                            {selected && <ChallengeStandings rows={challengeRows} roster={standingsRoster} games={selectedChallengeGames} rounds={challengeRounds.length ? challengeRounds : selectedRounds} benchmarks={challengeBenchmarks} previousRows={previousChallengeRows} previousRounds={previousChallengeRounds} previousWeekLabel={previousChallengeLabel} isCircle userId={userId} loading={standingsLoading || !selectedCircle} refreshing={standingsRefreshing} defaultOpen embedded rewardPoints={challengeScope?.rewardPoints || 0} closed={!!challengeLifecycle[String(challengeScope.id)]?.closed_at} winnerId={challengeLifecycle[String(challengeScope.id)]?.winner_id} stakeRewardName={challengeScope?.stakeRewardName || null} stakeSplitMethod={challengeScope?.stakeSplitMethod || null} />}
                           </div>
                         )}
                       </div>
                     );
                   })}
                 </div>
-              </div>
+              </section>
             )}
 
             {challengeHistory.length > 0 && (
-              <details className="mt-3 pt-3 group" style={{ borderTop:"1px solid rgba(16,24,40,.07)" }}>
-                <summary className="flex items-center gap-2 px-1 py-1 cursor-pointer list-none">
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-xs font-bold">Challenge history</span>
-                    <span className="block text-[9px] mt-0.5" style={{ color:"rgba(27,33,41,.43)" }}>
-                      Your latest circle results
-                    </span>
+              <details style={{ marginTop: "var(--space-3)", paddingTop: "var(--space-3)", borderTop: "1px solid var(--color-border)" }}>
+                <summary style={{ ...buttonReset, display: "flex", alignItems: "center", gap: "var(--space-2)", padding: "var(--space-1)", listStyle: "none" }}>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <strong style={{ display: "block", color: "var(--color-text-primary)", fontSize: "var(--text-body-size)" }}>Challenge history</strong>
+                    <span style={{ display: "block", marginTop: 2, color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>Your latest circle results</span>
                   </span>
-                  <span className="text-[9px] font-semibold" style={{ color:"rgba(27,33,41,.42)" }}>
-                    {Math.min(challengeHistory.length, 5)} recent
-                  </span>
-                  <ChevronDown size={15} className="transition-transform group-open:rotate-180" style={{ opacity:.32 }}/>
+                  <span style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>{Math.min(challengeHistory.length, 5)} recent</span>
+                  <ChevronDown size={17} style={{ color: "var(--color-icon-subtle)" }} />
                 </summary>
-                <div className="challenge-history-list mt-2 overflow-hidden rounded-2xl" style={{ background:"rgba(16,24,40,.025)",border:"1px solid rgba(16,24,40,.07)" }}>
+                <div style={{ marginTop: "var(--space-2)", overflow: "hidden", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)" }}>
                   {challengeHistory.slice(0, 5).map((item, index) => {
                     const isWinner = item.winner_id === userId;
                     const hasWinner = !!item.winner_id;
                     const entries = Number(item.entry_count) || 0;
                     const finishers = Number(item.finisher_count) || 0;
-                    const resultLabel = isWinner
-                      ? "You won"
-                      : hasWinner
-                        ? `${item.winner_name || "Circlemate"} won`
-                        : "No winner";
+                    const resultLabel = isWinner ? "You won" : hasWinner ? `${item.winner_name || "Circlemate"} won` : "No winner";
                     return (
-                      <div
-                        key={item.challenge_id}
-                        className="challenge-history-row flex items-center gap-3 px-3 py-2.5"
-                        style={{ borderTop:index ? "1px solid rgba(16,24,40,.06)" : "none" }}
-                      >
-                        <span className="flex-1 min-w-0">
-                          <span className="block text-[11px] font-semibold truncate">{item.challenge_title || item.circle_name}</span>
-                          <span className="challenge-history-muted block text-[9px] mt-0.5 truncate" style={{ color:"rgba(27,33,41,.44)" }}>
-                            {item.circle_name} · {challengeWeekLabel(item.week_start)}
-                          </span>
+                      <div key={item.challenge_id} style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", padding: "var(--space-3)", borderTop: index ? "1px solid var(--color-border)" : "none" }}>
+                        <span style={{ flex: 1, minWidth: 0 }}>
+                          <strong style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--color-text-primary)", fontSize: "var(--text-body-secondary-size)" }}>{item.challenge_title || item.circle_name}</strong>
+                          <span style={{ display: "block", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{item.circle_name} · {challengeWeekLabel(item.week_start)}</span>
                         </span>
-                        <span className="text-right shrink-0">
-                          <span
-                            className="challenge-history-result inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold"
-                            data-result={isWinner ? "won" : hasWinner ? "winner" : "none"}
-                            style={{
-                              background:isWinner ? "rgba(22,163,74,.10)" : hasWinner ? "rgba(47,111,237,.08)" : "rgba(16,24,40,.05)",
-                              color:isWinner ? "#15803D" : hasWinner ? "#2F6FED" : "rgba(27,33,41,.50)",
-                            }}
-                          >
-                            {resultLabel}
-                          </span>
-                          <span className="challenge-history-muted block text-[8px] mt-1" style={{ color:"rgba(27,33,41,.38)" }}>
-                            {entries > 0 ? `${finishers}/${entries} finished` : "No entries"}
-                          </span>
+                        <span style={{ flexShrink: 0, textAlign: "right" }}>
+                          <span style={{ display: "inline-flex", padding: "4px 8px", borderRadius: "var(--radius-full)", background: isWinner ? "var(--color-success-bg)" : hasWinner ? "var(--color-info-bg)" : "var(--color-surface)", color: isWinner ? "var(--color-success-text)" : hasWinner ? "var(--color-info-text)" : "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>{resultLabel}</span>
+                          <span style={{ display: "block", marginTop: 4, color: "var(--color-text-muted)", fontSize: "var(--text-caption-size)" }}>{entries > 0 ? `${finishers}/${entries} finished` : "No entries"}</span>
                         </span>
                       </div>
                     );
@@ -840,92 +787,102 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                 </div>
               </details>
             )}
-          </div>
+          </Card>
         )}
 
         {playMode === "challenge" && challengeScope?.type === "circle" && (
-          <div className="challenge-games-heading mb-3 rounded-2xl px-4 py-3 flex items-center gap-3" style={{ background:"rgba(47,111,237,.08)",border:"1px solid rgba(47,111,237,.16)" }}>
-            <span className="text-xl">{challengeScope.emoji || "⭐"}</span>
-            <span className="min-w-0">
-              <strong className="block text-sm truncate">{challengeScope.name}</strong>
-              <small className="block text-[10px] mt-0.5" style={{ color:"rgba(27,33,41,.50)" }}>
-                {todayRound ? todayRoundDone ? "Today’s round completed" : "Play today’s assigned round" : "No round scheduled today"}
-              </small>
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", marginBottom: "var(--space-3)", padding: "var(--space-3) var(--space-4)", border: "1px solid var(--color-primary-subtle-border)", borderRadius: "var(--radius-md)", background: "var(--color-primary-subtle)" }}>
+            <span aria-hidden="true" style={{ fontSize: 22 }}>{challengeScope.emoji || "⭐"}</span>
+            <span style={{ minWidth: 0 }}>
+              <strong style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--color-text-primary)", fontSize: "var(--text-body-size)" }}>{challengeScope.name}</strong>
+              <small style={{ display: "block", marginTop: 2, color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{todayRound ? todayRoundDone ? "Today’s round completed" : "Play today’s assigned round" : "No round scheduled today"}</small>
             </span>
           </div>
         )}
+
         {gameConfigLoading ? (
-          <p style={{ color: CREAM, opacity: 0.3 }} className="text-xs text-center py-8">{t("common.loading")}</p>
+          <div aria-live="polite" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-3)" }}>
+            {[0, 1, 2, 3].map((item) => <div key={item} className="home-skeleton" style={{ height: 154, borderRadius: "var(--radius-lg)", background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)" }} />)}
+          </div>
         ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {visibleGames
-            .filter((g) => g.live || !circleChallengeIsActive || (!!todayRound && g.id === todayRound.game))
-            .map((g) => {
-            const Icon = g.icon;
-            const playingCount = players.filter((p) => p.game === g.id && p.mode === (g.live ? "live" : playMode)).length;
-            const canOpenGame = g.available && (g.live || selectedChallengePlayable);
-            return (
-              <button
-                key={g.id}
-                disabled={!canOpenGame}
-                onClick={() => canOpenGame && onSelect(g.id)}
-                className="gloss-button home-tile relative flex flex-col items-start gap-3 rounded-2xl p-4 text-left"
-                style={{
-                  opacity: canOpenGame ? 1 : 0.45,
-                  cursor: canOpenGame ? "pointer" : "default",
-                }}
-              >
-                {!g.live && challengesLoaded && (challengeScope?.type === "circle" ? todayRoundDone : todayCompletions.has(g.id)) && (
-                  <span
-                    className={`home-tile-check home-tile-check--${g.id} absolute top-3 left-3 flex items-center justify-center rounded-full`}
-                    style={{ width: 18, height: 18, background: "rgba(47,111,237,0.12)" }}
-                    title={t("home.alreadyPlayed")}
-                  >
-                    <Check size={11} style={{ color: "#2F6FED" }} strokeWidth={3} />
-                  </span>
-                )}
-                {playingCount > 0 && (
-                  <span
-                    className="absolute top-3 right-3 flex items-center gap-1 rounded-full px-1.5 py-0.5"
-                    style={{ background: "rgba(34,197,94,0.12)" }}
-                  >
-                    <Circle size={5} fill="#22C55E" style={{ color: "#22C55E" }} />
-                    <span style={{ color: "#16A34A", fontWeight: 700 }} className="text-[10px]">{playingCount}</span>
-                  </span>
-                )}
-                <div
-                  className={`home-tile-icon home-tile-icon--${g.id} flex items-center justify-center rounded-xl`}
-                  style={{ width: 40, height: 40, background: `${g.accent}22` }}
+          <div className="home-game-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-3)" }}>
+            {visibleGames.filter((game) => game.live || !circleChallengeIsActive || (!!todayRound && game.id === todayRound.game)).map((game) => {
+              const Icon = game.icon;
+              const playingCount = players.filter((player) => player.game === game.id && player.mode === (game.live ? "live" : playMode)).length;
+              const canOpenGame = game.available && (game.live || selectedChallengePlayable);
+              const completed = !game.live && challengesLoaded && (challengeScope?.type === "circle" ? todayRoundDone : todayCompletions.has(game.id));
+              return (
+                <button
+                  type="button"
+                  key={game.id}
+                  disabled={!canOpenGame}
+                  onClick={() => canOpenGame && onSelect(game.id)}
+                  className="home-game-tile"
+                  style={{
+                    ...buttonReset,
+                    position: "relative",
+                    minHeight: 154,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    gap: "var(--space-3)",
+                    padding: "var(--space-4)",
+                    textAlign: "left",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: "var(--radius-lg)",
+                    background: "var(--color-surface)",
+                    boxShadow: "var(--shadow-card)",
+                    cursor: canOpenGame ? "pointer" : "not-allowed",
+                    transition: "transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast)",
+                  }}
                 >
-                  <Icon size={20} style={{ color: g.accent }} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <div style={{ color: CREAM, fontWeight: 600 }} className="text-sm">{g.label}</div>
-                    {g.live && (
-                      <span className="rounded-full px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wide" style={{ color:"#087A58",background:"rgba(21,150,111,.12)" }}>
-                        Live
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ color: CREAM, opacity: 0.5 }} className="text-xs mt-0.5 leading-snug">{t(`game.${g.id}.desc`)}</div>
-                  {!!todayPlayCounts[g.id] && (
-                    <div style={{ color: CREAM, opacity: 0.35 }} className="text-[10px] mt-1 font-semibold">
-                      Played {todayPlayCounts[g.id]}× today
-                    </div>
-                  )}
-                </div>
-                {!g.available && (
-                  <span style={{ color: CREAM, opacity: 0.35 }} className="text-[10px] font-semibold uppercase tracking-wide">
-                    {t("home.comingSoon")}
+                  {completed && <span title={t("home.alreadyPlayed")} style={{ position: "absolute", top: 12, left: 12, width: 22, height: 22, display: "grid", placeItems: "center", borderRadius: "50%", background: "var(--color-info-bg)" }}><Check size={13} style={{ color: "var(--color-info-text)" }} strokeWidth={3} /></span>}
+                  {playingCount > 0 && <span style={{ position: "absolute", top: 12, right: 12, display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 7px", borderRadius: "var(--radius-full)", background: "var(--color-success-bg)", color: "var(--color-success-text)", fontSize: "var(--text-caption-size)", fontWeight: 700 }}><Circle size={6} fill="currentColor" />{playingCount}</span>}
+                  <span aria-hidden="true" style={{ width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: "var(--radius-md)", background: accentSurface(game.accent), color: game.accent }}><Icon size={22} /></span>
+                  <span>
+                    <span style={{ display: "flex", alignItems: "center", gap: "var(--space-1)" }}>
+                      <strong style={{ color: "var(--color-text-primary)", fontSize: "var(--text-body-size)" }}>{game.label}</strong>
+                      {game.live && <span style={{ padding: "3px 6px", borderRadius: "var(--radius-full)", background: "var(--color-success-bg)", color: "var(--color-success-text)", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Live</span>}
+                    </span>
+                    <span style={{ display: "block", marginTop: 3, color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)", lineHeight: "var(--text-body-line)" }}>{t(`game.${game.id}.desc`)}</span>
+                    {!!todayPlayCounts[game.id] && <span style={{ display: "block", marginTop: "var(--space-1)", color: "var(--color-text-muted)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>Played {todayPlayCounts[game.id]}× today</span>}
                   </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+                  {!game.available && <span style={{ marginTop: "auto", color: "var(--color-text-muted)", fontSize: "var(--text-caption-size)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{t("home.comingSoon")}</span>}
+                </button>
+              );
+            })}
+          </div>
         )}
-      </div>
-    </div>
+      </main>
+
+      <style>{`
+        .home-progress-control:focus-visible,
+        .home-game-tile:focus-visible,
+        main button:focus-visible,
+        main summary:focus-visible {
+          outline: 2px solid var(--color-primary);
+          outline-offset: 2px;
+        }
+        .home-game-tile:disabled {
+          background: var(--color-surface-elevated) !important;
+          box-shadow: none !important;
+        }
+        @media (hover: hover) and (pointer: fine) {
+          .home-game-tile:not(:disabled):hover {
+            transform: translateY(-2px);
+            border-color: var(--color-primary-subtle-border);
+            box-shadow: var(--shadow-card-hover);
+          }
+        }
+        @media (min-width: 640px) {
+          .home-game-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .home-game-tile { transition: none !important; }
+          .home-game-tile:hover { transform: none !important; }
+          .home-skeleton { animation: none !important; }
+        }
+      `}</style>
+    </Page>
   );
 }
