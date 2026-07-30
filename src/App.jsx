@@ -47,6 +47,7 @@ import { useCompletedFeedbackCount } from "./lib/useCompletedFeedbackCount.js";
 import { useNewTransfersCount } from "./lib/useNewTransfers.js";
 import { useMyRedemptionUpdates } from "./lib/useMyRedemptionUpdates.js";
 import { useOpenRewardRequestsCount } from "./lib/useOpenRewardRequestsCount.js";
+import { useOrganiserAttentionCount } from "./lib/useOrganiserAttentionCount.js";
 import { usePokes } from "./lib/pokes.js";
 import { useUnreadMessages } from "./lib/useUnreadMessages.js";
 import { useI18n } from "./lib/i18n.jsx";
@@ -214,6 +215,7 @@ function AppShell() {
     supabase.rpc("am_i_a_circle_organiser").then(({ data }) => { if (!cancelled) setIsCircleOrganiser(!!data); });
     return () => { cancelled = true; };
   }, [user?.id]);
+  const organiserAttentionCount = useOrganiserAttentionCount(isCircleOrganiser ? user?.id : undefined);
 
   function openSection(section) {
     setSectionSignals((current) => ({ ...current, [section]: false }));
@@ -310,6 +312,7 @@ function AppShell() {
       onOpenAdminRewards={() => openAccountSection("adminrewards")}
       onOpenRewardRequests={() => openAccountSection("rewardrequests")}
       onOpenOrganiserRewards={isCircleOrganiser ? () => openAccountSection("organiserrewards") : undefined}
+      organiserAttentionCount={organiserAttentionCount}
       players={players}
       userId={user?.id}
       openFeedbackCount={openFeedbackCount}
@@ -605,13 +608,13 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
   );
 }
 
-function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenCircles, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, onOpenRewardRequests, onOpenOrganiserRewards, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
+function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenCircles, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, onOpenRewardRequests, onOpenOrganiserRewards, organiserAttentionCount = 0, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
   const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const isAdmin = !!profile.is_admin;
   const feedbackBadgeCount = isAdmin ? openFeedbackCount : completedFeedbackCount;
-  const totalNotifications = feedbackBadgeCount + newTransfersCount + myRedemptionUpdates + openRewardRequestsCount + unreadMessages.total
+  const totalNotifications = feedbackBadgeCount + newTransfersCount + myRedemptionUpdates + openRewardRequestsCount + organiserAttentionCount + unreadMessages.total
     + (sectionSignals.whatsnew ? 1 : 0) + (sectionSignals.circles ? 1 : 0);
 
   useEffect(() => {
@@ -640,7 +643,7 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
     { id:"circles", icon:Users, label:t("account.circles"), onClick:onOpenCircles, badge:sectionSignals.circles ? 1 : 0 },
     { id:"rewardrequests", icon:Gift, label:t("account.rewardRequests"), onClick:onOpenRewardRequests, badge:myRedemptionUpdates + openRewardRequestsCount },
   ];
-  if (onOpenOrganiserRewards) items.push({ id:"organiserrewards", icon:Gift, label:t("account.organiserRewards"), onClick:onOpenOrganiserRewards });
+  if (onOpenOrganiserRewards) items.push({ id:"organiserrewards", icon:Gift, label:t("account.organiserRewards"), onClick:onOpenOrganiserRewards, badge:organiserAttentionCount });
   const adminItems = [];
   if (isAdmin) {
     adminItems.push({ id:"adminplayers", icon:Shield, label:t("common.players"), onClick:onOpenAdminPlayers });
