@@ -88,7 +88,7 @@ export default function AdminRewards({onBack,onOpenCircles}){
   }
   async function deleteReward(id){
     const {error}=await supabase.rpc("delete_reward",{target_reward_id:id});
-    setMsg(error?.message||"Item deleted");
+    setMsg(error?.message||"Treat deleted");
     setDeleteConfirmId(null);
     refresh();
   }
@@ -119,12 +119,12 @@ export default function AdminRewards({onBack,onOpenCircles}){
     <div className="w-full max-w-xl">
       <header className="flex items-center gap-3 mb-6">
         <BackButton onClick={onBack} ariaLabel="Back"/>
-        <div><h1 className="text-2xl font-bold" style={{fontFamily:"'Fredoka',sans-serif",color:INK}}>Rewards Admin</h1><p className="text-xs opacity-45">Items, suggestions and delivery, all in one place</p></div>
+        <div><h1 className="text-2xl font-bold" style={{fontFamily:"'Fredoka',sans-serif",color:INK}}>Rewards Admin</h1><p className="text-xs opacity-45">Treats, suggestions and delivery, all in one place</p></div>
       </header>
 
       {!profile?.is_admin&&<div className="flex items-start gap-2 rounded-2xl px-3 py-2.5 mb-4 text-xs" style={{background:"rgba(124,58,237,.08)",color:"#5B21B6"}}>
         <Sparkles size={14} className="shrink-0 mt-0.5"/>
-        <span>You're a reward steward: you can manage items, price suggestions and review orders. Scoring rules and point adjustments stay admin-only.</span>
+        <span>You're a reward steward: you can manage treats, price suggestions and review orders. Scoring rules and point adjustments stay admin-only.</span>
       </div>}
       {msg&&<div className="rounded-2xl px-3 py-2.5 mb-4 text-xs" style={{background:"rgba(47,111,237,.08)",color:INK}}>{msg}</div>}
 
@@ -150,12 +150,12 @@ export default function AdminRewards({onBack,onOpenCircles}){
       {tab==="rewards"&&<div className="space-y-3">
         {onOpenCircles&&<button onClick={onOpenCircles} className="w-full rounded-2xl p-3 flex items-center gap-3 text-left" style={card}>
           <span className="grid place-items-center rounded-xl shrink-0" style={{width:36,height:36,background:"rgba(47,111,237,.09)",color:ACCENT}}><Users size={16}/></span>
-          <span className="flex-1 min-w-0"><span className="block text-sm font-semibold" style={{color:INK}}>Manage circles &amp; approvers</span><span className="block text-[11px] opacity-45">Rosters, invites, and who can approve reward items</span></span>
+          <span className="flex-1 min-w-0"><span className="block text-sm font-semibold" style={{color:INK}}>Manage circles &amp; approvers</span><span className="block text-[11px] opacity-45">Rosters, invites, and who can approve treats</span></span>
           <ChevronRight size={16} style={{opacity:.35}}/>
         </button>}
 
-        {circles.length===0?<div className="rounded-2xl px-3 py-2.5 text-xs" style={{background:"rgba(217,148,10,.10)",color:"#8A5C00"}}>You're not on a circle yet — join or create one to start proposing items.</div>:<form onSubmit={addReward} className="p-4 grid grid-cols-2 gap-2" style={card}>
-          <div className="col-span-2 text-xs font-semibold mb-1" style={{color:INK}}>Propose an item</div>
+        {circles.length===0?<div className="rounded-2xl px-3 py-2.5 text-xs" style={{background:"rgba(217,148,10,.10)",color:"#8A5C00"}}>You're not on a circle yet — join or create one to start proposing treats.</div>:<form onSubmit={addReward} className="p-4 grid grid-cols-2 gap-2" style={card}>
+          <div className="col-span-2 text-xs font-semibold mb-1" style={{color:INK}}>Propose a treat</div>
           <select required value={newReward.circle_id} onChange={e=>setNewReward({...newReward,circle_id:e.target.value})} className="col-span-2 border rounded-lg px-3 py-2 text-sm" style={{borderColor:"rgba(16,24,40,.12)"}}>
             {circles.map(t=><option key={t.circle_id} value={t.circle_id}>{t.circle_name} · {t.member_count} member{t.member_count===1?"":"s"}</option>)}
           </select>
@@ -169,7 +169,7 @@ export default function AdminRewards({onBack,onOpenCircles}){
           <input className="col-span-2 border rounded-lg px-3 py-2 text-sm" style={{borderColor:"rgba(16,24,40,.12)"}} placeholder="Image URL" value={newReward.image_url} onChange={e=>setNewReward({...newReward,image_url:e.target.value})}/>
           <input type="number" className="border rounded-lg px-3 py-2 text-sm" style={{borderColor:"rgba(16,24,40,.12)"}} placeholder="Points cost" value={newReward.points_cost} onChange={e=>setNewReward({...newReward,points_cost:e.target.value})} required/>
           <input type="number" className="border rounded-lg px-3 py-2 text-sm" style={{borderColor:"rgba(16,24,40,.12)"}} placeholder="Stock (blank unlimited)" value={newReward.stock_quantity} onChange={e=>setNewReward({...newReward,stock_quantity:e.target.value})}/>
-          <button className="col-span-2 rounded-xl py-2.5 text-white text-sm font-semibold" style={{background:ACCENT}}>Propose item</button>
+          <button className="col-span-2 rounded-xl py-2.5 text-white text-sm font-semibold" style={{background:ACCENT}}>Propose treat</button>
         </form>}
 
         {pending.length>0&&<div className="space-y-2">
@@ -192,7 +192,7 @@ export default function AdminRewards({onBack,onOpenCircles}){
         </div>}
 
         <div className="space-y-2">
-          {rewards.length>0&&<div className="text-xs font-bold uppercase tracking-wide opacity-40 px-1">Items</div>}
+          {rewards.length>0&&<div className="text-xs font-bold uppercase tracking-wide opacity-40 px-1">Treats</div>}
           {rewards.map(r=><div key={r.id} className="p-3" style={card}>
             <div className="flex items-center gap-3">
               <div className="grid place-items-center rounded-xl shrink-0" style={{width:40,height:40,background:"rgba(217,174,88,.14)"}}>{r.image_url?<img src={r.image_url} alt="" className="w-full h-full object-cover rounded-xl"/>:<Gift size={18} style={{color:"#D9AE58"}}/>}</div>
@@ -209,7 +209,7 @@ export default function AdminRewards({onBack,onOpenCircles}){
             {deleteConfirmId===r.id&&<div className="rounded-xl px-3 py-2.5 mt-2 text-xs" style={{background:"rgba(181,67,58,.08)",color:"#B5433A"}}>
               <div className="mb-2">Delete "{r.name}"? This can't be undone, and only works if no one has ever redeemed it.</div>
               <div className="flex gap-2">
-                <button onClick={()=>deleteReward(r.id)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-white" style={{background:"#B5433A"}}>Delete item</button>
+                <button onClick={()=>deleteReward(r.id)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-white" style={{background:"#B5433A"}}>Delete treat</button>
                 <button onClick={()=>setDeleteConfirmId(null)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{background:"rgba(16,24,40,.06)",color:INK}}>Cancel</button>
               </div>
             </div>}
@@ -245,7 +245,7 @@ export default function AdminRewards({onBack,onOpenCircles}){
     {priceTarget&&<div className="fixed inset-0 z-50 grid place-items-center p-4" style={{background:"rgba(16,24,40,.45)"}}>
       <div className="w-full max-w-sm rounded-3xl p-5" style={{background:"#fff",boxShadow:"0 24px 60px rgba(16,24,40,.22)"}}>
         <h2 className="font-bold mb-1">Price "{priceTarget.name}"</h2>
-        <p className="text-xs opacity-55 mb-3">Set a points cost — it'll then need a majority vote from this circle's approvers, same as any proposed item.</p>
+        <p className="text-xs opacity-55 mb-3">Set a points cost — it'll then need a majority vote from this circle's approvers, same as any proposed treat.</p>
         <input type="number" autoFocus value={priceValue} onChange={e=>setPriceValue(e.target.value)} placeholder="Points cost" className="w-full rounded-xl border px-3 py-2 text-sm" style={{borderColor:"rgba(16,24,40,.12)"}}/>
         <div className="flex gap-2 mt-4">
           <button onClick={()=>setPriceTarget(null)} className="flex-1 rounded-full py-2.5 text-xs font-semibold" style={{background:"rgba(16,24,40,.06)"}}>Cancel</button>

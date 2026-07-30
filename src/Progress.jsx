@@ -261,7 +261,7 @@ export default function Progress({ onBack, onOpenRewardRequests }) {
       {canProtect&&<button onClick={protect} className="gloss-button w-full p-3 mb-3 flex items-center justify-between rounded-lg" style={{color:INK}}><span className="flex items-center gap-2"><ShieldCheck size={18} style={{color:ACCENT}}/><span className="text-sm font-semibold">Protect your streak</span></span><span className="text-xs">{rules?.streak_protection_cost||250} Points</span></button>}
       {message&&<div className="rounded-xl p-3 mb-3 text-xs" style={{background:"rgba(47,111,237,.08)",color:INK}}>{message}</div>}
       <div className="game-mode-switch mb-3" style={{width:"100%",justifyContent:"flex-start"}}>{[["rewards","Rewards",Gift],["transfer","Transfer",Send]].map(([id,label,Icon])=>{const locked=id!=="rewards"&&!socialUnlocked;return <button key={id} disabled={locked} onClick={()=>setTab(id)} className={`gloss-button ${tab===id?"is-active":""}`} style={{flex:1}}>{locked?<Lock size={12}/>:<Icon size={14}/>} {label}</button>})}</div>
-      {!socialUnlocked&&<div className="rounded-2xl p-3 mb-3 text-xs flex items-start gap-2" style={{background:"rgba(217,174,88,.10)",color:"#775B1D"}}><Lock size={14} style={{marginTop:1,flexShrink:0}}/><span>Reach Level 2 to transfer points. Rewards, suggesting an item, streak protection, gameplay, circles you join, chat, and feedback remain available.</span></div>}
+      {!socialUnlocked&&<div className="rounded-2xl p-3 mb-3 text-xs flex items-start gap-2" style={{background:"rgba(217,174,88,.10)",color:"#775B1D"}}><Lock size={14} style={{marginTop:1,flexShrink:0}}/><span>Reach Level 2 to transfer points. Rewards, suggesting a treat, streak protection, gameplay, circles you join, chat, and feedback remain available.</span></div>}
       {tab==="rewards"&&onOpenRewardRequests&&<button onClick={onOpenRewardRequests} className="w-full mb-2 rounded-2xl p-3 flex items-center gap-3 text-left" style={card}>
         <span className="grid place-items-center rounded-xl shrink-0" style={{width:36,height:36,background:"rgba(47,111,237,.09)",color:ACCENT}}><ClipboardCheck size={16}/></span>
         <span className="flex-1 min-w-0"><span className="block text-sm font-semibold" style={{color:INK}}>Track my requests</span><span className="block text-[11px] opacity-45">See status and deliveries for what you've redeemed</span></span>
@@ -269,10 +269,10 @@ export default function Progress({ onBack, onOpenRewardRequests }) {
       </button>}
       {tab==="rewards"&&<button onClick={()=>setProposeOpen(v=>!v)} className="w-full mb-2 rounded-2xl p-3 flex items-center gap-3 text-left" style={card}>
         <span className="grid place-items-center rounded-xl shrink-0" style={{width:36,height:36,background:"rgba(47,111,237,.09)",color:ACCENT}}><Plus size={16}/></span>
-        <span className="flex-1 min-w-0"><span className="block text-sm font-semibold" style={{color:INK}}>Suggest an item</span><span className="block text-[11px] opacity-45">Any circle member can propose — an approver will price it</span></span>
+        <span className="flex-1 min-w-0"><span className="block text-sm font-semibold" style={{color:INK}}>Suggest a treat</span><span className="block text-[11px] opacity-45">Any circle member can propose — an approver will price it</span></span>
         <ChevronDown size={16} style={{opacity:.35,transform:proposeOpen?"rotate(180deg)":"none"}}/>
       </button>}
-      {tab==="rewards"&&proposeOpen&&circles.length===0&&<div className="rounded-2xl px-3 py-2.5 mb-2 text-xs" style={{background:"rgba(217,148,10,.10)",color:"#8A5C00"}}>You're not on a circle yet — join or create one to suggest an item.</div>}
+      {tab==="rewards"&&proposeOpen&&circles.length===0&&<div className="rounded-2xl px-3 py-2.5 mb-2 text-xs" style={{background:"rgba(217,148,10,.10)",color:"#8A5C00"}}>You're not on a circle yet — join or create one to suggest a treat.</div>}
       {tab==="rewards"&&proposeOpen&&circles.length>0&&<form onSubmit={submitProposal} className="p-4 mb-2" style={card}>
         <select value={proposal.circle_id} onChange={e=>setProposal({...proposal,circle_id:e.target.value})} className="w-full rounded-lg border px-3 py-2 text-sm mb-2" required>
           <option value="">Choose circle</option>
