@@ -8,9 +8,9 @@ import ChallengeStandings from "./ChallengeStandings.jsx";
 import { buildCircleChallengeRounds, localDateString } from "./lib/circleChallengeRounds.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
 
-const BG = "#F1F3F7";
-const PANEL = "#FFFFFF";
-const CREAM = "#1B2129";
+const BG = "var(--color-page-bg)";
+const PANEL = "var(--color-surface)";
+const CREAM = "var(--color-text-primary)";
 
 export const GAME_META = [
   { id: "queens", label: "Queens", desc: "One crown per row, column & region", icon: Crown, accent: "#2F6FED", available: true, challenge: true },
