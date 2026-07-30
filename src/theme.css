@@ -97,6 +97,12 @@
   --control-height-md: 44px;
   --control-height-lg: 52px;
 
+  /* Fixed global account control */
+  --global-player-bubble-size: 44px;
+  --global-player-bubble-offset: 16px;
+  --global-player-bubble-gap: 12px;
+  --global-header-safe-right: calc(var(--global-player-bubble-size) + var(--global-player-bubble-gap));
+
   /* ---- Typography ---- */
   --font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif;
 

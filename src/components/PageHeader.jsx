@@ -15,10 +15,11 @@ export default function PageHeader({ title, subtitle, onBack, action, backAriaLa
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
+        gap: "var(--space-3)",
         padding: "var(--space-5) 0 var(--space-4)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
+      <div className="design-page-header-main" style={{ minWidth: 0, display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
         {onBack && (
           <button
             type="button"
@@ -44,7 +45,7 @@ export default function PageHeader({ title, subtitle, onBack, action, backAriaLa
             <ArrowLeft size={20} />
           </button>
         )}
-        <div>
+        <div style={{ minWidth: 0 }}>
           <h1
             style={{
               fontSize: "var(--text-page-title-size)",
@@ -63,6 +64,9 @@ export default function PageHeader({ title, subtitle, onBack, action, backAriaLa
                 fontWeight: "var(--text-page-subtitle-weight)",
                 color: "var(--color-text-muted)",
                 margin: "2px 0 0 0",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
               }}
             >
               {subtitle}
@@ -70,8 +74,13 @@ export default function PageHeader({ title, subtitle, onBack, action, backAriaLa
           )}
         </div>
       </div>
-      {action && <div style={{ flexShrink: 0 }}>{action}</div>}
+      {action && <div className="design-page-header-action" style={{ flexShrink: 0 }}>{action}</div>}
       <style>{`
+        @media (max-width: 600px) {
+          .design-page-header {
+            padding-right: var(--global-header-safe-right) !important;
+          }
+        }
         .design-back-btn:active { transform: scale(0.97); }
         .design-back-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
         [data-theme="dark"] .design-back-btn { border: 1px solid var(--color-border); box-shadow: var(--shadow-control); }
