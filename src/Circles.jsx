@@ -418,6 +418,14 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
     <div style={{ background:BG, minHeight:"100vh", fontFamily:"'Inter',sans-serif" }} className="circles-page flex justify-center p-4 pt-10">
       <style>{`
         @media (max-width: 520px) {
+          .circles-page-header {
+            /* The account menu bubble is a fixed 44px circle pinned at
+               top:max(16px, safe-area-inset-top) / right:max(16px, safe-area-inset-right).
+               Clear it on both axes instead of letting this header's own
+               top-right button collide with it. */
+            margin-top: calc(max(16px, env(safe-area-inset-top, 0px)) + 16px);
+            padding-right: calc(60px + env(safe-area-inset-right, 0px));
+          }
           .circles-page-header-copy {
             min-width:0;
           }
