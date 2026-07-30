@@ -233,8 +233,22 @@ export default function AnimalRush({ onExit }) {
       setLoading(false);
       return null;
     }
+    const nextPlayersList = nextPlayers || [];
+    // If the current user is no longer a player and the room is in lobby,
+    // treat it as stale — clear the saved room so they can start fresh.
+    if (
+      nextRoom.status === "lobby"
+      && user?.id
+      && !nextPlayersList.some((p) => p.user_id === user.id)
+    ) {
+      window.localStorage.removeItem(roomStorageKey);
+      setRoom(null);
+      setPlayers([]);
+      setLoading(false);
+      return null;
+    }
     setRoom(nextRoom);
-    setPlayers(nextPlayers || []);
+    setPlayers(nextPlayersList);
     setLoading(false);
     return nextRoom;
   }, [roomStorageKey]);
@@ -435,7 +449,7 @@ export default function AnimalRush({ onExit }) {
     setWorking("");
     const nextRoom = Array.isArray(data) ? data[0] : data;
     if (error || !nextRoom) {
-      setMessage(error?.message || "Couldn’t create the room.");
+      setMessage(error?.message || "Couldn't create the room.");
       return;
     }
     rememberRoom(nextRoom);
@@ -453,7 +467,7 @@ export default function AnimalRush({ onExit }) {
     setWorking("");
     const nextRoom = Array.isArray(data) ? data[0] : data;
     if (error || !nextRoom) {
-      const errorMessage = error?.message || "Couldn’t join that room.";
+      const errorMessage = error?.message || "Couldn't join that room.";
       if (/room not found/i.test(errorMessage)) setJoinError("Room not found — check the code");
       else setMessage(errorMessage);
       return;
@@ -553,13 +567,12 @@ export default function AnimalRush({ onExit }) {
   async function leaveRoom() {
     if (room.status !== "lobby" && room.status !== "finished" && !window.confirm("Leave this live match? You will be eliminated.")) return;
     setWorking("leave");
+    // Clear local storage BEFORE the RPC so that even if it fails or times out,
+    // the user is not permanently stuck in a stale room.
+    window.localStorage.removeItem(roomStorageKey);
     const { error } = await supabase.rpc("animal_rush_leave_room", { target_room_id: room.id });
     setWorking("");
-    if (error) {
-      setMessage(error.message);
-      return;
-    }
-    window.localStorage.removeItem(roomStorageKey);
+    if (error) console.warn("animal_rush_leave_room RPC failed, room already cleaned locally:", error.message);
     setRoom(null);
     setPlayers([]);
     onExit?.();
