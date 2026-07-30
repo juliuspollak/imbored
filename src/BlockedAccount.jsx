@@ -1,19 +1,28 @@
 import { ShieldX } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { useI18n } from "./lib/i18n.jsx";
+import Page from "./components/Page.jsx";
+import Button from "./components/Button.jsx";
+import Card from "./components/Card.jsx";
 
 export default function BlockedAccount() {
   const { t } = useI18n();
   const { profile, signOut } = useAuth();
   return (
-    <main className="min-h-screen flex items-center justify-center p-5" style={{background:"#F1F3F7",fontFamily:"'Inter',sans-serif"}}>
-      <section className="w-full max-w-sm rounded-3xl p-7 text-center" style={{background:"#fff",border:"1px solid rgba(16,24,40,.09)",boxShadow:"0 16px 40px rgba(16,24,40,.10)"}}>
-        <div className="mx-auto mb-4 flex items-center justify-center rounded-full" style={{width:64,height:64,background:"rgba(181,67,58,.1)",color:"#B5433A"}}><ShieldX size={30}/></div>
-        <h1 className="text-2xl font-bold mb-2" style={{fontFamily:"'Fredoka',sans-serif",color:"#1B2129"}}>{t("blocked.title")}</h1>
-        <p className="text-sm mb-2" style={{color:"rgba(27,33,41,.65)"}}>{t("blocked.body")}</p>
-        {profile?.blocked_reason && <p className="text-xs rounded-xl p-3 mb-5" style={{background:"rgba(181,67,58,.07)",color:"#8F352E"}}>{profile.blocked_reason}</p>}
-        <button onClick={signOut} className="w-full rounded-full py-3 text-sm font-semibold" style={{background:"#1B2129",color:"#fff"}}>{t("common.signOut")}</button>
-      </section>
-    </main>
+    <Page style={{ alignItems: "center", justifyContent: "center" }}>
+      <Card style={{ textAlign: "center", padding: "var(--space-6)" }}>
+        <div style={{ margin: "0 auto var(--space-4)", width: 64, height: 64, borderRadius: "50%", background: "var(--color-danger-bg)", color: "var(--color-danger-text)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <ShieldX size={30} />
+        </div>
+        <h1 style={{ fontSize: "var(--text-page-title-size)", fontWeight: 700, marginBottom: "var(--space-2)", color: "var(--color-text-primary)" }}>{t("blocked.title")}</h1>
+        <p style={{ fontSize: "var(--text-body-size)", marginBottom: "var(--space-2)", color: "var(--color-text-secondary)" }}>{t("blocked.body")}</p>
+        {profile?.blocked_reason && (
+          <p style={{ fontSize: "var(--text-caption-size)", borderRadius: "var(--radius-md)", padding: "var(--space-3)", marginBottom: "var(--space-5)", background: "var(--color-danger-bg)", color: "var(--color-danger-text)" }}>
+            {profile.blocked_reason}
+          </p>
+        )}
+        <Button variant="primary" fullWidth onClick={signOut}>{t("common.signOut")}</Button>
+      </Card>
+    </Page>
   );
 }

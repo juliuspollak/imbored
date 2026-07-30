@@ -3,50 +3,24 @@ import { Mail, ArrowRight, Fingerprint } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { supabaseReady } from "./lib/supabase.js";
 import { useI18n } from "./lib/i18n.jsx";
+import Page from "./components/Page.jsx";
+import Button from "./components/Button.jsx";
+import Card from "./components/Card.jsx";
+import TextInput from "./components/TextInput.jsx";
 
-const BG = "#F1F3F7";
-const PANEL = "#FFFFFF";
-const INK = "#1B2129";
-const ACCENT = "#2F6FED";
-const CREAM = "#1B2129";
 const EMAIL_OTP_LENGTH = 8;
-
 const passkeySupported = typeof window !== "undefined" && !!window.PublicKeyCredential;
 
 function getAuthErrorMessage(error) {
   if (!error) return "Unable to send the sign-in code.";
   if (typeof error === "string") return error;
-
-  const directMessage =
-    error.message ||
-    error.error_description ||
-    error.description ||
-    error.msg;
-
-  // AuthRetryableFetchError sometimes arrives with message "{}" even though
-  // the useful information is its name/status. Do not show that raw object.
-  if (directMessage && directMessage !== "{}" && directMessage !== "[object Object]") {
-    return directMessage;
-  }
-
+  const directMessage = error.message || error.error_description || error.description || error.msg;
+  if (directMessage && directMessage !== "{}" && directMessage !== "[object Object]") return directMessage;
   const status = error.status || error.statusCode || error.context?.status;
   const name = error.name || error.constructor?.name;
-
-  if (name === "AuthRetryableFetchError" || Number(status) >= 500) {
-    return "The sign-in service could not send the email (server error). Please try again shortly. If it continues, check the Supabase Auth log and SMTP settings.";
-  }
-
-  if (name === "AuthApiError" && status) {
-    return `The sign-in request failed (${status}). Please check the Supabase Auth configuration.`;
-  }
-
-  try {
-    const serialised = JSON.stringify(error);
-    if (serialised && serialised !== "{}") return serialised;
-  } catch {
-    // Fall through to the safe default below.
-  }
-
+  if (name === "AuthRetryableFetchError" || Number(status) >= 500) return "The sign-in service could not send the email (server error). Please try again shortly.";
+  if (name === "AuthApiError" && status) return `The sign-in request failed (${status}).`;
+  try { const s = JSON.stringify(error); if (s && s !== "{}") return s; } catch { /* */ }
   return "Unable to send the sign-in code. Please try again.";
 }
 
@@ -79,100 +53,54 @@ export default function Login() {
     return () => clearInterval(t);
   }, [cooldown]);
 
-  async function handlePasskey() {
-    setError(null);
-    setPasskeyBusy(true);
-    const { error } = await signInWithPasskey();
-    setPasskeyBusy(false);
-    // A cancelled prompt or "no passkey on this device" isn't really an
-    // error worth alarming someone with — just let them fall through to
-    // the other sign-in options below.
-    if (error && error.name !== "NotAllowedError") setError(error.message);
-  }
-
-  async function handleGoogle() {
-    setError(null);
-    const { error } = await signInWithGoogle();
-    if (error) setError(error.message);
-  }
+  async function handlePasskey() { setError(null); setPasskeyBusy(true); const { error } = await signInWithPasskey(); setPasskeyBusy(false); if (error && error.name !== "NotAllowedError") setError(error.message); }
+  async function handleGoogle() { setError(null); const { error } = await signInWithGoogle(); if (error) setError(error.message); }
 
   async function handleSendCode(e) {
     e?.preventDefault?.();
     if (!email || sending || cooldown > 0) return;
-    const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail) return;
-
-    setSending(true);
-    setError(null);
-    setEmail(cleanEmail);
-
+    const cleanEmail = email.trim().toLowerCase(); if (!cleanEmail) return;
+    setSending(true); setError(null); setEmail(cleanEmail);
     try {
-      const result = await signInWithEmail(cleanEmail);
-      const authError = result?.error;
-
-      if (authError) {
-        console.error("Sign-in email error:", authError);
-        setError(getAuthErrorMessage(authError));
-        return;
-      }
-
-      setSent(true);
-      setCooldown(30); // a shared inbox rate limit means one person spamming "resend" can lock everyone out
-    } catch (error) {
-      console.error("Sign-in email exception:", error);
-      setError(getAuthErrorMessage(error));
-    } finally {
-      setSending(false);
-    }
+      const result = await signInWithEmail(cleanEmail); const authError = result?.error;
+      if (authError) { setError(getAuthErrorMessage(authError)); return; }
+      setSent(true); setCooldown(30);
+    } catch (err) { setError(getAuthErrorMessage(err)); }
+    finally { setSending(false); }
   }
 
-  async function handleVerify(e) {
-    e?.preventDefault?.();
-    await verifyEnteredCode(code);
-  }
+  async function handleVerify(e) { e?.preventDefault?.(); await verifyEnteredCode(code); }
 
   async function verifyEnteredCode(value) {
     const cleanCode = value.replace(/\D/g, "");
     if (verifying) return;
-    if (cleanCode.length !== EMAIL_OTP_LENGTH) {
-      setError(t("auth.invalidCodeLength"));
-      return;
-    }
-    setVerifying(true);
-    setError(null);
+    if (cleanCode.length !== EMAIL_OTP_LENGTH) { setError(t("auth.invalidCodeLength")); return; }
+    setVerifying(true); setError(null);
     const { error } = await verifyCode(email, cleanCode);
-    setVerifying(false);
-    if (error) setError(t("auth.invalidCode"));
+    setVerifying(false); if (error) setError(t("auth.invalidCode"));
   }
 
   useEffect(() => {
     if (!sent || code.length !== EMAIL_OTP_LENGTH) return;
-    // iOS and Android insert recognised email codes as one value. Submit
-    // immediately so the user does not also need to tap Verify.
     const timer = window.setTimeout(() => verifyEnteredCode(code), 120);
     return () => window.clearTimeout(timer);
-    // Only run when a complete new value arrives; including verifying here
-    // would retry an invalid code continuously after the request finishes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, sent]);
 
   return (
-    <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-center justify-center p-4">
-      <div
-        className="w-full max-w-sm rounded-2xl p-6"
-        style={{ background: PANEL, boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}
-      >
-        <div className="text-center mb-6">
-          <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK }} className="text-3xl">
+    <Page style={{ alignItems: "center", justifyContent: "center" }}>
+      <Card style={{ padding: "var(--space-6)", textAlign: "center" }}>
+        <div style={{ marginBottom: "var(--space-6)" }}>
+          <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: "var(--color-text-primary)", fontSize: "2rem", margin: 0 }}>
             I'mBoredToday
           </h1>
-          <p style={{ color: INK, opacity: 0.5 }} className="text-xs mt-1">
+          <p style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)", marginTop: "var(--space-1)" }}>
             {t("auth.tagline")}
           </p>
         </div>
 
         {!supabaseReady && (
-          <div className="text-xs rounded-lg p-3 mb-4" style={{ background: "rgba(217,105,92,0.1)", color: "#B5433A" }}>
+          <div style={{ fontSize: "var(--text-caption-size)", borderRadius: "var(--radius-sm)", padding: "var(--space-3)", marginBottom: "var(--space-4)", background: "var(--color-danger-bg)", color: "var(--color-danger-text)" }}>
             Supabase isn't configured yet — add your project URL and key to <code>.env</code> to enable accounts.
           </div>
         )}
@@ -181,117 +109,52 @@ export default function Login() {
           <>
             {passkeySupported && (
               <>
-                <button
-                  onClick={handlePasskey}
-                  disabled={!supabaseReady || passkeyBusy}
-                  className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold mb-3"
-                  style={{ background: ACCENT, color: "#FFFFFF", opacity: passkeyBusy ? 0.7 : 1 }}
-                >
-                  <Fingerprint size={16} />
+                <Button variant="primary" fullWidth loading={passkeyBusy} before={<Fingerprint size={16} />} onClick={handlePasskey} disabled={!supabaseReady} style={{ marginBottom: "var(--space-3)" }}>
                   {passkeyBusy ? t("auth.waiting") : t("auth.passkey")}
-                </button>
-                <p style={{ color: INK, opacity: 0.4 }} className="text-[11px] text-center mb-4">
-                  {t("auth.passkeyHint")}
-                </p>
+                </Button>
+                <p style={{ fontSize: 11, color: "var(--color-text-secondary)", marginBottom: "var(--space-4)" }}>{t("auth.passkeyHint")}</p>
               </>
             )}
-            <button
-              onClick={handleGoogle}
-              disabled={!supabaseReady}
-              className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold mb-4"
-              style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK, background: "#FFFFFF" }}
-            >
-              <GoogleIcon />
+            <Button variant="ghost" fullWidth before={<GoogleIcon />} onClick={handleGoogle} disabled={!supabaseReady} style={{ marginBottom: "var(--space-4)", border: "1px solid var(--color-border)" }}>
               {t("auth.google")}
-            </button>
-            <div className="flex items-center gap-3 mb-4">
-              <div style={{ height: 1, background: "rgba(16,24,40,0.12)" }} className="flex-1" />
-              <span style={{ color: INK, opacity: 0.4 }} className="text-[11px]">{t("auth.or")}</span>
-              <div style={{ height: 1, background: "rgba(16,24,40,0.12)" }} className="flex-1" />
+            </Button>
+            <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", marginBottom: "var(--space-4)" }}>
+              <div style={{ height: 1, background: "var(--color-border)", flex: 1 }} />
+              <span style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>{t("auth.or")}</span>
+              <div style={{ height: 1, background: "var(--color-border)", flex: 1 }} />
             </div>
             <form onSubmit={handleSendCode}>
-            <label style={{ color: INK, opacity: 0.6 }} className="text-xs font-medium block mb-1.5">
-              {t("auth.email")}
-            </label>
-            <input
-              type="email"
-              required
-              disabled={!supabaseReady}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="w-full rounded-lg px-3 py-2.5 text-sm mb-3 outline-none"
-              style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
-            />
-            {error && <p className="text-xs mb-3" style={{ color: "#B5433A" }}>{error}</p>}
-            <button
-              type="submit"
-              disabled={!supabaseReady || sending}
-              className="gloss-button w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold"
-              style={{ color: sending ? "rgba(27,33,41,0.4)" : CREAM, cursor: sending ? "default" : "pointer", opacity: sending ? 0.5 : 1 }}
-            >
-              {sending ? t("auth.sending") : t("auth.sendCode")}
-              {!sending && <ArrowRight size={15} />}
-            </button>
-            <p style={{ color: INK, opacity: 0.4 }} className="text-[11px] text-center mt-3">
-              {t("auth.noPassword")}
-            </p>
+              <label style={{ fontSize: "var(--text-caption-size)", fontWeight: 500, color: "var(--color-text-secondary)", display: "block", marginBottom: 6, textAlign: "left" }}>{t("auth.email")}</label>
+              <TextInput type="email" required disabled={!supabaseReady} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" style={{ marginBottom: "var(--space-3)" }} />
+              {error && <p style={{ fontSize: "var(--text-caption-size)", marginBottom: "var(--space-3)", color: "var(--color-danger-text)" }}>{error}</p>}
+              <Button variant="primary" fullWidth type="submit" loading={sending} disabled={!supabaseReady} after={<ArrowRight size={15} />}>
+                {sending ? t("auth.sending") : t("auth.sendCode")}
+              </Button>
+              <p style={{ fontSize: 11, color: "var(--color-text-secondary)", textAlign: "center", marginTop: "var(--space-3)" }}>{t("auth.noPassword")}</p>
             </form>
           </>
         ) : (
           <form onSubmit={handleVerify}>
-            <div className="text-center mb-4">
-              <Mail size={24} style={{ color: ACCENT, margin: "0 auto 8px" }} />
-              <p style={{ color: INK }} className="text-xs">
-                {t("auth.codeSent", { email })}
-              </p>
+            <div style={{ textAlign: "center", marginBottom: "var(--space-4)" }}>
+              <Mail size={24} style={{ color: "var(--color-primary)", margin: "0 auto 8px" }} />
+              <p style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-primary)" }}>{t("auth.codeSent", { email })}</p>
             </div>
-            <input
-              required
-              autoFocus
-              type="text"
-              name="one-time-code"
-              inputMode="numeric"
-              value={code}
-              onChange={(e) => {
-                setError(null);
-                setCode(e.target.value.replace(/[^0-9]/g, "").slice(0, EMAIL_OTP_LENGTH));
-              }}
-              placeholder={t("auth.codeLabel")}
-              autoComplete="one-time-code"
-              pattern="[0-9]*"
-              enterKeyHint="done"
-              aria-label={t("auth.codeLabel")}
-              maxLength={EMAIL_OTP_LENGTH}
-              className="w-full rounded-lg px-3 py-2.5 text-center text-lg tracking-[0.2em] mb-3 outline-none"
-              style={{ border: "1px solid rgba(16,24,40,0.14)", color: INK }}
+            <TextInput
+              required autoFocus type="text" name="one-time-code" inputMode="numeric"
+              value={code} onChange={(e) => { setError(null); setCode(e.target.value.replace(/[^0-9]/g, "").slice(0, EMAIL_OTP_LENGTH)); }}
+              placeholder={t("auth.codeLabel")} autoComplete="one-time-code" pattern="[0-9]*"
+              enterKeyHint="done" aria-label={t("auth.codeLabel")} maxLength={EMAIL_OTP_LENGTH}
+              style={{ textAlign: "center", letterSpacing: "0.2em", marginBottom: "var(--space-3)" }}
             />
-            {error && <p className="text-xs mb-3 text-center" style={{ color: "#B5433A" }}>{error}</p>}
-            <button
-              type="submit"
-              disabled={verifying}
-              className="gloss-button w-full rounded-lg py-2.5 text-sm font-semibold"
-              style={{ color: verifying ? "rgba(27,33,41,0.4)" : CREAM, cursor: verifying ? "default" : "pointer", opacity: verifying ? 0.5 : 1 }}
-            >
-              {verifying ? t("auth.checking") : t("auth.verify")}
-            </button>
-            <div className="flex justify-between mt-3">
-              <button type="button" onClick={() => { setSent(false); setCode(""); setError(null); }} style={{ color: INK, opacity: 0.5 }} className="text-xs">
-                {t("auth.changeEmail")}
-              </button>
-              <button
-                type="button"
-                onClick={handleSendCode}
-                disabled={cooldown > 0}
-                style={{ color: cooldown > 0 ? "rgba(27,33,41,0.35)" : ACCENT }}
-                className="text-xs font-medium"
-              >
-                {cooldown > 0 ? t("auth.resendIn", { seconds:cooldown }) : t("auth.resend")}
-              </button>
+            {error && <p style={{ fontSize: "var(--text-caption-size)", textAlign: "center", marginBottom: "var(--space-3)", color: "var(--color-danger-text)" }}>{error}</p>}
+            <Button variant="primary" fullWidth type="submit" loading={verifying}>{verifying ? t("auth.checking") : t("auth.verify")}</Button>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "var(--space-3)" }}>
+              <button type="button" onClick={() => { setSent(false); setCode(""); setError(null); }} style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)", background: "transparent", border: "none", cursor: "pointer" }}>{t("auth.changeEmail")}</button>
+              <button type="button" onClick={handleSendCode} disabled={cooldown > 0} style={{ fontSize: "var(--text-caption-size)", fontWeight: 500, color: cooldown > 0 ? "var(--color-text-secondary)" : "var(--color-primary)", background: "transparent", border: "none", cursor: cooldown > 0 ? "default" : "pointer" }}>{cooldown > 0 ? t("auth.resendIn", { seconds: cooldown }) : t("auth.resend")}</button>
             </div>
           </form>
         )}
-      </div>
-    </div>
+      </Card>
+    </Page>
   );
 }
