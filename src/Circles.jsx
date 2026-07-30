@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Ban, CalendarDays, Check, ChevronDown, Crown, Gift,
-  Lock, Mail, Plus, RotateCcw, Search, Trash2,
+  Lock, Mail, MoreVertical, Plus, RotateCcw, Search, Trash2,
   UserMinus, UserPlus, Users, X,
 } from "lucide-react";
 import BackButton from "./BackButton.jsx";
@@ -83,6 +83,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
   const [rosterQuery, setRosterQuery] = useState("");
   const [moderationBusy, setModerationBusy] = useState(null);
   const [memberConfirm, setMemberConfirm] = useState(null); // { id, action: "owner" | "remove" | "block" }
+  const [memberMenu, setMemberMenu] = useState(null); // id of member whose action menu is open
   const [deleteCircleTarget, setDeleteCircleTarget] = useState(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -169,6 +170,15 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
       setLoading(false);
     }
   }, [profile?.is_admin, user?.id]);
+
+  useEffect(() => {
+    if (!memberMenu) return undefined;
+    function closeFromOutside(event) {
+      if (!event.target.closest(".circle-member-menu-wrap")) setMemberMenu(null);
+    }
+    document.addEventListener("pointerdown", closeFromOutside);
+    return () => document.removeEventListener("pointerdown", closeFromOutside);
+  }, [memberMenu]);
 
   useEffect(() => {
     refresh();
@@ -667,10 +677,13 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                         <div className="flex items-center gap-1.5"><span className="text-sm font-semibold truncate">{isMe ? `${member.name} (you)` : member.name}</span>{circleOwner && <Crown size={11} style={{ color:"#D9AE58" }}/>}</div>
                         <div className="text-[10px] opacity-40 truncate">{circleOwner ? "Circle owner" : member.mood || "Circle member"}</div>
                       </div>
-                      {manager && !circleOwner && !isMe && <div className="flex gap-1 shrink-0">
-                        <button className="gloss-button circle-action-btn grid place-items-center rounded-full shrink-0" data-variant="owner" disabled={!!moderationBusy} onClick={() => setMemberConfirm(memberConfirm?.id === member.id && memberConfirm?.action === "owner" ? null : { id:member.id,action:"owner" })} style={{ width:32,height:32,background:"rgba(217,174,88,.14)",color:"#9A6A12" }} aria-label={`Make ${member.name} circle owner`} title="Make owner"><Crown size={14}/></button>
-                        <button className="gloss-button circle-action-btn grid place-items-center rounded-full shrink-0" data-variant="remove" disabled={!!moderationBusy} onClick={() => setMemberConfirm(memberConfirm?.id === member.id && memberConfirm?.action === "remove" ? null : { id:member.id,action:"remove" })} style={{ width:32,height:32,background:"rgba(16,24,40,.05)" }} aria-label={`Remove ${member.name}`} title="Remove"><UserMinus size={14}/></button>
-                        <button className="gloss-button circle-action-btn grid place-items-center rounded-full shrink-0" data-variant="block" disabled={!!moderationBusy} onClick={() => setMemberConfirm(memberConfirm?.id === member.id && memberConfirm?.action === "block" ? null : { id:member.id,action:"block" })} style={{ width:32,height:32,background:"rgba(181,67,58,.09)",color:"#B5433A" }} aria-label={`Block ${member.name}`} title="Block"><Ban size={14}/></button>
+                      {manager && !circleOwner && !isMe && <div className="circle-member-menu-wrap relative shrink-0">
+                        <button className="gloss-button circle-action-btn grid place-items-center rounded-full shrink-0" disabled={!!moderationBusy} onClick={() => setMemberMenu(memberMenu === member.id ? null : member.id)} style={{ width:32,height:32,background:"rgba(16,24,40,.05)" }} aria-label={`Actions for ${member.name}`} aria-haspopup="true" aria-expanded={memberMenu === member.id} title="Actions"><MoreVertical size={14}/></button>
+                        {memberMenu === member.id && <div className="circle-member-menu absolute right-0 top-full mt-1 rounded-2xl overflow-hidden z-20" style={{ background:"#fff", boxShadow:"0 12px 30px rgba(16,24,40,.18)", border:"1px solid rgba(16,24,40,.08)", minWidth:150 }}>
+                          <button className="flex items-center gap-2 w-full px-3 py-2.5 text-left text-xs font-medium" onClick={() => { setMemberConfirm({ id:member.id,action:"owner" });setMemberMenu(null); }} style={{ color:"#9A6A12" }}><Crown size={13}/>Make owner</button>
+                          <button className="flex items-center gap-2 w-full px-3 py-2.5 text-left text-xs font-medium" onClick={() => { setMemberConfirm({ id:member.id,action:"remove" });setMemberMenu(null); }} style={{ color:INK, borderTop:"1px solid rgba(16,24,40,.06)" }}><UserMinus size={13}/>Remove</button>
+                          <button className="flex items-center gap-2 w-full px-3 py-2.5 text-left text-xs font-medium" onClick={() => { setMemberConfirm({ id:member.id,action:"block" });setMemberMenu(null); }} style={{ color:"#B5433A", borderTop:"1px solid rgba(16,24,40,.06)" }}><Ban size={13}/>Block</button>
+                        </div>}
                       </div>}
                     </div>
                     {memberConfirm?.id === member.id && memberConfirm.action === "owner" && <div className="circle-member-confirm rounded-xl px-3 py-2.5 mt-2 text-xs" data-variant="owner" style={{ background:"rgba(217,174,88,.12)",color:"#775B1D" }}>

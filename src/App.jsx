@@ -648,7 +648,7 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
   if (isAdmin) {
     adminItems.push({ id:"adminplayers", icon:Shield, label:t("common.players"), onClick:onOpenAdminPlayers });
     adminItems.push({ id:"admingames", icon:Grid3x3, label:t("common.games"), onClick:onOpenAdminGames });
-    adminItems.push({ id:"adminrewards", icon:Gift, label:t("common.rewards"), onClick:onOpenAdminRewards });
+    adminItems.push({ id:"adminrewards", icon:Gift, label:t("common.rewardRules"), onClick:onOpenAdminRewards });
   }
 
   function openItem(item) {

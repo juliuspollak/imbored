@@ -63,7 +63,7 @@ export default function AdminRewards({onBack}){
     <div className="w-full max-w-xl">
       <header className="flex items-center gap-3 mb-6">
         <BackButton onClick={onBack} ariaLabel="Back"/>
-        <div><h1 className="text-2xl font-bold" style={{fontFamily:"'Fredoka',sans-serif",color:INK}}>Rewards Admin</h1><p className="text-xs opacity-45">Scoring rules and point adjustments</p></div>
+        <div><h1 className="text-2xl font-bold" style={{fontFamily:"'Fredoka',sans-serif",color:INK}}>Reward Rules</h1><p className="text-xs opacity-45">Scoring rules and point adjustments</p></div>
       </header>
 
       {msg&&<div className="rounded-2xl px-3 py-2.5 mb-4 text-xs" style={{background:"rgba(47,111,237,.08)",color:INK}}>{msg}</div>}

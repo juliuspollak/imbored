@@ -104,9 +104,9 @@ export default function OrganiserRewards({ onBack }) {
       <div className="game-mode-switch mb-4" style={{ width: "100%", justifyContent: "flex-start" }}>
         {TABS.map(([id, label]) => {
           const count = id === "ideas" ? ideas.filter((r) => r.status === "suggested").length : id === "active" ? active.filter((r) => r.cancellation_requested_at).length : 0;
-          return <button key={id} onClick={() => setTab(id)} className={`gloss-button ${tab === id ? "is-active" : ""}`} style={{ flex: 1, position: "relative" }}>
+          return <button key={id} onClick={() => setTab(id)} className={`gloss-button ${tab === id ? "is-active" : ""}`} style={{ flex: 1 }}>
             {label}
-            {count > 0 && <span className="absolute -top-1.5 -right-1.5 rounded-full text-white text-[9px] font-bold grid place-items-center" style={{ width: 16, height: 16, background: "#E5484D" }}>{count}</span>}
+            {count > 0 && <span className="mode-count">{count}</span>}
           </button>;
         })}
       </div>
