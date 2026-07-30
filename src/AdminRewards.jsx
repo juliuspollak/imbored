@@ -3,11 +3,12 @@ import { Settings, Plus } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
+import Page from "./components/Page.jsx";
+import Button from "./components/Button.jsx";
+import Card from "./components/Card.jsx";
+import StatusBanner from "./components/StatusBanner.jsx";
 
-const BG="#F1F3F7",PANEL="#fff",INK="#1B2129",ACCENT="#2F6FED";
-const card={background:PANEL,border:"1px solid rgba(16,24,40,.09)",borderRadius:16};
 const TABS=[["rules","Rules",Settings],["adjust","Adjust",Plus]];
-
 const FIELDS=[
   ["base_points","Base points","Starting score for every completed game."],
   ["hint_penalty","Hint penalty","Points deducted for each hint."],
@@ -19,7 +20,7 @@ const FIELDS=[
   ["day_points_step","Daily difficulty step","Points added per day: Monday +0, Tuesday +1 step, through Sunday +6 steps."],
   ["minimum_points","Minimum game points","Lowest possible award for a completed game."],
   ["maximum_points","Maximum game points","Highest possible award before a separate winner's prize."],
-  ["daily_points_cap","Daily gameplay cap","Maximum gameplay points earned per Sydney day across Practice and Challenge. Streak milestones and winner prizes are separate."],
+  ["daily_points_cap","Daily gameplay cap","Maximum gameplay points earned per Sydney day across Practice and Challenge."],
   ["practice_daily_limit","Daily practice limit","Number of practice games that can award points each day."],
   ["streak_protection_cost","Streak protection cost","Points charged to protect a missed streak day."],
 ];
@@ -39,64 +40,48 @@ export default function AdminRewards({onBack}){
       supabase.rpc("get_my_practice_reward_usage"),
       supabase.from("profiles").select("id,name,icon").order("name"),
     ]);
-    setRules(r);setPracticeUsage(usage);setPlayers(p||[]);
-    setLoading(false);
+    setRules(r);setPracticeUsage(usage);setPlayers(p||[]);setLoading(false);
   },[profile?.is_admin]);
   useEffect(()=>{refresh()},[refresh]);
 
   async function saveRules(){
     const {id,name,is_active,...editableRules}=rules;
     const {error}=await supabase.from("reward_rules").update({...editableRules,updated_at:new Date().toISOString(),updated_by:profile.id}).eq("id",id);
-    setMsg(error?.message||"Rules saved");
-    refresh();
+    setMsg(error?.message||"Rules saved");refresh();
   }
-  async function doAdjust(e){
-    e.preventDefault();
-    const {error}=await supabase.rpc("admin_adjust_points",{target_player_id:adjust.player,amount:Number(adjust.amount),reason:adjust.reason});
-    setMsg(error?.message||"Points adjusted");
-    if(!error)setAdjust({player:"",amount:"",reason:""});
-  }
+  async function doAdjust(e){e.preventDefault();const {error}=await supabase.rpc("admin_adjust_points",{target_player_id:adjust.player,amount:Number(adjust.amount),reason:adjust.reason});setMsg(error?.message||"Points adjusted");if(!error)setAdjust({player:"",amount:"",reason:""});}
 
-  if(!profile?.is_admin)return <div className="p-10 text-center text-sm opacity-45">Admin only.</div>;
+  if(!profile?.is_admin)return <div style={{textAlign:"center",padding:"var(--space-8)",color:"var(--color-text-secondary)"}}>Admin only.</div>;
 
-  return <div style={{background:BG,minHeight:"100vh",fontFamily:"'Inter',sans-serif"}} className="p-4 pt-10 flex justify-center">
-    <div className="w-full max-w-xl">
-      <header className="flex items-center gap-3 mb-6">
-        <BackButton onClick={onBack} ariaLabel="Back"/>
-        <div><h1 className="text-2xl font-bold" style={{fontFamily:"'Fredoka',sans-serif",color:INK}}>Reward Rules</h1><p className="text-xs opacity-45">Scoring rules and point adjustments</p></div>
-      </header>
+  return <Page>
+    <div style={{display:"flex",alignItems:"center",gap:"var(--space-3)",marginBottom:"var(--space-4)"}}><BackButton onClick={onBack} /><div><h1 style={{fontSize:"var(--text-page-title-size)",fontWeight:700,color:"var(--color-text-primary)"}}>Reward Rules</h1><p style={{fontSize:"var(--text-caption-size)",color:"var(--color-text-secondary)"}}>Scoring rules and point adjustments</p></div></div>
 
-      {msg&&<div className="rounded-2xl px-3 py-2.5 mb-4 text-xs" style={{background:"rgba(47,111,237,.08)",color:INK}}>{msg}</div>}
+    {msg&&<div style={{marginBottom:"var(--space-3)"}}><StatusBanner variant="info" dismissible onDismiss={()=>setMsg("")}>{msg}</StatusBanner></div>}
 
-      <div className="game-mode-switch mb-5" style={{width:"100%",justifyContent:"flex-start"}}>
-        {TABS.map(([id,label,Icon])=><button key={id} onClick={()=>setTab(id)} className={`gloss-button ${tab===id?"is-active":""}`} style={{flex:1}}><Icon size={13}/> {label}</button>)}
-      </div>
-
-      {loading?<p className="text-sm text-center opacity-45 py-10">Loading…</p>:<>
-
-      {tab==="rules"&&rules&&<div className="space-y-3">
-        <div className="rounded-2xl px-3 py-2.5 text-xs" style={{background:"rgba(47,111,237,.07)",color:INK}}>Challenge games earn the full award. Practice earns half, only the first three Practice completions of each game score per day, and gameplay stops earning after 40 points in a Sydney day. Later-day puzzles add a little more for difficulty. Weekly streak milestones and the winner's prize remain separate.</div>
-        {practiceUsage&&<div className="rounded-2xl px-3 py-3 text-xs" style={{background:"rgba(22,163,74,.07)",color:INK}}><div className="font-semibold">Your practice rewards today (limit {practiceUsage.daily_limit} per game)</div><div className="mt-1 opacity-70">{practiceUsage.by_game?.length?practiceUsage.by_game.map(item=>`${item.game} ${item.rewarded_count}/${practiceUsage.daily_limit}`).join(" · "):"None yet"}</div></div>}
-        <div className="p-4 grid grid-cols-2 gap-3" style={card}>
-          {FIELDS.map(([key,label,help])=><label key={key} className="text-[11px]">
-            <span className="font-semibold" style={{color:INK}}>{label}</span>
-            <input type="number" value={rules[key]??0} onChange={e=>setRules({...rules,[key]:Number(e.target.value)})} className="block w-full mt-1 rounded-lg border px-2 py-2 text-sm" style={{borderColor:"rgba(16,24,40,.12)"}}/>
-            <span className="block mt-1 opacity-45 leading-tight">{help}</span>
-          </label>)}
-          <button onClick={saveRules} className="col-span-2 rounded-xl py-2.5 text-white font-semibold text-sm" style={{background:ACCENT}}>Save rules</button>
-        </div>
-      </div>}
-
-      {tab==="adjust"&&<form onSubmit={doAdjust} className="p-4" style={card}>
-        <select required value={adjust.player} onChange={e=>setAdjust({...adjust,player:e.target.value})} className="w-full border rounded-lg px-3 py-2 text-sm mb-2" style={{borderColor:"rgba(16,24,40,.12)"}}>
-          <option value="">Player</option>{players.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
-        <input required type="number" value={adjust.amount} onChange={e=>setAdjust({...adjust,amount:e.target.value})} placeholder="Amount, negative to deduct" className="w-full border rounded-lg px-3 py-2 text-sm mb-2" style={{borderColor:"rgba(16,24,40,.12)"}}/>
-        <input required value={adjust.reason} onChange={e=>setAdjust({...adjust,reason:e.target.value})} placeholder="Reason" className="w-full border rounded-lg px-3 py-2 text-sm mb-2" style={{borderColor:"rgba(16,24,40,.12)"}}/>
-        <button className="w-full rounded-xl py-2.5 text-white text-sm font-semibold" style={{background:ACCENT}}>Apply adjustment</button>
-      </form>}
-
-      </>}
+    <div style={{display:"flex",gap:"var(--space-2)",marginBottom:"var(--space-5)"}}>
+      {TABS.map(([id,label,Icon])=><Button key={id} variant={tab===id?"primary":"secondary"} size="sm" before={<Icon size={13}/>} onClick={()=>setTab(id)} style={{flex:1}}>{label}</Button>)}
     </div>
-  </div>;
+
+    {loading?<p style={{textAlign:"center",padding:"var(--space-8)",color:"var(--color-text-secondary)"}}>Loading…</p>:<>
+    {tab==="rules"&&rules&&<div style={{display:"flex",flexDirection:"column",gap:"var(--space-3)"}}>
+      <div style={{borderRadius:"var(--radius-lg)",padding:"var(--space-3)",fontSize:"var(--text-caption-size)",background:"var(--color-info-bg)",color:"var(--color-text-primary)"}}>Challenge games earn the full award. Practice earns half, only three Practice completions of each game score per day, and gameplay stops after 40 points in a Sydney day.</div>
+      {practiceUsage&&<div style={{borderRadius:"var(--radius-lg)",padding:"var(--space-3)",fontSize:"var(--text-caption-size)",background:"var(--color-success-bg)",color:"var(--color-text-primary)"}}><div style={{fontWeight:600}}>Your practice rewards today (limit {practiceUsage.daily_limit} per game)</div><div style={{marginTop:"var(--space-1)",opacity:.7}}>{practiceUsage.by_game?.length?practiceUsage.by_game.map(i=>`${i.game} ${i.rewarded_count}/${practiceUsage.daily_limit}`).join(" · "):"None yet"}</div></div>}
+      <Card style={{padding:"var(--space-4)",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"var(--space-3)"}}>
+        {FIELDS.map(([key,label,help])=><label key={key} style={{fontSize:11}}>
+          <span style={{fontWeight:600,color:"var(--color-text-primary)"}}>{label}</span>
+          <input type="number" value={rules[key]??0} onChange={e=>setRules({...rules,[key]:Number(e.target.value)})} style={{display:"block",width:"100%",marginTop:"var(--space-1)",borderRadius:"var(--radius-sm)",border:"1px solid var(--color-border-strong)",padding:"var(--space-2)",fontSize:"var(--text-body-size)",background:"var(--color-surface-input)",color:"var(--color-text-primary)",boxSizing:"border-box"}}/>
+          <span style={{display:"block",marginTop:"var(--space-1)",color:"var(--color-text-secondary)",lineHeight:1.3}}>{help}</span>
+        </label>)}
+        <Button variant="primary" fullWidth onClick={saveRules} style={{gridColumn:"span 2"}}>Save rules</Button>
+      </Card>
+    </div>}
+
+    {tab==="adjust"&&<form onSubmit={doAdjust}><Card style={{padding:"var(--space-4)"}}>
+      <select required value={adjust.player} onChange={e=>setAdjust({...adjust,player:e.target.value})} style={{width:"100%",borderRadius:"var(--radius-sm)",border:"1px solid var(--color-border-strong)",padding:"var(--space-2) var(--space-3)",fontSize:"var(--text-body-size)",marginBottom:"var(--space-2)",background:"var(--color-surface-input)",color:"var(--color-text-primary)",boxSizing:"border-box"}}><option value="">Player</option>{players.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select>
+      <input required type="number" value={adjust.amount} onChange={e=>setAdjust({...adjust,amount:e.target.value})} placeholder="Amount, negative to deduct" style={{width:"100%",borderRadius:"var(--radius-sm)",border:"1px solid var(--color-border-strong)",padding:"var(--space-2) var(--space-3)",fontSize:"var(--text-body-size)",marginBottom:"var(--space-2)",background:"var(--color-surface-input)",color:"var(--color-text-primary)",boxSizing:"border-box"}}/>
+      <input required value={adjust.reason} onChange={e=>setAdjust({...adjust,reason:e.target.value})} placeholder="Reason" style={{width:"100%",borderRadius:"var(--radius-sm)",border:"1px solid var(--color-border-strong)",padding:"var(--space-2) var(--space-3)",fontSize:"var(--text-body-size)",marginBottom:"var(--space-2)",background:"var(--color-surface-input)",color:"var(--color-text-primary)",boxSizing:"border-box"}}/>
+      <Button variant="primary" fullWidth type="submit">Apply adjustment</Button>
+    </Card></form>}
+    </>}
+  </Page>;
 }
