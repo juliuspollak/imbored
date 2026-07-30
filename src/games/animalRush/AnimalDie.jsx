@@ -11,6 +11,8 @@ const DIE_FACES = [
   ["frog", "bottom"],
 ];
 
+const ANIMAL_IDS = ["fox", "panda", "owl", "rabbit", "lion", "frog"];
+
 const TARGET_ROTATIONS = {
   fox: "rotateX(0deg) rotateY(0deg)",
   panda: "rotateX(0deg) rotateY(-180deg)",
@@ -21,19 +23,17 @@ const TARGET_ROTATIONS = {
 };
 
 /**
- * Returns a misleading background colour for each die face so that
- * no animal's die face shows its correct card colour.
- * This prevents players from matching by colour instead of shape.
- * Each die face gets the individual colour of the NEXT animal in the list.
+ * Returns the ID of the next animal in the list — used to override both
+ * the background colour and the shape fills on die faces so that no face
+ * shows its own colour scheme. Players must identify the animal by its
+ * silhouette, not by colour.
  */
-function misdirectDieColour(animalId, colourMode) {
+function misdirectAnimalId(animalId, colourMode) {
   if (colourMode !== "individual") return undefined;
-  const animalIds = ["fox", "panda", "owl", "rabbit", "lion", "frog"];
-  const idx = animalIds.indexOf(animalId);
+  const idx = ANIMAL_IDS.indexOf(animalId);
   if (idx === -1) return undefined;
-  const nextIdx = (idx + 1) % animalIds.length;
-  const nextAnimalId = animalIds[nextIdx];
-  return animalColour(nextAnimalId, "individual");
+  const nextIdx = (idx + 1) % ANIMAL_IDS.length;
+  return ANIMAL_IDS[nextIdx];
 }
 
 export default function AnimalDie({
@@ -78,16 +78,24 @@ export default function AnimalDie({
           "--rush-die-end": TARGET_ROTATIONS[targetId] || TARGET_ROTATIONS.fox,
         }}
       >
-        {DIE_FACES.map(([animalId, face]) => (
-          <span className={`rush-die__face rush-die__face--${face}`} key={animalId}>
-            <AnimalFace
-              animalId={animalId}
-              colourMode={colourMode}
-              size={58}
-              bgColour={misdirectDieColour(animalId, colourMode)}
-            />
-          </span>
-        ))}
+        {DIE_FACES.map(([animalId, face]) => {
+          const misdirectedId = misdirectAnimalId(animalId, colourMode);
+          return (
+            <span className={`rush-die__face rush-die__face--${face}`} key={animalId}>
+              <AnimalFace
+                animalId={animalId}
+                colourMode={colourMode}
+                size={58}
+                bgColour={
+                  misdirectedId
+                    ? animalColour(misdirectedId, "individual")
+                    : undefined
+                }
+                overrideColourAnimalId={misdirectedId}
+              />
+            </span>
+          );
+        })}
       </div>
       <span className="rush-die__still" aria-hidden="true">?</span>
       {!revealed && countdown && <span className="rush-die__countdown">{countdown}</span>}

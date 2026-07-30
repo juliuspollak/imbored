@@ -98,11 +98,12 @@ function FaceFrame({ animalId, colourMode, size, children, bgColour }) {
   );
 }
 
-function Monkey({ colourMode, size, bgColour }) {
-  const colours = coloursFor("fox", colourMode);
-  const bg = bgColour ?? animalColour("fox", colourMode);
+function Monkey({ colourMode, size, bgColour, overrideColourAnimalId }) {
+  const colourAnimal = overrideColourAnimalId || "fox";
+  const colours = coloursFor(colourAnimal, colourMode);
+  const bg = bgColour ?? animalColour(colourAnimal, colourMode);
   return (
-    <FaceFrame animalId="fox" colourMode={colourMode} size={size} bgColour={bg}>
+    <FaceFrame animalId={colourAnimal} colourMode={colourMode} size={size} bgColour={bg}>
       <circle cx="22" cy="48" r="13" fill={colours.primary} />
       <circle cx="78" cy="48" r="13" fill={colours.primary} />
       <circle cx="22" cy="48" r="7" fill={colours.accent} strokeWidth="2.4" />
@@ -119,11 +120,12 @@ function Monkey({ colourMode, size, bgColour }) {
   );
 }
 
-function Snake({ colourMode, size, bgColour }) {
-  const colours = coloursFor("panda", colourMode);
-  const bg = bgColour ?? animalColour("panda", colourMode);
+function Snake({ colourMode, size, bgColour, overrideColourAnimalId }) {
+  const colourAnimal = overrideColourAnimalId || "panda";
+  const colours = coloursFor(colourAnimal, colourMode);
+  const bg = bgColour ?? animalColour(colourAnimal, colourMode);
   return (
-    <FaceFrame animalId="panda" colourMode={colourMode} size={size} bgColour={bg}>
+    <FaceFrame animalId={colourAnimal} colourMode={colourMode} size={size} bgColour={bg}>
       <path fill={colours.dark} d="M22 77c2-14 13-20 27-17 9 2 18 0 18-6 0-5-5-6-12-5l-5-15c18-6 34 1 34 17 0 21-20 28-39 23-7-2-10 0-11 7l-12-4Z" />
       <path fill={colours.primary} d="M39 32c0-13 8-21 20-21 15 0 24 10 22 23-2 12-11 19-23 18-12-1-19-9-19-20Z" />
       <path fill={colours.light} d="M54 37c7-7 18-8 25-3-3 11-11 17-21 16-4 0-7-2-10-4l6-9Z" strokeWidth="2.5" />
@@ -137,11 +139,12 @@ function Snake({ colourMode, size, bgColour }) {
   );
 }
 
-function Octopus({ colourMode, size, bgColour }) {
-  const colours = coloursFor("owl", colourMode);
-  const bg = bgColour ?? animalColour("owl", colourMode);
+function Octopus({ colourMode, size, bgColour, overrideColourAnimalId }) {
+  const colourAnimal = overrideColourAnimalId || "owl";
+  const colours = coloursFor(colourAnimal, colourMode);
+  const bg = bgColour ?? animalColour(colourAnimal, colourMode);
   return (
-    <FaceFrame animalId="owl" colourMode={colourMode} size={size} bgColour={bg}>
+    <FaceFrame animalId={colourAnimal} colourMode={colourMode} size={size} bgColour={bg}>
       <path fill={colours.primary} d="M31 49c0-23 8-36 21-36 15 0 23 14 22 36-1 18-9 26-22 26-13 0-21-9-21-26Z" />
       <path d="M37 63C25 68 27 82 16 82c-6 0-7-6-2-11" stroke={colours.dark} strokeWidth="9" />
       <path d="M44 69c-7 8-3 17-11 21-6 3-10-2-7-8" stroke={colours.mid} strokeWidth="9" />
@@ -157,11 +160,12 @@ function Octopus({ colourMode, size, bgColour }) {
   );
 }
 
-function Elephant({ colourMode, size, bgColour }) {
-  const colours = coloursFor("rabbit", colourMode);
-  const bg = bgColour ?? animalColour("rabbit", colourMode);
+function Elephant({ colourMode, size, bgColour, overrideColourAnimalId }) {
+  const colourAnimal = overrideColourAnimalId || "rabbit";
+  const colours = coloursFor(colourAnimal, colourMode);
+  const bg = bgColour ?? animalColour(colourAnimal, colourMode);
   return (
-    <FaceFrame animalId="rabbit" colourMode={colourMode} size={size} bgColour={bg}>
+    <FaceFrame animalId={colourAnimal} colourMode={colourMode} size={size} bgColour={bg}>
       <path fill={colours.dark} d="M19 47c0-18 10-30 26-30 8 0 14 3 19 9 14 0 23 10 22 24-1 15-11 25-24 25H40C27 75 19 64 19 47Z" />
       <path fill={colours.primary} d="M28 49c0-17 9-28 22-28 15 0 24 12 23 31l-3 25c-1 10-7 15-15 13-7-2-9-9-5-15l6-8V50c0-7-4-11-10-11-7 0-11 4-11 10v15c-5-4-7-9-7-15Z" />
       <path d="M55 75c-2 7 0 11 5 11 6 0 9-5 8-11" />
@@ -174,11 +178,12 @@ function Elephant({ colourMode, size, bgColour }) {
   );
 }
 
-function LionComponent({ colourMode, size, bgColour }) {
-  const colours = coloursFor("lion", colourMode);
-  const bg = bgColour ?? animalColour("lion", colourMode);
+function LionComponent({ colourMode, size, bgColour, overrideColourAnimalId }) {
+  const colourAnimal = overrideColourAnimalId || "lion";
+  const colours = coloursFor(colourAnimal, colourMode);
+  const bg = bgColour ?? animalColour(colourAnimal, colourMode);
   return (
-    <FaceFrame animalId="lion" colourMode={colourMode} size={size} bgColour={bg}>
+    <FaceFrame animalId={colourAnimal} colourMode={colourMode} size={size} bgColour={bg}>
       <path fill={colours.dark} d="m50 9 9 7 11-1 4 10 10 5-2 11 7 9-7 9 2 11-10 5-4 10-11-1-9 7-9-7-11 1-4-10-10-5 2-11-7-9 7-9-2-11 10-5 4-10 11 1 9-7Z" />
       <circle cx="50" cy="50" r="29" fill={colours.primary} />
       <circle cx="28" cy="38" r="8" fill={colours.mid} />
@@ -193,11 +198,12 @@ function LionComponent({ colourMode, size, bgColour }) {
   );
 }
 
-function Spider({ colourMode, size, bgColour }) {
-  const colours = coloursFor("frog", colourMode);
-  const bg = bgColour ?? animalColour("frog", colourMode);
+function Spider({ colourMode, size, bgColour, overrideColourAnimalId }) {
+  const colourAnimal = overrideColourAnimalId || "frog";
+  const colours = coloursFor(colourAnimal, colourMode);
+  const bg = bgColour ?? animalColour(colourAnimal, colourMode);
   return (
-    <FaceFrame animalId="frog" colourMode={colourMode} size={size} bgColour={bg}>
+    <FaceFrame animalId={colourAnimal} colourMode={colourMode} size={size} bgColour={bg}>
       <path d="M13 29 50 13l37 16-8 43-29 16-29-16-8-43Zm0 0 66 43M87 29 21 72M50 13v75M13 29h74M21 72h58" stroke={colours.accent} strokeWidth="1.5" opacity=".45" />
       <path d="M34 48 20 38m15 18-19-2m21 10-16 10m45-26 14-10M65 56l19-2M63 64l16 10" stroke={colours.dark} strokeWidth="7" />
       <ellipse cx="50" cy="57" rx="24" ry="21" fill={colours.mid} />
@@ -211,20 +217,20 @@ function Spider({ colourMode, size, bgColour }) {
   );
 }
 
-export default function AnimalFace({ animalId, colourMode = "uniform", size = 72, bgColour }) {
+export default function AnimalFace({ animalId, colourMode = "uniform", size = 72, bgColour, overrideColourAnimalId }) {
   switch (animalId) {
     case "fox":
-      return <Monkey colourMode={colourMode} size={size} bgColour={bgColour} />;
+      return <Monkey colourMode={colourMode} size={size} bgColour={bgColour} overrideColourAnimalId={overrideColourAnimalId} />;
     case "panda":
-      return <Snake colourMode={colourMode} size={size} bgColour={bgColour} />;
+      return <Snake colourMode={colourMode} size={size} bgColour={bgColour} overrideColourAnimalId={overrideColourAnimalId} />;
     case "owl":
-      return <Octopus colourMode={colourMode} size={size} bgColour={bgColour} />;
+      return <Octopus colourMode={colourMode} size={size} bgColour={bgColour} overrideColourAnimalId={overrideColourAnimalId} />;
     case "rabbit":
-      return <Elephant colourMode={colourMode} size={size} bgColour={bgColour} />;
+      return <Elephant colourMode={colourMode} size={size} bgColour={bgColour} overrideColourAnimalId={overrideColourAnimalId} />;
     case "lion":
-      return <LionComponent colourMode={colourMode} size={size} bgColour={bgColour} />;
+      return <LionComponent colourMode={colourMode} size={size} bgColour={bgColour} overrideColourAnimalId={overrideColourAnimalId} />;
     case "frog":
-      return <Spider colourMode={colourMode} size={size} bgColour={bgColour} />;
+      return <Spider colourMode={colourMode} size={size} bgColour={bgColour} overrideColourAnimalId={overrideColourAnimalId} />;
     default:
       return null;
   }
