@@ -14,6 +14,40 @@
  */
 
 /* =========================================================
+   DESIGN SYSTEM — Global component styles
+   ========================================================= */
+
+/* ---- Buttons ---- */
+.design-btn:active:not(:disabled) { transform: scale(0.96); }
+.design-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .design-btn:not(:disabled):hover { filter: brightness(1.05); }
+}
+
+/* ---- Inputs ---- */
+.design-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-ring); outline: none; }
+.design-input::placeholder { color: var(--color-text-muted); }
+
+/* ---- Cards ---- */
+.design-card:active { transform: scale(0.985); transition: transform var(--transition-fast); }
+
+/* ---- Page ---- */
+.design-page { transition: background var(--transition-fast), color var(--transition-fast); }
+
+/* ---- Back button ---- */
+.design-back-btn:active { transform: scale(0.97) !important; }
+.design-back-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+/* ---- Status banner ---- */
+.design-status-banner { transition: opacity var(--transition-normal); }
+
+/* ---- Accessibility ---- */
+@media (prefers-reduced-motion: reduce) {
+  .design-btn, .design-card, .design-page, .design-back-btn, .design-status-banner { transition: none !important; animation: none !important; }
+}
+
+/* =========================================================
    STANDARD COMPACT GLOSS BUTTON
    ========================================================= */
 
