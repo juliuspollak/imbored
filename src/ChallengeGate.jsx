@@ -8,11 +8,11 @@ import ModePill from "./ModePill.jsx";
 import GameHomeButton from "./GameHomeButton.jsx";
 import { buildCircleChallengeRounds, localDateString } from "./lib/circleChallengeRounds.js";
 
-const BG = "#F1F3F7";
-const PANEL = "#FFFFFF";
-const INK = "#1B2129";
-const ACCENT = "#2F6FED";
-const GREEN = "#16A34A";
+const BG = "var(--color-page-bg)";
+const PANEL = "var(--color-surface)";
+const INK = "var(--color-text-primary)";
+const ACCENT = "var(--color-primary)";
+const GREEN = "var(--color-success-text)";
 
 
 function fmtTime(s) {
@@ -221,7 +221,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   }
 
   return (
-    <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-start justify-center p-4 pt-[72px]">
+      <div style={{ background: BG, minHeight: "100vh", fontFamily: "var(--font-family)" }} className="flex items-start justify-center p-4 pt-[72px]">
       <GameHomeButton onClick={onExit} />
       {onSwitchMode && <ModePill mode="challenge" onSwitch={onSwitchMode} />}
 
@@ -230,44 +230,44 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           on, not a separate, plainer page. */}
       <div
         className="w-full max-w-sm sm:max-w-md lg:max-w-lg rounded-2xl p-5 lg:p-6 relative"
-        style={{ background: PANEL, boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}
+        style={{ background: PANEL, boxShadow: "var(--shadow-card)", border: "1px solid var(--color-border)" }}
       >
         <div className="relative text-center mb-6">
           <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK, letterSpacing: "-0.01em" }} className="text-4xl lg:text-5xl">
             {gameLabel}
           </h1>
-          <div className="inline-flex items-center rounded-full px-3 py-1 mt-2 text-xs font-semibold" style={{ background: "rgba(217,174,88,0.16)", color: "#9A6A12" }}>
+          <div className="inline-flex items-center rounded-full px-3 py-1 mt-2 text-xs font-semibold" style={{ background: "var(--color-warning-bg)", color: "var(--color-warning-text)" }}>
             {challengeScope?.type === "circle" ? `${challengeScope.emoji || "⭐"} ${challengeScope.name}` : "My Weekly Challenge"}
           </div>
-          <p style={{ color: INK, opacity: 0.45 }} className="text-xs mt-2">
+          <p style={{ color: "var(--color-text-secondary)" }} className="text-xs mt-2">
             {challengeScope?.type === "circle" ? "one attempt for this circle challenge" : "one personal attempt per day"}
           </p>
         </div>
 
         {alreadyPlayedNotice && (
-          <div className="text-xs rounded-lg p-3 mb-4 flex items-center justify-between" style={{ background: "rgba(217,105,92,0.1)", color: "#B5433A" }}>
+          <div className="text-xs rounded-lg p-3 mb-4 flex items-center justify-between" style={{ background: "var(--color-danger-bg)", color: "var(--color-danger-text)" }}>
             <span>You already completed today's challenge — showing your original result.</span>
-            <button className="gloss-button" onClick={() => setAlreadyPlayedNotice(false)}><X size={13} /></button>
+            <button onClick={() => setAlreadyPlayedNotice(false)} style={{ background: "transparent", border: "none", cursor: "pointer", color: "inherit" }}><X size={13} /></button>
           </div>
         )}
         {startError && (
           <div className="text-xs rounded-lg p-3 mb-4 flex items-center justify-between" style={{ background: "rgba(217,105,92,0.1)", color: "#B5433A" }}>
-            <span>{startError}</span><button className="gloss-button" onClick={() => setStartError("")}><X size={13} /></button>
+            <span>{startError}</span><button onClick={() => setStartError("")} style={{ background: "transparent", border: "none", cursor: "pointer", color: "inherit" }}><X size={13} /></button>
           </div>
         )}
 
         {!loading && hasStake && !stakeAccepted ? (
-          <div className="rounded-2xl p-4 text-center" style={{ background: "rgba(217,148,10,.08)" }}>
+          <div className="rounded-2xl p-4 text-center" style={{ background: "var(--color-warning-bg)" }}>
             <div className="text-sm font-semibold mb-1" style={{ color: INK }}>This challenge is staked</div>
-            <p className="text-xs mb-3" style={{ color: INK, opacity: 0.6 }}>
+            <p className="text-xs mb-3" style={{ color: "var(--color-text-secondary)" }}>
               The prize is <strong>{challengeScope.stakeRewardName || "an item"}</strong>. If you don't win, you agree to pay your {challengeScope.stakeSplitMethod === "ranked" ? "ranked" : "equal"} share — settled outside the app.
             </p>
-            <button disabled={acceptingStake} onClick={acceptStake} className="gloss-button w-full" style={{ background: "rgba(22,163,74,.12)", color: "#166534" }}>
+            <button disabled={acceptingStake} onClick={acceptStake} style={{ width: "100%", borderRadius: "var(--radius-md)", padding: "var(--space-2)", fontSize: "var(--text-body-size)", fontWeight: 600, background: "var(--color-success-bg)", color: "var(--color-success-text)", border: "none", cursor: "pointer" }}>
               {acceptingStake ? "Accepting…" : "Accept — I'll pay my share if I don't win"}
             </button>
           </div>
         ) : loading ? (
-          <p style={{ color: INK, opacity: 0.4 }} className="text-sm text-center py-8">Loading…</p>
+          <p style={{ color: "var(--color-text-secondary)" }} className="text-sm text-center py-8">Loading…</p>
         ) : (
           <div className="flex flex-col gap-2">
             {scheduledDateEntries.map(({ date, index: i }) => {
