@@ -680,7 +680,34 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                           <button onClick={() => { setMemberConfirm({ id: member.id, action: "block" }); setMemberMenu(null); }} style={{ borderRadius: "var(--radius-full)", padding: "6px 12px", fontSize: "var(--text-caption-size)", fontWeight: 500, display: "flex", alignItems: "center", gap: "var(--space-1)", background: "var(--color-danger-bg)", color: "var(--color-danger-text)", border: "none", cursor: "pointer" }}><Ban size={11} /> Block</button>
                         </div>
                       )}
-                      {/* Confirm dialogs */}{/* ... truncated for length - same logic as original ... */}
+                      {/* Confirm dialogs */}
+                      {memberConfirm?.id === member.id && memberConfirm.action === "owner" && (
+                        <div style={{ borderRadius: "var(--radius-sm)", padding: "10px 12px", marginTop: "var(--space-2)", fontSize: "var(--text-caption-size)", background: "var(--color-warning-bg)", color: "var(--color-warning-text)" }}>
+                          <div style={{ marginBottom: "var(--space-2)" }}>Make {member.name} the owner of {rosterCircle.name}? You'll remain a member, but lose owner-only controls.</div>
+                          <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                            <button onClick={() => { transferOwnership(rosterCircle, member); }} style={{ borderRadius: "var(--radius-full)", padding: "6px 14px", fontSize: "var(--text-caption-size)", fontWeight: 600, color: "#fff", background: "#9A6A12", border: "none", cursor: "pointer" }}>Make owner</button>
+                            <button onClick={() => setMemberConfirm(null)} style={{ borderRadius: "var(--radius-full)", padding: "6px 14px", fontSize: "var(--text-caption-size)", fontWeight: 600, background: "rgba(16,24,40,0.06)", color: "var(--color-text-primary)", border: "none", cursor: "pointer" }}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
+                      {memberConfirm?.id === member.id && memberConfirm.action === "remove" && (
+                        <div style={{ borderRadius: "var(--radius-sm)", padding: "10px 12px", marginTop: "var(--space-2)", fontSize: "var(--text-caption-size)", background: "rgba(16,24,40,0.06)", color: "var(--color-text-primary)" }}>
+                          <div style={{ marginBottom: "var(--space-2)" }}>Remove {member.name} from {rosterCircle.name}? They can rejoin later.</div>
+                          <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                            <button onClick={() => { moderateMember(rosterCircle, member, "remove"); setMemberConfirm(null); }} style={{ borderRadius: "var(--radius-full)", padding: "6px 14px", fontSize: "var(--text-caption-size)", fontWeight: 600, color: "#fff", background: "#4B5563", border: "none", cursor: "pointer" }}>Remove</button>
+                            <button onClick={() => setMemberConfirm(null)} style={{ borderRadius: "var(--radius-full)", padding: "6px 14px", fontSize: "var(--text-caption-size)", fontWeight: 600, background: "rgba(16,24,40,0.06)", color: "var(--color-text-primary)", border: "none", cursor: "pointer" }}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
+                      {memberConfirm?.id === member.id && memberConfirm.action === "block" && (
+                        <div style={{ borderRadius: "var(--radius-sm)", padding: "10px 12px", marginTop: "var(--space-2)", fontSize: "var(--text-caption-size)", background: "var(--color-danger-bg)", color: "var(--color-danger-text)" }}>
+                          <div style={{ marginBottom: "var(--space-2)" }}>Block {member.name} from {rosterCircle.name}? They won't be able to join or be invited again until unblocked.</div>
+                          <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                            <button onClick={() => { moderateMember(rosterCircle, member, "block"); setMemberConfirm(null); }} style={{ borderRadius: "var(--radius-full)", padding: "6px 14px", fontSize: "var(--text-caption-size)", fontWeight: 600, color: "#fff", background: "var(--color-danger-solid)", border: "none", cursor: "pointer" }}>Block</button>
+                            <button onClick={() => setMemberConfirm(null)} style={{ borderRadius: "var(--radius-full)", padding: "6px 14px", fontSize: "var(--text-caption-size)", fontWeight: 600, background: "rgba(16,24,40,0.06)", color: "var(--color-text-primary)", border: "none", cursor: "pointer" }}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
                     </div>;
                   })}
                   {/* Blocked list */}
