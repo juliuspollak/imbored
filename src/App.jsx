@@ -83,6 +83,7 @@ function AppShell() {
   }); // null | profile screens | a game id
   const [chatPlayer, setChatPlayer] = useState(null);
   const [chatReturn, setChatReturn] = useState(null);
+  const [rewardRequestsReturn, setRewardRequestsReturn] = useState(null);
   const [circlesTarget, setCirclesTarget] = useState(null);
   // Challenge mode needs an account to mean anything (once-per-day + history
   // are tied to a user) — default to it when logged in, otherwise practice
@@ -228,6 +229,7 @@ function AppShell() {
     // an account-menu selection can actually replace the active conversation.
     setChatPlayer(null);
     setChatReturn(null);
+    setRewardRequestsReturn(null);
     if (markViewed) {
       openSection(section);
       return;
@@ -373,7 +375,7 @@ function AppShell() {
   if (active === "progress") {
     return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
-        <Progress onBack={() => setActive(null)} onOpenRewardRequests={() => openAccountSection("rewardrequests")} />
+        <Progress onBack={() => setActive(null)} onOpenRewardRequests={() => { setRewardRequestsReturn("progress"); setActive("rewardrequests"); }} />
       </Suspense>
     );
   }
@@ -421,7 +423,7 @@ function AppShell() {
   if (active === "rewardrequests") {
     return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
-        <RewardRequests onBack={() => setActive(null)} />
+        <RewardRequests onBack={() => { setActive(rewardRequestsReturn === "progress" ? "progress" : null); setRewardRequestsReturn(null); }} />
       </Suspense>
     );
   }

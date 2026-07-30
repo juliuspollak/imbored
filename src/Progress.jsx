@@ -51,6 +51,13 @@ function gameBreakdown(item){
   ].filter(([,value])=>Number(value)!==0);
 }
 
+function suggestionStatus(item){
+  if(item.status==="suggested") return {text:"Needs a price",color:"#7C3AED",background:"rgba(124,58,237,.09)"};
+  if(item.status==="pending") return {text:`${item.approve_count}/${item.required_count} approved`,color:"#B5730E",background:"rgba(217,148,10,.10)"};
+  if(item.status==="active") return {text:"Approved — live below",color:"#12946A",background:"rgba(18,148,106,.10)"};
+  return {text:"Not approved",color:"#B5433A",background:"rgba(181,67,58,.09)"};
+}
+
 export default function Progress({ onBack, onOpenRewardRequests }) {
   const { user, profile } = useAuth();
   const [progress,setProgress]=useState(null), [rules,setRules]=useState(null), [rewards,setRewards]=useState([]), [players,setPlayers]=useState([]);
@@ -59,6 +66,7 @@ export default function Progress({ onBack, onOpenRewardRequests }) {
   const [proposeOpen,setProposeOpen]=useState(false);
   const [proposal,setProposal]=useState({circle_id:"",name:"",description:""});
   const [proposing,setProposing]=useState(false);
+  const [mySuggestions,setMySuggestions]=useState([]);
   const [transfer,setTransfer]=useState({player:"",amount:""});
   const [newTransfers,setNewTransfers]=useState([]);
   const [transferLog,setTransferLog]=useState([]);
@@ -71,7 +79,7 @@ export default function Progress({ onBack, onOpenRewardRequests }) {
     setLoading(true);
     await supabase.rpc("ensure_player_progress",{uid:user.id});
 
-    const [{data:p},{data:r},{data:rw},{data:c},{data:ps},{data:tx},{data:transfers}] = await Promise.all([
+    const [{data:p},{data:r},{data:rw},{data:c},{data:ps},{data:tx},{data:transfers},{data:mine}] = await Promise.all([
       supabase.from("player_progress").select("*").eq("player_id",user.id).single(),
       supabase.from("reward_rules").select("*").eq("is_active",true).maybeSingle(),
       supabase.rpc("list_my_available_rewards"),
@@ -82,6 +90,7 @@ export default function Progress({ onBack, onOpenRewardRequests }) {
       supabase.from("points_transactions").select("id,points,reason_code,related_player_id,created_at,seen_at")
         .eq("player_id",user.id).in("reason_code",["TRANSFER_RECEIVED","TRANSFER_SENT"])
         .order("created_at",{ascending:false}).order("id",{ascending:false}).limit(TRANSFER_HISTORY_LIMIT),
+      supabase.rpc("get_my_reward_proposals"),
     ]);
     const transactionRows=tx||[];
     const gameStatIds=[...new Set(transactionRows.map(item=>item.game_stat_id).filter(Boolean))];
@@ -93,7 +102,7 @@ export default function Progress({ onBack, onOpenRewardRequests }) {
       && !item.is_blocked
       && (item.is_admin || item.is_approved !== false)
     );
-    setProgress(p); setRules(r); setRewards(rw||[]); setCircles(c||[]); setPlayers(availablePlayers); setLoading(false);
+    setProgress(p); setRules(r); setRewards(rw||[]); setCircles(c||[]); setPlayers(availablePlayers); setMySuggestions(mine||[]); setLoading(false);
 
     const playerById = Object.fromEntries(availablePlayers.map(pl=>[pl.id,pl]));
     const gameStatById=Object.fromEntries((gameStats||[]).map(item=>[item.id,item]));
@@ -273,6 +282,21 @@ export default function Progress({ onBack, onOpenRewardRequests }) {
         <textarea value={proposal.description} onChange={e=>setProposal({...proposal,description:e.target.value})} placeholder="💭 Add a note, size, colour or idea" className="w-full rounded-lg border px-3 py-2 text-sm mb-2"/>
         <button disabled={proposing} className="w-full rounded-xl py-2.5 text-sm font-semibold text-white disabled:opacity-50" style={{background:ACCENT}}>{proposing?"Sending…":"Send suggestion"}</button>
       </form>}
+      {tab==="rewards"&&mySuggestions.length>0&&<div className="mb-3">
+        <div className="text-xs font-bold uppercase tracking-wide opacity-40 px-1 mb-2">Your suggestions</div>
+        <div className="space-y-2">
+          {mySuggestions.map(item=>{
+            const s=suggestionStatus(item);
+            return <div key={item.id} className="p-3" style={card}>
+              <div className="flex items-center justify-between gap-2">
+                <div className="font-semibold text-sm truncate" style={{color:INK}}>{item.name}</div>
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0" style={{color:s.color,background:s.background}}>{s.text}</span>
+              </div>
+              <div className="text-[11px] opacity-45 mt-0.5">{item.circle_name}</div>
+            </div>;
+          })}
+        </div>
+      </div>}
       {tab==="rewards"&&<div className="grid grid-cols-2 gap-2">{rewards.length===0?<p className="col-span-2 text-sm text-center opacity-40 py-8">No rewards yet.</p>:rewards.map(r=>{
         const affordable=progress.available_points>=r.points_cost;
         const short=r.points_cost-progress.available_points;
