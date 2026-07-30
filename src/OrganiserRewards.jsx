@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Gift, Check, X } from "lucide-react";
+import { Gift, Check, X, Trash2, TriangleAlert } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase } from "./lib/supabase.js";
 
@@ -19,8 +19,7 @@ export default function OrganiserRewards({ onBack }) {
   const [priceValue, setPriceValue] = useState("");
   const [stockValue, setStockValue] = useState("");
   const [working, setWorking] = useState("");
-  const [confirmRemove, setConfirmRemove] = useState(null);
-  const [forceRemove, setForceRemove] = useState(null);
+  const [removeTarget, setRemoveTarget] = useState(null); // id of the reward with its confirm panel open
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -71,16 +70,10 @@ export default function OrganiserRewards({ onBack }) {
   }
 
   async function removeReward(id, force = false) {
-    setConfirmRemove(null);
+    setRemoveTarget(null);
     setWorking(`remove-${id}`);
     const { error } = await supabase.rpc("delete_reward", { target_reward_id: id, force });
     setWorking("");
-    if (error && !force && /redemption history/i.test(error.message || "")) {
-      setForceRemove(id);
-      setMessage("");
-      return;
-    }
-    setForceRemove(null);
     setMessage(error?.message || "Reward removed");
     refresh();
   }
@@ -93,19 +86,22 @@ export default function OrganiserRewards({ onBack }) {
     refresh();
   }
 
-  function RemoveButton({ id }) {
-    if (forceRemove === id) return <div className="w-full mt-1">
-      <div className="text-[11px] mb-1.5" style={{ color: "#B5433A" }}>It has redemption history — deleting it also erases those redemption records (past point spends stay on the ledger). Remove anyway?</div>
+  function RemoveButton({ id, hasHistory }) {
+    if (removeTarget === id) return <div className="rounded-2xl p-3 mt-2 w-full" style={{ background: "rgba(181,67,58,.07)" }}>
       <div className="flex gap-2">
-        <button onClick={() => setForceRemove(null)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ background: "rgba(16,24,40,.06)", color: INK }}>Cancel</button>
-        <button onClick={() => removeReward(id, true)} disabled={!!working} className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-white" style={{ background: "#B5433A" }}>Remove and erase history</button>
+        <TriangleAlert size={15} className="shrink-0 mt-0.5" style={{ color: "#B5433A" }} />
+        <p className="text-xs leading-snug" style={{ color: "#7A2E28" }}>
+          {hasHistory
+            ? "This reward has redemption history. Removing it also erases those redemption records — past point spends stay on the ledger."
+            : "Remove this reward for good? This can't be undone."}
+        </p>
+      </div>
+      <div className="flex gap-2 mt-2.5">
+        <button onClick={() => setRemoveTarget(null)} className="flex-1 rounded-full py-1.5 text-[11px] font-semibold" style={{ background: "#fff", color: INK }}>Cancel</button>
+        <button onClick={() => removeReward(id, hasHistory)} disabled={!!working} className="flex-1 rounded-full py-1.5 text-[11px] font-semibold text-white" style={{ background: "#B5433A" }}>{hasHistory ? "Remove and erase history" : "Remove"}</button>
       </div>
     </div>;
-    if (confirmRemove === id) return <div className="flex gap-2 shrink-0">
-      <button onClick={() => setConfirmRemove(null)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ background: "rgba(16,24,40,.06)", color: INK }}>Cancel</button>
-      <button onClick={() => removeReward(id)} disabled={!!working} className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-white" style={{ background: "#B5433A" }}>Confirm remove</button>
-    </div>;
-    return <button onClick={() => setConfirmRemove(id)} disabled={!!working} className="shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ background: "rgba(181,67,58,.08)", color: "#B5433A" }}>Remove</button>;
+    return <button onClick={() => setRemoveTarget(id)} disabled={!!working} className="shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold flex items-center gap-1" style={{ background: "rgba(181,67,58,.08)", color: "#B5433A" }}><Trash2 size={12}/>Remove</button>;
   }
 
   if (loading) return <div style={{ background: BG, minHeight: "100vh" }} className="p-10 text-center text-sm opacity-40">Loading…</div>;
@@ -136,11 +132,12 @@ export default function OrganiserRewards({ onBack }) {
             <button onClick={() => openPrice(r, "available")} className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-white" style={{ background: ACCENT }}>Make available</button>
             <button onClick={() => openPrice(r, "vote")} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ background: "rgba(16,24,40,.06)", color: INK }}>Put to a vote</button>
             <button onClick={() => declineIdea(r.id)} disabled={!!working} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ background: "rgba(181,67,58,.08)", color: "#B5433A" }}>Not this time</button>
-            <RemoveButton id={r.id} />
+            {removeTarget !== r.id && <RemoveButton id={r.id} hasHistory={r.has_history} />}
           </div> : <div className="flex items-center justify-between gap-2">
             <span className="text-[11px] font-semibold opacity-55">Voting in progress</span>
-            <RemoveButton id={r.id} />
+            {removeTarget !== r.id && <RemoveButton id={r.id} hasHistory={r.has_history} />}
           </div>}
+          {removeTarget === r.id && <RemoveButton id={r.id} hasHistory={r.has_history} />}
         </div>)}
       </div>}
 
@@ -154,9 +151,9 @@ export default function OrganiserRewards({ onBack }) {
                   <div className="font-semibold text-sm truncate" style={{ color: INK }}>{r.name}</div>
                   <div className="text-[11px] opacity-45">{r.circle_name} · {r.points_cost.toLocaleString()} pts{r.stock_quantity != null ? ` · ${r.stock_quantity} left` : ""}</div>
                 </div>
-                {forceRemove !== r.id && <RemoveButton id={r.id} />}
+                {removeTarget !== r.id && <RemoveButton id={r.id} hasHistory={r.has_history} />}
               </div>
-              {forceRemove === r.id && <RemoveButton id={r.id} />}
+              {removeTarget === r.id && <RemoveButton id={r.id} hasHistory={r.has_history} />}
             </div>)}
           </div>
         </div>}
