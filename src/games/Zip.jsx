@@ -9,6 +9,7 @@ import BoardReviewToggle from "../BoardReviewToggle.jsx";
 import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Flag, Lock } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
+import Button from "../components/Button.jsx";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -665,7 +666,8 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
         display: "grid",
         gridTemplateColumns: `repeat(${boardSize}, 1fr)`,
         gridTemplateRows: `repeat(${boardSize}, 1fr)`,
-        background: BG,
+        background: "var(--color-surface)",
+        border: "2px solid var(--color-border-strong)",
         touchAction: "none",
         width: "calc(100% + 40px)",
       }}
@@ -694,7 +696,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
               className={`zp-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`}
               style={{
                 background: visitedCellBg(key),
-                border: "1px solid rgba(20,20,24,0.30)",
+                border: "1px solid var(--color-border-strong)",
                 cursor: solved ? "default" : "pointer",
                 WebkitTouchCallout: "none",
                 WebkitUserSelect: "none",
@@ -707,8 +709,8 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
                   style={{
                     width: "72%",
                     height: "72%",
-                    background: isVisited ? visitedDotBg(key) : "rgba(16,24,40,0.08)",
-                    color: isVisited ? "#FFFFFF" : CREAM,
+                    background: isVisited ? visitedDotBg(key) : "var(--color-surface-elevated)",
+                    color: isVisited ? "var(--color-primary-text)" : "var(--color-text-primary)",
                     fontWeight: 800,
                     fontSize: Math.max(14, 22 - boardSize),
                     border: orderConflict && isVisited ? `2px solid ${RED}` : "none",
@@ -880,6 +882,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
       className="flex items-start justify-center p-4 pt-[72px]"
     >
       <style>{`
+        .game-toolbar > * { width: 100%; min-width: 0; }
         @keyframes popIn { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes fadeUp { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
         @keyframes hintPulseError { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(217,105,92,1); } 50% { box-shadow: inset 0 0 0 3px rgba(217,105,92,0.25); } }
@@ -970,7 +973,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
             progress; once solved there's nothing left for any of them to do
             (Play Again in the solved panel below replaces "New"). */}
         {!solved && (
-        <div className="game-toolbar flex items-center justify-between gap-2 mb-3 px-1">
+        <div className="game-toolbar mb-3 px-1" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "var(--space-2)" }}>
           {[
             { label: t("common.undo"), onClick: handleUndo, disabled: history.length === 0 },
             { label: t("common.reset"), onClick: handleReset, disabled: false },
@@ -990,20 +993,17 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
               disabled={disabled}
             />
           ) : (
-            <button
+            <Button
               key={label}
               onClick={onClick}
               disabled={disabled}
               aria-label={label}
-              className="gloss-button flex-1 rounded-lg py-2 text-xs font-semibold transition-all"
-              style={{
-                background: disabled ? "rgba(16,24,40,0.06)" : undefined,
-                color: disabled ? "rgba(27,33,41,0.4)" : CREAM,
-                cursor: disabled ? "default" : "pointer",
-              }}
+              variant="secondary"
+              size="sm"
+              fullWidth
             >
               {label}
-            </button>
+            </Button>
           ))}
         </div>
         )}

@@ -9,6 +9,7 @@ import BoardReviewToggle from "../BoardReviewToggle.jsx";
 import { Crown, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock, X } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
+import Button from "../components/Button.jsx";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -771,9 +772,9 @@ export default function Queens({
           <h1 className="text-xl font-bold" style={{ fontFamily:"'Fredoka',sans-serif",color:INK }}>{t("challenge.notIncluded", { game:"Queens" })}</h1>
           <p className="text-xs mt-2" style={{ color:"rgba(27,33,41,.50)" }}>{t("challenge.notIncludedBody", { circle:challengeName || "This circle" })}</p>
           <div className="flex flex-col gap-2 mt-5">
-            <button type="button" onClick={onPlayPersonalChallenge} className="gloss-button rounded-full py-2.5 text-xs font-semibold" style={{ background:GOLD,color:"#fff" }}>{t("challenge.playMine")}</button>
-            <button type="button" onClick={onChooseAnotherChallenge} className="gloss-button rounded-full py-2.5 text-xs font-semibold" style={{ background:"rgba(16,24,40,.05)",color:INK }}>{t("challenge.chooseAnother")}</button>
-            {onBack && <button type="button" onClick={onBack} className="text-xs font-semibold py-2" style={{ color:"rgba(27,33,41,.55)" }}>{t("common.backHome")}</button>}
+            <Button type="button" onClick={onPlayPersonalChallenge} fullWidth>{t("challenge.playMine")}</Button>
+            <Button type="button" onClick={onChooseAnotherChallenge} variant="secondary" fullWidth>{t("challenge.chooseAnother")}</Button>
+            {onBack && <Button type="button" onClick={onBack} variant="ghost" fullWidth>{t("common.backHome")}</Button>}
           </div>
         </div>
       </div>
@@ -865,6 +866,7 @@ export default function Queens({
   return (
     <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-start justify-center p-4 pt-[72px]">
       <style>{`
+        .game-toolbar > * { width: 100%; min-width: 0; }
         @keyframes qp-pop {
           0% { transform: scale(0.6); opacity: 0; }
           70% { transform: scale(1.12); }
@@ -986,7 +988,7 @@ export default function Queens({
             progress; once solved there's nothing left for any of them to do
             (Play Again in the solved panel below replaces "New"). */}
         {!solved && (
-          <div className="game-toolbar flex items-center justify-between gap-2 mb-3 px-1">
+          <div className="game-toolbar mb-3 px-1" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "var(--space-2)" }}>
             {[
               { label: t("common.undo"), onClick: handleUndo, disabled: history.length === 0 },
               { label: t("common.reset"), onClick: handleReset, disabled: false },
@@ -1006,20 +1008,17 @@ export default function Queens({
                 disabled={disabled}
               />
             ) : (
-              <button
+              <Button
                 key={label}
                 onClick={onClick}
                 disabled={disabled}
                 aria-label={label}
-                className="gloss-button flex-1 rounded-lg py-2 text-xs font-semibold transition-all"
-                style={{
-                  background: disabled ? "rgba(16,24,40,0.06)" : undefined,
-                  color: disabled ? "rgba(27,33,41,0.4)" : CREAM,
-                  cursor: disabled ? "default" : "pointer",
-                }}
+                variant="secondary"
+                size="sm"
+                fullWidth
               >
                 {label}
-              </button>
+              </Button>
             ))}
           </div>
         )}

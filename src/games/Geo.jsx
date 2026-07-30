@@ -173,6 +173,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
   return (
     <Page style={{ alignItems: "flex-start" }}>
       <style>{`
+        .geo-toolbar > * { width: 100%; min-width: 0; }
         @media (hover: hover) and (pointer: fine) {
           .geo-option:not(:disabled):hover { border-color: var(--color-primary-subtle-border) !important; transform: translateY(-1px); }
           .geo-continent:not([aria-disabled="true"]):hover { filter: brightness(1.06); }
@@ -228,7 +229,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
         </div>
 
         {/* toolbar - text labels, spread at top */}
-        <div className="game-toolbar flex items-center justify-between gap-2 mb-3 px-1">
+        <div className="game-toolbar geo-toolbar mb-3 px-1" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-2)" }}>
           {[
             { label: t("common.restart"), onClick: handleReset, disabled: solved },
             {

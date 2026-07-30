@@ -9,6 +9,7 @@ import BoardReviewToggle from "../BoardReviewToggle.jsx";
 import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
+import Button from "../components/Button.jsx";
 
 function SunIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
   return (
@@ -534,9 +535,9 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
         display: "grid",
         gridTemplateColumns: `repeat(${SIZE}, 1fr)`,
         gridTemplateRows: `repeat(${SIZE}, 1fr)`,
-        background: "linear-gradient(145deg, #FBFCFE 0%, #F2F5F9 100%)",
-        border: "6px solid rgba(255,255,255,.92)",
-        boxShadow: "0 16px 34px rgba(16,24,40,.13), 0 2px 8px rgba(16,24,40,.08), inset 0 0 0 1px rgba(16,24,40,.08)",
+        background: "var(--color-surface)",
+        border: "4px solid var(--color-border-strong)",
+        boxShadow: "var(--shadow-card)",
         containerType: "inline-size",
         width: "calc(100% + 40px)",
       }}
@@ -554,8 +555,8 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
               disabled={isGiven}
               className={`tg-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`}
               style={{
-                background: isGiven ? "rgba(120,113,100,.075)" : "rgba(255,255,255,.22)",
-                border: "1px solid rgba(27,33,41,0.14)",
+                background: isGiven ? "var(--color-surface-elevated)" : "var(--color-surface)",
+                border: "1px solid var(--color-border-strong)",
                 boxShadow: isConflict ? `inset 0 0 0 3px ${RED}` : "none",
                 cursor: isGiven ? "default" : "pointer",
               }}
@@ -586,8 +587,8 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                     className="tg-hint-ghost-badge"
                     style={{
                       position: "absolute", top: 2, right: 2, width: 14, height: 14, borderRadius: "50%",
-                      background: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center",
-                      boxShadow: "0 1px 3px rgba(16,24,40,0.35)", pointerEvents: "none",
+                      background: "var(--color-surface-raised)", display: "flex", alignItems: "center", justifyContent: "center",
+                      boxShadow: "var(--shadow-control)", pointerEvents: "none",
                     }}
                   >
                     {hintCell.symbol === SUN ? (
@@ -619,15 +620,15 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
               width: 26,
               height: 26,
               borderRadius: "50%",
-              background: "rgba(255,255,255,.92)",
-              border: `1px solid rgba(16,24,40,0.14)`,
+              background: "var(--color-surface-raised)",
+              border: "1px solid var(--color-border-strong)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontSize: 13,
               fontWeight: 700,
-              color: CREAM,
-              boxShadow: "0 3px 9px rgba(16,24,40,.14)",
+              color: "var(--color-text-primary)",
+              boxShadow: "var(--shadow-control)",
               pointerEvents: "none",
               zIndex: 2,
             }}
@@ -683,6 +684,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
       className="flex items-start justify-center p-4 pt-[72px]"
     >
       <style>{`
+        .game-toolbar > * { width: 100%; min-width: 0; }
         @keyframes popIn { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes fadeUp { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
         @keyframes hintPulseError { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(217,105,92,1); } 50% { box-shadow: inset 0 0 0 3px rgba(217,105,92,0.25); } }
@@ -820,7 +822,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
             progress; once solved there's nothing left for any of them to do
             (Play Again in the solved panel below replaces "New"). */}
         {!solved && (
-          <div className="game-toolbar flex items-center justify-between gap-2 mb-3 px-1">
+          <div className="game-toolbar mb-3 px-1" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "var(--space-2)" }}>
             {[
               { label: t("common.undo"), onClick: handleUndo, disabled: history.length === 0 },
               { label: t("common.reset"), onClick: handleReset, disabled: false },
@@ -840,20 +842,17 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                 disabled={disabled}
               />
             ) : (
-              <button
+              <Button
                 key={label}
                 onClick={onClick}
                 disabled={disabled}
                 aria-label={label}
-                className="gloss-button flex-1 rounded-lg py-2 text-xs font-semibold transition-all"
-                style={{
-                  background: disabled ? "rgba(16,24,40,0.06)" : undefined,
-                  color: disabled ? "rgba(27,33,41,0.4)" : CREAM,
-                  cursor: disabled ? "default" : "pointer",
-                }}
+                variant="secondary"
+                size="sm"
+                fullWidth
               >
                 {label}
-              </button>
+              </Button>
             ))}
           </div>
         )}

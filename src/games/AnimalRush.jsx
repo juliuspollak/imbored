@@ -652,7 +652,7 @@ export default function AnimalRush({ onExit }) {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="rush-kicker">Live · 2–6 phones</p>
-                <h1 className="mt-1 text-4xl font-bold" style={{ fontFamily: "'Fredoka', sans-serif" }}>Animal Rush</h1>
+                <h1 className="mt-1" style={{ marginBottom: 0, color: "var(--color-text-primary)", fontSize: "var(--text-page-title-size)", lineHeight: "var(--text-page-title-line)", fontWeight: "var(--text-page-title-weight)" }}>Animal Rush</h1>
               </div>
               <span className="rush-icon-panel rush-icon-panel--mint grid h-12 w-12 place-items-center rounded-2xl">
                 <Radio size={24} />
@@ -816,7 +816,7 @@ export default function AnimalRush({ onExit }) {
               <Trophy size={31} />
             </span>
             <p className="rush-kicker mt-4">Match finished</p>
-            <h1 className="mt-1 text-3xl font-bold" style={{ fontFamily: "'Fredoka', sans-serif" }}>
+            <h1 className="mt-1" style={{ marginBottom: 0, color: "var(--color-text-primary)", fontSize: "var(--text-page-title-size)", lineHeight: "var(--text-page-title-line)", fontWeight: "var(--text-page-title-weight)" }}>
               {matchWinner?.user_id === user?.id ? "You won!" : `${matchWinner?.player_name || "A player"} won`}
             </h1>
             <p className="rush-muted mt-2 text-xs">First to {room.winning_cards} cards or last player standing.</p>
