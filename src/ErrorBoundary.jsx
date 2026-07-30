@@ -33,19 +33,19 @@ export default class ErrorBoundary extends React.Component {
       if (this.props.fallback) return this.props.fallback(this.state.error, this.reset);
       return (
         <div
-          style={{ background: "#F1F3F7", minHeight: "100vh" }}
+          style={{ background: "var(--color-page-bg)", minHeight: "100vh" }}
           className="flex items-center justify-center px-6"
         >
           <div className="flex flex-col items-center text-center gap-3" style={{ maxWidth: 360 }}>
             <span style={{ fontSize: 32 }}>😕</span>
-            <div style={{ color: "#1B2129", fontWeight: 700 }}>Something went wrong</div>
-            <div style={{ color: "#1B2129", opacity: 0.6, fontSize: 13 }}>
+            <div style={{ color: "var(--color-text-primary)", fontWeight: 700 }}>Something went wrong</div>
+            <div style={{ color: "var(--color-text-secondary)", fontSize: 13 }}>
               That wasn't supposed to happen. You can try again — your progress on other games is safe.
             </div>
             <button
               onClick={this.reset}
               className="mt-1 rounded-full px-5 py-2 text-sm font-semibold"
-              style={{ background: "#2F6FED", color: "#FFFFFF" }}
+              style={{ background: "var(--color-primary)", color: "#FFFFFF" }}
             >
               Try again
             </button>
