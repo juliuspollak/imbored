@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import AnimalFace from "./AnimalFace.jsx";
-import { animalById } from "./engine.js";
+import { animalById, animalColour } from "./engine.js";
 
 const DIE_FACES = [
   ["fox", "front"],
@@ -19,6 +19,22 @@ const TARGET_ROTATIONS = {
   lion: "rotateX(-90deg) rotateY(0deg)",
   frog: "rotateX(90deg) rotateY(0deg)",
 };
+
+/**
+ * Returns a misleading background colour for each die face so that
+ * no animal's die face shows its correct card colour.
+ * This prevents players from matching by colour instead of shape.
+ * Each die face gets the individual colour of the NEXT animal in the list.
+ */
+function misdirectDieColour(animalId, colourMode) {
+  if (colourMode !== "individual") return undefined;
+  const animalIds = ["fox", "panda", "owl", "rabbit", "lion", "frog"];
+  const idx = animalIds.indexOf(animalId);
+  if (idx === -1) return undefined;
+  const nextIdx = (idx + 1) % animalIds.length;
+  const nextAnimalId = animalIds[nextIdx];
+  return animalColour(nextAnimalId, "individual");
+}
 
 export default function AnimalDie({
   targetId,
@@ -64,7 +80,12 @@ export default function AnimalDie({
       >
         {DIE_FACES.map(([animalId, face]) => (
           <span className={`rush-die__face rush-die__face--${face}`} key={animalId}>
-            <AnimalFace animalId={animalId} colourMode={colourMode} size={58} />
+            <AnimalFace
+              animalId={animalId}
+              colourMode={colourMode}
+              size={58}
+              bgColour={misdirectDieColour(animalId, colourMode)}
+            />
           </span>
         ))}
       </div>
