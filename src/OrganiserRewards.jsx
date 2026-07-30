@@ -14,6 +14,7 @@ export default function OrganiserRewards({ onBack }) {
   const [ideas, setIdeas] = useState([]);
   const [active, setActive] = useState([]);
   const [finished, setFinished] = useState([]);
+  const [catalog, setCatalog] = useState([]);
   const [priceTarget, setPriceTarget] = useState(null); // { reward, mode: "available" | "vote" }
   const [priceValue, setPriceValue] = useState("");
   const [stockValue, setStockValue] = useState("");
@@ -21,14 +22,16 @@ export default function OrganiserRewards({ onBack }) {
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const [{ data: i }, { data: a }, { data: f }] = await Promise.all([
+    const [{ data: i }, { data: a }, { data: f }, { data: c }] = await Promise.all([
       supabase.rpc("get_organiser_new_ideas"),
       supabase.rpc("get_organiser_active_rewards"),
       supabase.rpc("get_organiser_finished"),
+      supabase.rpc("get_organiser_reward_catalog"),
     ]);
     setIdeas(i || []);
     setActive(a || []);
     setFinished(f || []);
+    setCatalog(c || []);
     setLoading(false);
   }, []);
   useEffect(() => { refresh(); }, [refresh]);
@@ -65,6 +68,15 @@ export default function OrganiserRewards({ onBack }) {
     refresh();
   }
 
+  async function removeReward(id) {
+    if (!window.confirm("Remove this reward for good? This can't be undone.")) return;
+    setWorking(`remove-${id}`);
+    const { error } = await supabase.rpc("delete_reward", { target_reward_id: id });
+    setWorking("");
+    setMessage(error?.message || "Reward removed");
+    refresh();
+  }
+
   async function resolveCancellation(id, approve) {
     setWorking(`cancel-${id}`);
     const { error } = await supabase.rpc("resolve_cancellation", { target_id: id, approve });
@@ -82,7 +94,7 @@ export default function OrganiserRewards({ onBack }) {
 
       <div className="game-mode-switch mb-4" style={{ width: "100%", justifyContent: "flex-start" }}>
         {TABS.map(([id, label]) => {
-          const count = id === "ideas" ? ideas.length : id === "active" ? active.filter((r) => r.cancellation_requested_at).length : 0;
+          const count = id === "ideas" ? ideas.filter((r) => r.status === "suggested").length : id === "active" ? active.filter((r) => r.cancellation_requested_at).length : 0;
           return <button key={id} onClick={() => setTab(id)} className={`gloss-button ${tab === id ? "is-active" : ""}`} style={{ flex: 1, position: "relative" }}>
             {label}
             {count > 0 && <span className="absolute -top-1.5 -right-1.5 rounded-full text-white text-[9px] font-bold grid place-items-center" style={{ width: 16, height: 16, background: "#E5484D" }}>{count}</span>}
@@ -106,6 +118,18 @@ export default function OrganiserRewards({ onBack }) {
       </div>}
 
       {tab === "active" && <div className="space-y-2">
+        {catalog.length > 0 && <div className="mb-1">
+          <div className="text-[11px] font-semibold opacity-45 mb-1.5 px-1">Reward catalog</div>
+          <div className="space-y-2">
+            {catalog.map((r) => <div key={r.id} className="p-3 flex items-center justify-between gap-2" style={card}>
+              <div className="min-w-0">
+                <div className="font-semibold text-sm truncate" style={{ color: INK }}>{r.name}</div>
+                <div className="text-[11px] opacity-45">{r.circle_name} · {r.points_cost.toLocaleString()} pts{r.stock_quantity != null ? ` · ${r.stock_quantity} left` : ""}</div>
+              </div>
+              <button onClick={() => removeReward(r.id)} disabled={!!working} className="shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ background: "rgba(181,67,58,.08)", color: "#B5433A" }}>Remove</button>
+            </div>)}
+          </div>
+        </div>}
         {active.length === 0 ? <p className="text-sm text-center opacity-40 py-6">Nothing in progress.</p> : active.map((r) => <div key={r.id} className="p-3" style={card}>
           <div className="flex items-center justify-between gap-2">
             <div className="font-semibold text-sm truncate" style={{ color: INK }}>{r.reward_name}</div>
@@ -131,11 +155,11 @@ export default function OrganiserRewards({ onBack }) {
       </div>}
     </div>
 
-    {priceTarget && <div className="fixed inset-0 z-50 grid place-items-center p-4" style={{ background: "rgba(16,24,40,.45)" }}>
-      <div className="w-full max-w-sm rounded-3xl p-5" style={{ background: "#fff", boxShadow: "0 24px 60px rgba(16,24,40,.22)" }}>
+    {priceTarget && <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto" style={{ background: "rgba(16,24,40,.45)" }}>
+      <div className="w-full max-w-sm rounded-3xl p-5 my-auto max-h-[90dvh] overflow-y-auto" style={{ background: "#fff", boxShadow: "0 24px 60px rgba(16,24,40,.22)" }}>
         <h2 className="font-bold mb-1">{priceTarget.mode === "vote" ? "Send to a vote" : "Make available"}: {priceTarget.reward.name}</h2>
         {priceTarget.reward.is_physical && <p className="text-xs mb-3" style={{ color: "#8A5C00" }}>You're agreeing to provide this reward. Members may have earned their points in other circles.</p>}
-        <input type="number" autoFocus value={priceValue} onChange={(e) => setPriceValue(e.target.value)} placeholder="Points cost" className="w-full rounded-xl border px-3 py-2 text-sm mb-2" />
+        <input type="number" inputMode="numeric" value={priceValue} onChange={(e) => setPriceValue(e.target.value)} placeholder="Points cost" className="w-full rounded-xl border px-3 py-2 text-sm mb-2" />
         {priceTarget.mode === "available" && priceTarget.reward.reward_type === "limited" && <input type="number" value={stockValue} onChange={(e) => setStockValue(e.target.value)} placeholder="How many available" className="w-full rounded-xl border px-3 py-2 text-sm" />}
         <div className="flex gap-2 mt-4">
           <button onClick={() => setPriceTarget(null)} className="flex-1 rounded-full py-2.5 text-xs font-semibold" style={{ background: "rgba(16,24,40,.06)" }}>Cancel</button>
