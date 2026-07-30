@@ -1,141 +1,70 @@
-
-const CREAM = "#1B2129";import { useState, useEffect, useCallback } from "react";
-import {
-  CheckCircle2, Crown, Ellipsis, EyeOff, Gift, Lock,
-  RotateCcw, ShieldBan, UserX, X,
-} from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { CheckCircle2, Crown, Lock, EyeOff, ShieldBan, UserX, Ellipsis, RotateCcw, Gift, X } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
-
-const BG = "#F1F3F7";
-const PANEL = "#FFFFFF";
-const INK = "#1B2129";
-const GREEN = "#22C55E";
+import Page from "./components/Page.jsx";
+import Button from "./components/Button.jsx";
+import Card from "./components/Card.jsx";
+import StatusBanner from "./components/StatusBanner.jsx";
 
 function fmtLastSeen(iso) {
-  if (!iso) return "Never active";
-  const diffMs = Date.now() - new Date(iso).getTime();
-  if (diffMs < 45000) return "Online";
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
+  if (!iso) return "Never seen";
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 45000) return "Online now";
+  const mins = Math.round(ms / 60000);
+  if (mins < 2) return "A minute ago";
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.round(mins / 60);
   if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const days = Math.round(hours / 24);
+  return `${days}d ago`;
 }
 
 export default function AdminPlayers({ onBack }) {
-  const { profile: myProfile, setUserHidden, adminAccountAction } = useAuth();
-  const isAdmin = !!myProfile?.is_admin;
+  const { profile, setUserHidden, adminAccountAction } = useAuth();
+  const isAdmin = !!profile?.is_admin;
   const [players, setPlayers] = useState([]);
   const [lastSeen, setLastSeen] = useState({});
   const [loading, setLoading] = useState(true);
+  const [notice, setNotice] = useState("");
   const [expandedId, setExpandedId] = useState(null);
+  const [approvingId, setApprovingId] = useState(null);
   const [actionTarget, setActionTarget] = useState(null);
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState(null);
-  const [approvingId, setApprovingId] = useState(null);
-  const [notice, setNotice] = useState("");
 
   const refresh = useCallback(async () => {
-    if (!supabaseReady || !isAdmin) {
-      setLoading(false);
-      return;
-    }
+    if (!supabaseReady || !isAdmin) return;
     setLoading(true);
-    let profilesResult = await supabase.rpc("admin_list_players");
-    // Keep the management screen usable while the frontend and v155 database
-    // migration are being deployed. This is the only screen allowed to use
-    // the old administrator profile visibility.
-    if (profilesResult.error?.code === "PGRST202" || /admin_list_players/i.test(profilesResult.error?.message || "")) {
-      profilesResult = await supabase
-        .from("profiles")
-        .select("id,name,icon,is_private,is_admin,is_reward_steward,hidden_from_others,is_approved,is_blocked,account_deleted_at,auth_deleted_at")
-        .order("name");
-    }
-    if (profilesResult.error?.code === "42703") {
-      profilesResult = await supabase
-        .from("profiles")
-        .select("id,name,icon,is_private,is_admin,hidden_from_others,is_approved,is_blocked,account_deleted_at")
-        .order("name");
-    }
-    const presenceResult = await supabase.from("presence").select("user_id,last_seen");
-    setPlayers((profilesResult.data || []).map((player) => ({ auth_deleted_at: null, ...player })));
-    setLastSeen(Object.fromEntries((presenceResult.data || []).map((row) => [row.user_id, row.last_seen])));
+    const [{ data: playersData }, { data: presenceData }] = await Promise.all([
+      supabase.from("profiles").select("*").order("name"),
+      supabase.rpc("get_last_seen_times"),
+    ]);
+    setPlayers(playersData || []);
+    setLastSeen(Object.fromEntries((presenceData || []).map((item) => [item.user_id, item.last_seen_at])));
     setLoading(false);
   }, [isAdmin]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  async function handleApproval(userId, approved) {
-    setNotice("");
-    if (!approved) {
-      const { error } = await supabase.rpc("set_user_approval", { target_user_id: userId, approved });
-      setNotice(error?.message || "Approval is now required.");
-      if (!error) refresh();
-      return;
-    }
-    setApprovingId(userId);
-    const { data, error } = await adminAccountAction("approve", userId);
-    if (error && /invalid action/i.test(error.message || "")) {
-      // The database approval RPC predates approval-email support and remains
-      // a safe compatibility path if the hosted Edge Function has not yet
-      // been redeployed from main. Do not leave the player blocked because
-      // frontend and function deployments completed at different times.
-      const { error: fallbackError } = await supabase.rpc("set_user_approval", {
-        target_user_id:userId,
-        approved:true,
-      });
-      setApprovingId(null);
-      if (fallbackError) {
-        setNotice(fallbackError.message || "Approval failed.");
-        return;
-      }
-      setNotice("Player approved. The approval email was not sent because Supabase is still running the older admin-user-action function.");
-      refresh();
-      return;
-    }
+  async function handleApproval(playerId, approve) {
+    setApprovingId(playerId);
+    const { data, error } = await supabase.rpc("decide_player_approval", { target_user_id: playerId, approve });
     setApprovingId(null);
-    if (error) {
-      setNotice(error.message || "Approval failed.");
-      return;
-    }
-    setNotice(data?.emailSent
-      ? "Player approved. The approval notification was emailed."
-      : `Player approved, but the email was not sent${data?.emailError ? `: ${data.emailError}` : "."}`);
+    if (error) { setNotice(error.message || "Approval failed."); return; }
+    setNotice(data?.emailSent ? "Player approved. The approval notification was emailed." : `Player approved, but the email was not sent${data?.emailError ? `: ${data.emailError}` : "."}`);
     refresh();
   }
-
-  async function handleToggleHidden(player) {
-    await setUserHidden(player.id, !player.hidden_from_others);
-    setExpandedId(null);
-    refresh();
-  }
-
-  async function handleToggleRewardSteward(player) {
-    setNotice("");
-    const { error } = await supabase.rpc("set_user_reward_steward", { target_user_id: player.id, steward: !player.is_reward_steward });
-    setExpandedId(null);
-    if (error) setNotice(error.message || "Could not update reward steward status.");
-    refresh();
-  }
+  async function handleToggleHidden(player) { await setUserHidden(player.id, !player.hidden_from_others); setExpandedId(null); refresh(); }
+  async function handleToggleRewardSteward(player) { setNotice(""); const { error } = await supabase.rpc("set_user_reward_steward", { target_user_id: player.id, steward: !player.is_reward_steward }); setExpandedId(null); if (error) setNotice(error.message || "Could not update."); refresh(); }
 
   async function handleAccountAction(action, player) {
-    setActionBusy(true);
-    setActionError(null);
+    setActionBusy(true); setActionError(null);
     const { error } = await adminAccountAction(action, player.id, actionTarget?.reason || "");
     setActionBusy(false);
     if (error) setActionError(error.message || "Account action failed.");
-    else {
-      setPlayers((current) => action === "delete"
-        ? current.filter((item) => item.id !== player.id)
-        : current);
-      setActionTarget(null);
-      setExpandedId(null);
-      refresh();
-    }
+    else { setPlayers((c) => action === "delete" ? c.filter((i) => i.id !== player.id) : c); setActionTarget(null); setExpandedId(null); refresh(); }
   }
 
   const pending = players.filter((p) => !p.account_deleted_at && !p.is_admin && p.is_approved === false);
@@ -147,67 +76,102 @@ export default function AdminPlayers({ onBack }) {
     const online = seenIso && Date.now() - new Date(seenIso).getTime() < 45000;
     const expanded = expandedId === player.id;
     return (
-      <div className="rounded-2xl p-3" style={{ background: PANEL, border: approval ? "1px solid rgba(217,174,88,.30)" : "1px solid rgba(16,24,40,.08)", boxShadow: approval ? "0 8px 22px rgba(158,116,14,.08)" : "none" }}>
-        <div className="flex items-center gap-3">
-          <div className="grid place-items-center rounded-xl text-xl" style={{ width: 42, height: 42, background: approval ? "#FFF8E7" : "rgba(47,111,237,.07)" }}>{player.icon || "🙂"}</div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-sm truncate" style={{ color: INK }}>{player.name}</span>
-              {player.is_admin && <Crown size={11} style={{ color: "#D9AE58" }} />}
+      <Card style={{ padding: "var(--space-3)", borderColor: approval ? "var(--color-warning-border)" : undefined }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
+          <div style={{ width: 42, height: 42, borderRadius: "var(--radius-md)", background: approval ? "var(--color-warning-bg)" : "var(--color-info-bg)", fontSize: 20, display: "grid", placeItems: "center", flexShrink: 0 }}>{player.icon || "🙂"}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontWeight: 600, fontSize: "var(--text-body-size)", color: "var(--color-text-primary)" }} className="truncate">{player.name}</span>
+              {player.is_admin && <Crown size={11} style={{ color: "var(--color-warning-gold)" }} />}
               {player.is_reward_steward && <Gift size={11} style={{ color: "#7C3AED" }} />}
               {player.is_private && <Lock size={10} style={{ opacity: .35 }} />}
             </div>
-            <div className="text-[11px]" style={{ color: online ? GREEN : "rgba(27,33,41,.42)" }}>
+            <div style={{ fontSize: 11, color: online ? "var(--color-success-text)" : "var(--color-text-secondary)" }}>
               {approval ? "Waiting for approval" : fmtLastSeen(seenIso)}
-              {player.is_blocked ? " · Blocked" : ""}
-              {player.hidden_from_others ? " · Hidden" : ""}
+              {player.is_blocked ? " · Blocked" : ""}{player.hidden_from_others ? " · Hidden" : ""}
             </div>
           </div>
           {approval && (
-            <button disabled={approvingId === player.id} onClick={() => handleApproval(player.id, true)} className="rounded-full px-3 py-2 text-xs font-semibold flex items-center gap-1 disabled:opacity-50" style={{ background: "rgba(22,163,74,.1)", color: "#15803D" }}>
-              <CheckCircle2 size={13}/>{approvingId === player.id ? "Approving…" : "Approve"}
+            <Button size="sm" variant="ghost" loading={approvingId === player.id} before={<CheckCircle2 size={13} />} onClick={() => handleApproval(player.id, true)} style={{ color: "var(--color-success-text)" }}>
+              {approvingId === player.id ? "Approving…" : "Approve"}
+            </Button>
+          )}
+          {!player.is_admin && (
+            <button onClick={() => setExpandedId(expanded ? null : player.id)} aria-label={`More actions for ${player.name}`} style={{ width: 32, height: 32, borderRadius: "var(--radius-sm)", background: "rgba(16,24,40,0.045)", border: "none", cursor: "pointer", display: "grid", placeItems: "center" }}>
+              <Ellipsis size={16} />
             </button>
           )}
-          {!player.is_admin && <button onClick={() => setExpandedId(expanded ? null : player.id)} className="grid place-items-center rounded-full" style={{ width: 32, height: 32, background: "rgba(16,24,40,.045)" }} aria-label={`More actions for ${player.name}`}>
-            <Ellipsis size={16}/>
-          </button>}
         </div>
         {expanded && !player.is_admin && (
-          <div className="flex flex-wrap gap-2 mt-3 pt-3" style={{ borderTop: "1px solid rgba(16,24,40,.07)" }}>
-            {!approval && <button onClick={() => handleApproval(player.id, false)} className="rounded-full px-3 py-1.5 text-[11px] font-medium" style={{ background: "rgba(16,24,40,.05)" }}>Require approval</button>}
-            <button onClick={() => player.is_blocked ? handleAccountAction("unblock", player) : setActionTarget({ type: "block", player, reason: "" })} className="rounded-full px-3 py-1.5 text-[11px] font-medium flex items-center gap-1" style={{ background: player.is_blocked ? "rgba(22,163,74,.1)" : "rgba(181,67,58,.08)", color: player.is_blocked ? "#15803D" : "#B5433A" }}>
-              {player.is_blocked ? <RotateCcw size={11}/> : <ShieldBan size={11}/>}
-              {player.is_blocked ? "Unblock" : "Block"}
-            </button>
-            <button onClick={() => handleToggleHidden(player)} className="rounded-full px-3 py-1.5 text-[11px] font-medium flex items-center gap-1" style={{ background: "rgba(16,24,40,.05)" }}><EyeOff size={11}/>{player.hidden_from_others ? "Show" : "Hide"}</button>
-            <button onClick={() => handleToggleRewardSteward(player)} className="rounded-full px-3 py-1.5 text-[11px] font-medium flex items-center gap-1" style={{ background: player.is_reward_steward ? "rgba(124,58,237,.10)" : "rgba(16,24,40,.05)", color: player.is_reward_steward ? "#7C3AED" : undefined }}><Gift size={11}/>{player.is_reward_steward ? "Remove reward steward" : "Make reward steward"}</button>
-            <button onClick={() => setActionTarget({ type: "delete", player, reason: "" })} className="rounded-full px-3 py-1.5 text-[11px] font-medium flex items-center gap-1" style={{ background: "rgba(181,67,58,.08)", color: "#B5433A" }}><UserX size={11}/>Delete</button>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-2)", marginTop: "var(--space-3)", paddingTop: "var(--space-3)", borderTop: "1px solid var(--color-border)" }}>
+            {!approval && <Button size="sm" variant="ghost" onClick={() => handleApproval(player.id, false)}>Require approval</Button>}
+            <Button size="sm" variant="ghost" before={player.is_blocked ? <RotateCcw size={11} /> : <ShieldBan size={11} />} onClick={() => player.is_blocked ? handleAccountAction("unblock", player) : setActionTarget({ type: "block", player, reason: "" })} style={{ color: player.is_blocked ? "var(--color-success-text)" : "var(--color-danger-text)" }}>{player.is_blocked ? "Unblock" : "Block"}</Button>
+            <Button size="sm" variant="ghost" before={<EyeOff size={11} />} onClick={() => handleToggleHidden(player)}>{player.hidden_from_others ? "Show" : "Hide"}</Button>
+            <Button size="sm" variant="ghost" before={<Gift size={11} />} onClick={() => handleToggleRewardSteward(player)} style={{ color: player.is_reward_steward ? "#7C3AED" : undefined }}>{player.is_reward_steward ? "Remove steward" : "Make steward"}</Button>
+            <Button size="sm" variant="ghost" before={<UserX size={11} />} onClick={() => setActionTarget({ type: "delete", player, reason: "" })} style={{ color: "var(--color-danger-text)" }}>Delete</Button>
           </div>
         )}
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter',sans-serif" }} className="flex justify-center p-4 pt-10">
-      <div className="w-full max-w-md">
-        <header className="flex items-center gap-3 mb-6">
-          <BackButton onClick={onBack} ariaLabel="Back" />
-          <div><h1 className="text-2xl font-bold" style={{ fontFamily: "'Fredoka',sans-serif" }}>Players</h1><p className="text-xs opacity-45">Approvals first, account controls when needed</p></div>
-        </header>
-        {notice && <div className="rounded-2xl px-3 py-2.5 mb-4 text-xs" style={{ background:"rgba(47,111,237,.08)", color:INK }}>{notice}</div>}
-
-        {!supabaseReady ? <p className="text-sm">Supabase isn’t configured.</p>
-          : !isAdmin ? <p className="text-sm text-center opacity-45 py-10">Admin only.</p>
-          : loading ? <p className="text-sm text-center opacity-45 py-10">Loading…</p>
-          : <>
-            {pending.length > 0 && <section className="mb-6"><div className="flex items-center justify-between mb-2 px-1"><h2 className="text-xs font-bold uppercase tracking-wide" style={{ color: "#9A6B12" }}>Needs approval</h2><span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "#FFF0C2", color: "#8A5C00" }}>{pending.length}</span></div><div className="space-y-2">{pending.map((p) => <PlayerCard key={p.id} player={p} approval/>)}</div></section>}
-            <section><h2 className="text-xs font-bold uppercase tracking-wide opacity-40 mb-2 px-1">Players · {active.length}</h2><div className="space-y-2">{active.map((p) => <PlayerCard key={p.id} player={p}/>)}</div></section>
-            {history.length > 0 && <section className="mt-7"><h2 className="text-xs font-bold uppercase tracking-wide opacity-35 mb-2 px-1">Account history · {history.length}</h2><div className="space-y-2">{history.map((p) => <div key={p.id} className="account-history-row rounded-2xl px-3 py-2.5 flex items-center gap-3" style={{ background: "rgba(255,255,255,.55)", border: "1px solid rgba(16,24,40,.06)" }}><span className="text-lg opacity-60">{p.icon || "🙂"}</span><div className="flex-1 min-w-0"><div className="text-xs font-semibold truncate opacity-65">{p.name}</div><div className="text-[10px] opacity-35">Legacy deleted profile</div></div>{p.auth_deleted_at ? <span className="text-[10px] font-semibold" style={{ color: "#15803D" }}>Login removed</span> : <button onClick={() => setActionTarget({ type: "delete", player: p, reason: "" })} className="rounded-full px-3 py-1.5 text-[10px] font-semibold" style={{ background: "rgba(181,67,58,.08)", color: "#B5433A" }}>Delete permanently</button>}</div>)}</div></section>}
-          </>}
-
-        {actionTarget && <div className="fixed inset-0 z-50 grid place-items-center p-4" style={{ background: "rgba(16,24,40,.45)" }}><div className="w-full max-w-sm rounded-3xl p-5" style={{ background: "#fff", boxShadow: "0 24px 60px rgba(16,24,40,.22)" }}><div className="flex gap-3 items-start"><div className="text-2xl">{actionTarget.player.icon || "🙂"}</div><div className="flex-1"><h2 className="font-bold">{actionTarget.type === "block" ? `Block ${actionTarget.player.name}?` : actionTarget.player.account_deleted_at ? `Permanently delete ${actionTarget.player.name}?` : `Delete ${actionTarget.player.name}’s account?`}</h2><p className="text-xs opacity-55 mt-1">{actionTarget.type === "block" ? "They won’t be able to use the app until restored." : "The login, linked identities, profile and associated player data will be permanently deleted."}</p></div><button onClick={() => setActionTarget(null)}><X size={16}/></button></div>{actionTarget.type === "block" && <textarea value={actionTarget.reason} onChange={(e) => setActionTarget({ ...actionTarget, reason: e.target.value })} placeholder="Reason shown to the player (optional)" className="w-full rounded-xl border px-3 py-2 text-sm mt-4" rows={2}/>} {actionError && <p className="text-xs mt-3" style={{ color: "#B5433A" }}>{actionError}</p>}<div className="flex gap-2 mt-4"><button onClick={() => setActionTarget(null)} className="flex-1 rounded-full py-2.5 text-xs font-semibold" style={{ background: "rgba(16,24,40,.06)" }}>Cancel</button><button disabled={actionBusy} onClick={() => handleAccountAction(actionTarget.type, actionTarget.player)} className="flex-1 rounded-full py-2.5 text-xs font-semibold text-white" style={{ background: "#B5433A" }}>{actionBusy ? "Working…" : actionTarget.type === "block" ? "Block" : "Delete permanently"}</button></div></div></div>}
+    <Page>
+      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", marginBottom: "var(--space-6)" }}>
+        <BackButton onClick={onBack} />
+        <div><h1 style={{ fontSize: "var(--text-page-title-size)", fontWeight: 700, color: "var(--color-text-primary)" }}>Players</h1><p style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>Approvals first, account controls when needed</p></div>
       </div>
-    </div>
+      {notice && <div style={{ marginBottom: "var(--space-4)" }}><StatusBanner variant="info" dismissible onDismiss={() => setNotice("")}>{notice}</StatusBanner></div>}
+
+      {!supabaseReady ? <p style={{ color: "var(--color-text-secondary)" }}>Supabase isn't configured.</p>
+        : !isAdmin ? <p style={{ textAlign: "center", padding: "var(--space-8)", color: "var(--color-text-secondary)" }}>Admin only.</p>
+        : loading ? <p style={{ textAlign: "center", padding: "var(--space-8)", color: "var(--color-text-secondary)" }}>Loading…</p>
+        : <>
+          {pending.length > 0 && <section style={{ marginBottom: "var(--space-6)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-2)", padding: "0 var(--space-1)" }}>
+              <h2 style={{ fontSize: "var(--text-caption-size)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--color-warning-text)", margin: 0 }}>Needs approval</h2>
+              <span style={{ borderRadius: "var(--radius-full)", padding: "2px 8px", fontSize: 10, fontWeight: 700, background: "var(--color-warning-bg)", color: "var(--color-warning-text)" }}>{pending.length}</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>{pending.map((p) => <PlayerCard key={p.id} player={p} approval />)}</div>
+          </section>}
+          <section>
+            <h2 style={{ fontSize: "var(--text-caption-size)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--color-text-secondary)", marginBottom: "var(--space-2)", padding: "0 var(--space-1)" }}>Players · {active.length}</h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>{active.map((p) => <PlayerCard key={p.id} player={p} />)}</div>
+          </section>
+          {history.length > 0 && <section style={{ marginTop: "var(--space-6)" }}>
+            <h2 style={{ fontSize: "var(--text-caption-size)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--color-text-secondary)", marginBottom: "var(--space-2)", padding: "0 var(--space-1)" }}>Account history · {history.length}</h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+              {history.map((p) => <Card key={p.id} style={{ padding: "var(--space-3)", display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
+                <span style={{ fontSize: 18, opacity: .6 }}>{p.icon || "🙂"}</span>
+                <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-text-primary)", opacity: .65 }} className="truncate">{p.name}</div><div style={{ fontSize: 10, color: "var(--color-text-secondary)" }}>Legacy deleted profile</div></div>
+                {p.auth_deleted_at ? <span style={{ fontSize: 10, fontWeight: 600, color: "var(--color-success-text)" }}>Login removed</span> : <Button size="sm" variant="ghost" onClick={() => setActionTarget({ type: "delete", player: p, reason: "" })} style={{ color: "var(--color-danger-text)" }}>Delete permanently</Button>}
+              </Card>)}
+            </div>
+          </section>}
+        </>}
+
+      {actionTarget && <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "grid", placeItems: "center", padding: "var(--space-4)", background: "var(--color-overlay)" }}>
+        <Card style={{ maxWidth: 400, width: "100%", padding: "var(--space-5)" }}>
+          <div style={{ display: "flex", gap: "var(--space-3)", alignItems: "flex-start" }}>
+            <div style={{ fontSize: 24 }}>{actionTarget.player.icon || "🙂"}</div>
+            <div style={{ flex: 1 }}>
+              <h2 style={{ fontWeight: 700, color: "var(--color-text-primary)", margin: 0 }}>
+                {actionTarget.type === "block" ? `Block ${actionTarget.player.name}?` : actionTarget.player.account_deleted_at ? `Permanently delete ${actionTarget.player.name}?` : `Delete ${actionTarget.player.name}'s account?`}
+              </h2>
+              <p style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)", marginTop: "var(--space-1)" }}>
+                {actionTarget.type === "block" ? "They won't be able to use the app until restored." : "The login, linked identities, profile and associated player data will be permanently deleted."}
+              </p>
+            </div>
+            <button onClick={() => setActionTarget(null)} style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--color-text-secondary)" }}><X size={16} /></button>
+          </div>
+          {actionTarget.type === "block" && <textarea value={actionTarget.reason} onChange={(e) => setActionTarget({ ...actionTarget, reason: e.target.value })} placeholder="Reason shown to the player (optional)" rows={2} style={{ width: "100%", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border-strong)", padding: "var(--space-2)", fontSize: "var(--text-body-size)", marginTop: "var(--space-4)", background: "var(--color-surface-input)", color: "var(--color-text-primary)", resize: "vertical", boxSizing: "border-box" }} />}
+          {actionError && <p style={{ fontSize: "var(--text-caption-size)", marginTop: "var(--space-3)", color: "var(--color-danger-text)" }}>{actionError}</p>}
+          <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-4)" }}>
+            <Button variant="ghost" fullWidth onClick={() => setActionTarget(null)}>Cancel</Button>
+            <Button variant="danger" fullWidth loading={actionBusy} onClick={() => handleAccountAction(actionTarget.type, actionTarget.player)}>{actionBusy ? "Working…" : actionTarget.type === "block" ? "Block" : "Delete permanently"}</Button>
+          </div>
+        </Card>
+      </div>}
+    </Page>
   );
 }
