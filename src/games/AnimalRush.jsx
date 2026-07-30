@@ -989,6 +989,9 @@ export default function AnimalRush({ onExit }) {
           {me?.eliminated && (
             <p className="rush-stage-message rush-error mt-4 text-center">You have no cards left. You can watch the rest of the match.</p>
           )}
+          {attemptFeedback?.error && (
+            <p className="rush-stage-message rush-error mt-4 text-center">{attemptFeedback.text || "That tap didn't register — try again."}</p>
+          )}
           {message && <p className="rush-stage-message rush-error mt-4">{message}</p>}
         </section>
       </main>
