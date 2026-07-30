@@ -418,34 +418,27 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
     <div style={{ background:BG, minHeight:"100vh", fontFamily:"'Inter',sans-serif" }} className="circles-page flex justify-center p-4 pt-10">
       <style>{`
         @media (max-width: 520px) {
-          .circles-page-header {
-            display:grid !important;
-            grid-template-columns:44px minmax(0,1fr) 52px;
-            align-items:center;
-            column-gap:10px;
-          }
           .circles-page-header-copy {
-            grid-column:2;
             min-width:0;
           }
           .circles-page-new-button {
-            grid-column:2 / 4;
-            grid-row:2;
-            justify-self:stretch;
-            justify-content:center;
-            margin-top:10px;
+            padding-left:10px;
+            padding-right:10px;
+          }
+          .circles-page-new-button-label {
+            display:none;
           }
         }
       `}</style>
       <div className="w-full max-w-md">
         <header className="circles-page-header flex items-center gap-3 mb-5">
           <BackButton onClick={onBack} ariaLabel="Back" />
-          <div className="circles-page-header-copy flex-1"><h1 className="text-2xl font-bold" style={{ fontFamily:"'Fredoka',sans-serif" }}>Circles</h1><p className="text-xs opacity-45">Play together, your way</p></div>
-          {!profile?.hidden_from_others && <button onClick={() => setComposerOpen((open) => !open)} className="gloss-button circles-page-new-button rounded-full px-3 py-2 text-xs font-semibold flex items-center gap-1" style={{ background:ACCENT,color:"#fff" }}><Plus size={14}/>New circle</button>}
+          <div className="circles-page-header-copy flex-1 min-w-0"><h1 className="text-2xl font-bold truncate" style={{ fontFamily:"'Fredoka',sans-serif" }}>Circles</h1><p className="text-xs opacity-45 truncate">Play together, your way</p></div>
+          {!profile?.hidden_from_others && <button onClick={() => setComposerOpen((open) => !open)} className="gloss-button circles-page-new-button rounded-full px-3 py-2 text-xs font-semibold flex items-center gap-1 shrink-0" style={{ background:ACCENT,color:"#fff" }}><Plus size={14}/><span className="circles-page-new-button-label">New circle</span></button>}
         </header>
 
         {!profile?.hidden_from_others && <div className="mb-4">
-          {!emailInviteOpen ? <button className="gloss-button w-full rounded-2xl px-4 py-3 flex items-center gap-3 text-left" onClick={() => setEmailInviteOpen(true)} style={{ background:"#fff",border:"1px solid rgba(16,24,40,.08)" }}><span className="grid place-items-center rounded-xl shrink-0" style={{ width:34,height:34,background:"rgba(47,111,237,.09)",color:ACCENT }}><Mail size={15}/></span><span className="flex-1 min-w-0"><span className="block text-xs font-semibold">Invite someone new</span><span className="block text-[10px] opacity-45 mt-0.5">Send an email to someone who isn’t here yet</span></span><ChevronDown size={14} className="shrink-0" style={{ opacity:.3 }}/></button>
+          {!emailInviteOpen ? <button className="gloss-button w-full rounded-2xl px-4 py-3 flex items-center gap-3 text-left" onClick={() => setEmailInviteOpen(true)} style={{ background:"#fff",border:"1px solid rgba(16,24,40,.08)" }}><span className="flex items-center justify-center rounded-xl" style={{ width:34,height:34,minWidth:34,maxWidth:34,minHeight:34,maxHeight:34,flex:"0 0 34px",background:"rgba(47,111,237,.09)",color:ACCENT }}><Mail size={15}/></span><span className="flex-1 min-w-0"><span className="block text-xs font-semibold">Invite someone new</span><span className="block text-[10px] opacity-45 mt-0.5">Send an email to someone who isn’t here yet</span></span><ChevronDown size={14} className="shrink-0" style={{ opacity:.3 }}/></button>
             : <form onSubmit={inviteByEmail} className="rounded-3xl p-4" style={{ background:"#fff",border:"1px solid rgba(47,111,237,.16)" }}><div className="text-sm font-bold">Invite by email</div><div className="text-[11px] opacity-45 mt-0.5 mb-3">They’ll receive a link to create their account.</div><input autoFocus required type="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} placeholder="friend@example.com" className="w-full rounded-2xl border px-3 py-2.5 text-base outline-none"/><div className="grid grid-cols-2 gap-2 mt-3"><button className="gloss-button rounded-full py-2.5 text-xs font-semibold" type="button" onClick={() => { setEmailInviteOpen(false);setInviteEmail(""); }} style={{ background:"rgba(16,24,40,.05)" }}>Cancel</button><button disabled={emailInviteBusy || !inviteEmail.trim()} className="gloss-button rounded-full py-2.5 text-xs font-semibold text-white disabled:opacity-40" style={{ background:ACCENT }}>{emailInviteBusy ? "Sending…" : "Send invitation"}</button></div></form>}
         </div>}
 

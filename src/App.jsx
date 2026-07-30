@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
-import { LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3, Star, Gift, MessagesSquare } from "lucide-react";
+import { LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3, Gift, MessagesSquare } from "lucide-react";
 import Home from "./Home.jsx";
 import GameHomeButton from "./GameHomeButton.jsx";
 import Login from "./Login.jsx";
@@ -304,7 +304,6 @@ function AppShell() {
       onOpenCircles={() => openAccountSection("circles", true)}
       onOpenChats={() => openAccountSection("chats")}
       onOpenStats={() => openAccountSection("stats")}
-      onOpenProgress={() => openAccountSection("progress")}
       onOpenFeedback={() => openAccountSection("feedback")}
       onOpenWhatsNew={() => openAccountSection("whatsnew", true)}
       onOpenAdminPlayers={() => openAccountSection("adminplayers")}
@@ -608,7 +607,7 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
   );
 }
 
-function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenCircles, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, onOpenRewardRequests, onOpenOrganiserRewards, organiserAttentionCount = 0, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
+function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenCircles, onOpenChats, onOpenStats, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, onOpenRewardRequests, onOpenOrganiserRewards, organiserAttentionCount = 0, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
   const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -639,7 +638,6 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
     { id:"chats", icon:MessagesSquare, label:t("account.chats"), onClick:onOpenChats, badge:unreadMessages.total },
     { id:"feedback", icon:MessageSquare, label:t("account.feedback"), onClick:onOpenFeedback, badge:feedbackBadgeCount },
     { id:"stats", icon:BarChart3, label:t("account.stats"), onClick:onOpenStats },
-    { id:"progress", icon:Star, label:t("account.progress"), onClick:onOpenProgress, badge:newTransfersCount },
     { id:"circles", icon:Users, label:t("account.circles"), onClick:onOpenCircles, badge:sectionSignals.circles ? 1 : 0 },
     { id:"rewardrequests", icon:Gift, label:t("account.rewardRequests"), onClick:onOpenRewardRequests, badge:myRedemptionUpdates + openRewardRequestsCount },
   ];

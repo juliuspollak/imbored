@@ -68,6 +68,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
   const { t, language } = useI18n();
   const { config: gameConfig, loading: gameConfigLoading } = useGameConfig();
   const [progress, setProgress] = useState(null);
+  const [todayPlayCounts, setTodayPlayCounts] = useState({});
   const [circleChallenges, setCircleChallenges] = useState([]);
   const [challengeHistory, setChallengeHistory] = useState([]);
   const [circleRosters, setCircleRosters] = useState({});
@@ -105,6 +106,34 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
       setExpandedChallengeId(null);
     }
   }, [challengeScope?.id, challengeScope?.type, challengesLoaded, onChallengeScopeChange, circleChallenges]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadTodayPlayCounts() {
+      if (!supabaseReady || !userId) return;
+      const start = new Date(); start.setHours(0, 0, 0, 0);
+      const end = new Date(start); end.setDate(end.getDate() + 1);
+      const { data } = await supabase
+        .from("game_stats")
+        .select("game")
+        .eq("user_id", userId)
+        .gte("completed_at", start.toISOString())
+        .lt("completed_at", end.toISOString());
+      if (cancelled) return;
+      const counts = {};
+      (data || []).forEach((row) => { counts[row.game] = (counts[row.game] || 0) + 1; });
+      setTodayPlayCounts(counts);
+    }
+    loadTodayPlayCounts();
+    if (!supabaseReady || !userId) return () => { cancelled = true; };
+    const detach = attachRealtimeRefresh({
+      channelName: `home-today-play-counts-${userId}`,
+      tables: [{ name: "game_stats" }],
+      refresh: loadTodayPlayCounts,
+      fallbackMs: 45000,
+    });
+    return () => { cancelled = true; detach(); };
+  }, [userId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -880,6 +909,11 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                     )}
                   </div>
                   <div style={{ color: CREAM, opacity: 0.5 }} className="text-xs mt-0.5 leading-snug">{t(`game.${g.id}.desc`)}</div>
+                  {!!todayPlayCounts[g.id] && (
+                    <div style={{ color: CREAM, opacity: 0.35 }} className="text-[10px] mt-1 font-semibold">
+                      Played {todayPlayCounts[g.id]}× today
+                    </div>
+                  )}
                 </div>
                 {!g.available && (
                   <span style={{ color: CREAM, opacity: 0.35 }} className="text-[10px] font-semibold uppercase tracking-wide">

@@ -1,6 +1,6 @@
 
 const CREAM = "#1B2129";import { useState, useEffect, useCallback } from "react";
-import { ThumbsUp, Check, X, Plus, MessageSquare, Trash2, RotateCcw, Pencil, Bell } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Check, X, Plus, MessageSquare, Trash2, RotateCcw, Pencil, Bell } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
@@ -313,16 +313,8 @@ export default function Feedback({ onBack }) {
                   const voted = myVotes.has(it.id);
                   const createdAt = formatCreatedAt(it.created_at);
                   return (
-                    <div key={it.id} className="rounded-2xl p-3.5 flex gap-3" style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)" }}>
-                      <button className="gloss-button flex flex-col items-center justify-center rounded-lg px-2.5 py-1.5 flex-shrink-0"
-                        onClick={() => toggleVote(it.id, voted)}
-                        style={{ background: voted ? "rgba(47,111,237,0.12)" : "rgba(16,24,40,0.05)", height: "fit-content" }}
-                      >
-                        <ThumbsUp size={13} style={{ color: voted ? ACCENT : INK, opacity: voted ? 1 : 0.4 }} />
-                        <span style={{ color: voted ? ACCENT : INK, opacity: voted ? 1 : 0.5, fontWeight: 700 }} className="text-xs mt-0.5">{count}</span>
-                      </button>
-
-                      <div className="flex-1 min-w-0">
+                    <div key={it.id} className="rounded-2xl p-3.5" style={{ background: PANEL, border: "1px solid rgba(16,24,40,0.09)" }}>
+                      <div>
                         <div className="flex items-center gap-2">
                           {editingId === it.id ? (
                             <div className="flex-1 rounded-2xl p-3" style={{background:"rgba(47,111,237,.05)",border:"1px solid rgba(47,111,237,.16)"}}>
@@ -364,43 +356,47 @@ export default function Feedback({ onBack }) {
                           </div>
                         )}
 
-                        {it.user_id === user?.id && it.status === "open" && !it.deleted_at && editingId !== it.id && (
-                          <button className="gloss-button mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold" onClick={() => { setEditingId(it.id); setEditTitle(it.title); }} style={{ color: ACCENT, background:"rgba(47,111,237,.09)", border:"1px solid rgba(47,111,237,.16)" }}>
-                            <Pencil size={12} /> Make changes
-                          </button>
-                        )}
                         {it.user_id === user?.id && it.status === "closed" && (
                           <div className="mt-2 flex items-center gap-1 text-[10px] font-medium" style={{ color: GREEN }}>
                             <Bell size={11} /> You were notified when this was completed
                           </div>
                         )}
 
-                        {isAdmin && (
-                          <div className="mt-2 flex flex-wrap items-center gap-3">
-                            {it.deleted_at ? (
-                              <button className="gloss-button flex items-center gap-1 text-xs font-medium" onClick={() => handleSoftDelete(it.id, false)} style={{ color: ACCENT }}>
-                                <RotateCcw size={12} /> Restore
-                              </button>
-                            ) : it.status === "open" ? (
-                              <button className="gloss-button flex items-center gap-1 text-xs font-medium disabled:opacity-45"
-                                disabled={completingId === it.id}
-                                onClick={() => handleClose(it.id)}
-                                style={{ color: GREEN }}
-                              >
-                                <Check size={12} /> {completingId === it.id ? "Marking…" : "Mark done"}
-                              </button>
-                            ) : (
-                              <button className="gloss-button flex items-center gap-1 text-xs font-medium" onClick={() => handleReopen(it.id)} style={{ color: INK, opacity: 0.5 }}>
-                                <X size={12} /> Reopen
-                              </button>
-                            )}
-                            {!it.deleted_at && (
-                              <button className="gloss-button flex items-center gap-1 text-xs font-medium" onClick={() => handleSoftDelete(it.id, true)} style={{ color: "#B5433A" }}>
-                                <Trash2 size={12} /> Delete
-                              </button>
-                            )}
-                          </div>
-                        )}
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <button className="gloss-button flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-semibold" onClick={() => toggleVote(it.id, voted)} style={{ color: voted ? GREEN : INK, background: voted ? "rgba(22,163,74,0.10)" : "rgba(16,24,40,0.05)" }}>
+                            <ThumbsUp size={13} /> {count}
+                          </button>
+                          <button className="gloss-button flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-semibold disabled:opacity-40" disabled={!voted} onClick={() => toggleVote(it.id, true)} style={{ color: "#B5433A", background: "rgba(181,67,58,0.08)" }}>
+                            <ThumbsDown size={13} />
+                          </button>
+                          {it.user_id === user?.id && it.status === "open" && !it.deleted_at && editingId !== it.id && (
+                            <button className="gloss-button flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold" onClick={() => { setEditingId(it.id); setEditTitle(it.title); }} style={{ color: ACCENT, background:"rgba(47,111,237,.09)", border:"1px solid rgba(47,111,237,.16)" }}>
+                              <Pencil size={12} /> Make changes
+                            </button>
+                          )}
+                          {isAdmin && (it.deleted_at ? (
+                            <button className="gloss-button flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium" onClick={() => handleSoftDelete(it.id, false)} style={{ color: ACCENT }}>
+                              <RotateCcw size={12} /> Restore
+                            </button>
+                          ) : it.status === "open" ? (
+                            <button className="gloss-button flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium disabled:opacity-45"
+                              disabled={completingId === it.id}
+                              onClick={() => handleClose(it.id)}
+                              style={{ color: GREEN }}
+                            >
+                              <Check size={12} /> {completingId === it.id ? "Marking…" : "Mark done"}
+                            </button>
+                          ) : (
+                            <button className="gloss-button flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium" onClick={() => handleReopen(it.id)} style={{ color: INK, opacity: 0.5 }}>
+                              <X size={12} /> Reopen
+                            </button>
+                          ))}
+                          {isAdmin && !it.deleted_at && (
+                            <button className="gloss-button flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium" onClick={() => handleSoftDelete(it.id, true)} style={{ color: "#B5433A" }}>
+                              <Trash2 size={12} /> Delete
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
