@@ -400,6 +400,7 @@ export default function Queens({
   const [hintsUsed, setHintsUsed] = useState(0);
   const [solved, setSolved] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const [hintCells, setHintCells] = useState([]);
   const [difficultyRating, setDifficultyRating] = useState(null);
   const [localSavedStatId, setLocalSavedStatId] = useState(null);
@@ -508,6 +509,7 @@ export default function Queens({
     setMistakes(0);
     setHintsUsed(0);
     setSolved(false);
+    setReviewing(false);
     setHintCells([]);
     setDifficultyRating(null);
     setLocalSavedStatId(null);
@@ -536,6 +538,7 @@ export default function Queens({
     setMistakes(0);
     setHintsUsed(0);
     setSolved(false);
+    setReviewing(false);
     setHintCells([]);
     setDifficultyRating(null);
     setLocalSavedStatId(null);
@@ -1052,7 +1055,8 @@ export default function Queens({
           onPlayAgain={() => newPuzzle(n)}
         />
 
-        {solved ? <BoardReviewToggle>{boardGrid}</BoardReviewToggle> : boardGrid}
+        {solved && <BoardReviewToggle reviewing={reviewing} onToggle={() => setReviewing((value) => !value)} />}
+        {(!solved || reviewing) && boardGrid}
 
         {!solved && (
           <p style={{ color: CREAM, opacity: 0.35 }} className="text-center text-[11px] mt-3">

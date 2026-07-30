@@ -335,6 +335,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
   const [hintCell, setHintCell] = useState(null);
   const [history, setHistory] = useState([]);
   const [showHelp, setShowHelp] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const boardRef = useRef(null);
   const dragRef = useRef({ active: false, historyPushed: false, lastKey: null, startCell: null, moved: false, rollbackCounted: false });
   const suppressClickRef = useRef(false);
@@ -354,6 +355,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
     setSeconds(0);
     setRunning(true);
     setSolved(false);
+    setReviewing(false);
     setMistakes(0);
     setResets(0);
     setHintsUsed(0);
@@ -1039,7 +1041,8 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
           onPlayAgain={() => newPuzzle(dayIdx)}
         />
 
-        {solved ? <BoardReviewToggle>{boardGrid}</BoardReviewToggle> : boardGrid}
+        {solved && <BoardReviewToggle reviewing={reviewing} onToggle={() => setReviewing((value) => !value)} />}
+        {(!solved || reviewing) && boardGrid}
 
         {solved && difficultyRating !== null && (
           <div className="flex justify-center mt-3">

@@ -347,6 +347,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
   const [hintCell, setHintCell] = useState(null);
   const [history, setHistory] = useState([]);
   const [showHelp, setShowHelp] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const [celebratingLines, setCelebratingLines] = useState([]);
   const [displayedConflicts, setDisplayedConflicts] = useState(new Set());
   const completedLinesRef = useRef(new Set());
@@ -361,6 +362,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     setSeconds(0);
     setRunning(true);
     setSolved(false);
+    setReviewing(false);
     setMistakes(0);
     setHintsUsed(0);
     setDifficultyRating(null);
@@ -889,7 +891,8 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           onPlayAgain={() => newPuzzle(dayIdx)}
         />
 
-        {solved ? <BoardReviewToggle>{boardGrid}</BoardReviewToggle> : boardGrid}
+        {solved && <BoardReviewToggle reviewing={reviewing} onToggle={() => setReviewing((value) => !value)} />}
+        {(!solved || reviewing) && boardGrid}
 
         {!solved && (
           <p style={{ color: CREAM, opacity: 0.35 }} className="text-center text-[11px] mt-3">
