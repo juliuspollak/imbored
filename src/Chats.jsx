@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, MessageCircle, Search, Sparkles, Users } from "lucide-react";
+import { MessageCircle, Search, Sparkles, Users } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
 import { canDiscoverProfile } from "./lib/profileVisibility.js";
+import Page from "./components/Page.jsx";
+import PageHeader from "./components/PageHeader.jsx";
+import Card from "./components/Card.jsx";
+import TextInput from "./components/TextInput.jsx";
+import Button from "./components/Button.jsx";
+import StatusBanner from "./components/StatusBanner.jsx";
 
 function formatWhen(value) {
   if (!value) return "";
@@ -46,7 +52,7 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
         return (active || pendingForAdmin)
           && canDiscoverProfile(p, { isAdmin: !!currentProfile?.is_admin });
       });
-      setProfiles([{ ...currentProfile, id:currentUser.id, name:"Challenge results", icon:"🏆" }, ...visibleProfiles]);
+      setProfiles([{ ...currentProfile, id: currentUser.id, name: "Challenge results", icon: "🏆" }, ...visibleProfiles]);
     }
     setPresence(new Set((presenceResult.data || []).map((p) => p.user_id)));
     setLoading(false);
@@ -60,6 +66,7 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
       refresh: load,
       fallbackMs: 60000,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id]);
 
   const profileMap = useMemo(() => Object.fromEntries(profiles.map((p) => [p.id, p])), [profiles]);
@@ -80,7 +87,6 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
     !normalisedQuery
     || `${conversation.profile.name || ""} ${conversation.latest.body || ""}`.toLowerCase().includes(normalisedQuery)
   ));
-  const conversationIds = new Set(conversations.map((c) => c.peerId));
   const findResults = normalisedQuery.length < 2
     ? []
     : profiles
@@ -104,7 +110,7 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
     if (latest?.activity_type === "feedback_completed") {
       await supabase
         .from("direct_messages")
-        .update({ read_at:new Date().toISOString() })
+        .update({ read_at: new Date().toISOString() })
         .eq("id", latest.id)
         .eq("recipient_id", currentUser.id);
       onOpenFeedback?.();
@@ -113,7 +119,7 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
     if (currentProfile?.is_admin && latest?.activity_type === "user_approval_required") {
       await supabase
         .from("direct_messages")
-        .update({ read_at:new Date().toISOString() })
+        .update({ read_at: new Date().toISOString() })
         .eq("id", latest.id)
         .eq("recipient_id", currentUser.id);
       onOpenAdminPlayers?.();
@@ -123,72 +129,158 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
   }
 
   return (
-    <div className="chats-page">
-      <style>{`
-        .chats-page{min-height:100vh;background:radial-gradient(circle at 20% 0,#e8e4ff 0,#f3f5fa 42%,#edf1f7 100%);color:#1b2129;padding-bottom:40px}
-        .chats-shell{width:min(100%,760px);margin:0 auto;padding:16px}
-        .chats-head{display:flex;align-items:center;gap:12px;margin-bottom:18px}
-        .chats-title{font-size:28px;font-weight:900;letter-spacing:-.04em}
-        .chat-search{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.86);border:1px solid rgba(27,33,41,.08);border-radius:18px;padding:12px 14px;box-shadow:0 10px 30px rgba(50,45,90,.08)}
-        .chat-search input{width:100%;border:0;outline:0;background:transparent;font:inherit}
-        .chat-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:5px;background:rgba(27,33,41,.055);border-radius:17px;margin-bottom:14px}
-        .chat-tab{display:flex;align-items:center;justify-content:center;gap:7px;border:0;border-radius:13px;padding:10px 12px;background:transparent;color:rgba(27,33,41,.55);font-size:12px;font-weight:800;transition:.16s ease}
-        .chat-tab.active{background:#fff;color:#5f4fe0;box-shadow:0 5px 16px rgba(50,45,90,.09)}
-        .chat-section-title{display:flex;align-items:center;gap:7px;margin:22px 4px 10px;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:rgba(27,33,41,.48)}
-        .conversation{width:100%;display:flex;align-items:center;gap:12px;border:0;text-align:left;background:rgba(255,255,255,.88);padding:12px;border-radius:22px;margin:8px 0;box-shadow:0 9px 26px rgba(27,33,41,.08);transition:.16s ease}
-        .conversation:active{transform:scale(.985)}
-        .conversation-avatar{position:relative;width:52px;height:52px;flex:0 0 auto;border-radius:19px;display:grid;place-items:center;font-size:29px;background:linear-gradient(145deg,#fff,#e9e5ff)}
-        .online-dot{position:absolute;right:-1px;bottom:-1px;width:13px;height:13px;border:3px solid white;border-radius:50%;background:#24c27a}
-        .unread-pill{min-width:22px;height:22px;padding:0 6px;border-radius:999px;display:grid;place-items:center;background:#6d5dfc;color:#fff;font-size:11px;font-weight:900}
-        .people-list{display:flex;flex-direction:column;gap:8px}
-        .person-card{width:100%;display:flex;align-items:center;gap:12px;border:0;background:rgba(255,255,255,.82);border-radius:18px;padding:10px 12px;text-align:left;box-shadow:0 8px 22px rgba(27,33,41,.07);transition:.16s ease}.person-card:active{transform:scale(.985)}
-        .person-avatar{position:relative;width:46px;height:46px;flex:0 0 auto;border-radius:16px;display:grid;place-items:center;font-size:26px;background:linear-gradient(145deg,#fff,#ece8ff)}
-      `}</style>
-      <div className="chats-shell">
-        <header className="chats-head">
-          <button type="button" onClick={onBack} className="nav-btn" style={{width:40,height:40,borderRadius:999,border:"1px solid rgba(27,33,41,.08)",background:"#fff",display:"grid",placeItems:"center"}}><ArrowLeft size={18}/></button>
-          <div><div className="chats-title">Chats</div><div style={{fontSize:12,color:"rgba(27,33,41,.5)"}}>Messages wait here, even when friends are offline.</div></div>
-        </header>
-        <div className="chat-tabs" role="tablist" aria-label="Chat views">
-          <button type="button" role="tab" aria-selected={view==="recent"} className={`chat-tab ${view==="recent"?"active":""}`} onClick={()=>changeView("recent")}><MessageCircle size={15}/>Recent</button>
-          <button type="button" role="tab" aria-selected={view==="find"} className={`chat-tab ${view==="find"?"active":""}`} onClick={()=>changeView("find")}><Users size={15}/>Find people</button>
-        </div>
-        {error && <div style={{marginTop:12,padding:12,borderRadius:14,background:"#fff0f0",color:"#a12b2b",fontSize:12}}>{error}</div>}
-        {view==="recent" ? (
-          <>
-            {conversations.length>6&&<label className="chat-search"><Search size={18} color="#7665ef"/><input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Search conversations…" /></label>}
-            <div className="chat-section-title"><MessageCircle size={14}/>Recent conversations</div>
-            {loading && <div style={{padding:24,textAlign:"center",opacity:.55}}>Loading chats…</div>}
-            {!loading && conversations.length===0 && <div style={{padding:26,textAlign:"center",background:"rgba(255,255,255,.65)",borderRadius:22}}><div style={{fontSize:38}}>💬✨</div><strong>No chats yet</strong><div style={{fontSize:13,opacity:.55,marginTop:5}}>Find someone and say hello.</div><button type="button" className="find-people-cta" onClick={()=>changeView("find")} style={{marginTop:14,border:0,borderRadius:999,padding:"9px 15px",background:"#6d5dfc",color:"#fff",fontSize:12,fontWeight:800}}>Find people</button></div>}
-            {!loading && conversations.length>0 && filteredConversations.length===0 && <div style={{padding:24,textAlign:"center",fontSize:12,opacity:.55}}>No conversations match that search.</div>}
-            {filteredConversations.map(({peerId,profile,latest,unread}) => (
-              <button type="button" className="conversation" key={peerId} onClick={()=>open(profile,latest)}>
-                <div className="conversation-avatar">{profile.icon||"🙂"}{presence.has(peerId)&&<span className="online-dot"/>}</div>
-                <div style={{flex:1,minWidth:0}}><div style={{display:"flex",justifyContent:"space-between",gap:8}}><strong style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile.name||"Player"}</strong><span style={{fontSize:10,opacity:.45}}>{formatWhen(latest.created_at)}</span></div><div style={{fontSize:12,opacity:unread?.85:.5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:unread?700:400}}>{latest.activity_type==="user_approval_required" ? "" : latest.activity_type==="feedback_completed" ? "Feedback update · " : latest.activity_type==="circle_invitation" ? "Circle invitation · " : latest.activity_type==="circle_challenge_winner" ? "Challenge result · " : latest.system_generated ? "Circle update · " : latest.sender_id===currentUser.id?"You: ":""}{latest.body}</div></div>
-                {latest.activity_type==="user_approval_required"
-                  ? <span className="rounded-full px-2.5 py-1 text-[10px] font-bold" style={{background:"#FFF0C2",color:"#8A5C00"}}>Review</span>
-                  : unread>0&&<span className="unread-pill">{unread}</span>}
-              </button>
-            ))}
-          </>
-        ) : (
-          <>
-            <label className="chat-search"><Search size={18} color="#7665ef"/><input autoFocus value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Search by name…" /></label>
-            <div className="chat-section-title"><Sparkles size={14}/>Find someone</div>
-            {normalisedQuery.length<2 ? (
-              <div style={{padding:28,textAlign:"center",background:"rgba(255,255,255,.65)",borderRadius:22}}><Search size={28} style={{margin:"0 auto 9px",opacity:.24}}/><strong style={{fontSize:13}}>Search for a player</strong><div style={{fontSize:12,opacity:.48,marginTop:4}}>Enter at least two characters. The full player directory stays out of view.</div></div>
-            ) : (
-              <div className="people-list">
-                {findResults.map((profile)=>{
-                  const existing=conversations.find((conversation)=>conversation.peerId===profile.id);
-                  return <button type="button" className="person-card" key={profile.id} onClick={()=>open(profile,existing?.latest)}><div className="person-avatar">{profile.icon||"🙂"}{presence.has(profile.id)&&<span className="online-dot"/>}</div><span style={{flex:1,minWidth:0}}><strong style={{display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile.name||"Player"}</strong><span style={{display:"block",fontSize:11,opacity:.48,marginTop:2}}>{existing?"Open recent conversation":presence.has(profile.id)?"Online now":"Offline · message anyway"}</span></span><MessageCircle size={17} style={{opacity:.35}} aria-hidden="true"/></button>;
-                })}
-                {!loading && findResults.length===0&&<div style={{padding:22,textAlign:"center",fontSize:12,opacity:.55}}>No players match “{query.trim()}”.</div>}
-              </div>
-            )}
-          </>
-        )}
+    <Page>
+      <PageHeader
+        title="Chats"
+        subtitle="Messages wait here, even when friends are offline."
+        onBack={onBack}
+        backAriaLabel="Back to home"
+      />
+
+      <div role="tablist" aria-label="Chat views" className="chats-tabs">
+        <button type="button" role="tab" aria-selected={view === "recent"} className={`chats-tab${view === "recent" ? " active" : ""}`} onClick={() => changeView("recent")}>
+          <MessageCircle size={15} />Recent
+        </button>
+        <button type="button" role="tab" aria-selected={view === "find"} className={`chats-tab${view === "find" ? " active" : ""}`} onClick={() => changeView("find")}>
+          <Users size={15} />Find people
+        </button>
       </div>
-    </div>
+
+      {error && <StatusBanner variant="error" style={{ marginBottom: "var(--space-3)" }}>{error}</StatusBanner>}
+
+      {view === "recent" ? (
+        <>
+          {conversations.length > 6 && (
+            <div className="chats-search">
+              <Search size={18} className="chats-search-icon" />
+              <TextInput value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search conversations…" style={{ paddingLeft: 40, border: "none", boxShadow: "none", background: "transparent" }} />
+            </div>
+          )}
+          <div className="chats-section-title"><MessageCircle size={14} />Recent conversations</div>
+
+          {loading && <div className="chats-status">Loading chats…</div>}
+
+          {!loading && conversations.length === 0 && (
+            <Card className="chats-empty">
+              <div style={{ fontSize: 38 }}>💬✨</div>
+              <strong>No chats yet</strong>
+              <p>Find someone and say hello.</p>
+              <Button variant="secondary" onClick={() => changeView("find")} style={{ marginTop: "var(--space-3)" }}>Find people</Button>
+            </Card>
+          )}
+
+          {!loading && conversations.length > 0 && filteredConversations.length === 0 && (
+            <div className="chats-status">No conversations match that search.</div>
+          )}
+
+          {filteredConversations.map(({ peerId, profile, latest, unread }) => (
+            <button type="button" className="chats-conversation" key={peerId} onClick={() => open(profile, latest)}>
+              <div className="chats-avatar">
+                {profile.icon || "🙂"}
+                {presence.has(peerId) && <span className="chats-online-dot" />}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: "var(--space-2)" }}>
+                  <strong className="chats-truncate">{profile.name || "Player"}</strong>
+                  <span className="chats-timestamp">{formatWhen(latest.created_at)}</span>
+                </div>
+                <div className={`chats-preview chats-truncate${unread ? " unread" : ""}`}>
+                  {latest.activity_type === "user_approval_required" ? "" : latest.activity_type === "feedback_completed" ? "Feedback update · " : latest.activity_type === "circle_invitation" ? "Circle invitation · " : latest.activity_type === "circle_challenge_winner" ? "Challenge result · " : latest.system_generated ? "Circle update · " : latest.sender_id === currentUser.id ? "You: " : ""}
+                  {latest.body}
+                </div>
+              </div>
+              {latest.activity_type === "user_approval_required"
+                ? <span className="chats-review-pill">Review</span>
+                : unread > 0 && <span className="chats-unread-pill">{unread}</span>}
+            </button>
+          ))}
+        </>
+      ) : (
+        <>
+          <div className="chats-search">
+            <Search size={18} className="chats-search-icon" />
+            <TextInput autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name…" style={{ paddingLeft: 40, border: "none", boxShadow: "none", background: "transparent" }} />
+          </div>
+          <div className="chats-section-title"><Sparkles size={14} />Find someone</div>
+
+          {normalisedQuery.length < 2 ? (
+            <Card className="chats-empty">
+              <Search size={28} style={{ color: "var(--color-text-muted)" }} />
+              <strong style={{ fontSize: "var(--text-body-secondary-size)" }}>Search for a player</strong>
+              <p>Enter at least two characters. The full player directory stays out of view.</p>
+            </Card>
+          ) : (
+            <div className="chats-people-list">
+              {findResults.map((profile) => {
+                const existing = conversations.find((conversation) => conversation.peerId === profile.id);
+                return (
+                  <button type="button" className="chats-person-card" key={profile.id} onClick={() => open(profile, existing?.latest)}>
+                    <div className="chats-avatar chats-avatar-sm">
+                      {profile.icon || "🙂"}
+                      {presence.has(profile.id) && <span className="chats-online-dot" />}
+                    </div>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <strong className="chats-truncate" style={{ display: "block" }}>{profile.name || "Player"}</strong>
+                      <span className="chats-person-hint">{existing ? "Open recent conversation" : presence.has(profile.id) ? "Online now" : "Offline · message anyway"}</span>
+                    </span>
+                    <MessageCircle size={17} style={{ color: "var(--color-text-muted)" }} aria-hidden="true" />
+                  </button>
+                );
+              })}
+              {!loading && findResults.length === 0 && (
+                <div className="chats-status">No players match “{query.trim()}”.</div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      <style>{`
+        .chats-tabs { display:grid; grid-template-columns:1fr 1fr; gap:5px; padding:5px; background:var(--color-surface-elevated); border:1px solid var(--color-border); border-radius:var(--radius-lg); margin-bottom:var(--space-4); }
+        .chats-tab { display:flex; align-items:center; justify-content:center; gap:7px; border:0; border-radius:var(--radius-md); padding:10px 12px; background:transparent; color:var(--color-text-secondary); font-size:12px; font-weight:800; cursor:pointer; transition:background var(--transition-fast), color var(--transition-fast); }
+        .chats-tab.active { background:var(--color-surface); color:var(--color-primary); box-shadow:var(--shadow-control); }
+        .chats-tab:focus-visible { outline:2px solid var(--color-primary); outline-offset:2px; }
+
+        .chats-search { position:relative; background:var(--color-surface-input); border:1px solid var(--color-border-strong); border-radius:var(--radius-md); margin-bottom:var(--space-3); }
+        .chats-search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--color-text-muted); pointer-events:none; }
+        .chats-search:focus-within { border-color:var(--color-primary); box-shadow:0 0 0 3px var(--color-primary-ring); }
+
+        .chats-section-title { display:flex; align-items:center; gap:7px; margin:var(--space-5) 4px var(--space-2); font-size:var(--text-caption-size); font-weight:900; letter-spacing:.08em; text-transform:uppercase; color:var(--color-text-muted); }
+
+        .chats-status { padding:var(--space-6) 0; text-align:center; color:var(--color-text-secondary); font-size:var(--text-body-secondary-size); }
+
+        .chats-empty { text-align:center; padding:var(--space-6); display:flex; flex-direction:column; align-items:center; gap:4px; }
+        .chats-empty strong { color:var(--color-text-primary); }
+        .chats-empty p { margin:0; color:var(--color-text-secondary); font-size:var(--text-body-secondary-size); }
+
+        .chats-conversation { width:100%; display:flex; align-items:center; gap:var(--space-3); border:1px solid var(--color-border); text-align:left; background:var(--color-surface); padding:var(--space-3); border-radius:var(--radius-xl); margin:var(--space-2) 0; box-shadow:var(--shadow-card); cursor:pointer; transition:transform var(--transition-fast), box-shadow var(--transition-fast); }
+        .chats-conversation:hover { box-shadow:var(--shadow-card-hover); }
+        .chats-conversation:active { transform:scale(.985); }
+        .chats-conversation:focus-visible { outline:2px solid var(--color-primary); outline-offset:2px; }
+
+        .chats-avatar { position:relative; width:52px; height:52px; flex:0 0 auto; border-radius:var(--radius-lg); display:grid; place-items:center; font-size:27px; background:var(--color-primary-subtle); border:1px solid var(--color-primary-subtle-border); }
+        .chats-avatar-sm { width:46px; height:46px; font-size:24px; }
+        .chats-online-dot { position:absolute; right:-1px; bottom:-1px; width:13px; height:13px; border:3px solid var(--color-surface); border-radius:50%; background:var(--color-success-text); }
+
+        .chats-truncate { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .chats-timestamp { flex:0 0 auto; font-size:10px; color:var(--color-text-muted); }
+        .chats-preview { font-size:var(--text-body-secondary-size); color:var(--color-text-secondary); }
+        .chats-preview.unread { color:var(--color-text-primary); font-weight:700; }
+
+        .chats-unread-pill { min-width:22px; height:22px; padding:0 6px; border-radius:var(--radius-full); display:grid; place-items:center; background:var(--color-primary); color:var(--color-primary-text); font-size:11px; font-weight:900; }
+        .chats-review-pill { border-radius:var(--radius-full); padding:4px 10px; font-size:10px; font-weight:800; background:var(--color-warning-bg); color:var(--color-warning-text); }
+
+        .chats-people-list { display:flex; flex-direction:column; gap:var(--space-2); }
+        .chats-person-card { width:100%; display:flex; align-items:center; gap:var(--space-3); border:1px solid var(--color-border); background:var(--color-surface); border-radius:var(--radius-lg); padding:var(--space-2) var(--space-3); text-align:left; box-shadow:var(--shadow-card); cursor:pointer; transition:transform var(--transition-fast), box-shadow var(--transition-fast); }
+        .chats-person-card:hover { box-shadow:var(--shadow-card-hover); }
+        .chats-person-card:active { transform:scale(.985); }
+        .chats-person-card:focus-visible { outline:2px solid var(--color-primary); outline-offset:2px; }
+        .chats-person-hint { display:block; font-size:var(--text-caption-size); color:var(--color-text-muted); margin-top:2px; }
+
+        @media (prefers-reduced-motion: reduce) {
+          .chats-conversation, .chats-person-card { transition:none !important; }
+        }
+      `}</style>
+    </Page>
   );
 }

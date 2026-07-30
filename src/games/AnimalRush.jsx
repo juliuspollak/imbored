@@ -142,7 +142,7 @@ function PlayerRow({ player, currentUserId, winnerId, synchronised }) {
       {typeof synchronised === "boolean" && (
         <span className="rush-sync-dot" data-ready={synchronised} aria-hidden="true" />
       )}
-      {isWinner && <Trophy size={16} color="#F2C66D" />}
+      {isWinner && <Trophy size={16} color="var(--color-warning-gold)" />}
       <span className="rush-token rush-token--shield"><Shield size={11} />{player.safety_cards || 0}</span>
       <span className="rush-token rush-token--card"><span>◆</span>{player.won_cards || 0}</span>
     </div>

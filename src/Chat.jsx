@@ -3,6 +3,8 @@ import { ArrowLeft, Send, Smile } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { sendPoke } from "./lib/pokes.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
+import Button from "./components/Button.jsx";
+import StatusBanner from "./components/StatusBanner.jsx";
 
 const QUICK_REACTIONS = ["👍", "👎", "❤️", "😂", "🔥", "👏"];
 const MESSAGE_REACTIONS = [
@@ -196,6 +198,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
       refresh: () => loadMessages({ quiet: true }),
       fallbackMs: 60000,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id, peerId]);
 
   useEffect(() => {
@@ -357,12 +360,12 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
 
   if (!currentUser?.id || !peerId) {
     return (
-      <div className="chat-screen" style={{ minHeight: "100dvh", display: "grid", placeItems: "center" }}>
+      <div className="chat-screen" style={{ minHeight: "100dvh", display: "grid", placeItems: "center", background: "var(--color-page-bg)" }}>
         <div style={{ textAlign: "center", padding: 24, maxWidth: 320 }}>
           <div style={{ fontSize: 32, marginBottom: 10 }}>💬</div>
-          <div style={{ fontWeight: 800, color: "#1b2129", marginBottom: 6 }}>Opening chat…</div>
-          <div style={{ color: "rgba(27,33,41,.6)", fontSize: 13, marginBottom: 16 }}>The chat is still getting ready. If it takes too long, go back and open it again.</div>
-          <button type="button" onClick={onBack} className="gloss-button nav-btn" style={{ padding: "10px 16px", borderRadius: 999, background: "#fff", border: "1px solid rgba(27,33,41,.08)" }}>Back</button>
+          <div style={{ fontWeight: 800, color: "var(--color-text-primary)", marginBottom: 6 }}>Opening chat…</div>
+          <div style={{ color: "var(--color-text-secondary)", fontSize: 13, marginBottom: 16 }}>The chat is still getting ready. If it takes too long, go back and open it again.</div>
+          <Button type="button" variant="secondary" onClick={onBack}>Back</Button>
         </div>
       </div>
     );
@@ -371,76 +374,86 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
   return (
     <div className="chat-screen">
       <style>{`
-        .chat-screen { height: 100dvh; min-height: 0; overflow: hidden; background: radial-gradient(circle at top, #e9e6ff 0, #f3f4f8 38%, #eef1f6 100%); color: #1b2129; }
-        .chat-shell { width: min(100%, 760px); height: 100%; min-height: 0; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; background: rgba(255,255,255,.58); backdrop-filter: blur(16px); }
-        .chat-header { flex: 0 0 auto; z-index: 20; display:flex; align-items:center; gap:12px; padding: 14px 16px; background: rgba(255,255,255,.82); border-bottom:1px solid rgba(27,33,41,.08); backdrop-filter: blur(18px); }
-        .chat-avatar { width:44px; height:44px; border-radius:16px; display:grid; place-items:center; font-size:25px; background:linear-gradient(145deg,#fff,#ebe8ff); box-shadow:0 8px 22px rgba(74,62,140,.16); }
-        .chat-poke { border:0; border-radius:999px; padding:9px 13px; background:#fff3cf; color:#805b00; font-weight:700; font-size:12px; box-shadow:0 6px 16px rgba(128,91,0,.12); transition:.18s ease; }
+        .chat-screen { height: 100dvh; min-height: 0; overflow: hidden; background: var(--color-page-bg); color: var(--color-text-primary); }
+        .chat-shell { width: min(100%, 760px); height: 100%; min-height: 0; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; background: var(--color-page-bg); }
+        .chat-header { flex: 0 0 auto; z-index: 20; display:flex; align-items:center; gap:12px; padding: 14px 16px; background: var(--color-surface); border-bottom:1px solid var(--color-border); }
+        .chat-avatar { width:44px; height:44px; border-radius:var(--radius-md); display:grid; place-items:center; font-size:25px; background:var(--color-primary-subtle); border:1px solid var(--color-primary-subtle-border); }
+        .chat-poke { border:0; border-radius:var(--radius-full); padding:9px 13px; background:var(--color-warning-bg); color:var(--color-warning-text); font-weight:700; font-size:12px; cursor:pointer; transition:transform var(--transition-fast); }
         .chat-poke:hover { transform:translateY(-1px); }
+        .chat-poke:focus-visible { outline:2px solid var(--color-primary); outline-offset:2px; }
         .chat-body { flex:1 1 auto; min-height:0; padding:18px 14px 20px; overflow-y:auto; overscroll-behavior:contain; overflow-anchor:none; }
-        .chat-day { width:max-content; margin:18px auto 12px; padding:5px 10px; border-radius:999px; background:rgba(27,33,41,.07); color:rgba(27,33,41,.55); font-size:11px; font-weight:700; }
+        .chat-day { width:max-content; margin:18px auto 12px; padding:5px 10px; border-radius:var(--radius-full); background:var(--color-surface-elevated); color:var(--color-text-secondary); font-size:11px; font-weight:700; }
         .chat-row { display:flex; margin:7px 0; }
         .chat-row.mine { justify-content:flex-end; }
-        .chat-bubble { position:relative; max-width:min(78%,520px); padding:10px 13px 7px; border-radius:20px; box-shadow:0 7px 18px rgba(27,33,41,.08); animation:chatPop .2s ease both; cursor:pointer; }
+        .chat-bubble { position:relative; max-width:min(78%,520px); padding:10px 13px 7px; border-radius:var(--radius-xl); box-shadow:var(--shadow-card); animation:chatPop .2s ease both; cursor:pointer; }
         .chat-row.has-reaction { margin-bottom:18px; }
-        .chat-message-picker { position:absolute; z-index:35; bottom:calc(100% + 7px); display:flex; gap:3px; padding:5px; border-radius:999px; background:rgba(255,255,255,.98); border:1px solid rgba(27,33,41,.09); box-shadow:0 12px 30px rgba(27,33,41,.18); }
+        .chat-message-picker { position:absolute; z-index:35; bottom:calc(100% + 7px); display:flex; gap:3px; padding:5px; border-radius:var(--radius-full); background:var(--color-surface); border:1px solid var(--color-border); box-shadow:var(--shadow-menu); }
         .chat-row.mine .chat-message-picker { right:0; }
         .chat-row.theirs .chat-message-picker { left:0; }
-        .chat-message-reaction { width:36px; height:34px; border:0; border-radius:50%; background:transparent; font-size:19px; transition:transform .13s ease,background .13s ease; }
-        .chat-message-reaction:hover,.chat-message-reaction.is-selected { background:rgba(118,87,255,.11); transform:scale(1.08); }
-        .chat-reaction-badges { position:absolute; bottom:-13px; display:flex; gap:3px; padding:2px 5px; min-height:24px; border-radius:999px; background:#fff; color:#1b2129; border:1px solid rgba(27,33,41,.10); box-shadow:0 4px 11px rgba(27,33,41,.13); }
+        .chat-message-reaction { width:36px; height:34px; border:0; border-radius:50%; background:transparent; font-size:19px; cursor:pointer; transition:transform .13s ease,background .13s ease; }
+        .chat-message-reaction:hover,.chat-message-reaction.is-selected { background:var(--color-primary-subtle); transform:scale(1.08); }
+        .chat-reaction-badges { position:absolute; bottom:-13px; display:flex; gap:3px; padding:2px 5px; min-height:24px; border-radius:var(--radius-full); background:var(--color-surface); color:var(--color-text-primary); border:1px solid var(--color-border); box-shadow:var(--shadow-control); }
         .chat-row.mine .chat-reaction-badges { right:8px; }
         .chat-row.theirs .chat-reaction-badges { left:8px; }
         .chat-reaction-count { display:flex; align-items:center; gap:2px; font-size:13px; line-height:1; }
-        .chat-reaction-count small { font-size:9px; font-weight:800; opacity:.55; }
-        .chat-row.mine .chat-bubble { background:linear-gradient(135deg,#7657ff,#4b72ff); color:#fff; border-bottom-right-radius:6px; }
-        .chat-row.theirs .chat-bubble { background:rgba(255,255,255,.95); color:#1b2129; border-bottom-left-radius:6px; }
-        .chat-bubble.system { max-width:min(90%,620px); background:linear-gradient(135deg,#fff7d6,#fff1b5)!important; color:#6f5200!important; border:1px solid rgba(174,128,0,.18); border-radius:18px!important; box-shadow:0 9px 24px rgba(128,91,0,.12); }
+        .chat-reaction-count small { font-size:9px; font-weight:800; color:var(--color-text-secondary); }
+        .chat-row.mine .chat-bubble { background:var(--color-primary); color:var(--color-primary-text); border-bottom-right-radius:6px; }
+        .chat-row.theirs .chat-bubble { background:var(--color-surface); color:var(--color-text-primary); border:1px solid var(--color-border); border-bottom-left-radius:6px; }
+        .chat-bubble.system { max-width:min(90%,620px); background:var(--color-warning-bg) !important; color:var(--color-warning-text) !important; border:1px solid var(--color-warning-border); border-radius:var(--radius-lg) !important; box-shadow:var(--shadow-card); }
         .chat-text { white-space:pre-wrap; overflow-wrap:anywhere; font-size:15px; line-height:1.42; }
         .chat-text.emoji-only { min-width:62px; display:grid; place-items:center; padding:3px 0; }
         .fluent-emoji,.fluent-emoji-fallback { display:inline-grid; place-items:center; object-fit:contain; vertical-align:middle; flex:0 0 auto; }
         .fluent-emoji { max-width:none; }
-        .chat-meta { margin-top:4px; display:flex; gap:5px; justify-content:flex-end; font-size:9px; opacity:.62; }
-        .chat-empty { text-align:center; margin:54px auto; max-width:300px; color:rgba(27,33,41,.56); }
-        .chat-composer-wrap { position:relative; flex:0 0 auto; z-index:25; width:100%; padding:8px 12px max(12px,env(safe-area-inset-bottom)); background:rgba(245,247,251,.97); border-top:1px solid rgba(27,33,41,.07); backdrop-filter:blur(18px); }
-        .chat-composer { display:flex; align-items:flex-end; gap:6px; padding:7px 8px; border-radius:24px; background:#fff; border:1px solid rgba(27,33,41,.09); box-shadow:0 12px 32px rgba(27,33,41,.13); }
-        .chat-input { flex:1; min-width:0; min-height:40px; max-height:112px; resize:none; border:0; outline:0; padding:9px 6px; background:transparent; font:inherit; color:#1b2129; }
-        .chat-tool,.chat-send,.chat-quick { width:40px; height:40px; flex:0 0 auto; border:0; border-radius:50%; display:grid; place-items:center; }
-        .chat-tool { background:transparent; color:#7657ff; }
-        .chat-tool.is-open { background:rgba(118,87,255,.10); }
-        .chat-send { background:linear-gradient(135deg,#7657ff,#4b72ff); color:#fff; box-shadow:0 8px 18px rgba(75,114,255,.28); }
-        .chat-send:disabled { opacity:.32; box-shadow:none; }
-        .chat-quick { background:rgba(118,87,255,.10); font-size:19px; touch-action:none; user-select:none; -webkit-user-select:none; }
-        .chat-picker { position:absolute; z-index:40; bottom:calc(100% + 7px); padding:8px; border-radius:18px; background:rgba(255,255,255,.98); border:1px solid rgba(27,33,41,.09); box-shadow:0 16px 38px rgba(27,33,41,.18); backdrop-filter:blur(16px); }
+        .chat-meta { margin-top:4px; display:flex; gap:5px; justify-content:flex-end; font-size:9px; color:currentColor; }
+        .chat-row.theirs .chat-meta { color:var(--color-text-secondary); }
+        .chat-empty { text-align:center; margin:54px auto; max-width:300px; color:var(--color-text-secondary); }
+        .chat-error { margin:14px auto; max-width:520px; }
+        .chat-composer-wrap { position:relative; flex:0 0 auto; z-index:25; width:100%; padding:8px 12px max(12px,env(safe-area-inset-bottom)); background:var(--color-surface); border-top:1px solid var(--color-border); }
+        .chat-notice { padding:12px 14px; border-radius:var(--radius-lg); background:var(--color-surface-elevated); color:var(--color-text-secondary); font-size:13px; text-align:center; border:1px solid var(--color-border); }
+        .chat-composer { display:flex; align-items:flex-end; gap:6px; padding:7px 8px; border-radius:var(--radius-xl); background:var(--color-surface-input); border:1px solid var(--color-border); box-shadow:var(--shadow-control); }
+        .chat-input { flex:1; min-width:0; min-height:40px; max-height:112px; resize:none; border:0; outline:0; padding:9px 6px; background:transparent; font:inherit; color:var(--color-text-primary); }
+        .chat-input::placeholder { color:var(--color-text-muted); }
+        .chat-tool,.chat-send,.chat-quick { width:40px; height:40px; flex:0 0 auto; border:0; border-radius:50%; display:grid; place-items:center; cursor:pointer; }
+        .chat-tool { background:transparent; color:var(--color-primary); }
+        .chat-tool.is-open { background:var(--color-primary-subtle); }
+        .chat-tool:focus-visible,.chat-send:focus-visible,.chat-quick:focus-visible,.chat-message-reaction:focus-visible,.chat-picker-button:focus-visible { outline:2px solid var(--color-primary); outline-offset:2px; }
+        .chat-send { background:var(--color-primary); color:var(--color-primary-text); box-shadow:var(--shadow-primary); }
+        .chat-send:disabled { background:var(--color-disabled-bg); color:var(--color-disabled-text); box-shadow:none; cursor:not-allowed; }
+        .chat-quick { background:var(--color-primary-subtle); font-size:19px; touch-action:none; user-select:none; -webkit-user-select:none; }
+        .chat-picker { position:absolute; z-index:40; bottom:calc(100% + 7px); padding:8px; border-radius:var(--radius-lg); background:var(--color-surface); border:1px solid var(--color-border); box-shadow:var(--shadow-menu); }
         .chat-emoji-picker { left:14px; width:min(310px,calc(100% - 28px)); display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
-        .chat-quick-picker { right:14px; display:flex; gap:3px; border-radius:999px; }
-        .chat-picker-button { width:36px; height:34px; border:0; border-radius:11px; background:transparent; font-size:19px; transition:transform .13s ease,background .13s ease; }
-        .chat-picker-button:hover { background:rgba(118,87,255,.08); transform:scale(1.08); }
+        .chat-quick-picker { right:14px; display:flex; gap:3px; border-radius:var(--radius-full); }
+        .chat-picker-button { width:36px; height:34px; border:0; border-radius:var(--radius-sm); background:transparent; font-size:19px; cursor:pointer; transition:transform .13s ease,background .13s ease; }
+        .chat-picker-button:hover { background:var(--color-primary-subtle); transform:scale(1.08); }
         @media (max-width: 520px) {
           .chat-header { padding:10px 10px; gap:9px; }
-          .chat-avatar { width:40px; height:40px; border-radius:14px; font-size:22px; }
+          .chat-avatar { width:40px; height:40px; border-radius:var(--radius-sm); font-size:22px; }
           .chat-poke { padding:8px 10px; }
           .chat-body { padding:12px 10px 16px; }
           .chat-composer-wrap { padding-left:8px; padding-right:8px; }
           .chat-emoji-picker { grid-template-columns:repeat(7,1fr); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .chat-bubble { animation:none !important; }
+          .chat-poke, .chat-message-reaction, .chat-picker-button { transition:none !important; }
         }
         @keyframes chatPop { from { transform:scale(.96) translateY(4px); opacity:.3; } to { transform:none; opacity:1; } }
       `}</style>
 
       <div className="chat-shell">
         <header className="chat-header">
-          <button type="button" onClick={onBack} className="gloss-button nav-btn" aria-label="Back" style={{ width:38,height:38,borderRadius:999,display:"grid",placeItems:"center",background:"#fff",border:"1px solid rgba(27,33,41,.08)" }}>
+          <Button type="button" variant="icon" onClick={onBack} aria-label="Back">
             <ArrowLeft size={18} />
-          </button>
+          </Button>
           <div className="chat-avatar">{peerAvailable ? (peerProfile?.icon || "🙂") : "🙂"}</div>
           <div style={{ flex:1, minWidth:0 }}>
             <div style={{ fontWeight:800, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{peerAvailable ? (peerProfile?.name || "Player") : "Unavailable player"}</div>
-            <div style={{ fontSize:11, color:"rgba(27,33,41,.5)" }}>
+            <div style={{ fontSize:11, color:"var(--color-text-secondary)" }}>
               {isSystemConversation ? "challenge notifications" : `private chat · ${peer?.is_online ? "online now" : "offline"}`}
             </div>
           </div>
           {!isSystemConversation && (
-            <button type="button" disabled={!peerAvailable} onClick={handlePoke} className="gloss-button chat-poke" style={{ opacity:peerAvailable ? 1 : .4 }}>
+            <button type="button" disabled={!peerAvailable} onClick={handlePoke} className="chat-poke" style={{ opacity:peerAvailable ? 1 : .4 }}>
               {pokeState === "sending" ? "Poking…" : pokeState === "sent" ? "Poked! 👋" : pokeState === "error" ? "Try again" : "👋 Poke"}
             </button>
           )}
@@ -451,7 +464,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
           {!loading && messages.length === 0 && (
             <div className="chat-empty">
               <div style={{ fontSize:44, marginBottom:10 }}>💬✨</div>
-              <div style={{ fontWeight:800, color:"#1b2129", marginBottom:6 }}>Start something fun</div>
+              <div style={{ fontWeight:800, color:"var(--color-text-primary)", marginBottom:6 }}>Start something fun</div>
               <div>Send a message, drop an emoji, or poke {peerProfile?.name || "them"}.</div>
             </div>
           )}
@@ -520,21 +533,17 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
               </div>
             );
           })}
-          {error && <div style={{ margin:"14px auto", maxWidth:520, padding:"10px 12px", borderRadius:14, background:"#fff0f0", color:"#a12b2b", fontSize:12 }}>{error}</div>}
+          {error && <div className="chat-error"><StatusBanner variant="error">{error}</StatusBanner></div>}
           <div ref={bottomRef} />
         </main>
 
         {isSystemConversation ? (
           <div className="chat-composer-wrap">
-            <div style={{ padding:"11px 14px", borderRadius:18, background:"rgba(255,255,255,.9)", color:"rgba(27,33,41,.56)", fontSize:12, textAlign:"center", border:"1px solid rgba(27,33,41,.08)" }}>
-              Challenge results are posted here automatically.
-            </div>
+            <div className="chat-notice">Challenge results are posted here automatically.</div>
           </div>
         ) : !peerAvailable ? (
           <div className="chat-composer-wrap">
-            <div style={{ padding:"12px 14px", borderRadius:18, background:"#fff", color:"rgba(27,33,41,.62)", fontSize:13, textAlign:"center", border:"1px solid rgba(27,33,41,.08)" }}>
-              This account is no longer available for messages.
-            </div>
+            <div className="chat-notice">This account is no longer available for messages.</div>
           </div>
         ) : <div className="chat-composer-wrap">
           {emojiPickerOpen && (

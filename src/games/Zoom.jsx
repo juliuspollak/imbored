@@ -3,21 +3,22 @@ import { withSeededRandom } from "../lib/seededRandom.js";
 import { useGameTimer } from "../lib/useGameTimer.js";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
-import { ZoomIn, RotateCcw, Timer as TimerIcon, HelpCircle } from "lucide-react";
+import { ZoomIn, Timer as TimerIcon, HelpCircle } from "lucide-react";
 import { generateZoomQuiz, ROUNDS_PER_QUIZ, LEVELS_PER_ROUND } from "./zoom/zoomGenerator.js";
 import { getTargetHistory, rememberTargets } from "./zoom/zoomHistory.js";
 import FlagImage from "./geo/FlagImage.jsx";
 import { useI18n } from "../lib/i18n.jsx";
 import { localizeZoomValue, localizeZoomPrompt } from "./zoom/zoomLocalization.js";
 import DaySelector from "../DaySelector.jsx";
+import Page from "../components/Page.jsx";
+import Card from "../components/Card.jsx";
+import Button from "../components/Button.jsx";
+import StatusBanner from "../components/StatusBanner.jsx";
 
-const BG = "var(--color-page-bg)";
-const PANEL = "var(--color-surface)";
 const INK = "var(--color-text-primary)";
-const ACCENT = "#7C3AED";
-const RED = "#E5484D";
+const ACCENT = "var(--color-primary)";
+const RED = "var(--color-danger-text)";
 const GREEN = "var(--color-success-text)";
-const CREAM = "var(--color-text-primary)";
 
 function fmtTime(s) {
   const m = Math.floor(s / 60);
@@ -98,9 +99,9 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
 
   if (!steps) {
     return (
-      <div style={{ background: BG, minHeight: "100vh" }} className="flex items-center justify-center">
-        <span style={{ color: INK, opacity: 0.6 }} className="text-sm">{t("common.buildingQuiz")}</span>
-      </div>
+      <Page style={{ alignItems: "center" }}>
+        <span role="status" style={{ padding: "var(--space-8)", color: "var(--color-text-secondary)", fontSize: "var(--text-body-size)" }}>{t("common.buildingQuiz")}</span>
+      </Page>
     );
   }
 
@@ -179,38 +180,35 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
   }).filter(Boolean).length;
 
   return (
-    <div style={{ background: BG, minHeight: "100vh" }} className="flex items-start justify-center p-4 pt-[72px]">
+    <Page style={{ alignItems: "flex-start" }}>
       <style>{`
-        .zoom-card { font-family: 'Inter', sans-serif; }
         @media (hover: hover) and (pointer: fine) {
-          .zoom-option:not(:disabled):hover { filter: brightness(0.97); transform: translateY(-1px); }
-          .zoom-icon-btn:hover { opacity: 0.85; }
-          .zoom-toolbar-btn:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.03); }
-          .zoom-next-btn:hover { filter: brightness(1.08); }
+          .zoom-option:not(:disabled):hover { border-color: var(--color-primary-subtle-border) !important; transform: translateY(-1px); }
+        }
+        .zoom-help-button:focus-visible, .zoom-option:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+        @media (prefers-reduced-motion: reduce) {
+          .zoom-option { transition: none !important; }
         }
         @media (max-width: 420px) {
           .zoom-card { padding: 16px !important; }
         }
       `}</style>
 
-      <div
-        className="zoom-card w-full max-w-md sm:max-w-lg lg:max-w-xl rounded-2xl p-5 lg:p-6 relative"
-        style={{ background: PANEL, boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}
-      >
-        <button onClick={() => setShowHelp((h) => !h)} className="zoom-icon-btn absolute top-4 right-4 transition-opacity" style={{ color: INK, opacity: 0.5 }}>
+      <Card className="zoom-card" style={{ position: "relative", marginTop: 72, marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
+        <button type="button" onClick={() => setShowHelp((h) => !h)} aria-label={showHelp ? "Hide instructions" : "Show instructions"} aria-expanded={showHelp} className="zoom-help-button" style={{ position: "absolute", top: "var(--space-3)", right: "var(--space-3)", width: 40, height: 40, display: "grid", placeItems: "center", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", color: "var(--color-icon-subtle)", cursor: "pointer" }}>
           <HelpCircle size={16} />
         </button>
 
         <div className="text-center mb-4">
-          <h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: INK, letterSpacing: "-0.01em" }} className="text-4xl lg:text-5xl">
+          <h1 style={{ margin: 0, fontSize: "var(--text-page-title-size)", lineHeight: "var(--text-page-title-line)", fontWeight: "var(--text-page-title-weight)", color: INK }}>
             Zoom
           </h1>
-          <p style={{ color: INK, opacity: 0.45 }} className="text-xs mt-1">{t("zoom.subtitle")}</p>
+          <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)" }} className="mt-1">{t("zoom.subtitle")}</p>
         </div>
 
         {isChallenge ? (
           <div className="flex justify-center mb-4">
-            <div className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: `${ACCENT}18`, color: ACCENT }}>
+            <div className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: "var(--color-primary-subtle)", color: ACCENT, border: "1px solid var(--color-primary-subtle-border)" }}>
               <span className="text-xs font-semibold">{t("common.todaysChallenge")}</span>
             </div>
           </div>
@@ -223,11 +221,11 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
         )}
 
         <div className="flex items-center justify-center gap-4 mb-3 px-1">
-          <div className="flex items-center gap-1.5" style={{ color: INK, opacity: 0.7 }}>
+          <div className="flex items-center gap-1.5" style={{ color: "var(--color-text-secondary)" }}>
             <TimerIcon size={14} />
             <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
           </div>
-          <div style={{ color: INK, opacity: 0.7 }} className="text-xs">
+          <div style={{ color: "var(--color-text-secondary)" }} className="text-xs">
             {t("zoom.round")} <span style={{ color: ACCENT, fontWeight: 600 }}>{roundNumber}</span>/{totalRounds}
           </div>
         </div>
@@ -237,26 +235,23 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
           {[
             { label: t("common.restart"), onClick: handleReset, disabled: solved },
           ].map(({ label, onClick, disabled }) => (
-            <button
+            <Button
               key={label}
               onClick={onClick}
               disabled={disabled}
               aria-label={label}
-              className="gloss-button flex-1 rounded-lg py-2 text-xs font-semibold transition-all"
-              style={{
-                background: disabled ? "rgba(16,24,40,0.06)" : undefined,
-                color: disabled ? "rgba(27,33,41,0.4)" : CREAM,
-                cursor: disabled ? "default" : "pointer",
-              }}
+              variant="secondary"
+              size="sm"
+              fullWidth
             >
               {label}
-            </button>
+            </Button>
           ))}
         </div>
         {showHelp && (
-          <div className="text-xs rounded-lg p-2.5 mb-3" style={{ background: "rgba(16,24,40,0.05)", color: INK, opacity: 0.75, lineHeight: 1.4 }}>
+          <StatusBanner variant="info" style={{ marginBottom: "var(--space-3)" }}>
             {t("zoom.help")}
-          </div>
+          </StatusBanner>
         )}
 
         {!solved && (
@@ -271,7 +266,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
                     width: r === step.roundIndex ? 18 : 6,
                     height: 6,
                     borderRadius: 999,
-                    background: r < step.roundIndex ? GREEN : r === step.roundIndex ? ACCENT : "rgba(16,24,40,0.12)",
+                    background: r < step.roundIndex ? GREEN : r === step.roundIndex ? ACCENT : "var(--color-border-strong)",
                     transition: "all 160ms ease",
                   }}
                 />
@@ -289,12 +284,12 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
                 const shown = revealed ? localizeZoomValue(revealed.answer, language, revealed) : label;
                 return (
                   <React.Fragment key={label}>
-                    {i > 0 && <span style={{ color: INK, opacity: 0.2 }} className="text-xs">→</span>}
+                    {i > 0 && <span style={{ color: "var(--color-text-muted)" }} className="text-xs">→</span>}
                     <span
                       className="text-[10px] font-semibold px-2 py-1 rounded-full"
                       style={{
-                        background: i === step.levelIndex ? `${ACCENT}18` : i < step.levelIndex ? "rgba(22,163,74,0.10)" : "rgba(16,24,40,0.04)",
-                        color: i === step.levelIndex ? ACCENT : i < step.levelIndex ? GREEN : "rgba(27,33,41,0.35)",
+                        background: i === step.levelIndex ? "var(--color-primary-subtle)" : i < step.levelIndex ? "var(--color-success-bg)" : "var(--color-surface-elevated)",
+                        color: i === step.levelIndex ? ACCENT : i < step.levelIndex ? GREEN : "var(--color-text-muted)",
                       }}
                     >
                       {shown}
@@ -319,11 +314,11 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
                 const isPicked = selected === option;
                 const isCorrect = answered && option === step.answer;
                 const isWrong = answered && isPicked && option !== step.answer;
-                let background = "rgba(16,24,40,0.05)";
+                let background = "var(--color-surface-elevated)";
                 let color = INK;
-                let border = "1px solid rgba(16,24,40,0.10)";
-                if (isCorrect) { background = "rgba(22,163,74,0.11)"; color = GREEN; border = `1px solid ${GREEN}55`; }
-                if (isWrong) { background = "rgba(229,72,77,0.10)"; color = RED; border = `1px solid ${RED}55`; }
+                let border = "1px solid var(--color-border)";
+                if (isCorrect) { background = "var(--color-success-bg)"; color = GREEN; border = "1px solid var(--color-success-border)"; }
+                if (isWrong) { background = "var(--color-danger-bg)"; color = RED; border = "1px solid var(--color-danger-solid)"; }
                 return (
                   <button
                     key={option}
@@ -339,14 +334,14 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
             </div>
 
             {answered && (
-              <div className="mb-3 text-center rounded-xl px-3 py-2.5" style={{ background: selected === step.answer ? "rgba(22,163,74,0.09)" : "rgba(229,72,77,0.08)" }}>
+              <div className="mb-3 text-center rounded-xl px-3 py-2.5" style={{ background: selected === step.answer ? "var(--color-success-bg)" : "var(--color-danger-bg)", border: `1px solid ${selected === step.answer ? "var(--color-success-border)" : "var(--color-danger-solid)"}` }}>
                 <div className="text-sm font-semibold" style={{ color: selected === step.answer ? GREEN : RED }}>
                   {selected === step.answer
                     ? t("zoom.correct", { answer: shownAnswer })
                     : t("zoom.incorrect", { selected: shownSelected, answer: shownAnswer })}
                 </div>
                 {step.levelKey === "country" && (
-                  <div className="text-xs mt-1" style={{ color: INK, opacity: 0.6 }}>
+                  <div className="text-xs mt-1" style={{ color: "var(--color-text-secondary)" }}>
                     {t("zoom.roundAnswer", { country: localizeZoomValue(step.countryName, language, { ...step, levelKey: "country" }), flag: step.flagEmoji || "" })}
                   </div>
                 )}
@@ -354,13 +349,13 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
             )}
 
             {answered && (
-              <button onClick={next} className="zoom-next-btn w-full rounded-lg py-2.5 text-sm font-semibold transition-all" style={{ background: ACCENT, color: "#FFFFFF" }}>
+              <Button onClick={next} fullWidth>
                 {isLast || (selected !== step.answer && isFinalRound)
                   ? t("common.seeResults")
                   : selected !== step.answer || step.levelKey === "country"
                     ? t("zoom.nextRound")
                     : t("common.nextQuestion")}
-              </button>
+              </Button>
             )}
           </>
         )}
@@ -387,13 +382,13 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
           <div className="flex flex-col items-center gap-3 py-4">
             <DifficultyRatingBadge value={difficultyRating} />
             {!isChallenge && (
-              <button onClick={() => newQuiz(dayIdx)} className="zoom-next-btn mt-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors" style={{ background: ACCENT, color: "#FFFFFF" }}>
+              <Button onClick={() => newQuiz(dayIdx)} size="sm">
                 {t("zoom.playAgain")}
-              </button>
+              </Button>
             )}
           </div>
         )}
-      </div>
-    </div>
+      </Card>
+    </Page>
   );
 }
