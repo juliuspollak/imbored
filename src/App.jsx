@@ -51,7 +51,7 @@ import { useOrganiserAttentionCount } from "./lib/useOrganiserAttentionCount.js"
 import { usePokes } from "./lib/pokes.js";
 import { useUnreadMessages } from "./lib/useUnreadMessages.js";
 import { useI18n } from "./lib/i18n.jsx";
-import { applyThemePreference } from "./lib/theme.js";
+import { applyThemePreference, cacheThemePreference } from "./lib/theme.js";
 
 const GAME_COMPONENTS = {
   queens: { Component: QueensGame, label: "Queens" },
@@ -151,8 +151,14 @@ function AppShell() {
     }
   }
   useLayoutEffect(() => {
-    applyThemePreference(profile?.theme_preference || "system");
-  }, [profile?.theme_preference]);
+    // Before the profile loads (or when signed out), keep whatever was last
+    // cached locally instead of forcing "system" - main.jsx already applied
+    // that cached value before this component ever mounted.
+    if (!profile) return;
+    const preference = profile.theme_preference || "system";
+    applyThemePreference(preference);
+    cacheThemePreference(preference);
+  }, [profile]);
   useEffect(() => {
     if (!profile?.account_deleted_at) return;
     // A historical/deleted profile must never render the Login component
