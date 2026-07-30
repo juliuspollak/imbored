@@ -50,7 +50,7 @@ grant execute on function public.am_i_a_circle_organiser() to authenticated;
 -- (reward_type/is_physical replace the old price/stock params a member
 -- was never supposed to set), so drop first. ----------
 drop function if exists public.propose_reward(bigint,text,text,text,bigint,int);
-create function public.propose_reward(
+create or replace function public.propose_reward(
   target_circle_id bigint,
   reward_name text,
   reward_description text,
