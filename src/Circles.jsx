@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Ban, CalendarDays, Check, ChevronDown, Crown, Gift,
-  Lock, Mail, Plus, RotateCcw, Search, ShieldCheck, Trash2,
+  Lock, Mail, Plus, RotateCcw, Search, Trash2,
   UserMinus, UserPlus, Users, X,
 } from "lucide-react";
 import BackButton from "./BackButton.jsx";
@@ -307,20 +307,6 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
     setModerationBusy(null);
     const verbs = { remove:"removed from", block:"blocked from", unblock:"unblocked for" };
     setMsg(error?.message || `${member.name} was ${verbs[action]} ${circle.name}`);
-    if (!error) await refresh();
-  }
-
-  async function toggleRewardApprover(circle, member) {
-    if (moderationBusy || member.id === circle.created_by) return;
-    const key = `${circle.id}:${member.id}:approver`;
-    setModerationBusy(key);
-    const { error } = await supabase.rpc("set_circle_reward_approver", {
-      target_circle_id:Number(circle.id),
-      target_user_id:member.id,
-      approve:!member.can_approve_rewards,
-    });
-    setModerationBusy(null);
-    setMsg(error?.message || `${member.name} is ${member.can_approve_rewards ? "no longer" : "now"} a reward approver for ${circle.name}`);
     if (!error) await refresh();
   }
 
@@ -678,12 +664,11 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                     <div className="flex items-center gap-3">
                       <span className="circle-member-icon grid place-items-center rounded-xl text-xl" style={{ width:38,height:38,background:"#fff" }}>{member.icon || "🙂"}</span>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5"><span className="text-sm font-semibold truncate">{isMe ? `${member.name} (you)` : member.name}</span>{circleOwner && <Crown size={11} style={{ color:"#D9AE58" }}/>}{(circleOwner || member.can_approve_rewards) && <ShieldCheck size={11} style={{ color:"#12946A" }}/>}</div>
-                        <div className="text-[10px] opacity-40 truncate">{circleOwner ? "Circle owner" : member.mood || "Circle member"}{member.can_approve_rewards && !circleOwner ? " · Reward approver" : ""}</div>
+                        <div className="flex items-center gap-1.5"><span className="text-sm font-semibold truncate">{isMe ? `${member.name} (you)` : member.name}</span>{circleOwner && <Crown size={11} style={{ color:"#D9AE58" }}/>}</div>
+                        <div className="text-[10px] opacity-40 truncate">{circleOwner ? "Circle owner" : member.mood || "Circle member"}</div>
                       </div>
                       {manager && !circleOwner && !isMe && <div className="flex gap-1.5 shrink-0">
                         <button className="gloss-button circle-action-btn grid place-items-center rounded-full shrink-0" data-variant="owner" disabled={!!moderationBusy} onClick={() => setMemberConfirm(memberConfirm?.id === member.id && memberConfirm?.action === "owner" ? null : { id:member.id,action:"owner" })} style={{ width:44,height:44,background:"rgba(217,174,88,.14)",color:"#9A6A12" }} aria-label={`Make ${member.name} circle owner`} title="Make owner"><Crown size={18}/></button>
-                        <button className="gloss-button circle-action-btn grid place-items-center rounded-full shrink-0" data-variant={member.can_approve_rewards ? "approver-active" : "approver"} disabled={!!moderationBusy} onClick={() => toggleRewardApprover(rosterCircle,member)} style={{ width:44,height:44,background:member.can_approve_rewards ? "rgba(18,148,106,.12)" : "rgba(16,24,40,.05)",color:member.can_approve_rewards ? "#12946A" : undefined }} aria-label={member.can_approve_rewards ? `Remove ${member.name} as reward approver` : `Make ${member.name} a reward approver`} title="Reward approver"><ShieldCheck size={18}/></button>
                         <button className="gloss-button circle-action-btn grid place-items-center rounded-full shrink-0" data-variant="remove" disabled={!!moderationBusy} onClick={() => setMemberConfirm(memberConfirm?.id === member.id && memberConfirm?.action === "remove" ? null : { id:member.id,action:"remove" })} style={{ width:44,height:44,background:"rgba(16,24,40,.05)" }} aria-label={`Remove ${member.name}`} title="Remove"><UserMinus size={18}/></button>
                         <button className="gloss-button circle-action-btn grid place-items-center rounded-full shrink-0" data-variant="block" disabled={!!moderationBusy} onClick={() => setMemberConfirm(memberConfirm?.id === member.id && memberConfirm?.action === "block" ? null : { id:member.id,action:"block" })} style={{ width:44,height:44,background:"rgba(181,67,58,.09)",color:"#B5433A" }} aria-label={`Block ${member.name}`} title="Block"><Ban size={18}/></button>
                       </div>}

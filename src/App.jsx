@@ -35,7 +35,8 @@ const Progress = lazy(() => import("./Progress.jsx"));
 const Chat = lazy(() => import("./Chat.jsx"));
 const Chats = lazy(() => import("./Chats.jsx"));
 const AdminRewards = lazy(() => import("./AdminRewards.jsx"));
-const RewardRequests = lazy(() => import("./RewardRequests.jsx"));
+const Rewards = lazy(() => import("./Rewards.jsx"));
+const OrganiserRewards = lazy(() => import("./OrganiserRewards.jsx"));
 import { saveStats } from "./lib/saveStats.js";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useOnlinePlayers } from "./lib/useOnlinePlayers.js";
@@ -206,6 +207,13 @@ function AppShell() {
   const openRewardRequestsCount = useOpenRewardRequestsCount(isRewardManager ? user?.id : undefined);
   const unreadMessages = useUnreadMessages(user?.id);
   const [sectionSignals, setSectionSignals] = useState({ whatsnew: false, circles: false });
+  const [isCircleOrganiser, setIsCircleOrganiser] = useState(false);
+  useEffect(() => {
+    if (!supabaseReady || !user?.id) { setIsCircleOrganiser(false); return; }
+    let cancelled = false;
+    supabase.rpc("am_i_a_circle_organiser").then(({ data }) => { if (!cancelled) setIsCircleOrganiser(!!data); });
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   function openSection(section) {
     setSectionSignals((current) => ({ ...current, [section]: false }));
@@ -301,6 +309,7 @@ function AppShell() {
       onOpenAdminGames={() => openAccountSection("admingames")}
       onOpenAdminRewards={() => openAccountSection("adminrewards")}
       onOpenRewardRequests={() => openAccountSection("rewardrequests")}
+      onOpenOrganiserRewards={isCircleOrganiser ? () => openAccountSection("organiserrewards") : undefined}
       players={players}
       userId={user?.id}
       openFeedbackCount={openFeedbackCount}
@@ -375,7 +384,7 @@ function AppShell() {
   if (active === "progress") {
     return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
-        <Progress onBack={() => setActive(null)} onOpenRewardRequests={() => { setRewardRequestsReturn("progress"); setActive("rewardrequests"); }} />
+        <Progress onBack={() => setActive(null)} onOpenRewards={() => { setRewardRequestsReturn("progress"); setActive("rewardrequests"); }} />
       </Suspense>
     );
   }
@@ -415,7 +424,15 @@ function AppShell() {
   if (active === "adminrewards") {
     return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
-        <AdminRewards onBack={() => setActive(null)} onOpenCircles={() => openCircles()} />
+        <AdminRewards onBack={() => setActive(null)} />
+      </Suspense>
+    );
+  }
+
+  if (active === "organiserrewards") {
+    return withAccountMenu(
+      <Suspense fallback={<FullScreenMessage text="Loading…" />}>
+        <OrganiserRewards onBack={() => setActive(null)} />
       </Suspense>
     );
   }
@@ -423,7 +440,7 @@ function AppShell() {
   if (active === "rewardrequests") {
     return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
-        <RewardRequests onBack={() => { setActive(rewardRequestsReturn === "progress" ? "progress" : null); setRewardRequestsReturn(null); }} />
+        <Rewards onBack={() => { setActive(rewardRequestsReturn === "progress" ? "progress" : null); setRewardRequestsReturn(null); }} />
       </Suspense>
     );
   }
@@ -588,12 +605,11 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
   );
 }
 
-function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenCircles, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, onOpenRewardRequests, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
+function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenCircles, onOpenChats, onOpenStats, onOpenProgress, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, onOpenRewardRequests, onOpenOrganiserRewards, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
   const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const isAdmin = !!profile.is_admin;
-  const isRewardManager = !!(profile.is_admin || profile.is_reward_steward);
   const feedbackBadgeCount = isAdmin ? openFeedbackCount : completedFeedbackCount;
   const totalNotifications = feedbackBadgeCount + newTransfersCount + myRedemptionUpdates + openRewardRequestsCount + unreadMessages.total
     + (sectionSignals.whatsnew ? 1 : 0) + (sectionSignals.circles ? 1 : 0);
@@ -624,12 +640,13 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
     { id:"circles", icon:Users, label:t("account.circles"), onClick:onOpenCircles, badge:sectionSignals.circles ? 1 : 0 },
     { id:"rewardrequests", icon:Gift, label:t("account.rewardRequests"), onClick:onOpenRewardRequests, badge:myRedemptionUpdates + openRewardRequestsCount },
   ];
+  if (onOpenOrganiserRewards) items.push({ id:"organiserrewards", icon:Gift, label:t("account.organiserRewards"), onClick:onOpenOrganiserRewards });
   const adminItems = [];
   if (isAdmin) {
     adminItems.push({ id:"adminplayers", icon:Shield, label:t("common.players"), onClick:onOpenAdminPlayers });
     adminItems.push({ id:"admingames", icon:Grid3x3, label:t("common.games"), onClick:onOpenAdminGames });
+    adminItems.push({ id:"adminrewards", icon:Gift, label:t("common.rewards"), onClick:onOpenAdminRewards });
   }
-  if (isRewardManager) adminItems.push({ id:"adminrewards", icon:Gift, label:t("common.rewards"), onClick:onOpenAdminRewards });
 
   function openItem(item) {
     setMenuOpen(false);

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Star, Flame, Trophy, Gift, Send, Plus, ShieldCheck, PartyPopper, X, Lock, Gamepad2, ArrowDownLeft, ArrowUpRight, RotateCcw, Info, ChevronDown, ChevronRight, ClipboardCheck } from "lucide-react";
+import { Star, Flame, Trophy, Gift, Send, ShieldCheck, PartyPopper, X, Lock, Gamepad2, ArrowDownLeft, ArrowUpRight, RotateCcw, Info, ChevronDown, ChevronRight } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase } from "./lib/supabase.js";
 import { isCommunityVisibleProfile } from "./lib/profileVisibility.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { markTransfersSeen } from "./lib/useNewTransfers.js";
 
-const BG="#F1F3F7", PANEL="#fff", INK="#1B2129", ACCENT="#2F6FED", CREAM="#1B2129";
+const BG="#F1F3F7", PANEL="#fff", INK="#1B2129", ACCENT="#2F6FED";
 const card={background:PANEL,border:"1px solid rgba(16,24,40,.09)",borderRadius:16};
 const ACTIVITY_LIMIT=8;
 const TRANSFER_HISTORY_LIMIT=100;
@@ -51,46 +51,29 @@ function gameBreakdown(item){
   ].filter(([,value])=>Number(value)!==0);
 }
 
-function suggestionStatus(item){
-  if(item.status==="suggested") return {text:"Needs a price",color:"#7C3AED",background:"rgba(124,58,237,.09)"};
-  if(item.status==="pending") return {text:`${item.approve_count}/${item.required_count} approved`,color:"#B5730E",background:"rgba(217,148,10,.10)"};
-  if(item.status==="active") return {text:"Approved — live below",color:"#12946A",background:"rgba(18,148,106,.10)"};
-  return {text:"Not approved",color:"#B5433A",background:"rgba(181,67,58,.09)"};
-}
-
-export default function Progress({ onBack, onOpenRewardRequests }) {
+export default function Progress({ onBack, onOpenRewards }) {
   const { user, profile } = useAuth();
-  const [progress,setProgress]=useState(null), [rules,setRules]=useState(null), [rewards,setRewards]=useState([]), [players,setPlayers]=useState([]);
-  const [tab,setTab]=useState("rewards"), [message,setMessage]=useState(""), [loading,setLoading]=useState(true);
-  const [circles,setCircles]=useState([]);
-  const [proposeOpen,setProposeOpen]=useState(false);
-  const [proposal,setProposal]=useState({circle_id:"",name:"",description:""});
-  const [proposing,setProposing]=useState(false);
-  const [mySuggestions,setMySuggestions]=useState([]);
+  const [progress,setProgress]=useState(null), [rules,setRules]=useState(null), [players,setPlayers]=useState([]);
+  const [message,setMessage]=useState(""), [loading,setLoading]=useState(true);
   const [transfer,setTransfer]=useState({player:"",amount:""});
   const [newTransfers,setNewTransfers]=useState([]);
   const [transferLog,setTransferLog]=useState([]);
   const [activity,setActivity]=useState([]);
   const [expandedActivityId,setExpandedActivityId]=useState(null);
-  const [redeemTarget,setRedeemTarget]=useState(null);
-  const [redeeming,setRedeeming]=useState(false);
 
   const refresh=useCallback(async()=>{
     setLoading(true);
     await supabase.rpc("ensure_player_progress",{uid:user.id});
 
-    const [{data:p},{data:r},{data:rw},{data:c},{data:ps},{data:tx},{data:transfers},{data:mine}] = await Promise.all([
+    const [{data:p},{data:r},{data:ps},{data:tx},{data:transfers}] = await Promise.all([
       supabase.from("player_progress").select("*").eq("player_id",user.id).single(),
       supabase.from("reward_rules").select("*").eq("is_active",true).maybeSingle(),
-      supabase.rpc("list_my_available_rewards"),
-      supabase.rpc("get_my_reward_circles"),
       supabase.from("profiles").select("id,name,icon,is_admin,is_approved,is_blocked,hidden_from_others,account_deleted_at").neq("id",user.id).order("name"),
       supabase.from("points_transactions").select("id,points,reason_code,game_stat_id,related_player_id,reward_id,metadata,created_at,seen_at")
         .eq("player_id",user.id).neq("points",0).order("created_at",{ascending:false}).order("id",{ascending:false}).limit(ACTIVITY_LIMIT),
       supabase.from("points_transactions").select("id,points,reason_code,related_player_id,created_at,seen_at")
         .eq("player_id",user.id).in("reason_code",["TRANSFER_RECEIVED","TRANSFER_SENT"])
         .order("created_at",{ascending:false}).order("id",{ascending:false}).limit(TRANSFER_HISTORY_LIMIT),
-      supabase.rpc("get_my_reward_proposals"),
     ]);
     const transactionRows=tx||[];
     const gameStatIds=[...new Set(transactionRows.map(item=>item.game_stat_id).filter(Boolean))];
@@ -102,7 +85,7 @@ export default function Progress({ onBack, onOpenRewardRequests }) {
       && !item.is_blocked
       && (item.is_admin || item.is_approved !== false)
     );
-    setProgress(p); setRules(r); setRewards(rw||[]); setCircles(c||[]); setPlayers(availablePlayers); setMySuggestions(mine||[]); setLoading(false);
+    setProgress(p); setRules(r); setPlayers(availablePlayers); setLoading(false);
 
     const playerById = Object.fromEntries(availablePlayers.map(pl=>[pl.id,pl]));
     const gameStatById=Object.fromEntries((gameStats||[]).map(item=>[item.id,item]));
@@ -141,32 +124,6 @@ export default function Progress({ onBack, onOpenRewardRequests }) {
     && !(progress?.streak_protected_through && progress.streak_protected_through>=sydneyDateString(-1));
   const socialUnlocked=!!profile?.is_admin || Number(progress?.current_level || 1)>=2 || Number(progress?.lifetime_points || 0)>=500;
 
-  async function confirmRedeem(){
-    if(!redeemTarget)return;
-    setRedeeming(true);
-    const {error}=await supabase.rpc("redeem_reward",{target_reward_id:redeemTarget.id,note:null});
-    setRedeeming(false);
-    setRedeemTarget(null);
-    setMessage(error?.message||"Reward requested");
-    refresh();
-  }
-  async function submitProposal(e){
-    e.preventDefault();
-    if(!proposal.circle_id||!proposal.name.trim())return;
-    setProposing(true);
-    const {error}=await supabase.rpc("propose_reward",{
-      target_circle_id:Number(proposal.circle_id),
-      reward_name:proposal.name,
-      reward_description:proposal.description||null,
-      reward_image_url:null,
-      reward_points_cost:null,
-      reward_stock_quantity:null,
-    });
-    setProposing(false);
-    setMessage(error?.message||"Suggestion sent — an approver will price it");
-    if(!error){setProposal({circle_id:"",name:"",description:""});setProposeOpen(false);}
-    refresh();
-  }
   async function sendPoints(e){e.preventDefault(); if(!socialUnlocked){setMessage("Point transfers unlock at Level 2.");return;} const amount=Number(transfer.amount); const {error}=await supabase.rpc("transfer_points",{target_player_id:transfer.player,amount}); setMessage(error?.message||"Points sent"); if(!error)setTransfer({player:"",amount:""}); refresh();}
   async function protect(){const {error}=await supabase.rpc("protect_streak"); setMessage(error?.message||"Streak protected"); refresh();}
 
@@ -214,6 +171,12 @@ export default function Progress({ onBack, onOpenRewardRequests }) {
         </span>
       </div>
 
+      {onOpenRewards&&<button onClick={onOpenRewards} className="w-full mb-3 rounded-2xl p-3 flex items-center gap-3 text-left" style={card}>
+        <span className="grid place-items-center rounded-xl shrink-0" style={{width:36,height:36,background:"rgba(47,111,237,.09)",color:ACCENT}}><Gift size={16}/></span>
+        <span className="flex-1 min-w-0"><span className="block text-sm font-semibold" style={{color:INK}}>Open Rewards</span><span className="block text-[11px] opacity-45">Suggest, vote on, and get rewards from your circles</span></span>
+        <ChevronRight size={16} style={{opacity:.35}}/>
+      </button>}
+
       <section className="mb-3 overflow-hidden" style={{...card,borderRadius:20}}>
         <div className="px-4 pt-3.5 pb-2">
           <div className="text-sm font-bold" style={{color:INK}}>How you earned your points</div>
@@ -260,50 +223,11 @@ export default function Progress({ onBack, onOpenRewardRequests }) {
       </section>
       {canProtect&&<button onClick={protect} className="gloss-button w-full p-3 mb-3 flex items-center justify-between rounded-lg" style={{color:INK}}><span className="flex items-center gap-2"><ShieldCheck size={18} style={{color:ACCENT}}/><span className="text-sm font-semibold">Protect your streak</span></span><span className="text-xs">{rules?.streak_protection_cost||250} Points</span></button>}
       {message&&<div className="rounded-xl p-3 mb-3 text-xs" style={{background:"rgba(47,111,237,.08)",color:INK}}>{message}</div>}
-      <div className="game-mode-switch mb-3" style={{width:"100%",justifyContent:"flex-start"}}>{[["rewards","Rewards",Gift],["transfer","Transfer",Send]].map(([id,label,Icon])=>{const locked=id!=="rewards"&&!socialUnlocked;return <button key={id} disabled={locked} onClick={()=>setTab(id)} className={`gloss-button ${tab===id?"is-active":""}`} style={{flex:1}}>{locked?<Lock size={12}/>:<Icon size={14}/>} {label}</button>})}</div>
-      {!socialUnlocked&&<div className="rounded-2xl p-3 mb-3 text-xs flex items-start gap-2" style={{background:"rgba(217,174,88,.10)",color:"#775B1D"}}><Lock size={14} style={{marginTop:1,flexShrink:0}}/><span>Reach Level 2 to transfer points. Rewards, suggesting a treat, streak protection, gameplay, circles you join, chat, and feedback remain available.</span></div>}
-      {tab==="rewards"&&onOpenRewardRequests&&<button onClick={onOpenRewardRequests} className="w-full mb-2 rounded-2xl p-3 flex items-center gap-3 text-left" style={card}>
-        <span className="grid place-items-center rounded-xl shrink-0" style={{width:36,height:36,background:"rgba(47,111,237,.09)",color:ACCENT}}><ClipboardCheck size={16}/></span>
-        <span className="flex-1 min-w-0"><span className="block text-sm font-semibold" style={{color:INK}}>Track my requests</span><span className="block text-[11px] opacity-45">See status and deliveries for what you've redeemed</span></span>
-        <ChevronRight size={16} style={{opacity:.35}}/>
-      </button>}
-      {tab==="rewards"&&<button onClick={()=>setProposeOpen(v=>!v)} className="w-full mb-2 rounded-2xl p-3 flex items-center gap-3 text-left" style={card}>
-        <span className="grid place-items-center rounded-xl shrink-0" style={{width:36,height:36,background:"rgba(47,111,237,.09)",color:ACCENT}}><Plus size={16}/></span>
-        <span className="flex-1 min-w-0"><span className="block text-sm font-semibold" style={{color:INK}}>Suggest a treat</span><span className="block text-[11px] opacity-45">Any circle member can propose — an approver will price it</span></span>
-        <ChevronDown size={16} style={{opacity:.35,transform:proposeOpen?"rotate(180deg)":"none"}}/>
-      </button>}
-      {tab==="rewards"&&proposeOpen&&circles.length===0&&<div className="rounded-2xl px-3 py-2.5 mb-2 text-xs" style={{background:"rgba(217,148,10,.10)",color:"#8A5C00"}}>You're not on a circle yet — join or create one to suggest a treat.</div>}
-      {tab==="rewards"&&proposeOpen&&circles.length>0&&<form onSubmit={submitProposal} className="p-4 mb-2" style={card}>
-        <select value={proposal.circle_id} onChange={e=>setProposal({...proposal,circle_id:e.target.value})} className="w-full rounded-lg border px-3 py-2 text-sm mb-2" required>
-          <option value="">Choose circle</option>
-          {circles.map(c=><option key={c.circle_id} value={c.circle_id}>{c.circle_name}</option>)}
-        </select>
-        <input value={proposal.name} onChange={e=>setProposal({...proposal,name:e.target.value})} placeholder="What would make your day?" className="w-full rounded-lg border px-3 py-2 text-sm mb-2" required/>
-        <textarea value={proposal.description} onChange={e=>setProposal({...proposal,description:e.target.value})} placeholder="💭 Add a note, size, colour or idea" className="w-full rounded-lg border px-3 py-2 text-sm mb-2"/>
-        <button disabled={proposing} className="w-full rounded-xl py-2.5 text-sm font-semibold text-white disabled:opacity-50" style={{background:ACCENT}}>{proposing?"Sending…":"Send suggestion"}</button>
-      </form>}
-      {tab==="rewards"&&mySuggestions.length>0&&<div className="mb-3">
-        <div className="text-xs font-bold uppercase tracking-wide opacity-40 px-1 mb-2">Your suggestions</div>
-        <div className="space-y-2">
-          {mySuggestions.map(item=>{
-            const s=suggestionStatus(item);
-            return <div key={item.id} className="p-3" style={card}>
-              <div className="flex items-center justify-between gap-2">
-                <div className="font-semibold text-sm truncate" style={{color:INK}}>{item.name}</div>
-                <span className="rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0" style={{color:s.color,background:s.background}}>{s.text}</span>
-              </div>
-              <div className="text-[11px] opacity-45 mt-0.5">{item.circle_name}</div>
-            </div>;
-          })}
-        </div>
-      </div>}
-      {tab==="rewards"&&<div className="grid grid-cols-2 gap-2">{rewards.length===0?<p className="col-span-2 text-sm text-center opacity-40 py-8">No rewards yet.</p>:rewards.map(r=>{
-        const affordable=progress.available_points>=r.points_cost;
-        const short=r.points_cost-progress.available_points;
-        return <div key={r.id} className="overflow-hidden" style={{...card,opacity:affordable?1:.6}}>{r.image_url?<img src={r.image_url} alt="" className="w-full h-24 object-cover"/>:<div className="h-24 flex items-center justify-center" style={{background:"rgba(217,174,88,.12)"}}><Gift size={30} style={{color:"#D9AE58"}}/></div>}<div className="p-3"><div className="font-semibold text-sm truncate" style={{color:INK}}>{r.name}</div><div className="text-xs mt-1" style={{color:INK,opacity:.55}}>{r.points_cost.toLocaleString()} Points</div><button disabled={!affordable} onClick={()=>setRedeemTarget(r)} className="w-full mt-2 rounded-lg py-1.5 text-xs font-semibold" style={{background:affordable?ACCENT:"rgba(16,24,40,.08)",color:affordable?"white":INK}}>{affordable?"Redeem":`Need ${short.toLocaleString()} more`}</button></div></div>;
-      })}</div>}
-      {tab==="transfer"&&<><form onSubmit={sendPoints} className="p-4" style={card}><select value={transfer.player} onChange={e=>setTransfer({...transfer,player:e.target.value})} className="w-full rounded-lg border px-3 py-2 text-sm mb-2" required><option value="">Choose player</option>{players.map(p=><option key={p.id} value={p.id}>{p.icon||"🙂"} {p.name}</option>)}</select><input type="number" min="10" value={transfer.amount} onChange={e=>setTransfer({...transfer,amount:e.target.value})} placeholder="Points" className="w-full rounded-lg border px-3 py-2 text-sm mb-2" required/><button className="w-full rounded-lg py-2 text-sm font-semibold text-white" style={{background:ACCENT}}>Send Points</button></form><div className="mt-3"><div className="text-xs font-semibold mb-2 opacity-60">Transfer history</div>{transferLog.length===0?<div className="text-xs opacity-40 text-center py-4">No transfers yet.</div>:transferLog.map(t=><div key={t.id} className="flex items-center gap-3 p-3 mb-2" style={card}><div className="text-xl">{t.reason_code==="TRANSFER_RECEIVED"?"🎉":"💸"}</div><div className="flex-1"><div className="text-xs font-semibold">{t.reason_code==="TRANSFER_RECEIVED"?`Received from ${t.other?.icon||"🙂"} ${t.other?.name||"Someone"}`:`Sent to ${t.other?.icon||"🙂"} ${t.other?.name||"Someone"}`}</div><div className="text-[10px] opacity-40">{new Date(t.created_at).toLocaleString()}</div></div><div className="font-bold text-sm" style={{color:t.points>0?"#15803D":"#B5433A"}}>{t.points>0?"+":""}{t.points.toLocaleString()}</div></div>)}</div></>}
+
+      <div className="text-sm font-bold mb-2 flex items-center gap-2" style={{color:INK}}><Send size={14}/> Transfer points</div>
+      {!socialUnlocked
+        ? <div className="rounded-2xl p-3 mb-3 text-xs flex items-start gap-2" style={{background:"rgba(217,174,88,.10)",color:"#775B1D"}}><Lock size={14} style={{marginTop:1,flexShrink:0}}/><span>Reach Level 2 to send points to other players.</span></div>
+        : <><form onSubmit={sendPoints} className="p-4" style={card}><select value={transfer.player} onChange={e=>setTransfer({...transfer,player:e.target.value})} className="w-full rounded-lg border px-3 py-2 text-sm mb-2" required><option value="">Choose player</option>{players.map(p=><option key={p.id} value={p.id}>{p.icon||"🙂"} {p.name}</option>)}</select><input type="number" min="10" value={transfer.amount} onChange={e=>setTransfer({...transfer,amount:e.target.value})} placeholder="Points" className="w-full rounded-lg border px-3 py-2 text-sm mb-2" required/><button className="w-full rounded-lg py-2 text-sm font-semibold text-white" style={{background:ACCENT}}>Send Points</button></form><div className="mt-3"><div className="text-xs font-semibold mb-2 opacity-60">Transfer history</div>{transferLog.length===0?<div className="text-xs opacity-40 text-center py-4">No transfers yet.</div>:transferLog.map(t=><div key={t.id} className="flex items-center gap-3 p-3 mb-2" style={card}><div className="text-xl">{t.reason_code==="TRANSFER_RECEIVED"?"🎉":"💸"}</div><div className="flex-1"><div className="text-xs font-semibold">{t.reason_code==="TRANSFER_RECEIVED"?`Received from ${t.other?.icon||"🙂"} ${t.other?.name||"Someone"}`:`Sent to ${t.other?.icon||"🙂"} ${t.other?.name||"Someone"}`}</div><div className="text-[10px] opacity-40">{new Date(t.created_at).toLocaleString()}</div></div><div className="font-bold text-sm" style={{color:t.points>0?"#15803D":"#B5433A"}}>{t.points>0?"+":""}{t.points.toLocaleString()}</div></div>)}</div></>}
     </>}
-    {redeemTarget&&<div className="fixed inset-0 z-50 grid place-items-center p-4" style={{background:"rgba(16,24,40,.45)"}}><div className="w-full max-w-sm rounded-3xl p-5" style={{background:"#fff",boxShadow:"0 24px 60px rgba(16,24,40,.22)"}}><div className="flex gap-3 items-start"><div className="text-2xl">{redeemTarget.image_url?<img src={redeemTarget.image_url} alt="" className="rounded-xl" style={{width:44,height:44,objectFit:"cover"}}/>:<Gift size={28} style={{color:"#D9AE58"}}/>}</div><div className="flex-1"><h2 className="font-bold">Redeem {redeemTarget.name}?</h2><p className="text-xs opacity-55 mt-1">{redeemTarget.points_cost.toLocaleString()} Points will be spent right away. A reward manager will review and deliver it.</p></div><button onClick={()=>setRedeemTarget(null)} aria-label="Cancel"><X size={16}/></button></div><div className="flex gap-2 mt-4"><button onClick={()=>setRedeemTarget(null)} className="flex-1 rounded-full py-2.5 text-xs font-semibold" style={{background:"rgba(16,24,40,.06)"}}>Cancel</button><button disabled={redeeming} onClick={confirmRedeem} className="flex-1 rounded-full py-2.5 text-xs font-semibold text-white disabled:opacity-50" style={{background:ACCENT}}>{redeeming?"Redeeming…":"Redeem"}</button></div></div></div>}
   </div></div>;
 }
