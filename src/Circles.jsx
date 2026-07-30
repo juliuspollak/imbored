@@ -82,7 +82,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
   const [rosterCircle, setRosterCircle] = useState(null);
   const [rosterQuery, setRosterQuery] = useState("");
   const [moderationBusy, setModerationBusy] = useState(null);
-  const [transferConfirmId, setTransferConfirmId] = useState(null);
+  const [memberConfirm, setMemberConfirm] = useState(null); // { id, action: "owner" | "remove" | "block" }
   const [deleteCircleTarget, setDeleteCircleTarget] = useState(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -458,7 +458,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
         </header>
 
         {!profile?.hidden_from_others && <div className="mb-4">
-          {!emailInviteOpen ? <button className="gloss-button w-full rounded-2xl px-4 py-3 flex items-center gap-3 text-left" onClick={() => setEmailInviteOpen(true)} style={{ background:"#fff",border:"1px solid rgba(16,24,40,.08)" }}><span className="grid place-items-center rounded-xl" style={{ width:34,height:34,background:"rgba(47,111,237,.09)",color:ACCENT }}><Mail size={15}/></span><span className="flex-1"><span className="block text-xs font-semibold">Invite someone new</span><span className="block text-[10px] opacity-45 mt-0.5">Send an email to someone who isn’t here yet</span></span><ChevronDown size={14} style={{ opacity:.3 }}/></button>
+          {!emailInviteOpen ? <button className="gloss-button w-full rounded-2xl px-4 py-3 flex items-center gap-3 text-left" onClick={() => setEmailInviteOpen(true)} style={{ background:"#fff",border:"1px solid rgba(16,24,40,.08)" }}><span className="grid place-items-center rounded-xl shrink-0" style={{ width:34,height:34,background:"rgba(47,111,237,.09)",color:ACCENT }}><Mail size={15}/></span><span className="flex-1 min-w-0"><span className="block text-xs font-semibold">Invite someone new</span><span className="block text-[10px] opacity-45 mt-0.5">Send an email to someone who isn’t here yet</span></span><ChevronDown size={14} className="shrink-0" style={{ opacity:.3 }}/></button>
             : <form onSubmit={inviteByEmail} className="rounded-3xl p-4" style={{ background:"#fff",border:"1px solid rgba(47,111,237,.16)" }}><div className="text-sm font-bold">Invite by email</div><div className="text-[11px] opacity-45 mt-0.5 mb-3">They’ll receive a link to create their account.</div><input autoFocus required type="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} placeholder="friend@example.com" className="w-full rounded-2xl border px-3 py-2.5 text-base outline-none"/><div className="grid grid-cols-2 gap-2 mt-3"><button className="gloss-button rounded-full py-2.5 text-xs font-semibold" type="button" onClick={() => { setEmailInviteOpen(false);setInviteEmail(""); }} style={{ background:"rgba(16,24,40,.05)" }}>Cancel</button><button disabled={emailInviteBusy || !inviteEmail.trim()} className="gloss-button rounded-full py-2.5 text-xs font-semibold text-white disabled:opacity-40" style={{ background:ACCENT }}>{emailInviteBusy ? "Sending…" : "Send invitation"}</button></div></form>}
         </div>}
 
@@ -498,20 +498,14 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
               <div className="circle-icon-control grid place-items-center rounded-2xl text-2xl" style={{ width:48,height:48,background:"linear-gradient(145deg,#f0f4ff,#fff)" }}>{circle.emoji || "⭐"}</div>
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-sm flex items-center gap-1.5"><span className="truncate">{circle.name}</span>{owner && <Crown size={12} style={{ color:"#D9AE58" }}/>}</div>
-                <button className="gloss-button flex items-center mt-1 max-w-full text-left disabled:cursor-default"
-                  type="button"
-                  disabled={manager || (!isMine && !profile?.is_admin)}
-                  onClick={() => { setRosterCircle(circle);setRosterQuery(""); }}
-                  aria-label={!manager && (isMine || profile?.is_admin) ? `View members of ${circle.name}` : undefined}
-                >
+                <div className="flex items-center mt-1 max-w-full">
                   <div className="flex shrink-0">{roster.slice(0,3).map((member,index) => <span key={member.id} title={member.name} className="grid place-items-center rounded-full text-xs" style={{ width:24,height:24,background:"#F1F3F7",border:"2px solid white",marginLeft:index ? -6 : 0,zIndex:3-index }}>{member.icon || "🙂"}</span>)}</div>
                   <span className="text-[10px] opacity-50 ml-2 truncate">
                     {isMine && roster.length
                       ? `${roster.slice(0,2).map((member) => member.id === user?.id ? "You" : member.name).join(", ")}${roster.length > 2 ? ` +${roster.length - 2}` : ""}`
                       : `${roster.length} member${roster.length === 1 ? "" : "s"}`}
-                    {!manager && (isMine || profile?.is_admin) ? " · View members" : ""}
                   </span>
-                </button>
+                </div>
               </div>
               {manager ? <button className="gloss-button rounded-full px-3 py-2 text-xs font-semibold flex items-center gap-1" onClick={() => { setRosterCircle(circle);setRosterQuery(""); }} style={{ background:"rgba(47,111,237,.09)",color:ACCENT }}><Users size={13}/>Manage</button>
                 : isMine ? <button className="gloss-button rounded-full px-3 py-2 text-xs font-semibold flex items-center gap-1" onClick={() => { setRosterCircle(circle);setRosterQuery(""); }} style={{ background:"rgba(47,111,237,.09)",color:ACCENT }}><Users size={13}/>Circle</button>
@@ -688,17 +682,31 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                         <div className="text-[10px] opacity-40 truncate">{circleOwner ? "Circle owner" : member.mood || "Circle member"}{member.can_approve_rewards && !circleOwner ? " · Reward approver" : ""}</div>
                       </div>
                       {manager && !circleOwner && !isMe && <div className="flex gap-1.5 shrink-0">
-                        <button className="gloss-button circle-action-btn grid place-items-center rounded-full shrink-0" data-variant="owner" disabled={!!moderationBusy} onClick={() => setTransferConfirmId(transferConfirmId === member.id ? null : member.id)} style={{ width:44,height:44,background:"rgba(217,174,88,.14)",color:"#9A6A12" }} aria-label={`Make ${member.name} circle owner`} title="Make owner"><Crown size={22}/></button>
-                        <button className="gloss-button circle-action-btn grid place-items-center rounded-full shrink-0" data-variant={member.can_approve_rewards ? "approver-active" : "approver"} disabled={!!moderationBusy} onClick={() => toggleRewardApprover(rosterCircle,member)} style={{ width:44,height:44,background:member.can_approve_rewards ? "rgba(18,148,106,.12)" : "rgba(16,24,40,.05)",color:member.can_approve_rewards ? "#12946A" : undefined }} aria-label={member.can_approve_rewards ? `Remove ${member.name} as reward approver` : `Make ${member.name} a reward approver`} title="Reward approver"><ShieldCheck size={22}/></button>
-                        <button className="gloss-button circle-action-btn grid place-items-center rounded-full shrink-0" data-variant="remove" disabled={!!moderationBusy} onClick={() => moderateMember(rosterCircle,member,"remove")} style={{ width:44,height:44,background:"rgba(16,24,40,.05)" }} aria-label={`Remove ${member.name}`} title="Remove"><UserMinus size={22}/></button>
-                        <button className="gloss-button circle-action-btn grid place-items-center rounded-full shrink-0" data-variant="block" disabled={!!moderationBusy} onClick={() => moderateMember(rosterCircle,member,"block")} style={{ width:44,height:44,background:"rgba(181,67,58,.09)",color:"#B5433A" }} aria-label={`Block ${member.name}`} title="Block"><Ban size={22}/></button>
+                        <button className="gloss-button circle-action-btn grid place-items-center rounded-full shrink-0" data-variant="owner" disabled={!!moderationBusy} onClick={() => setMemberConfirm(memberConfirm?.id === member.id && memberConfirm?.action === "owner" ? null : { id:member.id,action:"owner" })} style={{ width:44,height:44,background:"rgba(217,174,88,.14)",color:"#9A6A12" }} aria-label={`Make ${member.name} circle owner`} title="Make owner"><Crown size={18}/></button>
+                        <button className="gloss-button circle-action-btn grid place-items-center rounded-full shrink-0" data-variant={member.can_approve_rewards ? "approver-active" : "approver"} disabled={!!moderationBusy} onClick={() => toggleRewardApprover(rosterCircle,member)} style={{ width:44,height:44,background:member.can_approve_rewards ? "rgba(18,148,106,.12)" : "rgba(16,24,40,.05)",color:member.can_approve_rewards ? "#12946A" : undefined }} aria-label={member.can_approve_rewards ? `Remove ${member.name} as reward approver` : `Make ${member.name} a reward approver`} title="Reward approver"><ShieldCheck size={18}/></button>
+                        <button className="gloss-button circle-action-btn grid place-items-center rounded-full shrink-0" data-variant="remove" disabled={!!moderationBusy} onClick={() => setMemberConfirm(memberConfirm?.id === member.id && memberConfirm?.action === "remove" ? null : { id:member.id,action:"remove" })} style={{ width:44,height:44,background:"rgba(16,24,40,.05)" }} aria-label={`Remove ${member.name}`} title="Remove"><UserMinus size={18}/></button>
+                        <button className="gloss-button circle-action-btn grid place-items-center rounded-full shrink-0" data-variant="block" disabled={!!moderationBusy} onClick={() => setMemberConfirm(memberConfirm?.id === member.id && memberConfirm?.action === "block" ? null : { id:member.id,action:"block" })} style={{ width:44,height:44,background:"rgba(181,67,58,.09)",color:"#B5433A" }} aria-label={`Block ${member.name}`} title="Block"><Ban size={18}/></button>
                       </div>}
                     </div>
-                    {transferConfirmId === member.id && <div className="circle-owner-confirm rounded-xl px-3 py-2.5 mt-2 text-xs" style={{ background:"rgba(217,174,88,.12)",color:"#775B1D" }}>
+                    {memberConfirm?.id === member.id && memberConfirm.action === "owner" && <div className="circle-member-confirm rounded-xl px-3 py-2.5 mt-2 text-xs" data-variant="owner" style={{ background:"rgba(217,174,88,.12)",color:"#775B1D" }}>
                       <div className="mb-2">Make {member.name} the owner of {rosterCircle.name}? You'll remain a member, but lose owner-only controls.</div>
                       <div className="flex gap-2">
-                        <button onClick={() => transferOwnership(rosterCircle,member)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-white" style={{ background:"#9A6A12" }}>Make owner</button>
-                        <button onClick={() => setTransferConfirmId(null)} className="circle-action-btn rounded-full px-3 py-1.5 text-[11px] font-semibold" data-variant="cancel" style={{ background:"rgba(16,24,40,.06)" }}>Cancel</button>
+                        <button onClick={() => { transferOwnership(rosterCircle,member);setMemberConfirm(null); }} className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-white" style={{ background:"#9A6A12" }}>Make owner</button>
+                        <button onClick={() => setMemberConfirm(null)} className="circle-action-btn rounded-full px-3 py-1.5 text-[11px] font-semibold" data-variant="cancel" style={{ background:"rgba(16,24,40,.06)" }}>Cancel</button>
+                      </div>
+                    </div>}
+                    {memberConfirm?.id === member.id && memberConfirm.action === "remove" && <div className="circle-member-confirm rounded-xl px-3 py-2.5 mt-2 text-xs" data-variant="remove" style={{ background:"rgba(16,24,40,.06)",color:INK }}>
+                      <div className="mb-2">Remove {member.name} from {rosterCircle.name}? They can rejoin later if invited, or by requesting to join again.</div>
+                      <div className="flex gap-2">
+                        <button onClick={() => { moderateMember(rosterCircle,member,"remove");setMemberConfirm(null); }} className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-white" style={{ background:"#4B5563" }}>Remove</button>
+                        <button onClick={() => setMemberConfirm(null)} className="circle-action-btn rounded-full px-3 py-1.5 text-[11px] font-semibold" data-variant="cancel" style={{ background:"rgba(16,24,40,.06)" }}>Cancel</button>
+                      </div>
+                    </div>}
+                    {memberConfirm?.id === member.id && memberConfirm.action === "block" && <div className="circle-member-confirm rounded-xl px-3 py-2.5 mt-2 text-xs" data-variant="block" style={{ background:"rgba(181,67,58,.08)",color:"#9F2F2A" }}>
+                      <div className="mb-2">Block {member.name} from {rosterCircle.name}? They won't be able to join or be invited again until unblocked.</div>
+                      <div className="flex gap-2">
+                        <button onClick={() => { moderateMember(rosterCircle,member,"block");setMemberConfirm(null); }} className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-white" style={{ background:"#B5433A" }}>Block</button>
+                        <button onClick={() => setMemberConfirm(null)} className="circle-action-btn rounded-full px-3 py-1.5 text-[11px] font-semibold" data-variant="cancel" style={{ background:"rgba(16,24,40,.06)" }}>Cancel</button>
                       </div>
                     </div>}
                   </div>;

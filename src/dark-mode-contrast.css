@@ -722,12 +722,22 @@
     color: #8fb4ff !important;
   }
 
-  /* Same light-tuned-color bug as the row action buttons above: this confirm
-     panel's gold background and dark-brown text (and the Cancel button that
-     inherits it) were never meant to sit on a dark surface. */
-  .circle-owner-confirm {
+  /* Same light-tuned-color bug as the row action buttons above: these confirm
+     panels' light-mode backgrounds and dark text were never meant to sit on
+     a dark surface. Each action variant gets its own readable tint. */
+  .circle-member-confirm[data-variant="owner"] {
     background: rgba(217, 174, 88, 0.16) !important;
     color: #f0c975 !important;
+  }
+
+  .circle-member-confirm[data-variant="remove"] {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #dfe7f2 !important;
+  }
+
+  .circle-member-confirm[data-variant="block"] {
+    background: rgba(247, 107, 107, 0.16) !important;
+    color: #ff8d91 !important;
   }
 
   .circle-action-btn[data-variant="cancel"] {
