@@ -55,7 +55,7 @@ const INDIVIDUAL_PALETTES = {
 };
 
 function coloursFor(animalId, colourMode) {
-  return colourMode === "individual"
+  return colourMode === "individual" || colourMode === "mixed"
     ? INDIVIDUAL_PALETTES[animalId]
     : UNIFORM_PALETTES[animalId];
 }
@@ -173,7 +173,7 @@ function Elephant({ colourMode, size, bgColour, overrideColourAnimalId }) {
       <Eye cx="59" cy="38" rotate="5" />
       <path d="M57 51q7 3 12-1" />
       <path fill="#FFF8E7" d="M44 58c-5 9-9 12-14 11 4-2 7-8 8-14l6 3Z" strokeWidth="2.2" />
-      <path d="m58 58 10 1m-10 5 9 3" stroke={colourMode === "individual" ? colours.accent : colours.dark} strokeWidth="2" />
+      <path d="m58 58 10 1m-10 5 9 3" stroke={colourMode === "individual" || colourMode === "mixed" ? colours.accent : colours.dark} strokeWidth="2" />
     </FaceFrame>
   );
 }
