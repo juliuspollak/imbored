@@ -19,6 +19,7 @@ export default function OrganiserRewards({ onBack }) {
   const [priceValue, setPriceValue] = useState("");
   const [stockValue, setStockValue] = useState("");
   const [working, setWorking] = useState("");
+  const [confirmRemove, setConfirmRemove] = useState(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -69,7 +70,7 @@ export default function OrganiserRewards({ onBack }) {
   }
 
   async function removeReward(id) {
-    if (!window.confirm("Remove this reward for good? This can't be undone.")) return;
+    setConfirmRemove(null);
     setWorking(`remove-${id}`);
     const { error } = await supabase.rpc("delete_reward", { target_reward_id: id });
     setWorking("");
@@ -83,6 +84,14 @@ export default function OrganiserRewards({ onBack }) {
     setWorking("");
     setMessage(error?.message || (approve ? "Cancellation approved" : "Reward kept in progress"));
     refresh();
+  }
+
+  function RemoveButton({ id }) {
+    if (confirmRemove === id) return <div className="flex gap-2 shrink-0">
+      <button onClick={() => setConfirmRemove(null)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ background: "rgba(16,24,40,.06)", color: INK }}>Cancel</button>
+      <button onClick={() => removeReward(id)} disabled={!!working} className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-white" style={{ background: "#B5433A" }}>Confirm remove</button>
+    </div>;
+    return <button onClick={() => setConfirmRemove(id)} disabled={!!working} className="shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ background: "rgba(181,67,58,.08)", color: "#B5433A" }}>Remove</button>;
   }
 
   if (loading) return <div style={{ background: BG, minHeight: "100vh" }} className="p-10 text-center text-sm opacity-40">Loading…</div>;
@@ -109,11 +118,15 @@ export default function OrganiserRewards({ onBack }) {
             <span className="text-[10px] opacity-45 shrink-0">{r.reward_type}</span>
           </div>
           <div className="text-[11px] opacity-45 mt-0.5 mb-2">{r.circle_name} · suggested by {r.creator_icon} {r.creator_name}{r.status === "pending" ? ` · ${r.approve_count}/${r.required_count} votes` : ""}</div>
-          {r.status === "suggested" ? <div className="flex gap-2">
+          {r.status === "suggested" ? <div className="flex flex-wrap gap-2">
             <button onClick={() => openPrice(r, "available")} className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-white" style={{ background: ACCENT }}>Make available</button>
             <button onClick={() => openPrice(r, "vote")} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ background: "rgba(16,24,40,.06)", color: INK }}>Put to a vote</button>
             <button onClick={() => declineIdea(r.id)} disabled={!!working} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ background: "rgba(181,67,58,.08)", color: "#B5433A" }}>Not this time</button>
-          </div> : <span className="text-[11px] font-semibold opacity-55">Voting in progress</span>}
+            <RemoveButton id={r.id} />
+          </div> : <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold opacity-55">Voting in progress</span>
+            <RemoveButton id={r.id} />
+          </div>}
         </div>)}
       </div>}
 
@@ -126,7 +139,7 @@ export default function OrganiserRewards({ onBack }) {
                 <div className="font-semibold text-sm truncate" style={{ color: INK }}>{r.name}</div>
                 <div className="text-[11px] opacity-45">{r.circle_name} · {r.points_cost.toLocaleString()} pts{r.stock_quantity != null ? ` · ${r.stock_quantity} left` : ""}</div>
               </div>
-              <button onClick={() => removeReward(r.id)} disabled={!!working} className="shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ background: "rgba(181,67,58,.08)", color: "#B5433A" }}>Remove</button>
+              <RemoveButton id={r.id} />
             </div>)}
           </div>
         </div>}
