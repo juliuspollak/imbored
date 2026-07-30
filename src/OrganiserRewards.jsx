@@ -20,6 +20,7 @@ export default function OrganiserRewards({ onBack }) {
   const [stockValue, setStockValue] = useState("");
   const [working, setWorking] = useState("");
   const [confirmRemove, setConfirmRemove] = useState(null);
+  const [forceRemove, setForceRemove] = useState(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -69,11 +70,17 @@ export default function OrganiserRewards({ onBack }) {
     refresh();
   }
 
-  async function removeReward(id) {
+  async function removeReward(id, force = false) {
     setConfirmRemove(null);
     setWorking(`remove-${id}`);
-    const { error } = await supabase.rpc("delete_reward", { target_reward_id: id });
+    const { error } = await supabase.rpc("delete_reward", { target_reward_id: id, force });
     setWorking("");
+    if (error && !force && /redemption history/i.test(error.message || "")) {
+      setForceRemove(id);
+      setMessage("");
+      return;
+    }
+    setForceRemove(null);
     setMessage(error?.message || "Reward removed");
     refresh();
   }
@@ -87,6 +94,13 @@ export default function OrganiserRewards({ onBack }) {
   }
 
   function RemoveButton({ id }) {
+    if (forceRemove === id) return <div className="w-full mt-1">
+      <div className="text-[11px] mb-1.5" style={{ color: "#B5433A" }}>It has redemption history — deleting it also erases those redemption records (past point spends stay on the ledger). Remove anyway?</div>
+      <div className="flex gap-2">
+        <button onClick={() => setForceRemove(null)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ background: "rgba(16,24,40,.06)", color: INK }}>Cancel</button>
+        <button onClick={() => removeReward(id, true)} disabled={!!working} className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-white" style={{ background: "#B5433A" }}>Remove and erase history</button>
+      </div>
+    </div>;
     if (confirmRemove === id) return <div className="flex gap-2 shrink-0">
       <button onClick={() => setConfirmRemove(null)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ background: "rgba(16,24,40,.06)", color: INK }}>Cancel</button>
       <button onClick={() => removeReward(id)} disabled={!!working} className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-white" style={{ background: "#B5433A" }}>Confirm remove</button>
@@ -134,12 +148,15 @@ export default function OrganiserRewards({ onBack }) {
         {catalog.length > 0 && <div className="mb-1">
           <div className="text-[11px] font-semibold opacity-45 mb-1.5 px-1">Reward catalog</div>
           <div className="space-y-2">
-            {catalog.map((r) => <div key={r.id} className="p-3 flex items-center justify-between gap-2" style={card}>
-              <div className="min-w-0">
-                <div className="font-semibold text-sm truncate" style={{ color: INK }}>{r.name}</div>
-                <div className="text-[11px] opacity-45">{r.circle_name} · {r.points_cost.toLocaleString()} pts{r.stock_quantity != null ? ` · ${r.stock_quantity} left` : ""}</div>
+            {catalog.map((r) => <div key={r.id} className="p-3" style={card}>
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="font-semibold text-sm truncate" style={{ color: INK }}>{r.name}</div>
+                  <div className="text-[11px] opacity-45">{r.circle_name} · {r.points_cost.toLocaleString()} pts{r.stock_quantity != null ? ` · ${r.stock_quantity} left` : ""}</div>
+                </div>
+                {forceRemove !== r.id && <RemoveButton id={r.id} />}
               </div>
-              <RemoveButton id={r.id} />
+              {forceRemove === r.id && <RemoveButton id={r.id} />}
             </div>)}
           </div>
         </div>}
