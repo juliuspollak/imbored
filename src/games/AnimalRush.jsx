@@ -40,6 +40,8 @@ import {
 import "./animalRush/animal-rush.css";
 
 const ROOM_STORAGE_PREFIX = "imbored-animal-rush-room-";
+/** Lobby rooms older than this are considered stale and auto-cleaned on page load. */
+const LOBBY_STALE_THRESHOLD_MS = 3 * 60 * 60 * 1000; // 3 hours
 
 function useReducedMotionPreference() {
   const [enabled, setEnabled] = useState(() =>
@@ -278,9 +280,35 @@ export default function AnimalRush({ onExit }) {
       return;
     }
     void synchroniseClock();
-    const savedRoomId = window.localStorage.getItem(roomStorageKey);
-    if (savedRoomId) void refreshRoom(savedRoomId);
-    else setLoading(false);
+    const raw = window.localStorage.getItem(roomStorageKey);
+    if (!raw) {
+      setLoading(false);
+      return;
+    }
+    // Parse saved room data — stored as JSON with a timestamp so we can
+    // detect and discard stale lobby rooms that were joined hours ago.
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (_) {
+      // Legacy: plain room ID string, migrate it to timestamped format.
+      parsed = { id: raw };
+    }
+    const savedRoomId = typeof parsed === "object" && parsed?.id ? parsed.id : null;
+    if (!savedRoomId) {
+      window.localStorage.removeItem(roomStorageKey);
+      setLoading(false);
+      return;
+    }
+    // If the room was saved more than 3 hours ago, treat it as stale
+    // and clear it so the user starts with a fresh game screen.
+    const savedAt = typeof parsed?.savedAt === "number" ? parsed.savedAt : 0;
+    if (savedAt > 0 && Date.now() - savedAt > LOBBY_STALE_THRESHOLD_MS) {
+      window.localStorage.removeItem(roomStorageKey);
+      setLoading(false);
+      return;
+    }
+    void refreshRoom(savedRoomId);
   }, [refreshRoom, roomStorageKey, supported, synchroniseClock, user?.id]);
 
   useEffect(() => {
@@ -438,7 +466,12 @@ export default function AnimalRush({ onExit }) {
   }, [refreshRoom, room, serverNow]);
 
   function rememberRoom(nextRoom) {
-    window.localStorage.setItem(roomStorageKey, nextRoom.id);
+    // Store room ID with a timestamp so stale rooms can be detected
+    // and auto-cleaned on next page load.
+    window.localStorage.setItem(roomStorageKey, JSON.stringify({
+      id: nextRoom.id,
+      savedAt: Date.now(),
+    }));
     setRoom(nextRoom);
   }
 
