@@ -16,13 +16,13 @@ export default function BoardReviewToggle({ reviewing, onToggle, disabled = fals
       disabled={disabled}
       className="brt-button"
       aria-pressed={reviewing}
-      aria-label={reviewing ? t("common.solve", "Solve") : t("common.review", "Review")}
+      aria-label={reviewing ? t("common.solve") : t("common.review")}
       style={{
         color: reviewing ? "var(--color-text-primary)" : "var(--color-text-secondary)",
       }}
     >
       <Eye size={14} />
-      <span>{reviewing ? t("common.solve", "Solve") : t("common.review", "Review")}</span>
+      <span>{reviewing ? t("common.solve") : t("common.review")}</span>
     </button>
   );
 }

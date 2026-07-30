@@ -248,6 +248,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   const [hintCell, setHintCell] = useState(null);
   const [history, setHistory] = useState([]);
   const [showHelp, setShowHelp] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const [celebratingCells, setCelebratingCells] = useState(new Set());
   const prevCompleteSectionsRef = useRef(new Set());
 
@@ -265,6 +266,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     setDifficultyRating(null);
     setHintCell(null);
     setHistory([]);
+    setReviewing(false);
     hintCooldown.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isChallenge, seed]);
@@ -676,7 +678,13 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
           onPlayAgain={() => newPuzzle(dayIdx)}
         />
 
-        {solved ? <BoardReviewToggle>{boardGrid}</BoardReviewToggle> : boardGrid}
+        {solved && (
+          <BoardReviewToggle
+            reviewing={reviewing}
+            onToggle={() => setReviewing((value) => !value)}
+          />
+        )}
+        {(!solved || reviewing) && boardGrid}
 
         {/* number palette — every button is a no-op once solved */}
         {!solved && (
