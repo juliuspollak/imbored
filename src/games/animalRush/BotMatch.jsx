@@ -9,30 +9,28 @@ import {
   animalById,
   applyWrongTap,
   botAnimalChoice,
+  derangedShuffle,
   matchWinner,
+  pickNextTarget,
   playerRoundOutcome,
 } from "./engine.js";
 
 const WINNING_CARDS = 7;
 const BOT_ID = "animal-rush-bot";
 
-function shuffledAnimals() {
-  return [...ANIMAL_IDS].sort(() => Math.random() - 0.5);
-}
-
-function createRound(number, difficulty) {
-  const previewOrder = shuffledAnimals();
+function createRound(number, difficulty, previousTarget, previousOrder) {
+  const previewOrder = previousOrder ? derangedShuffle(previousOrder) : [...ANIMAL_IDS].sort(() => Math.random() - 0.5);
   let order = previewOrder;
   if (difficulty === "hard") {
-    do {
-      order = shuffledAnimals();
-    } while (order.every((animal, index) => animal === previewOrder[index]));
+    // Hard mode: final order must differ from preview at every position
+    order = derangedShuffle(previewOrder);
   }
+  const target = previousTarget ? pickNextTarget(previousTarget) : ANIMAL_IDS[Math.floor(Math.random() * ANIMAL_IDS.length)];
   const rollAt = Date.now() + (number === 1 ? 3000 : 700);
   const shuffleAt = difficulty === "hard" ? rollAt + DIE_ROLL_DURATION_MS : null;
   return {
     number,
-    target: ANIMAL_IDS[Math.floor(Math.random() * ANIMAL_IDS.length)],
+    target,
     difficulty,
     previewOrder,
     order,
@@ -201,7 +199,12 @@ export default function BotMatch({
       setFeedback(null);
       commitGame({
         ...current,
-        round: createRound(current.round.number + 1, current.difficulty),
+        round: createRound(
+          current.round.number + 1,
+          current.difficulty,
+          current.round.target,
+          current.round.order,
+        ),
       });
     }, 2200);
     return () => window.clearTimeout(timer);
@@ -263,6 +266,12 @@ export default function BotMatch({
     attemptCorrect: feedback?.isCorrect === true,
   }), [feedback, game.round.status, game.round.winner, userId]);
 
+  function colourModeLabel() {
+    if (game.colourMode === "individual") return "animal colours";
+    if (game.colourMode === "mixed") return "mixed colours";
+    return "one colour";
+  }
+
   function restart() {
     setFeedback(null);
     commitGame(createGame(userId, profile, game.difficulty, game.colourMode));
@@ -316,7 +325,7 @@ export default function BotMatch({
           <span className="rush-muted flex items-center gap-2 text-[11px] font-semibold">
             Test round {game.round.number}
             <span className="rush-mode-badge">
-              {game.difficulty} · {game.colourMode === "individual" ? "animal colours" : "one colour"}
+              {game.difficulty} · {colourModeLabel()}
             </span>
             {reducedMotion && <span className="rush-motion-badge">Motion reduced</span>}
           </span>

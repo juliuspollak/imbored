@@ -16,8 +16,9 @@ export const DIFFICULTY_MODES = [
   { id: "hard", label: "Hard", description: "Cards reshuffle before reveal" },
 ];
 export const COLOUR_MODES = [
+  { id: "individual", label: "Animal colours", description: "Each animal has its own colour" },
   { id: "uniform", label: "One colour", description: "Harder · recognise the shape" },
-  { id: "individual", label: "Animal colours", description: "Easier · colour helps" },
+  { id: "mixed", label: "Mixed colours", description: "Die colours are misleading" },
 ];
 
 export function animalById(id) {
@@ -26,7 +27,7 @@ export function animalById(id) {
 
 export function animalColour(id, colourMode = "uniform") {
   const animal = animalById(id);
-  return colourMode === "individual" ? animal.individualColour : animal.colour;
+  return colourMode === "individual" || colourMode === "mixed" ? animal.individualColour : animal.colour;
 }
 
 export function isPhoneDevice({
@@ -38,6 +39,36 @@ export function isPhoneDevice({
   const phoneUserAgent = /iPhone|iPod|Android.+Mobile|Windows Phone/i.test(userAgent);
   const reportsMobile = typeof userAgentMobile === "boolean" ? userAgentMobile : phoneUserAgent;
   return reportsMobile && maxTouchPoints > 0 && coarsePointer;
+}
+
+/**
+ * Returns a shuffled copy of the array where no element stays in its
+ * original position (a derangement). Falls back to a simple shuffle if
+ * no derangement is found after a short loop — extremely rare with 6 items.
+ */
+export function derangedShuffle(arr) {
+  if (arr.length < 2) return [...arr];
+  const original = [...arr];
+  let result;
+  for (let attempt = 0; attempt < 50; attempt++) {
+    result = [...original].sort(() => Math.random() - 0.5);
+    if (!result.every((val, idx) => val === original[idx])) return result;
+  }
+  // Fallback: force-swap first element with a random other
+  result = [...original].sort(() => Math.random() - 0.5);
+  if (result.every((val, idx) => val === original[idx])) {
+    const swapIdx = 1 + Math.floor(Math.random() * (result.length - 1));
+    [result[0], result[swapIdx]] = [result[swapIdx], result[0]];
+  }
+  return result;
+}
+
+/**
+ * Picks a random animal that is not the previous target.
+ */
+export function pickNextTarget(previousTarget) {
+  const options = ANIMAL_IDS.filter((id) => id !== previousTarget);
+  return options[Math.floor(Math.random() * options.length)];
 }
 
 export function roundPhase(room, now = Date.now()) {

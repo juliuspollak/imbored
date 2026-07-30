@@ -23,13 +23,14 @@ const TARGET_ROTATIONS = {
 };
 
 /**
- * Returns the ID of the next animal in the list — used to override both
- * the background colour and the shape fills on die faces so that no face
- * shows its own colour scheme. Players must identify the animal by its
- * silhouette, not by colour.
+ * Returns the ID of the next animal in the list — used in "mixed" mode
+ * to override both the background colour and shape fills on die faces.
+ * Each face shows a completely different animal's colour scheme so
+ * players must identify the silhouette, not the hue.
+ * Returns undefined for non-mixed modes.
  */
 function misdirectAnimalId(animalId, colourMode) {
-  if (colourMode !== "individual") return undefined;
+  if (colourMode !== "mixed") return undefined;
   const idx = ANIMAL_IDS.indexOf(animalId);
   if (idx === -1) return undefined;
   const nextIdx = (idx + 1) % ANIMAL_IDS.length;
@@ -88,7 +89,7 @@ export default function AnimalDie({
                 size={58}
                 bgColour={
                   misdirectedId
-                    ? animalColour(misdirectedId, "individual")
+                    ? animalColour(misdirectedId, "mixed")
                     : undefined
                 }
                 overrideColourAnimalId={misdirectedId}

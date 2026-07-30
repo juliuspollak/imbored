@@ -199,7 +199,7 @@ export default function AnimalRush({ onExit }) {
   const [attemptFeedback, setAttemptFeedback] = useState(null);
   const [botMode, setBotMode] = useState(false);
   const [botDifficulty, setBotDifficulty] = useState("standard");
-  const [botColourMode, setBotColourMode] = useState("uniform");
+  const [botColourMode, setBotColourMode] = useState("individual");
   const [clockRtt, setClockRtt] = useState(null);
   const attemptRef = useRef(false);
   const roundRef = useRef(null);
@@ -786,7 +786,7 @@ export default function AnimalRush({ onExit }) {
               label={isHost ? "Match difficulty" : "Host-selected difficulty"}
             />
             <ColourModeSelector
-              value={room.colour_mode || "uniform"}
+              value={room.colour_mode || "individual"}
               onChange={changeColourMode}
               disabled={!isHost || !!working}
               label={isHost ? "Animal colours" : "Host-selected colours"}
@@ -886,7 +886,7 @@ export default function AnimalRush({ onExit }) {
           <span className="rush-muted flex items-center gap-2 text-[11px] font-semibold">
             Round {room.round_number}
             <span className="rush-mode-badge">
-              {room.difficulty || "standard"} · {room.colour_mode === "individual" ? "animal colours" : "one colour"}
+              {room.difficulty || "standard"} · {room.colour_mode === "individual" ? "animal colours" : room.colour_mode === "mixed" ? "mixed colours" : "one colour"}
             </span>
             {reducedMotion && <span className="rush-motion-badge">Motion reduced</span>}
           </span>
