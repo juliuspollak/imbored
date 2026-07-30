@@ -429,21 +429,14 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
           .circles-page-header-copy {
             min-width:0;
           }
-          .circles-page-new-button {
-            padding-left:10px;
-            padding-right:10px;
-          }
-          .circles-page-new-button-label {
-            display:none;
-          }
         }
       `}</style>
       <div className="w-full max-w-md">
         <header className="circles-page-header flex items-center gap-3 mb-5">
           <BackButton onClick={onBack} ariaLabel="Back" />
           <div className="circles-page-header-copy flex-1 min-w-0"><h1 className="text-2xl font-bold truncate" style={{ fontFamily:"'Fredoka',sans-serif" }}>Circles</h1><p className="text-xs opacity-45 truncate">Play together, your way</p></div>
-          {!profile?.hidden_from_others && <button onClick={() => setComposerOpen((open) => !open)} className="gloss-button circles-page-new-button rounded-full px-3 py-2 text-xs font-semibold flex items-center gap-1 shrink-0" style={{ background:ACCENT,color:"#fff" }}><Plus size={14}/><span className="circles-page-new-button-label">New circle</span></button>}
         </header>
+        {!profile?.hidden_from_others && <button onClick={() => setComposerOpen((open) => !open)} className="gloss-button mb-4 rounded-full px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5" style={{ background:composerOpen ? "rgba(16,24,40,0.06)" : ACCENT, color:composerOpen ? INK : "#fff" }}><Plus size={14}/>{composerOpen ? "Cancel" : "New circle"}</button>}
 
         {!profile?.hidden_from_others && <div className="mb-4">
           {!emailInviteOpen ? <button className="gloss-button w-full rounded-2xl px-4 py-3 flex items-center gap-3 text-left" onClick={() => setEmailInviteOpen(true)} style={{ background:"#fff",border:"1px solid rgba(16,24,40,.08)" }}><span className="flex items-center justify-center rounded-full" style={{ width:26,height:26,minWidth:26,maxWidth:26,minHeight:26,maxHeight:26,flex:"0 0 26px",background:"rgba(47,111,237,.09)",color:ACCENT }}><Mail size={13}/></span><span className="flex-1 min-w-0"><span className="block text-xs font-semibold">Invite someone new</span><span className="block text-[10px] opacity-45 mt-0.5">Send an email to someone who isn’t here yet</span></span><ChevronDown size={14} className="shrink-0" style={{ opacity:.3 }}/></button>
