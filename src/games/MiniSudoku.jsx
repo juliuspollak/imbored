@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom, shuffle } from "../lib/seededRandom.js";
 import { useGameTimer } from "../lib/useGameTimer.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
@@ -6,9 +6,13 @@ import HintCooldownButton from "../HintCooldownButton.jsx";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import BoardReviewToggle from "../BoardReviewToggle.jsx";
-import { Grid3x3, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Delete, Lock } from "lucide-react";
+import { Grid3x3, CornerUpLeft, Timer as TimerIcon, HelpCircle, Delete } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
+import Page from "../components/Page.jsx";
+import Card from "../components/Card.jsx";
+import Button from "../components/Button.jsx";
+import StatusBanner from "../components/StatusBanner.jsx";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -182,11 +186,6 @@ function getConflicts(board) {
 
 /* ---------------- design tokens ---------------- */
 
-const BG = "var(--color-page-bg)";
-const PANEL = "var(--color-surface)";
-const CREAM = "var(--color-text-primary)";
-const GOLD = "var(--color-primary)";
-const RED = "#E5484D";
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const GIVEN_TARGETS = [24, 22, 20, 18, 16, 14, 12];
 
@@ -201,15 +200,24 @@ function fmtTime(s) {
 function NumBtn({ onClick, disabled, used = false, active = false, children, ...rest }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
-      className="ms-num-btn flex items-center justify-center rounded-xl py-3.5 text-lg font-semibold transition-all"
+      className="ms-num-btn"
       style={{
-        background: active ? "rgba(47,111,237,0.14)" : used ? "rgba(16,24,40,0.025)" : "rgba(16,24,40,0.045)",
-        color: disabled ? "rgba(27,33,41,0.3)" : active ? GOLD : used ? "rgba(27,33,41,0.28)" : CREAM,
-        cursor: disabled ? "default" : "pointer",
-        opacity: used && !disabled ? 0.62 : 1,
-        boxShadow: active ? `inset 0 0 0 2px ${GOLD}` : "none",
+        minHeight: 52,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        border: active ? "2px solid var(--color-primary)" : "1px solid var(--color-border)",
+        borderRadius: "var(--radius-md)",
+        background: active ? "var(--color-primary-subtle)" : used ? "var(--color-page-bg)" : "var(--color-surface-elevated)",
+        color: disabled ? "var(--color-disabled-text)" : active ? "var(--color-primary)" : used ? "var(--color-text-muted)" : "var(--color-text-primary)",
+        cursor: disabled ? "not-allowed" : "pointer",
+        font: "inherit",
+        fontSize: 18,
+        fontWeight: 600,
+        transition: "transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast)",
       }}
       {...rest}
     >
@@ -325,9 +333,9 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
 
   if (!board || !puzzle) {
     return (
-      <div style={{ background: BG, minHeight: "100vh" }} className="flex items-center justify-center">
-        <span style={{ color: CREAM, opacity: 0.6 }} className="text-sm">{t("common.buildingPuzzle")}</span>
-      </div>
+      <Page style={{ alignItems: "center" }}>
+        <div role="status" style={{ padding: "var(--space-8)", color: "var(--color-text-secondary)", fontSize: "var(--text-body-size)" }}>{t("common.buildingPuzzle")}</div>
+      </Page>
     );
   }
 
@@ -448,15 +456,17 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
 
   const boardGrid = (
     <div
-      className="ms-board rounded-xl overflow-hidden -mx-5 lg:-mx-6"
+      className="ms-board"
       style={{
         aspectRatio: "1 / 1",
         display: "grid",
         gridTemplateColumns: `repeat(${N}, 1fr)`,
         gridTemplateRows: `repeat(${N}, 1fr)`,
-        background: PANEL,
-        border: "2px solid #6B6B70",
-        width: "calc(100% + 40px)",
+        overflow: "hidden",
+        background: "var(--color-surface)",
+        border: "2px solid var(--color-border-strong)",
+        borderRadius: "var(--radius-md)",
+        width: "100%",
       }}
     >
       {board.map((row, r) =>
@@ -475,17 +485,24 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
               key={`${r}-${c}`}
               onClick={() => handleCellClick(r, c)}
               disabled={isGiven}
-              className={`ms-cell relative flex items-center justify-center transition-colors duration-150 ${hintClass} ${isCelebrating ? "ms-celebrate" : ""}`}
+              className={`ms-cell ${hintClass} ${isCelebrating ? "ms-celebrate" : ""}`}
               style={{
-                background: isCelebrating ? "rgba(34,197,94,0.18)" : PANEL,
-                borderRight: rightEdge ? "2px solid #6B6B70" : "1px solid rgba(16,24,40,0.08)",
-                borderBottom: bottomEdge ? "2px solid #6B6B70" : "1px solid rgba(16,24,40,0.08)",
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                background: isCelebrating ? "var(--color-success-bg)" : isSelected ? "var(--color-primary-subtle)" : "var(--color-surface)",
+                border: 0,
+                borderRight: rightEdge ? "2px solid var(--color-border-strong)" : "1px solid var(--color-border)",
+                borderBottom: bottomEdge ? "2px solid var(--color-border-strong)" : "1px solid var(--color-border)",
                 boxShadow: isConflict
-                  ? `inset 0 0 0 3px ${RED}`
+                  ? "inset 0 0 0 3px var(--color-danger-solid)"
                   : isSelected
-                  ? "inset 0 0 0 2.5px #22C55E"
+                  ? "inset 0 0 0 3px var(--color-primary)"
                   : "none",
                 cursor: isGiven ? "default" : "pointer",
+                transition: "background var(--transition-fast), box-shadow var(--transition-fast)",
               }}
             >
               {val !== 0 && (
@@ -496,7 +513,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
                   style={{
                     fontSize: "clamp(16px, 5vw, 26px)",
                     fontWeight: isGiven ? 700 : 500,
-                    color: isConflict ? RED : isGiven ? CREAM : "rgba(27,33,41,0.5)",
+                    color: isConflict ? "var(--color-danger-text)" : isGiven ? "var(--color-text-primary)" : "var(--color-primary)",
                   }}
                 >
                   {val}
@@ -510,11 +527,10 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   );
 
   return (
-    <div style={{ background: BG, minHeight: "100vh" }} className="flex items-start justify-center p-4 pt-[72px]">
+    <Page style={{ alignItems: "flex-start" }}>
       <style>{`
-        .ms-card, .ms-cell { font-family: 'Inter', sans-serif; }
-        @keyframes msPulseError { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(229,72,77,1); } 50% { box-shadow: inset 0 0 0 3px rgba(229,72,77,0.25); } }
-        @keyframes msPulseHint { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(47,111,237,1); } 50% { box-shadow: inset 0 0 0 3px rgba(47,111,237,0.2); } }
+        @keyframes msPulseError { 0%, 100% { box-shadow: inset 0 0 0 3px var(--color-danger-solid); } 50% { box-shadow: inset 0 0 0 1px var(--color-danger-text); } }
+        @keyframes msPulseHint { 0%, 100% { box-shadow: inset 0 0 0 3px var(--color-primary); } 50% { box-shadow: inset 0 0 0 1px var(--color-primary); } }
         .ms-hint-error { animation: msPulseError 1.1s ease-in-out infinite; }
         .ms-hint-naked, .ms-hint-hidden, .ms-hint-forced { animation: msPulseHint 1.1s ease-in-out infinite; }
         @keyframes msCelebrate {
@@ -527,48 +543,44 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         @media (prefers-reduced-motion: reduce) {
           .ms-hint-error, .ms-hint-naked, .ms-hint-hidden, .ms-hint-forced, .ms-celebrate { animation: none !important; }
         }
+        .ms-cell:focus-visible, .ms-num-btn:focus-visible, .ms-help-button:focus-visible {
+          outline: 2px solid var(--color-primary);
+          outline-offset: -2px;
+          z-index: 2;
+        }
         @media (hover: hover) and (pointer: fine) {
-          .ms-cell:not(:disabled):hover { filter: brightness(0.96); }
-          .ms-icon-btn:hover { opacity: 0.85; }
-          .ms-play-again:hover { filter: brightness(1.08); }
-          .ms-toolbar-btn:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.03); }
-          .ms-num-btn:not(:disabled):hover { filter: brightness(1.08); transform: translateY(-1px); }
+          .ms-cell:not(:disabled):hover { background: var(--color-primary-subtle) !important; }
+          .ms-num-btn:not(:disabled):hover { transform: translateY(-1px); border-color: var(--color-primary-subtle-border) !important; }
         }
       `}</style>
 
-      <div
-        className="ms-card w-full max-w-md sm:max-w-lg lg:max-w-xl rounded-2xl p-5 lg:p-6 relative"
-        style={{ background: PANEL, boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}
-      >
+      <Card style={{ position: "relative", marginTop: 72, marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
         <button
+          type="button"
           onClick={() => setShowHelp((h) => !h)}
-          className="ms-icon-btn absolute top-4 right-4 transition-opacity"
-          style={{ color: CREAM, opacity: 0.5 }}
+          className="ms-help-button"
+          aria-label={showHelp ? "Hide instructions" : "Show instructions"}
+          aria-expanded={showHelp}
+          style={{ width: 40, height: 40, position: "absolute", top: "var(--space-3)", right: "var(--space-3)", display: "grid", placeItems: "center", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", color: "var(--color-icon-subtle)", cursor: "pointer" }}
         >
-          <HelpCircle size={16} />
+          <HelpCircle size={18} />
         </button>
 
-        {/* header */}
-        <div className="text-center mb-4">
-          <h1
-            style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }}
-            className="text-4xl lg:text-5xl"
-          >
-            Mini Sudoku
-          </h1>
-          <p style={{ color: CREAM, opacity: 0.45 }} className="text-xs mt-1">
+        <header style={{ marginBottom: "var(--space-4)", padding: "0 44px", textAlign: "center" }}>
+          <h1 style={{ margin: 0, color: "var(--color-text-primary)", fontSize: "var(--text-page-title-size)", lineHeight: "var(--text-page-title-line)", fontWeight: "var(--text-page-title-weight)" }}>Mini Sudoku</h1>
+          <p style={{ margin: "var(--space-1) 0 0", color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)", lineHeight: "var(--text-body-line)" }}>
             classic sudoku, bite-sized — every row, column &amp; box gets 1&ndash;6
           </p>
-        </div>
+        </header>
 
         {/* day selector — locked to today's date in challenge mode. Only
             relevant before solving: you already picked the day you just
             played, and it belongs on the next puzzle, not this result. */}
         {!solved && (isChallenge ? (
-          <div className="flex justify-center mb-4">
-            <div className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: `${GOLD}18`, color: GOLD }}>
-              <span className="text-xs font-semibold">{t("common.todaysChallenge")}</span>
-              <span className="text-[10px] opacity-80">{GIVEN_TARGETS[dayIdx]} givens</span>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "var(--space-4)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", padding: "7px var(--space-3)", border: "1px solid var(--color-primary-subtle-border)", borderRadius: "var(--radius-full)", background: "var(--color-primary-subtle)", color: "var(--color-primary)" }}>
+              <span style={{ fontSize: "var(--text-body-secondary-size)", fontWeight: 600 }}>{t("common.todaysChallenge")}</span>
+              <span style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>{GIVEN_TARGETS[dayIdx]} givens</span>
             </div>
           </div>
         ) : (
@@ -580,23 +592,23 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         ))}
 
         {solved && difficultyRating !== null && (
-          <div className="flex justify-center mb-3">
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "var(--space-3)" }}>
             <DifficultyRatingBadge value={difficultyRating} />
           </div>
         )}
 
         {/* stats row — redundant with GameSolvedPanel's own stats once solved */}
         {!solved && (
-          <div className="flex items-center justify-center gap-4 mb-3 px-1">
-            <div className="flex items-center gap-1.5" style={{ color: CREAM, opacity: 0.7 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexWrap: "wrap", gap: "var(--space-4)", marginBottom: "var(--space-3)", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <TimerIcon size={14} />
-              <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
+              <span style={{ fontVariantNumeric: "tabular-nums" }}>{fmtTime(seconds)}</span>
             </div>
-            <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
-              mistakes: <span style={{ color: mistakes > 0 ? RED : CREAM }}>{mistakes}</span>
+            <div>
+              mistakes: <span style={{ color: mistakes > 0 ? "var(--color-danger-text)" : "var(--color-text-primary)", fontWeight: 600 }}>{mistakes}</span>
             </div>
-            <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
-              hints: <span style={{ color: hintsUsed > 0 ? GOLD : CREAM }}>{hintsUsed}</span>
+            <div>
+              hints: <span style={{ color: hintsUsed > 0 ? "var(--color-primary)" : "var(--color-text-primary)", fontWeight: 600 }}>{hintsUsed}</span>
             </div>
           </div>
         )}
@@ -605,7 +617,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
             progress; once solved there's nothing left for any of them to do
             (Play Again in the solved panel below replaces "New"). */}
         {!solved && (
-          <div className="game-toolbar flex items-center justify-between gap-2 mb-3 px-1">
+          <div className="game-toolbar" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "var(--space-2)", marginBottom: "var(--space-3)" }}>
             {[
               { label: t("common.reset"), onClick: handleReset, disabled: solved },
               { label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
@@ -624,40 +636,34 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
                 disabled={disabled}
               />
             ) : (
-              <button
+              <Button
                 key={label}
                 onClick={onClick}
                 disabled={disabled}
                 aria-label={label}
-                className="gloss-button flex-1 rounded-lg py-2 text-xs font-semibold transition-all"
-                style={{
-                  background: disabled ? "rgba(16,24,40,0.06)" : undefined,
-                  color: disabled ? "rgba(27,33,41,0.4)" : CREAM,
-                  cursor: disabled ? "default" : "pointer",
-                }}
+                variant="secondary"
+                size="sm"
+                fullWidth
               >
                 {label}
-              </button>
+              </Button>
             ))}
           </div>
         )}
 
         {!solved && showHelp && (
-          <div
-            className="text-xs rounded-lg p-2.5 mb-3"
-            style={{ background: "rgba(16,24,40,0.05)", color: CREAM, opacity: 0.75, lineHeight: 1.4 }}
-          >
+          <StatusBanner variant="info" style={{ marginBottom: "var(--space-3)", lineHeight: "var(--text-body-line)" }}>
             Tap a cell, then tap a number to fill it — tap the same number again to clear it.
             Every row, column, and bold-bordered 2×3 box needs the digits 1 through 6 exactly once.
             Hint flags one wrong number, or fills in one cell that's already logically forced —
             never a guess.
-          </div>
+          </StatusBanner>
         )}
 
         <GameSolvedPanel
           solved={solved}
           difficultyRating={difficultyRating}
-          icon={<Grid3x3 size={26} style={{ color: GOLD }} />}
+          icon={<Grid3x3 size={26} style={{ color: "var(--color-primary)" }} />}
           stats={
             <>
               {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
@@ -674,7 +680,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
 
         {/* number palette — every button is a no-op once solved */}
         {!solved && (
-          <div className="grid grid-cols-4 gap-2 mt-4">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "var(--space-2)", marginTop: "var(--space-4)" }}>
             {paletteDigits.slice(0, 3).map((d) => (
               <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={!selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
                 {d}
@@ -695,11 +701,11 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         )}
 
         {!solved && (
-          <p style={{ color: CREAM, opacity: 0.35 }} className="text-center text-[11px] mt-3">
+          <p style={{ margin: "var(--space-3) 0 0", color: "var(--color-text-secondary)", textAlign: "center", fontSize: "var(--text-caption-size)" }}>
             {filledCount}/{N * N} filled
           </p>
         )}
-      </div>
-    </div>
+      </Card>
+    </Page>
   );
 }
