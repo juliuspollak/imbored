@@ -1,26 +1,28 @@
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { Eye } from "lucide-react";
+import { useI18n } from "./lib/i18n.jsx";
 import "./board-review-toggle.css";
 
-// Once a board game is solved, its board has nothing left to do (every
-// handler already no-ops once `solved` is true) but still costs a full
-// screen's worth of scroll if always shown. Collapse it behind a toggle so
-// the result panel is the first and, for most players, only thing visible -
-// while anyone who wants to check their finished board can still open it.
-export default function BoardReviewToggle({ children, openLabel = "Review your board", closeLabel = "Hide board" }) {
-  const [open, setOpen] = useState(false);
+/**
+ * Floating toggle pill for Solve / Review mode.
+ * Uses CSS classes from board-review-toggle.css for the visual pill,
+ * but uses design tokens for text color.
+ */
+export default function BoardReviewToggle({ reviewing, onToggle, disabled = false }) {
+  const { t } = useI18n();
   return (
-    <div className="board-review">
-      <button
-        type="button"
-        className="board-review-toggle"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-      >
-        <span>{open ? closeLabel : openLabel}</span>
-        <ChevronDown size={14} />
-      </button>
-      {open && <div className="board-review-panel">{children}</div>}
-    </div>
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={disabled}
+      className="brt-button"
+      aria-pressed={reviewing}
+      aria-label={reviewing ? t("common.solve", "Solve") : t("common.review", "Review")}
+      style={{
+        color: reviewing ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+      }}
+    >
+      <Eye size={14} />
+      <span>{reviewing ? t("common.solve", "Solve") : t("common.review", "Review")}</span>
+    </button>
   );
 }

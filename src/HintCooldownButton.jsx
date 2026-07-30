@@ -28,7 +28,7 @@ export default function HintCooldownButton({ cooldown, label = "Hint", onClick, 
           isolation: isolate;
           overflow: hidden;
           cursor: pointer;
-          color: #1B2129;
+          color: var(--color-text-primary);
           background: rgba(16,24,40,.06);
           transition: transform .16s ease, box-shadow .2s ease, border-color .2s ease;
         }
@@ -37,8 +37,8 @@ export default function HintCooldownButton({ cooldown, label = "Hint", onClick, 
           cursor: default;
           opacity: 1 !important;
           filter: none !important;
-          color: #1B2129 !important;
-          background: rgba(16,24,40,.06) !important;
+          color: var(--color-text-primary) !important;
+          background: var(--color-border) !important;
         }
         .hint-liquid-fill {
           position: absolute;
@@ -46,7 +46,7 @@ export default function HintCooldownButton({ cooldown, label = "Hint", onClick, 
           inset: 0 auto 0 0;
           width: var(--hint-fill);
           overflow: hidden;
-          background: linear-gradient(90deg, #78A7FF 0%, #4D83ED 62%, #2F6FED 100%);
+          background: linear-gradient(90deg, #78A7FF 0%, #4D83ED 62%, var(--color-primary) 100%);
           box-shadow: inset -5px 0 12px rgba(255,255,255,.32);
           transition: width 1s linear;
         }
@@ -73,25 +73,21 @@ export default function HintCooldownButton({ cooldown, label = "Hint", onClick, 
           0%, 100% { transform: translateX(-1px) rotate(0deg) scaleY(1); }
           50% { transform: translateX(3px) rotate(8deg) scaleY(1.08); }
         }
-        @media (prefers-color-scheme: dark) {
-          .hint-liquid-button,
-          .hint-liquid-button:disabled,
-          .game-toolbar .hint-liquid-button:disabled {
-            color: rgba(238,243,251,.88) !important;
-            background: rgba(255,255,255,.07) !important;
-            border-color: rgba(255,255,255,.12) !important;
-          }
-          .game-toolbar .hint-liquid-button[data-disabled-by-game="true"] {
-            color: rgba(232,238,247,.34) !important;
-            background: rgba(255,255,255,.035) !important;
-            border-color: rgba(255,255,255,.07) !important;
-            box-shadow: none !important;
-          }
-          .game-toolbar .hint-liquid-button[data-disabled-by-game="true"] .hint-liquid-fill {
-            display: none;
-          }
-          .hint-liquid-label { text-shadow: 0 1px 1px rgba(0,0,0,.32); }
+        [data-theme="dark"] .hint-liquid-button,
+        [data-theme="dark"] .hint-liquid-button:disabled {
+          color: var(--color-text-primary) !important;
+          background: rgba(255,255,255,.07) !important;
+          border-color: var(--color-border) !important;
         }
+        [data-theme="dark"] .game-toolbar .hint-liquid-button[data-disabled-by-game="true"] {
+          color: var(--color-disabled-text) !important;
+          background: rgba(255,255,255,.035) !important;
+          border-color: var(--color-border) !important;
+          box-shadow: none !important;
+        }
+        [data-theme="dark"] .game-toolbar .hint-liquid-button[data-disabled-by-game="true"] .hint-liquid-fill { display: none; }
+        [data-theme="dark"] .hint-liquid-label { text-shadow: 0 1px 1px rgba(0,0,0,.32); }
+        [data-theme="dark"] .hint-liquid-button:not(.is-filling):not(:disabled) { color: #fff; }
         @media (prefers-reduced-motion: reduce) {
           .hint-liquid-fill { transition: none; }
           .hint-liquid-wave { animation: none; }

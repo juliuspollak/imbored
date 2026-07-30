@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
 
-const INK = "#1B2129";
-const ACCENT = "#2F6FED";
+const INK = "var(--color-text-primary)";
+const ACCENT = "var(--color-primary)";
 const TRACK = "rgba(16,24,40,0.10)";
-const GREEN = "#16A34A";
+const GREEN = "var(--color-success-text)";
 
 export const BAR_COUNT = 6;
 
