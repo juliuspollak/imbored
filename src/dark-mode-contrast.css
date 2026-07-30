@@ -623,23 +623,6 @@
     background: rgba(247, 107, 107, 0.10) !important;
   }
 
-  .circle-member-menu {
-    background: rgba(35, 42, 55, 0.98) !important;
-    border-color: rgba(255, 255, 255, 0.12) !important;
-  }
-
-  .circle-member-menu button {
-    color: #f4f7fb !important;
-  }
-
-  .circle-member-menu button[style*="color: rgb(154, 106, 18)"] {
-    color: #e8c26a !important;
-  }
-
-  .circle-member-menu button[style*="color: rgb(181, 67, 58)"] {
-    color: #ff8d91 !important;
-  }
-
   .circle-invite-panel {
     background: linear-gradient(155deg, rgba(35, 45, 60, 0.94), rgba(23, 30, 42, 0.96)) !important;
     border-color: rgba(255, 255, 255, 0.11) !important;
