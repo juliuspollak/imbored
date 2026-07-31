@@ -412,6 +412,7 @@ export default function Queens({
   const dragRef = useRef({ active: false, mode: null, visited: new Set(), startCell: null, moved: false, isTouch: false });
   const boardRef = useRef(null);
   const pointerActiveRef = useRef(false);
+  const ignoreCompatibilityClickUntilRef = useRef(0);
   const lastHandledPointerRef = useRef(null);
   const handleCellClickRef = useRef(null);
   const puzzleKeyRef = useRef(0);
@@ -578,7 +579,11 @@ export default function Queens({
 
   const conflicts = validate(board);
 
-  function handleCellClick(r, c) {
+  function handleCellClick(r, c, event) {
+    // Some iOS versions still emit a compatibility click even when the
+    // touchstart was prevented. Touches are applied directly in onUp, so that
+    // delayed click must not cycle the freshly painted × into a queen.
+    if (event && event.detail !== 0 && Date.now() < ignoreCompatibilityClickUntilRef.current) return;
     if (solved || pointerActiveRef.current) return;
     setRunning(true);
     pushHistory();
@@ -665,7 +670,9 @@ export default function Queens({
         dragRef.current.active = false;
         if (wasTouch) {
           // touchstart was prevented, so no compatibility click should be
-          // generated. Apply a stationary tap exactly once here instead.
+          // generated. Apply a stationary tap exactly once here and defensively
+          // discard any delayed compatibility click iOS still generates.
+          ignoreCompatibilityClickUntilRef.current = Date.now() + 800;
           pointerActiveRef.current = false;
           if (!wasCancelled && !wasDrag && startCell) {
             handleCellClickRef.current?.(startCell.r, startCell.c);
@@ -830,7 +837,7 @@ export default function Queens({
           return (
             <button
               key={`${r}-${c}`}
-              onClick={() => handleCellClick(r, c)}
+              onClick={(event) => handleCellClick(r, c, event)}
               className={`qp-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`}
               style={{
                 "--qp-region-color": REGION_COLORS[region % REGION_COLORS.length],
