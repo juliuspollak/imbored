@@ -220,7 +220,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   }
 
   return (
-      <div style={{ background: BG, minHeight: "100vh", fontFamily: "var(--font-family)" }} className="flex items-start justify-center p-4 pt-[72px]">
+      <div style={{ background: BG, minHeight: "100vh", fontFamily: "var(--font-family)", paddingTop: "var(--game-content-top)" }} className="flex items-start justify-center p-4">
       <GameHomeButton onClick={onExit} />
       {onSwitchMode && <ModePill mode="challenge" onSwitch={onSwitchMode} />}
 

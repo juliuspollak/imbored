@@ -20,7 +20,7 @@ const FIELDS=[
   ["day_points_step","Daily difficulty step","Points added per day: Monday +0, Tuesday +1 step, through Sunday +6 steps."],
   ["minimum_points","Minimum game points","Lowest possible award for a completed game."],
   ["maximum_points","Maximum game points","Highest possible award before a separate winner's prize."],
-  ["daily_points_cap","Daily gameplay cap","Maximum gameplay points earned per Sydney day across Practice and Challenge."],
+  ["daily_points_cap","Daily Practice cap","Maximum Practice points earned per Sydney day. Challenge points are not capped."],
   ["practice_daily_limit","Daily practice limit","Number of practice games that can award points each day."],
   ["streak_protection_cost","Streak protection cost","Points charged to protect a missed streak day."],
 ];
@@ -64,7 +64,7 @@ export default function AdminRewards({onBack}){
 
     {loading?<p style={{textAlign:"center",padding:"var(--space-8)",color:"var(--color-text-secondary)"}}>Loading…</p>:<>
     {tab==="rules"&&rules&&<div style={{display:"flex",flexDirection:"column",gap:"var(--space-3)"}}>
-      <div style={{borderRadius:"var(--radius-lg)",padding:"var(--space-3)",fontSize:"var(--text-caption-size)",background:"var(--color-info-bg)",color:"var(--color-text-primary)"}}>Challenge games earn the full award. Practice earns half, only three Practice completions of each game score per day, and gameplay stops after 40 points in a Sydney day.</div>
+      <div style={{borderRadius:"var(--radius-lg)",padding:"var(--space-3)",fontSize:"var(--text-caption-size)",background:"var(--color-info-bg)",color:"var(--color-text-primary)"}}>Challenge games earn the full award without a daily cap. Practice earns half, only three Practice completions of each game score per day, and Practice earnings stop after {rules.daily_points_cap || 40} points in a Sydney day.</div>
       {practiceUsage&&<div style={{borderRadius:"var(--radius-lg)",padding:"var(--space-3)",fontSize:"var(--text-caption-size)",background:"var(--color-success-bg)",color:"var(--color-text-primary)"}}><div style={{fontWeight:600}}>Your practice rewards today (limit {practiceUsage.daily_limit} per game)</div><div style={{marginTop:"var(--space-1)",opacity:.7}}>{practiceUsage.by_game?.length?practiceUsage.by_game.map(i=>`${i.game} ${i.rewarded_count}/${practiceUsage.daily_limit}`).join(" · "):"None yet"}</div></div>}
       <Card style={{padding:"var(--space-4)",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"var(--space-3)"}}>
         {FIELDS.map(([key,label,help])=><label key={key} style={{fontSize:11}}>

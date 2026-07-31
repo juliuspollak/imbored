@@ -32,7 +32,7 @@ function gameBreakdown(item){
   if(item.reason_code!=="GAME_COMPLETED") return [];
   const m=item.metadata||{};
   if(m.economy_rebased) return [["Previous scale",m.pre_v137_points],["Rebalanced",m.rebased_points]].filter(([,v])=>Number(v)!==0);
-  return [["Base",m.base],["Day difficulty",m.day_bonus],["Speed",m.time],["Hints",m.hints],["Mistakes",m.mistakes],["Weekly streak",m.weekly_streak],["Practice rate",m.mode_adjustment],["Adjustment",m.limit_adjustment],["Daily cap",m.daily_cap_adjustment]].filter(([,v])=>Number(v)!==0);
+  return [["Base",m.base],["Day difficulty",m.day_bonus],["Speed",m.time],["Hints",m.hints],["Mistakes",m.mistakes],["Weekly streak",m.weekly_streak],["Practice rate",m.mode_adjustment],["Adjustment",m.limit_adjustment],["Practice cap",m.daily_cap_adjustment]].filter(([,v])=>Number(v)!==0);
 }
 
 export default function Progress({ onBack, onOpenRewards }) {
@@ -120,7 +120,7 @@ export default function Progress({ onBack, onOpenRewards }) {
 
         <div style={{borderRadius:"var(--radius-lg)",padding:"var(--space-3)",marginBottom:"var(--space-3)",display:"flex",alignItems:"flex-start",gap:"var(--space-2)",background:"var(--color-info-bg)",color:"var(--color-text-primary)"}}>
           <Info size={14} style={{color:"var(--color-primary)",flexShrink:0,marginTop:2}}/>
-          <span style={{fontSize:10,lineHeight:1.5,opacity:.65}}>Lifetime points raise your level and never decrease when you spend or send points. Gameplay can earn up to {rules?.daily_points_cap||40} points per Sydney day; only the first {rules?.practice_daily_limit||3} Practice games score per game each day, at {rules?.practice_points_percent||50}% of Challenge points.</span>
+          <span style={{fontSize:10,lineHeight:1.5,opacity:.65}}>Lifetime points raise your level and never decrease when you spend or send points. Practice can earn up to {rules?.daily_points_cap||40} points per Sydney day; only the first {rules?.practice_daily_limit||3} Practice games per game score each day, at {rules?.practice_points_percent||50}% of Challenge points. Challenge points are not capped.</span>
         </div>
 
         {onOpenRewards&&<button onClick={onOpenRewards} style={{width:"100%",marginBottom:"var(--space-3)",borderRadius:"var(--radius-lg)",padding:"var(--space-3)",display:"flex",alignItems:"center",gap:"var(--space-3)",textAlign:"left",background:"var(--color-surface)",border:"1px solid var(--color-border)",cursor:"pointer",color:"inherit"}}>

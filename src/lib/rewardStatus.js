@@ -12,8 +12,12 @@ export function rewardStatusText(reward, fallback = "No points awarded") {
     const earned = reward.daily_points_earned;
     const cap = reward.daily_points_cap;
     return Number.isFinite(earned) && Number.isFinite(cap)
-      ? `Daily cap reached (${earned}/${cap}) — resets tomorrow`
-      : "Daily points cap reached — resets tomorrow";
+      ? `Practice points limit reached: ${earned} of ${cap} today · resets tomorrow`
+      : "Practice points limit reached for today · resets tomorrow";
+  }
+  if (/^\s*\d+\s*\/\s*\d+\s*$/.test(reward.message || "")) {
+    const [earned, cap] = reward.message.split("/").map((value) => Number(value.trim()));
+    return `Practice points limit reached: ${earned} of ${cap} today · resets tomorrow`;
   }
   return reward.message || fallback;
 }

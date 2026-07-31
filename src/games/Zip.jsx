@@ -878,8 +878,8 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
 
   return (
     <div
-      style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}
-      className="flex items-start justify-center p-4 pt-[72px]"
+      style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif", paddingTop: "var(--game-content-top)" }}
+      className="flex items-start justify-center p-4"
     >
       <style>{`
         .game-toolbar > * { width: 100%; min-width: 0; }

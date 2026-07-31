@@ -556,7 +556,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         }
       `}</style>
 
-      <Card style={{ position: "relative", marginTop: 72, marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
+      <Card style={{ position: "relative", marginTop: "var(--game-content-top)", marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
         <button
           type="button"
           onClick={() => setShowHelp((h) => !h)}
