@@ -585,7 +585,8 @@ export default function Queens({
     setBoard((prev) => {
       const next = prev.map((row) => row.slice());
       next[r][c] = (next[r][c] + 1) % 3;
-      if (next[r][c] === 2 && puzzle.solution[r] !== c) setMistakes((m) => m + 1);
+      // Cell editing is exploratory: do not penalise a second tap that cycles
+      // × to a crown. Invalid crown combinations are already shown as conflicts.
       const allCorrect = next.every((row, rr) => row[puzzle.solution[rr]] === 2) && next.flat().filter((v) => v === 2).length === boardSize;
       if (allCorrect) {
         setSolved(true);
@@ -876,7 +877,7 @@ export default function Queens({
   );
 
   return (
-    <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-start justify-center p-4 pt-[72px]">
+    <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif", paddingTop: "var(--game-content-top)" }} className="flex items-start justify-center p-4">
       <style>{`
         .game-toolbar > * { width: 100%; min-width: 0; }
         @keyframes qp-pop {

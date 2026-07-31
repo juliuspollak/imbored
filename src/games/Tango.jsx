@@ -12,18 +12,19 @@ import DaySelector from "../DaySelector.jsx";
 import Button from "../components/Button.jsx";
 
 function SunIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
+  const gradientId = React.useId().replace(/:/g, "");
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
       <defs>
-        <linearGradient id="tango-sun-face" x1="6" y1="5" x2="18" y2="19" gradientUnits="userSpaceOnUse">
+        <linearGradient id={gradientId} x1="6" y1="5" x2="18" y2="19" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#FFC64A" />
           <stop offset="100%" stopColor="#F59E0B" />
         </linearGradient>
       </defs>
       <circle
         cx="12" cy="12" r="7.55"
-        fill={isConflict ? "#E5484D" : "url(#tango-sun-face)"}
-        stroke={isConflict ? "#C9363B" : "#D97706"}
+        fill={`url(#${gradientId})`}
+        stroke="#D97706"
         strokeWidth="1.35"
       />
     </svg>
@@ -31,10 +32,11 @@ function SunIcon({ size = 24, className = "", style, isConflict = false, ...prop
 }
 
 function ModernMoonIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
+  const gradientId = React.useId().replace(/:/g, "");
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
       <defs>
-        <linearGradient id="tango-moon-face" x1="6" y1="4" x2="18" y2="20" gradientUnits="userSpaceOnUse">
+        <linearGradient id={gradientId} x1="6" y1="4" x2="18" y2="20" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#67A8FF" />
           <stop offset="55%" stopColor="#3478D4" />
           <stop offset="100%" stopColor="#1855AA" />
@@ -42,8 +44,8 @@ function ModernMoonIcon({ size = 24, className = "", style, isConflict = false, 
       </defs>
       <path
         d="M19.75 15.55A8.65 8.65 0 0 1 8.45 4.25a8.9 8.9 0 1 0 11.3 11.3Z"
-        fill={isConflict ? "#E5484D" : "url(#tango-moon-face)"}
-        stroke={isConflict ? "#C9363B" : "#174A91"}
+        fill={`url(#${gradientId})`}
+        stroke="#174A91"
         strokeWidth="1.15"
         strokeLinejoin="round"
       />
@@ -668,8 +670,8 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
 
   return (
     <div
-      style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}
-      className="flex items-start justify-center p-4 pt-[72px]"
+      className="flex items-start justify-center p-4"
+      style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif", paddingTop: "var(--game-content-top)" }}
     >
       <style>{`
         .game-toolbar > * { width: 100%; min-width: 0; }
@@ -703,7 +705,8 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           transition: border-color .18s ease, background .18s ease, transform .18s ease;
           pointer-events: none;
         }
-        .tg-cell:not(:disabled):hover::after { border-color: rgba(74,111,165,.18); background: rgba(255,255,255,.4); transform: scale(.96); }
+        .tg-cell { -webkit-tap-highlight-color: transparent; }
+        .tg-cell:focus { outline: none; }
         .tg-symbol-disc {
           width: clamp(38px, 13cqw, 56px);
           height: clamp(38px, 13cqw, 56px);
@@ -726,6 +729,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           .tg-symbol, .tg-card, .tg-hint-error, .tg-hint-forced, .tg-hint-next, .tg-line-complete, .tg-line-spark, .tg-board-shell::before, .tg-board-shell::after { animation: none !important; }
         }
         @media (hover: hover) and (pointer: fine) {
+          .tg-cell:not(:disabled):hover::after { border-color: rgba(74,111,165,.18); transform: scale(.96); }
           .tg-cell:not(:disabled):hover { filter: brightness(1.03); }
           .tg-icon-btn:hover { opacity: 0.85; }
           .tg-play-again:hover { filter: brightness(1.08); }
