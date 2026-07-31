@@ -18,6 +18,7 @@ import TextInput from "./components/TextInput.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
 import AvatarGroup from "./components/AvatarGroup.jsx";
 
+
 const CIRCLE_EMOJIS = ["🎮","🧩","🚀","🔥","⭐","🏆","🦄","🐉","🦊","🐼","🌈","⚡","💎","👑","🎯","🛸"];
 const DAYS = [{id:1,label:"Mon"},{id:2,label:"Tue"},{id:3,label:"Wed"},{id:4,label:"Thu"},{id:5,label:"Fri"},{id:6,label:"Sat"},{id:7,label:"Sun"}];
 const DEFAULT_GAMES = ["queens","tango","zip","minisudoku","geo","zoom"];
