@@ -616,11 +616,24 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
 function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenCircles, onOpenChats, onOpenStats, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, onOpenRewardRequests, onOpenOrganiserRewards, organiserAttentionCount = 0, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
   const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [seenOrganiserAttentionCount, setSeenOrganiserAttentionCount] = useState(0);
   const menuRef = useRef(null);
   const isAdmin = !!profile.is_admin;
   const feedbackBadgeCount = isAdmin ? openFeedbackCount : completedFeedbackCount;
-  const totalNotifications = feedbackBadgeCount + newTransfersCount + myRedemptionUpdates + openRewardRequestsCount + organiserAttentionCount + unreadMessages.total
+  const unseenOrganiserAttentionCount = Math.max(0, organiserAttentionCount - seenOrganiserAttentionCount);
+  const totalNotifications = feedbackBadgeCount + newTransfersCount + myRedemptionUpdates + openRewardRequestsCount + unseenOrganiserAttentionCount + unreadMessages.total
     + (sectionSignals.whatsnew ? 1 : 0) + (sectionSignals.circles ? 1 : 0);
+
+  useEffect(() => {
+    setSeenOrganiserAttentionCount(0);
+  }, [userId]);
+
+  useEffect(() => {
+    // Keep the acknowledgement aligned when an organiser actions an item. The
+    // unresolved total remains visible beside Organise rewards, while only a
+    // later increase is considered new enough to light up the account bubble.
+    setSeenOrganiserAttentionCount((seen) => Math.min(seen, organiserAttentionCount));
+  }, [organiserAttentionCount]);
 
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -658,6 +671,11 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
   function openItem(item) {
     setMenuOpen(false);
     item.onClick?.();
+  }
+
+  function toggleMenu() {
+    if (!menuOpen) setSeenOrganiserAttentionCount(organiserAttentionCount);
+    setMenuOpen(!menuOpen);
   }
 
   const accountBadge = (
@@ -705,7 +723,7 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
       )}
       <button
         type="button"
-        onClick={() => setMenuOpen((value) => !value)}
+        onClick={toggleMenu}
         className="nav-btn grid place-items-center rounded-full"
         aria-label={t("account.open")}
         aria-haspopup="menu"
