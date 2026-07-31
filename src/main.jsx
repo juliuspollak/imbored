@@ -10,6 +10,7 @@ import "./index.css";
 import "./theme.css";
 import "./game-solved-panel.css";
 import "./board-review-toggle.css";
+import "./circle-portal.css";
 
 enableAutomaticAppUpdates();
 
