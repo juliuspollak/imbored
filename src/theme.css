@@ -102,6 +102,10 @@
   --global-player-bubble-offset: 16px;
   --global-player-bubble-gap: 12px;
   --global-header-safe-right: calc(var(--global-player-bubble-size) + var(--global-player-bubble-gap));
+  --game-content-top: calc(
+    max(var(--global-player-bubble-offset), env(safe-area-inset-top)) +
+      var(--control-height-md) + var(--space-3)
+  );
 
   /* ---- Typography ---- */
   --font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif;

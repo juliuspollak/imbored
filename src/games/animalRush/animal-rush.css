@@ -34,7 +34,7 @@
   width: min(100%, 430px);
   min-height: 100svh;
   margin: 0 auto;
-  padding: max(64px, calc(env(safe-area-inset-top) + 48px)) 16px
+  padding: var(--game-content-top) 16px
     max(22px, env(safe-area-inset-bottom));
 }
 
@@ -824,10 +824,6 @@
 }
 
 @media (max-height: 720px) {
-  .rush-shell {
-    padding-top: 54px;
-  }
-
   .rush-target {
     width: 88px;
     height: 88px;
