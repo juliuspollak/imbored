@@ -1,0 +1,72 @@
+.hive-game-tile {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.hive-game-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .24;
+  background-image:
+    linear-gradient(30deg, rgba(255, 191, 36, .34) 12%, transparent 12.5%, transparent 87%, rgba(255, 191, 36, .34) 87.5%),
+    linear-gradient(150deg, rgba(255, 191, 36, .34) 12%, transparent 12.5%, transparent 87%, rgba(255, 191, 36, .34) 87.5%),
+    linear-gradient(30deg, rgba(255, 191, 36, .24) 12%, transparent 12.5%, transparent 87%, rgba(255, 191, 36, .24) 87.5%),
+    linear-gradient(150deg, rgba(255, 191, 36, .24) 12%, transparent 12.5%, transparent 87%, rgba(255, 191, 36, .24) 87.5%),
+    linear-gradient(60deg, rgba(255, 191, 36, .18) 25%, transparent 25.5%, transparent 75%, rgba(255, 191, 36, .18) 75%);
+  background-size: 24px 42px;
+  background-position: 0 0, 0 0, 12px 21px, 12px 21px, 0 0;
+  mask-image: linear-gradient(120deg, #000, transparent 72%);
+}
+
+.hive-game-tile::after {
+  content: "🐝";
+  position: absolute;
+  right: 14px;
+  top: 12px;
+  z-index: 2;
+  font-size: 30px;
+  line-height: 1;
+  filter: drop-shadow(0 5px 7px rgba(87, 54, 0, .22));
+  transform: rotate(-8deg);
+  pointer-events: none;
+}
+
+.hive-branded-surface {
+  --hive-honey: #f6b91f;
+  --hive-amber: #d98b08;
+}
+
+.hive-bee-piece {
+  display: inline-grid;
+  place-items: center;
+  width: 1em;
+  height: 1em;
+  font-size: 1.08em;
+  line-height: 1;
+  transform: translateY(-1px);
+  filter: drop-shadow(0 2px 2px rgba(79, 49, 0, .2));
+  animation: hive-bee-arrive 180ms cubic-bezier(.2, .9, .25, 1.25) both;
+}
+
+.hive-branded-surface [aria-pressed="true"] .hive-bee-piece,
+.hive-branded-surface button:active .hive-bee-piece {
+  transform: translateY(-1px) scale(.94);
+}
+
+@keyframes hive-bee-arrive {
+  from { opacity: 0; transform: translateY(3px) scale(.65) rotate(-12deg); }
+  to { opacity: 1; transform: translateY(-1px) scale(1) rotate(0); }
+}
+
+@media (prefers-color-scheme: dark) {
+  .hive-game-tile::before { opacity: .18; }
+  .hive-game-tile::after { filter: drop-shadow(0 5px 9px rgba(0, 0, 0, .42)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hive-bee-piece { animation: none; }
+}
