@@ -139,12 +139,12 @@ export default function ReleaseNotes({ onBack }) {
                       <span style={{ fontSize: 10, color: "var(--color-text-secondary)" }}>{fmtDate(n.created_at)}</span>
                       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-1)", marginLeft: "auto" }}>
                         <button onClick={() => setReaction(n.id, "up")} disabled={savingReactionId === n.id} aria-pressed={mine === "up"} title={mine === "up" ? "Remove thumbs up" : "Thumbs up"}
-                          style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: "var(--radius-full)", padding: "2px 6px", fontSize: 10, fontWeight: 600, background: mine === "up" ? "var(--color-success-bg)" : "rgba(16,24,40,0.05)", color: mine === "up" ? "var(--color-success-text)" : "var(--color-text-primary)", opacity: mine === "up" ? 1 : 0.5, border: "none", cursor: "pointer" }}>
+                          style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: "var(--radius-full)", padding: "2px 6px", fontSize: 10, fontWeight: 600, background: mine === "up" ? "var(--color-success-bg)" : "var(--color-surface-elevated)", color: mine === "up" ? "var(--color-success-text)" : "var(--color-text-secondary)", border: "1px solid var(--color-border)", cursor: "pointer" }}>
                           <ThumbsUp size={11} fill={mine === "up" ? "currentColor" : "none"} />
                           <span>{upCount}</span>
                         </button>
                         <button onClick={() => setReaction(n.id, "down")} disabled={savingReactionId === n.id} aria-pressed={mine === "down"} title={mine === "down" ? "Remove thumbs down" : "Thumbs down"}
-                          style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: "var(--radius-full)", padding: "2px 6px", fontSize: 10, fontWeight: 600, background: mine === "down" ? "var(--color-danger-bg)" : "rgba(16,24,40,0.05)", color: mine === "down" ? "var(--color-danger-text)" : "var(--color-text-primary)", opacity: mine === "down" ? 1 : 0.5, border: "none", cursor: "pointer" }}>
+                          style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: "var(--radius-full)", padding: "2px 6px", fontSize: 10, fontWeight: 600, background: mine === "down" ? "var(--color-danger-bg)" : "var(--color-surface-elevated)", color: mine === "down" ? "var(--color-danger-text)" : "var(--color-text-secondary)", border: "1px solid var(--color-border)", cursor: "pointer" }}>
                           <ThumbsDown size={11} fill={mine === "down" ? "currentColor" : "none"} />
                           <span>{downCount}</span>
                         </button>

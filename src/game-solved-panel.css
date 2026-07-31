@@ -5,22 +5,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 16px 0;
-  color: #1b2129;
+  gap: var(--space-2);
+  padding: var(--space-4) 0;
+  color: var(--color-text-primary);
 }
 
 .game-solved-title {
-  font-family: "Fredoka", sans-serif;
-  font-weight: 600;
-  font-size: 1.5rem;
+  font-family: var(--font-family);
+  font-weight: var(--text-card-title-weight);
+  font-size: var(--text-page-title-size);
   color: inherit;
 }
 
 .game-solved-stats {
-  font-size: 0.75rem;
-  color: inherit;
-  opacity: 0.7;
+  font-size: var(--text-body-secondary-size);
+  color: var(--color-text-secondary);
   margin-bottom: 4px;
 }
 
@@ -29,13 +28,15 @@
   padding: 4px 12px;
   font-size: 0.875rem;
   font-weight: 700;
-  background: rgba(217, 174, 88, 0.14);
-  color: #b88724;
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+  border: 1px solid var(--color-warning-border);
 }
 
 .game-solved-reward.is-error {
-  background: rgba(181, 67, 58, 0.10);
-  color: #b5433a;
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  border-color: var(--color-danger-solid);
 }
 
 .game-solved-finalising-row {
@@ -50,21 +51,24 @@
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: #2f6fed;
+  background: var(--color-primary);
   animation: game-solved-pulse 1.4s ease-in-out infinite;
 }
 
 .game-solved-finalising-text {
   font-size: 0.75rem;
   font-weight: 500;
-  color: inherit;
-  opacity: 0.65;
+  color: var(--color-text-secondary);
   padding: 4px 0;
 }
 
 .game-solved-play-again {
-  background: #2f6fed;
-  color: #ffffff;
+  min-height: var(--control-height-sm);
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+  border: 0;
+  cursor: pointer;
+  box-shadow: var(--shadow-primary);
 }
 
 /* Rated/finalising/spinner swap in once savedStatId (or completionFinished)
@@ -83,22 +87,12 @@
   50% { opacity: 1; transform: scale(1); }
 }
 
-@media (prefers-color-scheme: dark) {
-  .game-solved-panel {
-    color: #f4f7fb !important;
-  }
+.game-solved-play-again:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 
-  .game-solved-panel .difficulty-rating {
-    color: #f4f7fb;
-  }
-
-  .game-solved-panel .difficulty-rating-bar[data-selected="false"] {
-    background: rgba(255, 255, 255, 0.16) !important;
-  }
-
-  .game-solved-panel .difficulty-rating-labels,
-  .game-solved-panel .difficulty-rating > div:first-child {
-    color: rgba(232, 238, 247, 0.70) !important;
-    opacity: 1 !important;
-  }
+@media (prefers-reduced-motion: reduce) {
+  .game-solved-rating-in,
+  .game-solved-finalising-dot { animation: none; }
 }

@@ -23,6 +23,7 @@ export default function BackButton({ onClick, ariaLabel = "Back to home", classN
       aria-label={ariaLabel}
     >
       <ArrowLeft size={20} />
+      <style>{`.design-back-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }`}</style>
     </button>
   );
 }

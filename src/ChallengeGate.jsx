@@ -209,9 +209,9 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           rewardResult={rewardResult}
         />
         {saveError && (
-          <div className="fixed left-4 right-4 bottom-5 z-[130] mx-auto max-w-sm rounded-2xl p-3 flex items-center gap-3" role="alert" style={{ background:"rgba(255,255,255,.98)",border:"1px solid rgba(181,67,58,.28)",boxShadow:"0 16px 44px rgba(16,24,40,.22)",color:"#9F2F2A" }}>
+          <div className="fixed left-4 right-4 bottom-5 z-[130] mx-auto max-w-sm rounded-2xl p-3 flex items-center gap-3" role="alert" style={{ background:"var(--color-surface-raised)",border:"1px solid var(--color-danger-solid)",boxShadow:"var(--shadow-menu)",color:"var(--color-danger-text)" }}>
             <span className="flex-1 text-xs font-semibold">{saveError}</span>
-            <button type="button" disabled={!lastSolvedStats && !pointsRetryStatId} onClick={retryResultSave} className="rounded-full px-3 py-2 text-xs font-bold text-white disabled:opacity-40" style={{ background:"#B5433A" }}>Retry</button>
+            <button type="button" disabled={!lastSolvedStats && !pointsRetryStatId} onClick={retryResultSave} className="rounded-full px-3 py-2 text-xs font-bold disabled:opacity-40" style={{ background:"var(--color-danger-solid)", color:"var(--color-primary-text)" }}>Retry</button>
           </div>
         )}
         {onSwitchMode && <ModePill mode="challenge" onSwitch={onSwitchMode} />}
@@ -250,7 +250,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           </div>
         )}
         {startError && (
-          <div className="text-xs rounded-lg p-3 mb-4 flex items-center justify-between" style={{ background: "rgba(217,105,92,0.1)", color: "#B5433A" }}>
+          <div className="text-xs rounded-lg p-3 mb-4 flex items-center justify-between" style={{ background: "var(--color-danger-bg)", color: "var(--color-danger-text)", border: "1px solid var(--color-danger-solid)" }}>
             <span>{startError}</span><button onClick={() => setStartError("")} style={{ background: "transparent", border: "none", cursor: "pointer", color: "inherit" }}><X size={13} /></button>
           </div>
         )}
@@ -290,8 +290,8 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                     }}
                     className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-left"
                     style={{
-                      background: result ? "rgba(22,163,74,0.05)" : isPlayable ? "rgba(47,111,237,0.05)" : "rgba(16,24,40,0.03)",
-                      border: isPlayable ? `1.5px solid ${isToday ? ACCENT : "rgba(47,111,237,0.4)"}` : "1px solid rgba(16,24,40,0.07)",
+                      background: result ? "var(--color-success-bg)" : isPlayable ? "var(--color-primary-subtle)" : "var(--color-surface-elevated)",
+                      border: isPlayable ? `1.5px solid ${isToday ? ACCENT : "var(--color-primary-subtle-border)"}` : "1px solid var(--color-border)",
                       opacity: isFuture ? 0.45 : 1,
                       cursor: result || isPlayable ? "pointer" : "default",
                     }}
@@ -300,7 +300,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                       className="flex items-center justify-center rounded-full flex-shrink-0"
                       style={{
                         width: 32, height: 32,
-                        background: result ? "rgba(22,163,74,0.12)" : isFuture ? "rgba(16,24,40,0.05)" : "rgba(47,111,237,0.12)",
+                        background: result ? "var(--color-success-bg)" : isFuture ? "var(--color-surface-elevated)" : "var(--color-primary-subtle)",
                       }}
                     >
                       {isFuture ? (
@@ -334,7 +334,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                   </button>
 
                   {isExpanded && result && (
-                    <div className="rounded-xl px-4 py-3 mt-1" style={{ background: "rgba(16,24,40,0.03)" }}>
+                    <div className="rounded-xl px-4 py-3 mt-1" style={{ background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)" }}>
                       <div className="grid grid-cols-3 gap-2 mb-2">
                         <Stat label="Time" value={fmtTime(result.seconds)} />
                         <Stat

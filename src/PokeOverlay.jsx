@@ -37,12 +37,11 @@ export default function PokeOverlay({ poke, onDismiss }) {
           align-items: center;
           gap: 11px;
           padding: 12px 12px 12px 14px;
-          color: #1B2129;
-          background: rgba(255, 255, 255, .96);
-          border: 1px solid rgba(255, 255, 255, .9);
-          border-radius: 16px;
-          box-shadow: 0 12px 32px rgba(16, 24, 40, .18);
-          backdrop-filter: blur(12px);
+          color: var(--color-text-primary);
+          background: var(--color-surface-raised);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-lg);
+          box-shadow: var(--shadow-menu);
           animation: pokeSlideIn .25s cubic-bezier(.2, .8, .2, 1);
           pointer-events: auto;
         }
@@ -52,8 +51,8 @@ export default function PokeOverlay({ poke, onDismiss }) {
           flex: 0 0 34px;
           width: 34px;
           height: 34px;
-          border-radius: 11px;
-          background: #fff3cf;
+          border-radius: var(--radius-sm);
+          background: var(--color-warning-bg);
           font-size: 18px;
         }
         .poke-notification__message {
@@ -70,16 +69,16 @@ export default function PokeOverlay({ poke, onDismiss }) {
           padding: 0;
           border: 0;
           border-radius: 10px;
-          color: #667085;
+          color: var(--color-text-secondary);
           background: transparent;
           font: 700 20px/1 system-ui, sans-serif;
           cursor: pointer;
         }
         .poke-notification__dismiss:hover,
         .poke-notification__dismiss:focus-visible {
-          color: #1B2129;
-          background: rgba(16, 24, 40, .07);
-          outline: none;
+          color: var(--color-text-primary);
+          background: var(--color-surface-elevated);
+          outline: 2px solid var(--color-primary);
         }
         @media (max-width: 520px) {
           .poke-notification-layer {

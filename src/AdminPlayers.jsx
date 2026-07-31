@@ -83,7 +83,7 @@ export default function AdminPlayers({ onBack }) {
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ fontWeight: 600, fontSize: "var(--text-body-size)", color: "var(--color-text-primary)" }} className="truncate">{player.name}</span>
               {player.is_admin && <Crown size={11} style={{ color: "var(--color-warning-gold)" }} />}
-              {player.is_reward_steward && <Gift size={11} style={{ color: "#7C3AED" }} />}
+              {player.is_reward_steward && <Gift size={11} style={{ color: "var(--color-primary)" }} />}
               {player.is_private && <Lock size={10} style={{ opacity: .35 }} />}
             </div>
             <div style={{ fontSize: 11, color: online ? "var(--color-success-text)" : "var(--color-text-secondary)" }}>
@@ -97,7 +97,7 @@ export default function AdminPlayers({ onBack }) {
             </Button>
           )}
           {!player.is_admin && (
-            <button onClick={() => setExpandedId(expanded ? null : player.id)} aria-label={`More actions for ${player.name}`} style={{ width: 32, height: 32, borderRadius: "var(--radius-sm)", background: "rgba(16,24,40,0.045)", border: "none", cursor: "pointer", display: "grid", placeItems: "center" }}>
+            <button onClick={() => setExpandedId(expanded ? null : player.id)} aria-label={`More actions for ${player.name}`} style={{ width: 32, height: 32, borderRadius: "var(--radius-sm)", background: "var(--color-surface-elevated)", color: "var(--color-icon-subtle)", border: "1px solid var(--color-border)", cursor: "pointer", display: "grid", placeItems: "center" }}>
               <Ellipsis size={16} />
             </button>
           )}
@@ -107,7 +107,7 @@ export default function AdminPlayers({ onBack }) {
             {!approval && <Button size="sm" variant="ghost" onClick={() => handleApproval(player.id, false)}>Require approval</Button>}
             <Button size="sm" variant="ghost" before={player.is_blocked ? <RotateCcw size={11} /> : <ShieldBan size={11} />} onClick={() => player.is_blocked ? handleAccountAction("unblock", player) : setActionTarget({ type: "block", player, reason: "" })} style={{ color: player.is_blocked ? "var(--color-success-text)" : "var(--color-danger-text)" }}>{player.is_blocked ? "Unblock" : "Block"}</Button>
             <Button size="sm" variant="ghost" before={<EyeOff size={11} />} onClick={() => handleToggleHidden(player)}>{player.hidden_from_others ? "Show" : "Hide"}</Button>
-            <Button size="sm" variant="ghost" before={<Gift size={11} />} onClick={() => handleToggleRewardSteward(player)} style={{ color: player.is_reward_steward ? "#7C3AED" : undefined }}>{player.is_reward_steward ? "Remove steward" : "Make steward"}</Button>
+            <Button size="sm" variant="ghost" before={<Gift size={11} />} onClick={() => handleToggleRewardSteward(player)} style={{ color: player.is_reward_steward ? "var(--color-primary)" : undefined }}>{player.is_reward_steward ? "Remove steward" : "Make steward"}</Button>
             <Button size="sm" variant="ghost" before={<UserX size={11} />} onClick={() => setActionTarget({ type: "delete", player, reason: "" })} style={{ color: "var(--color-danger-text)" }}>Delete</Button>
           </div>
         )}

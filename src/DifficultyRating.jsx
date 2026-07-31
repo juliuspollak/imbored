@@ -3,7 +3,7 @@ import { Check } from "lucide-react";
 
 const INK = "var(--color-text-primary)";
 const ACCENT = "var(--color-primary)";
-const TRACK = "rgba(16,24,40,0.10)";
+const TRACK = "var(--color-border-strong)";
 const GREEN = "var(--color-success-text)";
 
 export const BAR_COUNT = 6;
@@ -53,10 +53,10 @@ export function DifficultyRatingBadge({ value }) {
   return (
     <div
       className="inline-flex items-center gap-2 rounded-full px-3 py-1.5"
-      style={{ background: "rgba(47,111,237,0.08)", color: INK }}
+      style={{ background: "var(--color-primary-subtle)", color: INK, border: "1px solid var(--color-primary-subtle-border)" }}
       aria-label={`Your difficulty rating: ${describe(selected)}`}
     >
-      <span className="text-[10px] font-semibold" style={{ opacity: 0.55 }}>Your rating</span>
+      <span className="text-[10px] font-semibold" style={{ color: "var(--color-text-secondary)" }}>Your rating</span>
       <RatingBars selected={selected} compact />
       <span className="text-[10px] font-semibold" style={{ color: ACCENT }}>{describe(selected)}</span>
     </div>
@@ -98,7 +98,7 @@ export default function DifficultyRating({ onRate, onRated }) {
             type="button"
             onClick={() => onRated(Math.round((selected / (BAR_COUNT - 1)) * 100))}
             className="mt-1 rounded-full px-4 py-1.5 text-xs font-semibold transition-colors"
-            style={{ background: ACCENT, color: "#FFFFFF" }}
+            style={{ background: ACCENT, color: "var(--color-primary-text)" }}
           >
             View board
           </button>
@@ -109,7 +109,7 @@ export default function DifficultyRating({ onRate, onRated }) {
 
   return (
     <div className="difficulty-rating flex flex-col items-center">
-      <div style={{ color: INK, opacity: 0.5 }} className="text-xs mb-3">
+      <div style={{ color: "var(--color-text-secondary)" }} className="text-xs mb-3">
         {saving ? "Saving your rating…" : "How did that feel?"}
       </div>
       <div className="flex items-end gap-1.5" style={{ height: 52 }}>
@@ -122,7 +122,7 @@ export default function DifficultyRating({ onRate, onRated }) {
               disabled={saving}
               aria-label={`Difficulty level ${i + 1} of ${BAR_COUNT}`}
               className="flex items-end"
-              style={{ width: 28, height: 52, cursor: saving ? "wait" : "pointer" }}
+              style={{ width: 28, height: 52, padding: 0, border: 0, background: "transparent", cursor: saving ? "wait" : "pointer" }}
             >
               <div
                 className="difficulty-rating-bar"
@@ -141,8 +141,8 @@ export default function DifficultyRating({ onRate, onRated }) {
         })}
       </div>
       <div className="difficulty-rating-labels flex justify-between w-full mt-2" style={{ maxWidth: BAR_COUNT * 28 + (BAR_COUNT - 1) * 6 }}>
-        <span style={{ color: INK, opacity: 0.4 }} className="text-[10px]">Too easy</span>
-        <span style={{ color: INK, opacity: 0.4 }} className="text-[10px]">Too hard</span>
+        <span style={{ color: "var(--color-text-muted)" }} className="text-[10px]">Too easy</span>
+        <span style={{ color: "var(--color-text-muted)" }} className="text-[10px]">Too hard</span>
       </div>
     </div>
   );

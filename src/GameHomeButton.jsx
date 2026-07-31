@@ -9,12 +9,12 @@ export default function GameHomeButton({ onClick }) {
       className="nav-btn flex shrink-0 items-center justify-center rounded-full"
       style={{
         position: "fixed",
-        top: "max(16px, env(safe-area-inset-top))",
+        top: "max(var(--global-player-bubble-offset), env(safe-area-inset-top))",
         left: "max(16px, calc((100vw - var(--game-nav-width, 512px)) / 2))",
         zIndex: 50,
-        width: 36,
-        height: 36,
-        minHeight: 36,
+        width: "var(--control-height-md)",
+        height: "var(--control-height-md)",
+        minHeight: "var(--control-height-md)",
         padding: 0,
         color: "var(--color-icon-primary)",
         background: "var(--color-surface)",
@@ -33,6 +33,7 @@ export default function GameHomeButton({ onClick }) {
       title="Home"
     >
       <Home size={17} />
+      <style>{`.nav-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }`}</style>
     </button>
   );
 }

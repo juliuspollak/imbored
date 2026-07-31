@@ -192,7 +192,7 @@ export default function Feedback({ onBack }) {
 
                         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginTop: "var(--space-3)" }}>
                           <button onClick={() => toggleVote(item.id, iVoted)}
-                            style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: "var(--radius-full)", padding: "6px 12px", fontSize: "var(--text-caption-size)", fontWeight: 600, background: iVoted ? "var(--color-primary-subtle)" : "rgba(16,24,40,0.05)", color: iVoted ? "var(--color-primary)" : "var(--color-text-primary)", border: "none", cursor: "pointer" }}>
+                            style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: "var(--radius-full)", padding: "6px 12px", fontSize: "var(--text-caption-size)", fontWeight: 600, background: iVoted ? "var(--color-primary-subtle)" : "var(--color-surface-elevated)", color: iVoted ? "var(--color-primary)" : "var(--color-text-primary)", border: "1px solid var(--color-border)", cursor: "pointer" }}>
                             <ThumbsUp size={14} fill={iVoted ? "var(--color-primary)" : "none"} /> {count}
                           </button>
 

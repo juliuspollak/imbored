@@ -13,18 +13,18 @@ const TABS = [["available", "Available rewards"], ["ideas", "Ideas"], ["mine", "
 
 function myRewardStatus(row) {
   if (row.status === "requested" || row.status === "approved") {
-    return row.cancellation_requested_at ? { text: "Cancellation requested", color: "#B5730E", bg: "rgba(217,148,10,.10)" } : { text: "In progress", color: "#2F6FED", bg: "rgba(47,111,237,.09)" };
+    return row.cancellation_requested_at ? { text: "Cancellation requested", color: "var(--color-warning-text)", bg: "var(--color-warning-bg)" } : { text: "In progress", color: "var(--color-primary)", bg: "var(--color-primary-subtle)" };
   }
-  if (row.status === "fulfilled") return { text: "You got it", color: "#12946A", bg: "rgba(18,148,106,.10)" };
-  if (row.status === "disputed") return { text: "Something wrong? — waiting", color: "#B5433A", bg: "rgba(181,67,58,.09)" };
-  return { text: "Cancelled — points returned", color: "#5B6472", bg: "rgba(16,24,40,.06)" };
+  if (row.status === "fulfilled") return { text: "You got it", color: "var(--color-success-text)", bg: "var(--color-success-bg)" };
+  if (row.status === "disputed") return { text: "Something wrong? — waiting", color: "var(--color-danger-text)", bg: "var(--color-danger-bg)" };
+  return { text: "Cancelled — points returned", color: "var(--color-text-secondary)", bg: "var(--color-surface-elevated)" };
 }
 
 function ideaStatus(row) {
-  if (row.status === "suggested") return { text: "Needs a price", color: "#7C3AED", bg: "rgba(124,58,237,.09)" };
-  if (row.status === "pending") return { text: `${row.approve_count}/${row.required_count} votes`, color: "#B5730E", bg: "rgba(217,148,10,.10)" };
-  if (row.status === "rejected") return { text: "Not this time", color: "#5B6472", bg: "rgba(16,24,40,.06)" };
-  return { text: "Available", color: "#12946A", bg: "rgba(18,148,106,.10)" };
+  if (row.status === "suggested") return { text: "Needs a price", color: "var(--color-primary)", bg: "var(--color-primary-subtle)" };
+  if (row.status === "pending") return { text: `${row.approve_count}/${row.required_count} votes`, color: "var(--color-warning-text)", bg: "var(--color-warning-bg)" };
+  if (row.status === "rejected") return { text: "Not this time", color: "var(--color-text-secondary)", bg: "var(--color-surface-elevated)" };
+  return { text: "Available", color: "var(--color-success-text)", bg: "var(--color-success-bg)" };
 }
 
 export default function Rewards({ onBack }) {
@@ -85,7 +85,7 @@ export default function Rewards({ onBack }) {
   return (
     <Page>
       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", marginBottom: "var(--space-4)" }}><BackButton onClick={onBack} /><h1 style={{ fontSize: "var(--text-page-title-size)", fontWeight: 700, color: "var(--color-text-primary)" }}>Rewards</h1></div>
-      <section style={{ borderRadius: "var(--radius-xl)", padding: "var(--space-4)", marginBottom: "var(--space-4)", background: "linear-gradient(145deg,#17233E 0%,#243B73 100%)", color: "#fff" }}>
+      <section style={{ borderRadius: "var(--radius-xl)", padding: "var(--space-4)", marginBottom: "var(--space-4)", background: "var(--color-primary)", color: "var(--color-primary-text)", boxShadow: "var(--shadow-primary)" }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
           <div><span style={{ fontSize: "1.5rem", fontWeight: 700 }}>{Number(progress?.available_points || 0).toLocaleString()}</span> <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px", opacity: .7 }}>points</span></div>
           {pointsSetAside > 0 && <div style={{ fontSize: 11, textAlign: "right", opacity: .75 }}>{pointsSetAside.toLocaleString()} points<br />set aside</div>}
@@ -105,8 +105,8 @@ export default function Rewards({ onBack }) {
             const short = r.points_cost - Number(progress?.available_points || 0);
             return <Card key={r.id} style={{ padding: "var(--space-3)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-                <div style={{ width: 44, height: 44, borderRadius: "var(--radius-md)", background: "rgba(217,174,88,.14)", display: "grid", placeItems: "center", flexShrink: 0 }}>
-                  {r.image_url ? <img src={r.image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "var(--radius-md)" }} /> : <Gift size={20} style={{ color: "#D9AE58" }} />}
+                <div style={{ width: 44, height: 44, borderRadius: "var(--radius-md)", background: "var(--color-warning-bg)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                  {r.image_url ? <img src={r.image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "var(--radius-md)" }} /> : <Gift size={20} style={{ color: "var(--color-warning-gold)" }} />}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 600, fontSize: "var(--text-body-size)", color: "var(--color-text-primary)" }} className="truncate">{r.name}</div>
