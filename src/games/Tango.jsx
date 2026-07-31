@@ -308,6 +308,30 @@ function getCompletedLines(board, solution) {
   return lines;
 }
 
+function getFullLines(board) {
+  const lines = [];
+  for (let index = 0; index < SIZE; index++) {
+    if (board[index].every((value) => value !== 0)) lines.push(`row-${index}`);
+    if (board.every((row) => row[index] !== 0)) lines.push(`col-${index}`);
+  }
+  return lines;
+}
+
+function lineHasConflict(line, conflicts) {
+  const [direction, rawIndex] = line.split("-");
+  const index = Number(rawIndex);
+  for (let offset = 0; offset < SIZE; offset++) {
+    const key = direction === "row" ? `${index}-${offset}` : `${offset}-${index}`;
+    if (conflicts.has(key)) return true;
+  }
+  return false;
+}
+
+function getRuleValidCompletedLines(board, edgeMap) {
+  const conflicts = getConflicts(board, edgeMap);
+  return getFullLines(board).filter((line) => !lineHasConflict(line, conflicts));
+}
+
 /* ---------------- design tokens ---------------- */
 
 const BG = "var(--color-page-bg)";
@@ -354,6 +378,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
   const [celebratingLines, setCelebratingLines] = useState([]);
   const [displayedConflicts, setDisplayedConflicts] = useState(new Set());
   const completedLinesRef = useRef(new Set());
+  const invalidCompletedLinesRef = useRef(new Set());
   const celebrationTimerRef = useRef(null);
   const conflictDebounceRef = useRef(null);
 
@@ -372,7 +397,13 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     setHintCell(null);
     setHistory([]);
     setCelebratingLines([]);
-    completedLinesRef.current = new Set(getCompletedLines(p.givens, p.solution));
+    const initialCelebratedLines = dIdx <= 1
+      ? getCompletedLines(p.givens, p.solution)
+      : dIdx <= 3
+        ? getRuleValidCompletedLines(p.givens, p.edgeMap)
+        : [];
+    completedLinesRef.current = new Set(initialCelebratedLines);
+    invalidCompletedLinesRef.current = new Set();
     window.clearTimeout(celebrationTimerRef.current);
     hintCooldown.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -398,7 +429,11 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
 
   useEffect(() => {
     if (!board || !puzzle) return undefined;
-    const completed = getCompletedLines(board, puzzle.solution);
+    const completed = dayIdx <= 1
+      ? getCompletedLines(board, puzzle.solution)
+      : dayIdx <= 3
+        ? getRuleValidCompletedLines(board, puzzle.edgeMap)
+        : [];
     const newlyCompleted = completed.filter((line) => !completedLinesRef.current.has(line));
     completedLinesRef.current = new Set(completed);
     if (!newlyCompleted.length) return undefined;
@@ -406,7 +441,18 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     window.clearTimeout(celebrationTimerRef.current);
     celebrationTimerRef.current = window.setTimeout(() => setCelebratingLines([]), 900);
     return undefined;
-  }, [board, puzzle]);
+  }, [board, puzzle, dayIdx]);
+
+  useEffect(() => {
+    if (!board || !puzzle || solved) return;
+    const conflicts = getConflicts(board, puzzle.edgeMap);
+    const invalidCompleted = getFullLines(board).filter((line) => lineHasConflict(line, conflicts));
+    const newlyInvalid = invalidCompleted.filter((line) => !invalidCompletedLinesRef.current.has(line));
+    invalidCompletedLinesRef.current = new Set(invalidCompleted);
+    // One placement can finish both a row and a column. Treat that single
+    // action as one mistake rather than charging twice for the same tap.
+    if (newlyInvalid.length > 0) setMistakes((value) => value + 1);
+  }, [board, puzzle, solved]);
 
   useEffect(() => () => window.clearTimeout(celebrationTimerRef.current), []);
 
@@ -480,6 +526,13 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     setDifficultyRating(null);
     setHintCell(null);
     setHistory([]);
+    const resetCelebratedLines = dayIdx <= 1
+      ? getCompletedLines(puzzle.givens, puzzle.solution)
+      : dayIdx <= 3
+        ? getRuleValidCompletedLines(puzzle.givens, puzzle.edgeMap)
+        : [];
+    completedLinesRef.current = new Set(resetCelebratedLines);
+    invalidCompletedLinesRef.current = new Set();
     // Keep the elapsed time when resetting the current puzzle.
     setSolved(false);
     setRunning(true);
