@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { Gift, Check, X, Trash2 } from "lucide-react";
-import BackButton from "./BackButton.jsx";
 import { supabase } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 import Page from "./components/Page.jsx";
+import PageHeader from "./components/PageHeader.jsx";
 import Button from "./components/Button.jsx";
 import Card from "./components/Card.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
@@ -62,7 +62,7 @@ export default function OrganiserRewards({ onBack }) {
 
   return (
     <Page>
-      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", marginBottom: "var(--space-4)" }}><BackButton onClick={onBack} /><h1 style={{ fontSize: "var(--text-page-title-size)", fontWeight: 700, color: "var(--color-text-primary)" }}>Organise rewards</h1></div>
+      <PageHeader title="Organise rewards" onBack={onBack} />
       {message && <div style={{ marginBottom: "var(--space-3)" }}><StatusBanner variant="info" dismissible onDismiss={() => setMessage("")}>{message}</StatusBanner></div>}
 
       <div style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-4)" }}>
