@@ -39,9 +39,13 @@ function CirclePortalMark() {
     <button type="button" className="circle-portal-trigger" onClick={() => setAnimationRun((run) => run + 1)} aria-label="Spin the circle portal again">
       <span key={animationRun} className="circle-portal-mark" aria-hidden="true">
         <span className="circle-portal-ring" />
-        <span className="circle-portal-spark circle-portal-spark-a" />
-        <span className="circle-portal-spark circle-portal-spark-b" />
-        <span className="circle-portal-spark circle-portal-spark-c" />
+        <span className="circle-portal-comet">
+          <span className="circle-portal-spark circle-portal-comet-head" />
+          <span className="circle-portal-spark circle-portal-comet-tail-1" />
+          <span className="circle-portal-spark circle-portal-comet-tail-2" />
+          <span className="circle-portal-spark circle-portal-comet-tail-3" />
+          <span className="circle-portal-spark circle-portal-comet-tail-4" />
+        </span>
       </span>
     </button>
   );
@@ -384,25 +388,34 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
         }
         .circle-portal-ring {
           position:absolute; inset:4px; border-radius:50%;
-          border:2px solid color-mix(in srgb,var(--color-primary) 68%,transparent);
-          border-left-color:transparent; border-bottom-color:color-mix(in srgb,var(--color-warning-gold) 72%,transparent);
+          border:1.5px solid color-mix(in srgb,var(--color-primary) 48%,transparent);
+          border-left-color:color-mix(in srgb,var(--color-warning-gold) 60%,transparent); border-bottom-color:transparent;
           box-shadow:0 0 9px color-mix(in srgb,var(--color-primary) 38%,transparent),inset 0 0 7px color-mix(in srgb,var(--color-primary) 22%,transparent);
           animation:circle-portal-spin 3.6s cubic-bezier(.18,.72,.22,1) both;
         }
-        .circle-portal-spark {
-          position:absolute; width:4px; height:4px; border-radius:50%; background:var(--color-warning-gold);
-          box-shadow:0 0 6px 2px color-mix(in srgb,var(--color-warning-gold) 60%,transparent);
+        .circle-portal-comet {
+          position:absolute; inset:1px; border-radius:50%;
+          animation:circle-comet-orbit 3.8s cubic-bezier(.2,.7,.2,1) both;
         }
-        .circle-portal-spark-a { top:1px; left:13px; animation:circle-spark-a 3.2s ease-out both; }
-        .circle-portal-spark-b { top:19px; left:25px; animation:circle-spark-b 3.2s ease-out both; }
-        .circle-portal-spark-c { top:23px; left:3px; animation:circle-spark-c 3.2s ease-out both; }
+        .circle-portal-spark {
+          position:absolute; border-radius:50%; background:var(--color-warning-gold);
+          box-shadow:0 0 6px 2px color-mix(in srgb,var(--color-warning-gold) 62%,transparent);
+        }
+        .circle-portal-comet-head { width:5px; height:5px; top:-1px; left:12px; background:#fff; }
+        .circle-portal-comet-tail-1 { width:4px; height:4px; top:0; left:7px; opacity:.9; }
+        .circle-portal-comet-tail-2 { width:3px; height:3px; top:3px; left:3px; opacity:.68; }
+        .circle-portal-comet-tail-3 { width:2.5px; height:2.5px; top:7px; left:0; opacity:.46; }
+        .circle-portal-comet-tail-4 { width:2px; height:2px; top:12px; left:-1px; opacity:.25; }
         @keyframes circle-portal-arrive { from { opacity:0; transform:scale(.35); } 65% { opacity:1; transform:scale(1.12); } to { transform:scale(1); } }
         @keyframes circle-portal-spin { from { transform:rotate(-80deg) scale(.65); } to { transform:rotate(640deg) scale(1); } }
-        @keyframes circle-spark-a { 0% { opacity:0; transform:translate(-8px,14px) scale(.2); } 35% { opacity:1; } 100% { opacity:.72; transform:translate(0,0) scale(.75); } }
-        @keyframes circle-spark-b { 0% { opacity:0; transform:translate(-16px,-12px) scale(.2); } 50% { opacity:1; } 100% { opacity:.55; transform:translate(0,0) scale(.65); } }
-        @keyframes circle-spark-c { 0% { opacity:0; transform:translate(18px,-15px) scale(.2); } 42% { opacity:1; } 100% { opacity:.48; transform:translate(0,0) scale(.6); } }
+        @keyframes circle-comet-orbit {
+          0% { opacity:0; transform:rotate(-120deg) scale(.6); }
+          12% { opacity:1; }
+          82% { opacity:1; transform:rotate(900deg) scale(1); }
+          100% { opacity:.72; transform:rotate(960deg) scale(1); }
+        }
         @media (prefers-reduced-motion: reduce) {
-          .circle-portal-mark,.circle-portal-ring,.circle-portal-spark { animation:none !important; }
+          .circle-portal-mark,.circle-portal-ring,.circle-portal-comet,.circle-portal-spark { animation:none !important; }
         }
       `}</style>
 
