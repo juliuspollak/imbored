@@ -409,7 +409,7 @@ export default function Queens({
   const [completionFinished, setCompletionFinished] = useState(false);
   const [syncRetryTick, setSyncRetryTick] = useState(0);
   const [solvedAtMs, setSolvedAtMs] = useState(null);
-  const dragRef = useRef({ active: false, mode: null, visited: new Set(), startCell: null, moved: false });
+  const dragRef = useRef({ active: false, mode: null, visited: new Set(), startCell: null, moved: false, isTouch: false });
   const boardRef = useRef(null);
   const pointerActiveRef = useRef(false);
   const lastHandledPointerRef = useRef(null);
@@ -601,9 +601,11 @@ export default function Queens({
 
   function handleMouseDown(e) {
     if (solved) return;
-    // Keep the generated click for a stationary iOS tap, while preventing
-    // desktop text/button selection during drag.
-    if (!e.touches) e.preventDefault();
+    const isTouch = !!e.touches;
+    // iOS may emit its synthetic click after touchend and after a zero-delay
+    // guard has already cleared. Own touch taps ourselves so one gesture can
+    // never paint an × and then cycle that same cell again into a queen.
+    e.preventDefault();
     const target = e.target.closest(".qp-cell");
     if (!target) return;
     const cells = Array.from(boardRef.current.querySelectorAll(".qp-cell"));
@@ -618,6 +620,7 @@ export default function Queens({
       visited: new Set([`${r},${c}`]),
       startCell: { r, c },
       moved: false,
+      isTouch,
     };
   }
 
@@ -653,15 +656,25 @@ export default function Queens({
         return next;
       });
     }
-    function onUp() {
+    function onUp(e) {
       if (dragRef.current.active) {
         const wasDrag = dragRef.current.moved;
+        const wasTouch = dragRef.current.isTouch;
+        const startCell = dragRef.current.startCell;
+        const wasCancelled = e?.type === "touchcancel";
         dragRef.current.active = false;
-        if (wasDrag) {
+        if (wasTouch) {
+          // touchstart was prevented, so no compatibility click should be
+          // generated. Apply a stationary tap exactly once here instead.
+          pointerActiveRef.current = false;
+          if (!wasCancelled && !wasDrag && startCell) {
+            handleCellClickRef.current?.(startCell.r, startCell.c);
+          }
+        } else if (wasDrag) {
           // Suppress the click emitted after a completed drag.
           window.setTimeout(() => { pointerActiveRef.current = false; }, 0);
         } else {
-          // A stationary press is a normal click: blank → × → queen → blank.
+          // A stationary mouse press is a normal click.
           pointerActiveRef.current = false;
         }
       }
@@ -670,11 +683,13 @@ export default function Queens({
     window.addEventListener("mouseup", onUp);
     window.addEventListener("touchmove", onMove, { passive: false });
     window.addEventListener("touchend", onUp);
+    window.addEventListener("touchcancel", onUp);
     return () => {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
       window.removeEventListener("touchmove", onMove);
       window.removeEventListener("touchend", onUp);
+      window.removeEventListener("touchcancel", onUp);
     };
   }, [boardSize]);
 
