@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { Gift, Plus, ThumbsUp, ThumbsDown, ClipboardCheck } from "lucide-react";
-import BackButton from "./BackButton.jsx";
 import { supabase } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
 import Page from "./components/Page.jsx";
+import PageHeader from "./components/PageHeader.jsx";
 import Button from "./components/Button.jsx";
 import Card from "./components/Card.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
@@ -84,7 +84,7 @@ export default function Rewards({ onBack }) {
 
   return (
     <Page>
-      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", marginBottom: "var(--space-4)" }}><BackButton onClick={onBack} /><h1 style={{ fontSize: "var(--text-page-title-size)", fontWeight: 700, color: "var(--color-text-primary)" }}>Rewards</h1></div>
+      <PageHeader title="Rewards" onBack={onBack} />
       <section style={{ borderRadius: "var(--radius-xl)", padding: "var(--space-4)", marginBottom: "var(--space-4)", background: "var(--color-primary)", color: "var(--color-primary-text)", boxShadow: "var(--shadow-primary)" }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
           <div><span style={{ fontSize: "1.5rem", fontWeight: 700 }}>{Number(progress?.available_points || 0).toLocaleString()}</span> <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px", opacity: .7 }}>points</span></div>
