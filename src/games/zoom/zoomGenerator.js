@@ -9,10 +9,7 @@ const DIFFICULTY_CEILING = [2, 2, 2, 3, 3, 3, 3];
 const ROUNDS_PER_QUIZ = 3;
 const LEVELS_PER_ROUND = 3; // continent -> subregion -> country
 
-// One hook fact per round, drawn from whichever of these a country actually
-// has (every country always has a capital, so that's the guaranteed
-// fallback — nothing ever comes back empty-handed).
-const CLUE_SOURCES = [
+const FACT_CLUE_SOURCES = [
   { type: "animal", field: "animals" },
   { type: "flora", field: "flora" },
   { type: "landmark", field: "landmarks" },
@@ -20,6 +17,15 @@ const CLUE_SOURCES = [
   { type: "naturalFeature", field: "naturalFeatures" },
   { type: "currency", field: "currencies", pick: (v) => v?.name },
   { type: "language", field: "languages", pick: (v) => v?.name },
+];
+
+// Each quiz deliberately mixes subjects. Previously countries were chosen
+// first and clues second, which made animals and flora rare because most of
+// the larger country list only contains currency/language data.
+const ROUND_THEMES = [
+  { id: "nature", clueTypes: ["animal", "flora"] },
+  { id: "discovery", clueTypes: ["landmark", "food", "naturalFeature"] },
+  { id: "world", clueTypes: ["flag", "currency", "language"] },
 ];
 
 const LEVEL1_TEMPLATES = {
@@ -50,15 +56,27 @@ function level3Prompt(subregion) {
   return `Down to two — which country in ${subregion} is it?`;
 }
 
-function pickClue(country) {
-  const usable = shuffle(CLUE_SOURCES).find(({ field, pick }) => {
-    const value = country[field]?.[0];
-    return pick ? Boolean(pick(value)) : Boolean(value);
-  });
+function clueSource(type) {
+  return FACT_CLUE_SOURCES.find((source) => source.type === type);
+}
+
+function hasClue(country, type) {
+  if (type === "flag") return Boolean(country.flagEmoji);
+  const source = clueSource(type);
+  if (!source) return false;
+  return (country[source.field] || []).some((value) => source.pick ? Boolean(source.pick(value)) : Boolean(value));
+}
+
+function pickClue(country, preferredTypes = []) {
+  const preferred = shuffle(preferredTypes).find((type) => hasClue(country, type));
+  if (preferred === "flag") return { type: "flag", name: country.name };
+
+  const sources = preferred ? [clueSource(preferred)] : shuffle(FACT_CLUE_SOURCES);
+  const usable = sources.find(({ type }) => hasClue(country, type));
   if (!usable) {
     return { type: "capital", name: country.capital || country.capitals?.[0] || country.name };
   }
-  const raw = shuffle(country[usable.field])[0];
+  const raw = shuffle(country[usable.field]).find((value) => usable.pick ? Boolean(usable.pick(value)) : Boolean(value));
   const name = usable.pick ? usable.pick(raw) : raw;
   return { type: usable.type, name, code: usable.type === "currency" || usable.type === "language" ? raw?.code : undefined };
 }
@@ -68,8 +86,8 @@ function otherOption(pool, exclude) {
   return shuffle(candidates)[0];
 }
 
-function buildRound(country, roundIndex, useFlag) {
-  const clue = useFlag && country.flagEmoji ? { type: "flag", name: country.name } : pickClue(country);
+function buildRound(country, roundIndex, preferredTypes) {
+  const clue = pickClue(country, preferredTypes);
   const subregion = country.subregion;
   const subregionOptions = subregionsFor(country.continent);
   const continentDistractor = otherOption(CONTINENTS.filter((c) => c !== "Antarctica"), country.continent);
@@ -125,15 +143,38 @@ function buildRound(country, roundIndex, useFlag) {
   return levels;
 }
 
+function orderedCandidates(pool, recentIds, chosen) {
+  const usedContinents = new Set(chosen.map((country) => country.continent));
+  const ranked = shuffle(pool).sort((a, b) => {
+    const aRecent = recentIds.includes(a.id) ? 1 : 0;
+    const bRecent = recentIds.includes(b.id) ? 1 : 0;
+    if (aRecent !== bRecent) return aRecent - bRecent;
+    const aContinent = usedContinents.has(a.continent) ? 1 : 0;
+    const bContinent = usedContinents.has(b.continent) ? 1 : 0;
+    return aContinent - bContinent;
+  });
+  return ranked;
+}
+
 function chooseTargets(ceiling, recentIds = []) {
   const pool = COUNTRIES.filter((c) => c.difficulty <= ceiling);
-  const fresh = shuffle(pool.filter((c) => !recentIds.includes(c.id)));
-  const stale = shuffle(pool.filter((c) => recentIds.includes(c.id)));
-  const ordered = [...fresh, ...stale];
   const chosen = [];
-  for (const country of ordered) {
+
+  for (const theme of ROUND_THEMES) {
+    const eligible = pool.filter((country) =>
+      !chosen.some((selected) => selected.id === country.id)
+      && theme.clueTypes.some((type) => hasClue(country, type))
+    );
+    const country = orderedCandidates(eligible, recentIds, chosen.map((item) => item.country))[0];
+    if (country) chosen.push({ country, theme });
+  }
+
+  // Defensive fallback for future datasets with a missing theme.
+  for (const country of orderedCandidates(pool, recentIds, chosen.map((item) => item.country))) {
     if (chosen.length >= ROUNDS_PER_QUIZ) break;
-    chosen.push(country);
+    if (!chosen.some((selected) => selected.country.id === country.id)) {
+      chosen.push({ country, theme: { id: "mixed", clueTypes: [] } });
+    }
   }
   return chosen;
 }
@@ -145,8 +186,10 @@ function chooseTargets(ceiling, recentIds = []) {
 function generateZoomQuiz(dayIdx, recentIds = []) {
   const ceiling = DIFFICULTY_CEILING[dayIdx] ?? 3;
   const targets = chooseTargets(ceiling, recentIds);
-  const steps = targets.flatMap((country, roundIndex) => buildRound(country, roundIndex, Math.random() < 0.4));
+  const steps = targets.flatMap(({ country, theme }, roundIndex) =>
+    buildRound(country, roundIndex, theme.clueTypes).map((step) => ({ ...step, clueTheme: theme.id }))
+  );
   return steps;
 }
 
-export { generateZoomQuiz, ROUNDS_PER_QUIZ, LEVELS_PER_ROUND, DIFFICULTY_CEILING };
+export { generateZoomQuiz, ROUNDS_PER_QUIZ, LEVELS_PER_ROUND, DIFFICULTY_CEILING, ROUND_THEMES };

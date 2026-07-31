@@ -19,6 +19,17 @@ const INK = "var(--color-text-primary)";
 const ACCENT = "var(--color-primary)";
 const RED = "var(--color-danger-text)";
 const GREEN = "var(--color-success-text)";
+const CLUE_BADGES = {
+  animal: ["🐾", "zoom.clueAnimal"],
+  flora: ["🌿", "zoom.cluePlant"],
+  landmark: ["🏛️", "zoom.clueLandmark"],
+  food: ["🍽️", "zoom.clueFood"],
+  naturalFeature: ["🌋", "zoom.clueNature"],
+  flag: ["🚩", "zoom.clueFlag"],
+  currency: ["🪙", "zoom.clueCurrency"],
+  language: ["💬", "zoom.clueLanguage"],
+  capital: ["📍", "zoom.cluePlace"],
+};
 
 function fmtTime(s) {
   const m = Math.floor(s / 60);
@@ -47,7 +58,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
   const [correctLog, setCorrectLog] = useState([]); // per-step booleans, for the "rounds nailed" stat
   const [showHelp, setShowHelp] = useState(false);
   const [difficultyRating, setDifficultyRating] = useState(null);
-  const stateKey = `imbored:zoom:i18n-v1:${mode}:${userId || "guest"}:${challengeDate || dayIdx}:${seed || "practice"}`;
+  const stateKey = `imbored:zoom:variety-v2:${mode}:${userId || "guest"}:${challengeDate || dayIdx}:${seed || "practice"}`;
 
   const newQuiz = useCallback((dIdx, forceFresh = false) => {
     if (!forceFresh) {
@@ -194,7 +205,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
         }
       `}</style>
 
-      <Card className="zoom-card" style={{ position: "relative", marginTop: 72, marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
+      <Card className="zoom-card" style={{ position: "relative", marginTop: "var(--game-content-top)", marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
         <button type="button" onClick={() => setShowHelp((h) => !h)} aria-label={showHelp ? "Hide instructions" : "Show instructions"} aria-expanded={showHelp} className="zoom-help-button" style={{ position: "absolute", top: "var(--space-3)", right: "var(--space-3)", width: 40, height: 40, display: "grid", placeItems: "center", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", color: "var(--color-icon-subtle)", cursor: "pointer" }}>
           <HelpCircle size={16} />
         </button>
@@ -297,6 +308,20 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
                   </React.Fragment>
                 );
               })}
+            </div>
+
+            <div className="flex justify-center mb-3">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                style={{
+                  color: "var(--color-text-secondary)",
+                  background: "var(--color-surface-elevated)",
+                  border: "1px solid var(--color-border)",
+                }}
+              >
+                <span aria-hidden="true">{(CLUE_BADGES[step.clueType] || CLUE_BADGES.capital)[0]}</span>
+                {t((CLUE_BADGES[step.clueType] || CLUE_BADGES.capital)[1])}
+              </span>
             </div>
 
             {step.clueType === "flag" && (
