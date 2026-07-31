@@ -564,11 +564,12 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
           <p style={{ margin: "var(--space-1) 0 0", color: "var(--color-text-secondary)", fontSize: "var(--text-page-subtitle-size)" }}>{t("home.tagline")}</p>
         </header>
 
-        {progress && onOpenProgress && (
+        {onOpenProgress && (
           <button
             type="button"
             onClick={onOpenProgress}
             className="home-progress-control"
+            aria-busy={!progress}
             style={{
               ...buttonReset,
               minHeight: "var(--control-height-md)",
@@ -583,16 +584,22 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
               boxShadow: "var(--shadow-control)",
               color: "var(--color-text-primary)",
             }}
-            aria-label={`Open My Progress — ${(progress.available_points || 0).toLocaleString(language === "sk" ? "sk-SK" : "en")} ${t("home.points")}, ${progress.challenge_current_streak || 0} ${progress.challenge_current_streak === 1 ? t("home.day") : t("home.days")}`}
+            aria-label={progress
+              ? `Open My Progress — ${(progress.available_points || 0).toLocaleString(language === "sk" ? "sk-SK" : "en")} ${t("home.points")}, ${progress.challenge_current_streak || 0} ${progress.challenge_current_streak === 1 ? t("home.day") : t("home.days")}`
+              : "Open My Progress — values loading"}
           >
             <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "var(--text-caption-size)", fontWeight: 600 }}>
               <Star size={15} fill="currentColor" style={{ color: "var(--color-warning-gold)" }} />
-              {(progress.available_points || 0).toLocaleString(language === "sk" ? "sk-SK" : "en")}
+              {progress
+                ? (progress.available_points || 0).toLocaleString(language === "sk" ? "sk-SK" : "en")
+                : <span aria-hidden="true" style={{ width: 28, height: 10, borderRadius: "var(--radius-full)", background: "var(--color-surface-elevated)" }} />}
             </span>
             <span aria-hidden="true" style={{ width: 1, height: 16, background: "var(--color-border)" }} />
             <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "var(--text-caption-size)", fontWeight: 600 }}>
               <Flame size={15} style={{ color: "var(--color-danger-solid)" }} />
-              {progress.challenge_current_streak || 0}
+              {progress
+                ? progress.challenge_current_streak || 0
+                : <span aria-hidden="true" style={{ width: 14, height: 10, borderRadius: "var(--radius-full)", background: "var(--color-surface-elevated)" }} />}
             </span>
             <ChevronRight size={15} style={{ color: "var(--color-icon-subtle)" }} />
           </button>
