@@ -95,6 +95,7 @@ const Button = forwardRef(function Button(
       disabled={isDisabled}
       onClick={onClick}
       className="design-btn"
+      data-variant={variant}
       style={mergedStyle}
       {...rest}
     >
@@ -115,33 +116,6 @@ const Button = forwardRef(function Button(
       {!loading && before && <span className="design-btn-before">{before}</span>}
       {variant === "icon" ? children : <span>{children}</span>}
       {!loading && after && <span className="design-btn-after">{after}</span>}
-      <style>{`@keyframes ds-spin { to { transform: rotate(360deg); } }
-        .design-btn:active:not(:disabled) { transform: scale(0.96); }
-        .design-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
-        @media (hover: hover) and (pointer: fine) {
-          .design-btn:not(:disabled):hover {
-            background: ${
-              variant === "primary" ? "var(--color-primary-hover)" :
-              variant === "danger" ? "#C94A4A" :
-              variant === "ghost" ? "rgba(16,24,40,0.04)" :
-              variant === "icon" ? "var(--color-surface-elevated)" :
-              "var(--color-primary-subtle)"
-            } !important;
-            ${variant === "icon" ? "border-color: #50617D !important;" : ""}
-          }
-        }
-        [data-theme="dark"] .design-btn:not(:disabled):hover {
-          background: ${
-            variant === "primary" ? "var(--color-primary-hover)" :
-            variant === "danger" ? "#C94A4A" :
-            variant === "ghost" ? "rgba(255,255,255,0.04)" :
-            variant === "icon" ? "#24304A" :
-            "var(--color-primary-subtle)"
-          } !important;
-          ${variant === "icon" ? "border-color: #50617D !important;" : ""}
-          ${variant === "ghost" ? "color: var(--color-text-primary) !important;" : ""}
-        }
-      `}</style>
     </button>
   );
 });

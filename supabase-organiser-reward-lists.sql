@@ -4,6 +4,21 @@
 
 begin;
 
+create or replace function public.is_circle_organiser(target_circle_id bigint)
+returns boolean
+language sql
+stable
+security definer
+set search_path to 'public'
+as $function$
+  select auth.uid() is not null and exists(
+    select 1
+    from public.circles c
+    where c.id=target_circle_id
+      and c.created_by=auth.uid()
+  );
+$function$;
+
 create or replace function public.am_i_a_circle_organiser()
 returns boolean
 language sql
@@ -204,6 +219,7 @@ revoke all on function public.list_organiser_active_requests() from public;
 revoke all on function public.list_organiser_reward_catalog() from public;
 revoke all on function public.list_organiser_finished_requests() from public;
 grant execute on function public.am_i_a_circle_organiser() to authenticated;
+grant execute on function public.is_circle_organiser(bigint) to authenticated;
 grant execute on function public.list_organiser_ideas() to authenticated;
 grant execute on function public.list_organiser_active_requests() to authenticated;
 grant execute on function public.list_organiser_reward_catalog() to authenticated;

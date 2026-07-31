@@ -21,8 +21,17 @@
 .design-btn:active:not(:disabled) { transform: scale(0.96); }
 .design-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 
+@keyframes ds-spin { to { transform: rotate(360deg); } }
+
 @media (hover: hover) and (pointer: fine) {
   .design-btn:not(:disabled):hover { filter: brightness(1.05); }
+  .design-btn[data-variant="primary"]:not(:disabled):hover { background: var(--color-primary-hover) !important; }
+  .design-btn[data-variant="secondary"]:not(:disabled):hover { background: var(--color-primary-subtle) !important; }
+  .design-btn[data-variant="danger"]:not(:disabled):hover { background: #C94A4A !important; }
+  .design-btn[data-variant="ghost"]:not(:disabled):hover { background: rgba(16,24,40,0.04) !important; }
+  .design-btn[data-variant="icon"]:not(:disabled):hover { background: var(--color-surface-elevated) !important; border-color: #50617D !important; }
+  [data-theme="dark"] .design-btn[data-variant="ghost"]:not(:disabled):hover { background: rgba(255,255,255,0.04) !important; color: var(--color-text-primary) !important; }
+  [data-theme="dark"] .design-btn[data-variant="icon"]:not(:disabled):hover { background: #24304A !important; }
 }
 
 /* ---- Inputs ---- */
