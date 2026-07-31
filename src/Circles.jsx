@@ -80,7 +80,6 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
   const [expandedChallengeId, setExpandedChallengeId] = useState(null);
   const [challengeEdits, setChallengeEdits] = useState({});
   const [myRewards, setMyRewards] = useState([]);
-  const [dismissedApprovals, setDismissedApprovals] = useState({});
   const [cardMenuCircleId, setCardMenuCircleId] = useState(null);
   const hasLoadedRef = useRef(false);
   const deepLinkAppliedRef = useRef(false);
@@ -154,7 +153,6 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
         return next;
       });
       hasLoadedRef.current = true;
-      void supabase.rpc("mark_my_circle_request_updates_seen");
     } catch (error) {
       setLoadError(error?.message || "Circles could not be loaded.");
     } finally {
@@ -243,6 +241,20 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
   async function decide(requestId, approve) {
     const { error } = await supabase.rpc("decide_circle_join_request", { request_id:requestId, approve });
     setMsg(error?.message || (approve ? "Player added" : "Request declined")); refresh();
+  }
+
+  async function dismissRequestUpdate() {
+    const seenAt = new Date().toISOString();
+    const { error } = await supabase.rpc("mark_my_circle_request_updates_seen");
+    if (error) {
+      setMsg(error.message || "Could not dismiss the request update.");
+      return;
+    }
+    setRequests((current) => current.map((item) =>
+      item.user_id === user?.id && item.status !== "pending"
+        ? { ...item, user_seen_at: seenAt }
+        : item
+    ));
   }
 
   async function leave(circle) {
@@ -449,7 +461,6 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
               const manager = canManage(circle);
               const myRequest = requests.find((r) => r.circle_id === circle.id && r.user_id === user?.id);
               const pending = requests.filter((r) => r.circle_id === circle.id && r.status === "pending");
-              const approvalDismissed = dismissedApprovals[circle.id];
               const menuOpen = cardMenuCircleId === circle.id;
 
               return (
@@ -515,13 +526,13 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                   )}
 
                   {/* Approval */}
-                  {myRequest && myRequest.status === "approved" && !isMine && !approvalDismissed && (
-                    <div style={{ marginTop: "var(--space-3)" }}><StatusBanner variant="success" dismissible onDismiss={() => setDismissedApprovals((p) => ({ ...p, [circle.id]: true }))}>Your request was approved.</StatusBanner></div>
+                  {myRequest && myRequest.status === "approved" && !myRequest.user_seen_at && (
+                    <div style={{ marginTop: "var(--space-3)" }}><StatusBanner variant="success" dismissible onDismiss={dismissRequestUpdate}>Your request to join {circle.name} was approved.</StatusBanner></div>
                   )}
 
                   {/* Denied */}
-                  {myRequest && myRequest.status !== "approved" && myRequest.status !== "pending" && !isMine && (
-                    <div style={{ marginTop: "var(--space-3)" }}><StatusBanner variant="error">Your request was {myRequest.status}.</StatusBanner></div>
+                  {myRequest && myRequest.status !== "approved" && myRequest.status !== "pending" && !myRequest.user_seen_at && (
+                    <div style={{ marginTop: "var(--space-3)" }}><StatusBanner variant="error" dismissible onDismiss={dismissRequestUpdate}>Your request to join {circle.name} was {myRequest.status}.</StatusBanner></div>
                   )}
                 </article>
               );
