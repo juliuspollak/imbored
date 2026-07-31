@@ -18,6 +18,9 @@ export function useOrganiserAttentionCount(userId) {
     compute,
     tables: [{ name: "rewards" }, { name: "reward_redemptions" }],
     channelName: `organiser-attention-${userId}`,
-    emptyValue: 0,
+    // null distinguishes "not loaded yet" from a real zero. AccountBadge uses
+    // that distinction to avoid overwriting a persisted acknowledgement while
+    // the first count request is still in flight after a page refresh.
+    emptyValue: null,
   });
 }

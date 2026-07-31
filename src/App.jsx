@@ -440,7 +440,7 @@ function AppShell() {
   if (active === "organiserrewards") {
     return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
-        <OrganiserRewards onBack={() => setActive(null)} attentionCount={organiserAttentionCount} />
+        <OrganiserRewards onBack={() => setActive(null)} attentionCount={organiserAttentionCount || 0} />
       </Suspense>
     );
   }
@@ -613,27 +613,56 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
   );
 }
 
-function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenCircles, onOpenChats, onOpenStats, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, onOpenRewardRequests, onOpenOrganiserRewards, organiserAttentionCount = 0, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
+function organiserAttentionSeenKey(userId) {
+  return `organiser-attention-seen-${userId || "anonymous"}`;
+}
+
+function readSeenOrganiserAttentionCount(userId) {
+  if (typeof window === "undefined" || !userId) return 0;
+  try {
+    const saved = Number.parseInt(window.localStorage.getItem(organiserAttentionSeenKey(userId)) || "0", 10);
+    return Number.isFinite(saved) ? Math.max(0, saved) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveSeenOrganiserAttentionCount(userId, count) {
+  if (typeof window === "undefined" || !userId) return;
+  try {
+    window.localStorage.setItem(organiserAttentionSeenKey(userId), String(Math.max(0, count)));
+  } catch {
+    // A blocked local store only means the acknowledgement lasts this session.
+  }
+}
+
+function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenCircles, onOpenChats, onOpenStats, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, onOpenRewardRequests, onOpenOrganiserRewards, organiserAttentionCount = null, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
   const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [seenOrganiserAttentionCount, setSeenOrganiserAttentionCount] = useState(0);
+  const [seenOrganiserAttentionCount, setSeenOrganiserAttentionCount] = useState(() => readSeenOrganiserAttentionCount(userId));
   const menuRef = useRef(null);
   const isAdmin = !!profile.is_admin;
   const feedbackBadgeCount = isAdmin ? openFeedbackCount : completedFeedbackCount;
-  const unseenOrganiserAttentionCount = Math.max(0, organiserAttentionCount - seenOrganiserAttentionCount);
+  const resolvedOrganiserAttentionCount = organiserAttentionCount ?? 0;
+  const unseenOrganiserAttentionCount = Math.max(0, resolvedOrganiserAttentionCount - seenOrganiserAttentionCount);
   const totalNotifications = feedbackBadgeCount + newTransfersCount + myRedemptionUpdates + openRewardRequestsCount + unseenOrganiserAttentionCount + unreadMessages.total
     + (sectionSignals.whatsnew ? 1 : 0) + (sectionSignals.circles ? 1 : 0);
 
   useEffect(() => {
-    setSeenOrganiserAttentionCount(0);
+    setSeenOrganiserAttentionCount(readSeenOrganiserAttentionCount(userId));
   }, [userId]);
 
   useEffect(() => {
+    if (organiserAttentionCount === null) return;
     // Keep the acknowledgement aligned when an organiser actions an item. The
     // unresolved total remains visible beside Organise rewards, while only a
     // later increase is considered new enough to light up the account bubble.
-    setSeenOrganiserAttentionCount((seen) => Math.min(seen, organiserAttentionCount));
-  }, [organiserAttentionCount]);
+    setSeenOrganiserAttentionCount((seen) => {
+      const next = Math.min(seen, organiserAttentionCount);
+      saveSeenOrganiserAttentionCount(userId, next);
+      return next;
+    });
+  }, [organiserAttentionCount, userId]);
 
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -660,7 +689,7 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
     { id:"circles", icon:Users, label:t("account.circles"), onClick:onOpenCircles, badge:sectionSignals.circles ? 1 : 0 },
     { id:"rewardrequests", icon:Gift, label:t("account.rewardRequests"), onClick:onOpenRewardRequests, badge:myRedemptionUpdates + openRewardRequestsCount },
   ];
-  if (onOpenOrganiserRewards) items.push({ id:"organiserrewards", icon:Gift, label:t("account.organiserRewards"), onClick:onOpenOrganiserRewards, badge:organiserAttentionCount });
+  if (onOpenOrganiserRewards) items.push({ id:"organiserrewards", icon:Gift, label:t("account.organiserRewards"), onClick:onOpenOrganiserRewards, badge:resolvedOrganiserAttentionCount });
   const adminItems = [];
   if (isAdmin) {
     adminItems.push({ id:"adminplayers", icon:Shield, label:t("common.players"), onClick:onOpenAdminPlayers });
@@ -674,7 +703,10 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
   }
 
   function toggleMenu() {
-    if (!menuOpen) setSeenOrganiserAttentionCount(organiserAttentionCount);
+    if (!menuOpen && organiserAttentionCount !== null) {
+      setSeenOrganiserAttentionCount(organiserAttentionCount);
+      saveSeenOrganiserAttentionCount(userId, organiserAttentionCount);
+    }
     setMenuOpen(!menuOpen);
   }
 
@@ -733,10 +765,10 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
           "--nav-border":"rgba(47,111,237,.36)",
           width:"var(--global-player-bubble-size)",
           height:"var(--global-player-bubble-size)",
-          background:"rgba(255,255,255,.94)",
+          background:"var(--color-surface)",
           backdropFilter:"blur(12px)",
-          border:menuOpen ? "2px solid rgba(47,111,237,.38)" : "1px solid rgba(16,24,40,.12)",
-          boxShadow:"0 8px 24px rgba(16,24,40,.12)",
+          border:menuOpen ? "2px solid var(--color-primary-subtle-border)" : "1px solid var(--color-border)",
+          boxShadow:"var(--shadow-menu)",
           fontSize:22,
           touchAction:"manipulation",
           WebkitTapHighlightColor:"transparent",
