@@ -6,12 +6,12 @@
 }
 
 .circle-portal-trigger:hover {
-  transform: scale(1.05);
-  filter: brightness(1.06);
+  transform: scale(1.045);
+  filter: brightness(1.05);
 }
 
 .circle-portal-trigger:active {
-  transform: scale(.92) !important;
+  transform: scale(.93) !important;
 }
 
 .circle-portal-mark {
@@ -19,147 +19,130 @@
   height: 31px !important;
   border-radius: 50%;
   isolation: isolate;
-  animation: circle-portal-premium-arrive 620ms cubic-bezier(.18, .9, .22, 1.15) both !important;
+  animation: circle-portal-arrive-v2 560ms cubic-bezier(.2, .9, .2, 1.08) both !important;
 }
 
 .circle-portal-mark::before {
   content: "";
   position: absolute;
-  inset: 6px;
-  z-index: -1;
+  inset: 4px;
+  z-index: -2;
   border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 35%, transparent) 0%, color-mix(in srgb, var(--color-primary) 14%, transparent) 48%, transparent 74%);
-  filter: blur(2px);
-  animation: circle-portal-premium-glow 900ms ease-out both;
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 26%, transparent) 0 34%, transparent 70%);
+  filter: blur(3px);
+  animation: circle-portal-aura-v2 760ms ease-out both;
 }
 
 .circle-portal-mark::after {
   content: "";
   position: absolute;
-  inset: 11px;
+  inset: 10px;
+  z-index: 1;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--color-primary) 58%, var(--color-warning-gold));
-  box-shadow: 0 0 5px color-mix(in srgb, var(--color-primary) 75%, transparent), 0 0 12px color-mix(in srgb, var(--color-primary) 32%, transparent);
-  animation: circle-portal-premium-core 900ms ease-out both;
+  background: radial-gradient(circle at 35% 30%, #fff 0 10%, color-mix(in srgb, var(--color-warning-gold) 82%, white) 22%, color-mix(in srgb, var(--color-primary) 72%, var(--color-warning-gold)) 62%, transparent 72%);
+  box-shadow: 0 0 5px color-mix(in srgb, var(--color-warning-gold) 58%, transparent), 0 0 11px color-mix(in srgb, var(--color-primary) 28%, transparent);
+  animation: circle-portal-core-v2 760ms ease-out both;
 }
 
 .circle-portal-ring {
   inset: 2px !important;
-  border-width: 1.5px !important;
-  border-color: color-mix(in srgb, var(--color-primary) 48%, transparent) !important;
-  border-right-color: color-mix(in srgb, var(--color-warning-gold) 82%, transparent) !important;
-  border-bottom-color: transparent !important;
-  box-shadow: 0 0 8px color-mix(in srgb, var(--color-primary) 34%, transparent), inset 0 0 7px color-mix(in srgb, var(--color-primary) 18%, transparent) !important;
-  animation: circle-portal-premium-spin 2.75s cubic-bezier(.16, .72, .2, 1) both !important;
+  border-width: 1.35px !important;
+  border-color: color-mix(in srgb, var(--color-primary) 38%, transparent) !important;
+  border-top-color: color-mix(in srgb, var(--color-warning-gold) 72%, transparent) !important;
+  border-right-color: transparent !important;
+  border-bottom-color: color-mix(in srgb, var(--color-primary) 18%, transparent) !important;
+  box-shadow: 0 0 7px color-mix(in srgb, var(--color-primary) 26%, transparent), inset 0 0 5px color-mix(in srgb, var(--color-primary) 14%, transparent) !important;
+  animation: circle-portal-ring-v2 2.15s cubic-bezier(.18, .72, .18, 1) both !important;
+}
+
+.circle-portal-ring::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
+  border-left-color: color-mix(in srgb, var(--color-warning-gold) 42%, transparent);
+  border-bottom-color: transparent;
+  animation: circle-portal-ring-inner-v2 1.8s cubic-bezier(.18, .72, .18, 1) both;
 }
 
 .circle-portal-ring::after {
   content: "";
   position: absolute;
-  inset: 5px;
+  inset: -2px;
   border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
-  border-top-color: transparent;
-  border-left-color: color-mix(in srgb, var(--color-warning-gold) 50%, transparent);
-  animation: circle-portal-premium-spin-reverse 2.2s cubic-bezier(.16, .72, .2, 1) both;
+  background: conic-gradient(from 210deg, transparent 0 56%, color-mix(in srgb, var(--color-primary) 18%, transparent) 68%, color-mix(in srgb, var(--color-warning-gold) 44%, transparent) 82%, transparent 92%);
+  -webkit-mask: radial-gradient(circle, transparent 0 72%, #000 74% 100%);
+  mask: radial-gradient(circle, transparent 0 72%, #000 74% 100%);
+  opacity: .72;
 }
 
 .circle-portal-comet {
   inset: 0 !important;
-  animation: circle-portal-premium-orbit 2.65s cubic-bezier(.2, .68, .2, 1) both !important;
+  z-index: 3;
+  animation: circle-portal-orbit-v2 2.05s cubic-bezier(.18, .68, .18, 1) both !important;
 }
 
 .circle-portal-comet::before {
   content: "";
   position: absolute;
-  top: 1px;
-  left: 1px;
-  width: 17px;
-  height: 9px;
-  border-radius: 100% 0 0 0;
-  border-top: 3px solid color-mix(in srgb, var(--color-warning-gold) 78%, transparent);
-  transform: rotate(-18deg);
-  transform-origin: right top;
-  opacity: .88;
-  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--color-warning-gold) 58%, transparent));
+  inset: -1px;
+  border-radius: 50%;
+  background: conic-gradient(from 292deg, transparent 0 74%, color-mix(in srgb, var(--color-warning-gold) 8%, transparent) 78%, color-mix(in srgb, var(--color-warning-gold) 48%, transparent) 86%, color-mix(in srgb, var(--color-warning-gold) 88%, transparent) 94%, transparent 99%);
+  -webkit-mask: radial-gradient(circle, transparent 0 76%, #000 79% 100%);
+  mask: radial-gradient(circle, transparent 0 76%, #000 79% 100%);
+  filter: drop-shadow(0 0 2px color-mix(in srgb, var(--color-warning-gold) 45%, transparent));
+}
+
+.circle-portal-comet::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 12.5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff 0 30%, color-mix(in srgb, var(--color-warning-gold) 78%, white) 56%, color-mix(in srgb, var(--color-warning-gold) 90%, transparent) 100%);
+  box-shadow: 0 0 4px 1px #fff, 0 0 8px 2px color-mix(in srgb, var(--color-warning-gold) 62%, transparent);
 }
 
 .circle-portal-spark {
-  background: var(--color-warning-gold) !important;
-  box-shadow: 0 0 6px 2px color-mix(in srgb, var(--color-warning-gold) 62%, transparent) !important;
-}
-
-.circle-portal-comet-head {
-  width: 6px !important;
-  height: 6px !important;
-  top: -1px !important;
-  left: 13px !important;
-  z-index: 2;
-  background: #fff !important;
-  box-shadow: 0 0 4px 1px #fff, 0 0 9px 3px color-mix(in srgb, var(--color-warning-gold) 72%, transparent) !important;
-}
-
-.circle-portal-comet-tail-1 {
-  width: 3px !important;
-  height: 3px !important;
-  top: 1px !important;
-  left: 8px !important;
-  opacity: .62 !important;
-}
-
-.circle-portal-comet-tail-2 {
-  width: 2.5px !important;
-  height: 2.5px !important;
-  top: 4px !important;
-  left: 4px !important;
-  opacity: .4 !important;
-}
-
-.circle-portal-comet-tail-3 {
-  width: 2px !important;
-  height: 2px !important;
-  top: 8px !important;
-  left: 1px !important;
-  opacity: .24 !important;
-}
-
-.circle-portal-comet-tail-4 {
   display: none !important;
 }
 
-@keyframes circle-portal-premium-arrive {
-  0% { opacity: 0; transform: scale(.3) rotate(-20deg); }
-  65% { opacity: 1; transform: scale(1.12) rotate(3deg); }
+@keyframes circle-portal-arrive-v2 {
+  0% { opacity: 0; transform: scale(.5) rotate(-10deg); }
+  68% { opacity: 1; transform: scale(1.07) rotate(2deg); }
   100% { opacity: 1; transform: scale(1) rotate(0); }
 }
 
-@keyframes circle-portal-premium-spin {
-  0% { transform: rotate(-45deg) scale(.72); }
-  100% { transform: rotate(675deg) scale(1); }
+@keyframes circle-portal-ring-v2 {
+  0% { transform: rotate(-35deg) scale(.82); opacity: .35; }
+  100% { transform: rotate(500deg) scale(1); opacity: 1; }
 }
 
-@keyframes circle-portal-premium-spin-reverse {
-  0% { transform: rotate(80deg) scale(.72); }
-  100% { transform: rotate(-500deg) scale(1); }
+@keyframes circle-portal-ring-inner-v2 {
+  0% { transform: rotate(65deg) scale(.82); opacity: .2; }
+  100% { transform: rotate(-330deg) scale(1); opacity: .75; }
 }
 
-@keyframes circle-portal-premium-orbit {
-  0% { opacity: 0; transform: rotate(-70deg) scale(.6); }
-  12% { opacity: 1; }
-  82% { opacity: 1; }
-  100% { opacity: 1; transform: rotate(790deg) scale(1); }
+@keyframes circle-portal-orbit-v2 {
+  0% { opacity: 0; transform: rotate(-55deg) scale(.72); }
+  10% { opacity: 1; }
+  86% { opacity: 1; }
+  100% { opacity: 1; transform: rotate(650deg) scale(1); }
 }
 
-@keyframes circle-portal-premium-glow {
-  0% { opacity: 0; transform: scale(.45); }
-  55% { opacity: 1; transform: scale(1.15); }
-  100% { opacity: .82; transform: scale(1); }
+@keyframes circle-portal-aura-v2 {
+  0% { opacity: 0; transform: scale(.6); }
+  58% { opacity: .9; transform: scale(1.08); }
+  100% { opacity: .68; transform: scale(1); }
 }
 
-@keyframes circle-portal-premium-core {
-  0% { opacity: 0; transform: scale(.25); }
-  55% { opacity: 1; transform: scale(1.35); }
-  100% { opacity: .9; transform: scale(1); }
+@keyframes circle-portal-core-v2 {
+  0% { opacity: 0; transform: scale(.4); }
+  55% { opacity: 1; transform: scale(1.18); }
+  100% { opacity: .94; transform: scale(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -168,7 +151,7 @@
   .circle-portal-mark::before,
   .circle-portal-mark::after,
   .circle-portal-ring,
-  .circle-portal-ring::after,
+  .circle-portal-ring::before,
   .circle-portal-comet {
     animation: none !important;
   }
