@@ -486,22 +486,17 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
   function handleHint() {
     if (solved || hintCooldown.isLocked()) return;
     const applyHint = (r, c, type, countMistake = false) => {
-      pushHistory();
-      setBoard((previous) => {
-        const next = previous.map((row) => row.slice());
-        next[r][c] = puzzle.solution[r][c];
-        return next;
-      });
+      // A hint is guidance only. Never write the solution into the board:
+      // keep an incorrect symbol in place, or leave an empty cell empty,
+      // and show the expected symbol in the corner annotation below.
       setHintCell({ r, c, type, symbol: puzzle.solution[r][c] });
       setHintsUsed((value) => value + 1);
       if (countMistake) setMistakes((value) => value + 1);
       hintCooldown.startCooldown();
     };
 
-    // A hint now performs a visible, useful action: it corrects the first
-    // wrong symbol, otherwise fills a forced cell, and finally reveals one
-    // blank cell. Previously it only drew a faint preview, which could be
-    // imperceptible on iOS and looked as though the button did nothing.
+    // First flag an incorrect symbol. If all entered symbols are correct,
+    // point to a logically forced blank, then fall back to the first blank.
     for (let r = 0; r < SIZE; r++) {
       for (let c = 0; c < SIZE; c++) {
         if (board[r][c] !== 0 && board[r][c] !== puzzle.solution[r][c]) {
@@ -548,6 +543,11 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           const isConflict = displayedConflicts.has(`${r}-${c}`);
           const isHint = hintCell && hintCell.r === r && hintCell.c === c;
           const hintClass = isHint && !isConflict ? `tg-hint-${hintCell.type}` : "";
+          const hintBackground = hintCell?.type === "error"
+            ? "repeating-linear-gradient(135deg, var(--color-surface) 0 7px, var(--color-danger-bg) 7px 14px)"
+            : hintCell?.type === "forced"
+              ? "repeating-linear-gradient(135deg, var(--color-surface) 0 7px, var(--color-primary-subtle) 7px 14px)"
+              : "repeating-linear-gradient(135deg, var(--color-surface) 0 7px, var(--color-warning-border) 7px 14px)";
           return (
             <button
               key={`${r}-${c}`}
@@ -555,7 +555,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
               disabled={isGiven}
               className={`tg-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`}
               style={{
-                background: isGiven ? "var(--color-surface-elevated)" : "var(--color-surface)",
+                background: isHint ? hintBackground : isGiven ? "var(--color-surface-elevated)" : "var(--color-surface)",
                 border: "1px solid var(--color-border-strong)",
                 boxShadow: isConflict ? `inset 0 0 0 3px ${RED}` : "none",
                 cursor: isGiven ? "default" : "pointer",
@@ -567,37 +567,25 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
               {val === MOON && (
                 <span className="tg-symbol tg-symbol-disc tg-symbol-disc--moon"><ModernMoonIcon key={`moon-${r}-${c}`} size={Math.max(28, 50 - SIZE)} isConflict={isConflict} /></span>
               )}
-              {/* The pulsing border alone doesn't say what belongs here —
-                  show a faint preview of the actual symbol. For an empty
-                  hinted cell it sits centred like a real placement; for a
-                  wrong existing symbol (val !== EMPTY) it sits as a small
-                  corner badge instead, so it doesn't visually collide
-                  with the (still-visible, still red) wrong symbol. */}
+              {/* Hints never place or replace a symbol. The striped cell
+                  identifies where to look and this corner badge shows the
+                  expected answer without making the move for the player. */}
               {isHint && hintCell.symbol && !solved && (
-                val === EMPTY ? (
-                  <span className="tg-hint-ghost" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-                    {hintCell.symbol === SUN ? (
-                      <SunIcon size={Math.max(22, 32 - SIZE)} style={{ color: SUN_COLOR, opacity: 0.4 }} />
-                    ) : (
-                      <ModernMoonIcon size={Math.max(24, 34 - SIZE)} style={{ opacity: 0.42 }} />
-                    )}
-                  </span>
-                ) : (
-                  <span
-                    className="tg-hint-ghost-badge"
-                    style={{
-                      position: "absolute", top: 2, right: 2, width: 14, height: 14, borderRadius: "50%",
-                      background: "var(--color-surface-raised)", display: "flex", alignItems: "center", justifyContent: "center",
-                      boxShadow: "var(--shadow-control)", pointerEvents: "none",
-                    }}
-                  >
-                    {hintCell.symbol === SUN ? (
-                      <SunIcon size={10} style={{ color: SUN_COLOR }} />
-                    ) : (
-                      <ModernMoonIcon size={9} style={{ color: "#40557D" }} />
-                    )}
-                  </span>
-                )
+                <span
+                  className="tg-hint-ghost-badge"
+                  aria-label={hintCell.symbol === SUN ? "This cell should be a sun" : "This cell should be a moon"}
+                  style={{
+                    position: "absolute", top: 3, right: 3, width: 16, height: 16, borderRadius: "50%",
+                    background: "var(--color-surface-raised)", display: "flex", alignItems: "center", justifyContent: "center",
+                    border: "1px solid var(--color-border-strong)", boxShadow: "var(--shadow-control)", pointerEvents: "none",
+                  }}
+                >
+                  {hintCell.symbol === SUN ? (
+                    <SunIcon size={11} style={{ color: SUN_COLOR }} />
+                  ) : (
+                    <ModernMoonIcon size={10} style={{ color: "var(--color-icon-primary)" }} />
+                  )}
+                </span>
               )}
             </button>
           );
