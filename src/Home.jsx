@@ -150,6 +150,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
     let cancelled = false;
     async function loadCircleChallenges() {
       if (!supabaseReady || !userId) return;
+      setChallengesLoaded(false);
       const week = currentWeekRange();
       // Finalise expired occurrences before active and history are read. Doing
       // all three calls concurrently caused a just-ended challenge to appear
@@ -480,9 +481,15 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
       today_done:(challengeCompletions[String(item.challenge_id)] || new Set()).has(todayString()),
     })),
   ];
-  const pendingChallenges = challengeItems.filter((item) =>
-    item.active_today && item.status.remaining > 0 && !item.today_done
-  );
+  // Until both inputs are loaded, an empty completion set does not mean the
+  // player has completed nothing. Treating it that way made the Challenge tab
+  // briefly show "1" whenever Home remounted after a Practice game, then hide
+  // it again as soon as the real Challenge completions arrived.
+  const pendingChallenges = challengesLoaded && !gameConfigLoading
+    ? challengeItems.filter((item) =>
+        item.active_today && item.status.remaining > 0 && !item.today_done
+      )
+    : [];
   const selectedCircle = challengeScope?.type === "circle"
     ? circleChallenges.find((item) => String(item.challenge_id) === String(challengeScope.id))
     : null;
