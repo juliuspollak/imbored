@@ -32,6 +32,17 @@ function circleIdentity(circle) {
   return { label:name.charAt(0).toUpperCase(), color:CIRCLE_MONOGRAM_COLORS[hash % CIRCLE_MONOGRAM_COLORS.length], isEmoji:false };
 }
 
+function CirclePortalMark() {
+  return (
+    <span className="circle-portal-mark" aria-hidden="true">
+      <span className="circle-portal-ring" />
+      <span className="circle-portal-spark circle-portal-spark-a" />
+      <span className="circle-portal-spark circle-portal-spark-b" />
+      <span className="circle-portal-spark circle-portal-spark-c" />
+    </span>
+  );
+}
+
 function challengeChoiceStyle(selected) {
   return {
     background: selected ? "var(--color-primary-subtle)" : "var(--color-surface-elevated)",
@@ -355,11 +366,38 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
         @media (max-width: 520px) {
           .circles-page-header { margin-top: calc(max(16px, env(safe-area-inset-top, 0px)) + 16px); padding-right: calc(60px + env(safe-area-inset-right, 0px)); }
         }
+        .circle-title-with-portal { display:inline-flex; align-items:center; gap:9px; }
+        .circle-portal-mark {
+          position:relative; display:inline-block; width:30px; height:30px; flex:0 0 30px;
+          border-radius:50%; animation:circle-portal-arrive 700ms cubic-bezier(.2,.9,.2,1) both;
+        }
+        .circle-portal-ring {
+          position:absolute; inset:4px; border-radius:50%;
+          border:2px solid color-mix(in srgb,var(--color-primary) 68%,transparent);
+          border-left-color:transparent; border-bottom-color:color-mix(in srgb,var(--color-warning-gold) 72%,transparent);
+          box-shadow:0 0 9px color-mix(in srgb,var(--color-primary) 38%,transparent),inset 0 0 7px color-mix(in srgb,var(--color-primary) 22%,transparent);
+          animation:circle-portal-spin 1.8s cubic-bezier(.25,.75,.25,1) both;
+        }
+        .circle-portal-spark {
+          position:absolute; width:4px; height:4px; border-radius:50%; background:var(--color-warning-gold);
+          box-shadow:0 0 6px 2px color-mix(in srgb,var(--color-warning-gold) 60%,transparent);
+        }
+        .circle-portal-spark-a { top:1px; left:13px; animation:circle-spark-a 1.8s ease-out both; }
+        .circle-portal-spark-b { top:19px; left:25px; animation:circle-spark-b 1.8s ease-out both; }
+        .circle-portal-spark-c { top:23px; left:3px; animation:circle-spark-c 1.8s ease-out both; }
+        @keyframes circle-portal-arrive { from { opacity:0; transform:scale(.35); } 65% { opacity:1; transform:scale(1.12); } to { transform:scale(1); } }
+        @keyframes circle-portal-spin { from { transform:rotate(-80deg) scale(.65); } to { transform:rotate(640deg) scale(1); } }
+        @keyframes circle-spark-a { 0% { opacity:0; transform:translate(-8px,14px) scale(.2); } 35% { opacity:1; } 100% { opacity:.72; transform:translate(0,0) scale(.75); } }
+        @keyframes circle-spark-b { 0% { opacity:0; transform:translate(-16px,-12px) scale(.2); } 50% { opacity:1; } 100% { opacity:.55; transform:translate(0,0) scale(.65); } }
+        @keyframes circle-spark-c { 0% { opacity:0; transform:translate(18px,-15px) scale(.2); } 42% { opacity:1; } 100% { opacity:.48; transform:translate(0,0) scale(.6); } }
+        @media (prefers-reduced-motion: reduce) {
+          .circle-portal-mark,.circle-portal-ring,.circle-portal-spark { animation:none !important; }
+        }
       `}</style>
 
       {/* Header */}
       <PageHeader
-        title="Circles"
+        title={<span className="circle-title-with-portal">Circles <CirclePortalMark /></span>}
         subtitle="Play together, your way"
         onBack={onBack}
         action={!profile?.hidden_from_others && (
