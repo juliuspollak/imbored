@@ -706,8 +706,11 @@ export default function Queens({
     const wrong = [];
     for (let r = 0; r < boardSize; r++) {
       for (let c = 0; c < boardSize; c++) {
-        if (board[r][c] === 2 && puzzle.solution[r] !== c) wrong.push({ r, c, type: "wrong" });
-        if (board[r][c] === 1 && puzzle.solution[r] === c) wrong.push({ r, c, type: "wrong" });
+        // Use the same striped answer style as a normal suggestion. A wrong
+        // × on the solution cell should preview a queen; a misplaced queen
+        // should be identified as a cell that needs eliminating.
+        if (board[r][c] === 2 && puzzle.solution[r] !== c) wrong.push({ r, c, type: "cross", src: "wrong" });
+        if (board[r][c] === 1 && puzzle.solution[r] === c) wrong.push({ r, c, type: "queen", src: "wrong" });
       }
     }
     if (wrong.length) {
@@ -715,19 +718,23 @@ export default function Queens({
       return;
     }
 
-    // A correctly placed queen rules out its entire row and column. Highlight
-    // every still-blank cell in that obvious follow-up move together.
+    // A correctly placed queen rules out its row, column, region and every
+    // touching cell. Highlight all still-blank eliminations together so the
+    // same rule is not split across two visually different hint steps.
     for (let queenRow = 0; queenRow < boardSize; queenRow++) {
       const queenCol = puzzle.solution[queenRow];
       if (board[queenRow][queenCol] !== 2) continue;
+      const queenRegion = puzzle.regionGrid[queenRow][queenCol];
       const eliminated = [];
-      const seen = new Set();
-      for (let index = 0; index < boardSize; index++) {
-        for (const [r, c] of [[queenRow, index], [index, queenCol]]) {
-          const key = `${r}-${c}`;
-          if (board[r][c] === 0 && !seen.has(key)) {
-            seen.add(key);
-            eliminated.push({ r, c, type:"cross", src:"queen-elimination" });
+      for (let r = 0; r < boardSize; r++) {
+        for (let c = 0; c < boardSize; c++) {
+          if (r === queenRow && c === queenCol || board[r][c] !== 0) continue;
+          const sameRow = r === queenRow;
+          const sameColumn = c === queenCol;
+          const sameRegion = puzzle.regionGrid[r][c] === queenRegion;
+          const touching = Math.abs(r - queenRow) <= 1 && Math.abs(c - queenCol) <= 1;
+          if (sameRow || sameColumn || sameRegion || touching) {
+            eliminated.push({ r, c, type: "cross", src: "queen-elimination" });
           }
         }
       }
@@ -840,21 +847,26 @@ export default function Queens({
                   style={{ color: "rgba(17,24,39,0.60)" }}
                 />
               )}
-              {isHint && cellHint.type === "cross" && cellHint.src !== "queen-elimination" && val === 0 && (
-                <X
-                  className="qp-cross"
-                  size={Math.max(13, 22 - boardSize)}
-                  strokeWidth={2.8}
-                  style={{ color: "#2563EB", opacity: 0.72, pointerEvents: "none" }}
-                />
-              )}
-              {isHint && cellHint.type === "queen" && val !== 2 && (
+              {isHint && cellHint.type === "queen" && val === 0 && (
                 <Crown
                   className="qp-crown"
                   size={Math.max(17, 27 - boardSize)}
                   strokeWidth={2.6}
                   style={{ color: "#047857", fill: "rgba(16,185,129,0.28)", opacity: 0.82, pointerEvents: "none" }}
                 />
+              )}
+              {isHint && cellHint.type === "queen" && val === 1 && (
+                <span
+                  aria-label="This cell should contain a queen"
+                  style={{
+                    position: "absolute", top: 3, right: 3, width: 16, height: 16,
+                    borderRadius: "50%", display: "grid", placeItems: "center",
+                    background: "var(--color-surface-raised)", border: "1px solid var(--color-border-strong)",
+                    boxShadow: "var(--shadow-control)", pointerEvents: "none", zIndex: 3,
+                  }}
+                >
+                  <Crown size={10} strokeWidth={2.6} style={{ color: "#047857", fill: "rgba(16,185,129,0.28)" }} />
+                </span>
               )}
             </button>
           );
@@ -872,11 +884,6 @@ export default function Queens({
           70% { transform: scale(1.12); }
           100% { transform: scale(1); opacity: 1; }
         }
-        @keyframes qp-wrong {
-          0%,100% { transform: translateX(0); }
-          25% { transform: translateX(-4px); }
-          75% { transform: translateX(4px); }
-        }
         @keyframes qp-hint-pulse {
           0%,100% { box-shadow: inset 0 0 0 3px rgba(47,111,237,0.5), 0 0 0 0 rgba(47,111,237,0.3); }
           50% { box-shadow: inset 0 0 0 3px rgba(47,111,237,0.9), 0 0 0 8px rgba(47,111,237,0); }
@@ -886,7 +893,6 @@ export default function Queens({
           50% { box-shadow: inset 0 0 0 3px rgba(18,148,106,0.9), 0 0 0 8px rgba(18,148,106,0); }
         }
         .qp-crown { animation: qp-pop 0.22s ease-out; }
-        .qp-hint-wrong { animation: qp-wrong 0.35s ease-in-out 2; }
         .qp-hint-cross { animation: qp-hint-pulse 0.7s ease-in-out infinite; z-index: 2; }
         .qp-hint-queen { animation: qp-hint-queen 0.7s ease-in-out infinite; z-index: 2; }
         .qp-hint-cross::after, .qp-hint-queen::after {
@@ -1031,9 +1037,9 @@ export default function Queens({
             Tap a cell once to mark it with ×, tap again to place a crown — or press and drag
             across cells to paint or clear × marks in one stroke. Every row, column, and colored
             region needs exactly one crown, and crowns can't touch — not even diagonally. Hint
-            first shakes any cell that's wrong (a crown where none belongs, or an × on a cell that
-            must hold a crown); if nothing is wrong it rings the next cell you can deduce — blue
-            for an ×, green for a crown.
+            first stripes any cell that's wrong (a crown where none belongs, or an × on a cell that
+            must hold a crown). Otherwise it stripes the next move you can deduce — blue marks
+            cells to eliminate and green previews a crown.
           </div>
         )}
 
