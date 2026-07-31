@@ -71,12 +71,21 @@ export default function AdminPlayers({ onBack }) {
   const active = players.filter((p) => !p.account_deleted_at && (p.is_admin || p.is_approved !== false));
   const history = players.filter((p) => p.account_deleted_at);
 
-  function PlayerCard({ player, approval = false }) {
+  function PlayerCard({ player, approval = false, compact = false, last = false }) {
     const seenIso = lastSeen[player.id];
     const online = seenIso && Date.now() - new Date(seenIso).getTime() < 45000;
     const expanded = expandedId === player.id;
+    const activityLabel = fmtLastSeen(seenIso);
+    const showStatus = !compact || approval || activityLabel !== "Never seen" || player.is_blocked || player.hidden_from_others;
     return (
-      <Card style={{ padding: "var(--space-3)", borderColor: approval ? "var(--color-warning-border)" : undefined }}>
+      <Card style={{
+        padding: "var(--space-3)",
+        borderColor: approval ? "var(--color-warning-border)" : undefined,
+        border: compact ? "none" : undefined,
+        borderBottom: compact && !last ? "1px solid var(--color-border)" : undefined,
+        borderRadius: compact ? 0 : undefined,
+        boxShadow: compact ? "none" : undefined,
+      }}>
         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
           <div style={{ width: 42, height: 42, borderRadius: "var(--radius-md)", background: approval ? "var(--color-warning-bg)" : "var(--color-info-bg)", fontSize: 20, display: "grid", placeItems: "center", flexShrink: 0 }}>{player.icon || "🙂"}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -86,7 +95,7 @@ export default function AdminPlayers({ onBack }) {
               {player.is_reward_steward && <Gift size={11} style={{ color: "var(--color-primary)" }} />}
               {player.is_private && <Lock size={10} style={{ opacity: .35 }} />}
             </div>
-            <div style={{ fontSize: 11, color: online ? "var(--color-success-text)" : "var(--color-text-secondary)" }}>
+            <div style={{ display: showStatus ? "block" : "none", fontSize: 11, color: online ? "var(--color-success-text)" : "var(--color-text-secondary)" }}>
               {approval ? "Waiting for approval" : fmtLastSeen(seenIso)}
               {player.is_blocked ? " · Blocked" : ""}{player.hidden_from_others ? " · Hidden" : ""}
             </div>
@@ -97,7 +106,7 @@ export default function AdminPlayers({ onBack }) {
             </Button>
           )}
           {!player.is_admin && (
-            <button onClick={() => setExpandedId(expanded ? null : player.id)} aria-label={`More actions for ${player.name}`} style={{ width: 32, height: 32, borderRadius: "var(--radius-sm)", background: "var(--color-surface-elevated)", color: "var(--color-icon-subtle)", border: "1px solid var(--color-border)", cursor: "pointer", display: "grid", placeItems: "center" }}>
+            <button onClick={() => setExpandedId(expanded ? null : player.id)} aria-label={`More actions for ${player.name}`} aria-expanded={expanded} style={{ width: 32, height: 32, borderRadius: "var(--radius-sm)", background: compact && !expanded ? "transparent" : "var(--color-surface-elevated)", color: "var(--color-icon-subtle)", border: "none", cursor: "pointer", display: "grid", placeItems: "center" }}>
               <Ellipsis size={16} />
             </button>
           )}
@@ -136,7 +145,7 @@ export default function AdminPlayers({ onBack }) {
           </section>}
           <section>
             <h2 style={{ fontSize: "var(--text-caption-size)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--color-text-secondary)", marginBottom: "var(--space-2)", padding: "0 var(--space-1)" }}>Players · {active.length}</h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>{active.map((p) => <PlayerCard key={p.id} player={p} />)}</div>
+            <Card style={{ padding: 0, overflow: "hidden" }}>{active.map((p, index) => <PlayerCard key={p.id} player={p} compact last={index === active.length - 1} />)}</Card>
           </section>
           {history.length > 0 && <section style={{ marginTop: "var(--space-6)" }}>
             <h2 style={{ fontSize: "var(--text-caption-size)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--color-text-secondary)", marginBottom: "var(--space-2)", padding: "0 var(--space-1)" }}>Account history · {history.length}</h2>
