@@ -440,7 +440,7 @@ function AppShell() {
   if (active === "organiserrewards") {
     return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
-        <OrganiserRewards onBack={() => setActive(null)} />
+        <OrganiserRewards onBack={() => setActive(null)} attentionCount={organiserAttentionCount} />
       </Suspense>
     );
   }

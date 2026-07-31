@@ -10,11 +10,12 @@ import StatusBanner from "./components/StatusBanner.jsx";
 
 const TABS = [["ideas", "Ideas"], ["active", "In progress"], ["finished", "Finished"]];
 
-export default function OrganiserRewards({ onBack }) {
+export default function OrganiserRewards({ onBack, attentionCount = 0 }) {
   const { user } = useAuth();
   const [tab, setTab] = useState("ideas");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [ideas, setIdeas] = useState([]);
   const [active, setActive] = useState([]);
   const [catalog, setCatalog] = useState([]);
@@ -27,13 +28,27 @@ export default function OrganiserRewards({ onBack }) {
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const [{ data: i }, { data: a }, { data: cat }, { data: f }] = await Promise.all([
+    setLoadError("");
+    const [ideasResult, activeResult, catalogResult, finishedResult] = await Promise.all([
       supabase.rpc("list_organiser_ideas"),
       supabase.rpc("list_organiser_active_requests"),
       supabase.rpc("list_organiser_reward_catalog"),
       supabase.rpc("list_organiser_finished_requests"),
     ]);
-    setIdeas(i || []); setActive(a || []); setCatalog(cat || []); setFinished(f || []); setLoading(false);
+    const failures = [
+      ["ideas", ideasResult.error],
+      ["active rewards", activeResult.error],
+      ["reward catalog", catalogResult.error],
+      ["finished rewards", finishedResult.error],
+    ].filter(([, error]) => error);
+    setIdeas(ideasResult.data || []);
+    setActive(activeResult.data || []);
+    setCatalog(catalogResult.data || []);
+    setFinished(finishedResult.data || []);
+    setLoadError(failures.length
+      ? `Could not load ${failures.map(([label]) => label).join(", ")}. ${failures[0][1].message || "Please try again."}`
+      : "");
+    setLoading(false);
   }, []);
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -60,9 +75,15 @@ export default function OrganiserRewards({ onBack }) {
 
   if (loading) return <Page><p style={{ textAlign: "center", padding: "var(--space-8) 0", color: "var(--color-text-secondary)" }}>Loading…</p></Page>;
 
+  const loadedAttentionCount = ideas.filter((reward) => reward.status === "suggested").length
+    + active.filter((request) => request.cancellation_requested_at).length;
+  const hasAttentionMismatch = !loadError && attentionCount > loadedAttentionCount;
+
   return (
     <Page>
       <PageHeader title="Organise rewards" onBack={onBack} />
+      {loadError && <div style={{ marginBottom: "var(--space-3)" }}><StatusBanner variant="error">{loadError} <Button size="sm" variant="secondary" onClick={refresh} style={{ marginLeft: "var(--space-2)" }}>Try again</Button></StatusBanner></div>}
+      {hasAttentionMismatch && <div style={{ marginBottom: "var(--space-3)" }}><StatusBanner variant="warning">Your menu shows {attentionCount} item{attentionCount === 1 ? "" : "s"} needing attention, but this page received {loadedAttentionCount}. The organiser database filters are out of sync.</StatusBanner></div>}
       {message && <div style={{ marginBottom: "var(--space-3)" }}><StatusBanner variant="info" dismissible onDismiss={() => setMessage("")}>{message}</StatusBanner></div>}
 
       <div style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-4)" }}>
@@ -79,7 +100,7 @@ export default function OrganiserRewards({ onBack }) {
               <div style={{ fontWeight: 600, fontSize: "var(--text-body-size)", color: "var(--color-text-primary)" }} className="truncate">{r.name}</div>
               <span style={{ fontSize: 10, color: "var(--color-text-secondary)", flexShrink: 0 }}>{r.reward_type}</span>
             </div>
-            <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 2, marginBottom: "var(--space-2)" }}>{r.circle_name} · suggested by {r.creator_icon} {r.creator_name}{r.status === "pending" ? ` · ${r.approve_count}/${r.required_count} votes` : ""}</div>
+            <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 2, marginBottom: "var(--space-2)" }}>{r.circle_name} · suggested by {r.creator_icon} {r.creator_name}{r.status === "pending" && r.approve_count != null && r.required_count != null ? ` · ${r.approve_count}/${r.required_count} votes` : ""}</div>
             {r.status === "suggested" ? <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-2)" }}>
               <Button size="sm" variant="primary" onClick={() => openPrice(r, "available")}>Make available</Button>
               <Button size="sm" variant="secondary" onClick={() => openPrice(r, "vote")}>Put to a vote</Button>
