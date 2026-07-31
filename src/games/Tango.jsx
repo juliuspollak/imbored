@@ -379,6 +379,8 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
   const [displayedConflicts, setDisplayedConflicts] = useState(new Set());
   const completedLinesRef = useRef(new Set());
   const invalidCompletedLinesRef = useRef(new Set());
+  const invalidMistakeTimerRef = useRef(null);
+  const skipNextInvalidMistakeRef = useRef(false);
   const celebrationTimerRef = useRef(null);
   const conflictDebounceRef = useRef(null);
 
@@ -404,6 +406,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
         : [];
     completedLinesRef.current = new Set(initialCelebratedLines);
     invalidCompletedLinesRef.current = new Set();
+    window.clearTimeout(invalidMistakeTimerRef.current);
     window.clearTimeout(celebrationTimerRef.current);
     hintCooldown.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -447,14 +450,35 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     if (!board || !puzzle || solved) return;
     const conflicts = getConflicts(board, puzzle.edgeMap);
     const invalidCompleted = getFullLines(board).filter((line) => lineHasConflict(line, conflicts));
+    const invalidSet = new Set(invalidCompleted);
+    if (skipNextInvalidMistakeRef.current) {
+      skipNextInvalidMistakeRef.current = false;
+      invalidCompletedLinesRef.current = invalidSet;
+      window.clearTimeout(invalidMistakeTimerRef.current);
+      return;
+    }
+    // Once a charged line becomes valid/incomplete, a later invalid completion
+    // is a new mistake episode. Keep already-charged lines while they remain bad.
+    invalidCompletedLinesRef.current = new Set(
+      [...invalidCompletedLinesRef.current].filter((line) => invalidSet.has(line))
+    );
+    window.clearTimeout(invalidMistakeTimerRef.current);
     const newlyInvalid = invalidCompleted.filter((line) => !invalidCompletedLinesRef.current.has(line));
-    invalidCompletedLinesRef.current = new Set(invalidCompleted);
-    // One placement can finish both a row and a column. Treat that single
-    // action as one mistake rather than charging twice for the same tap.
-    if (newlyInvalid.length > 0) setMistakes((value) => value + 1);
+    if (newlyInvalid.length === 0) return;
+    // Players need two taps to cycle sun → moon. Use the same grace period as
+    // the visual conflict warning so the temporary sun is never a mistake.
+    invalidMistakeTimerRef.current = window.setTimeout(() => {
+      newlyInvalid.forEach((line) => invalidCompletedLinesRef.current.add(line));
+      // One placement can finish both a row and a column; charge the move once.
+      setMistakes((value) => value + 1);
+    }, 2000);
+    return () => window.clearTimeout(invalidMistakeTimerRef.current);
   }, [board, puzzle, solved]);
 
-  useEffect(() => () => window.clearTimeout(celebrationTimerRef.current), []);
+  useEffect(() => () => {
+    window.clearTimeout(celebrationTimerRef.current);
+    window.clearTimeout(invalidMistakeTimerRef.current);
+  }, []);
 
   useEffect(() => {
     if (!board || !puzzle) return;
@@ -485,7 +509,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
   const filledCount = board.flat().filter((v) => v !== 0).length;
 
   function pushHistory() {
-    setHistory((h) => [...h, { board: board.map((row) => row.slice()), mistakes, hints: hintsUsed }].slice(-50));
+    setHistory((h) => [...h, { board: board.map((row) => row.slice()) }].slice(-50));
   }
 
   function performTapCycle(r, c) {
@@ -508,9 +532,10 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     if (solved || history.length === 0) return;
     const last = history[history.length - 1];
     setHistory((h) => h.slice(0, -1));
+    // Restoring an earlier board is not a new placement and must not create a
+    // fresh delayed mistake if that earlier board already contained a conflict.
+    skipNextInvalidMistakeRef.current = true;
     setBoard(last.board);
-    setMistakes(last.mistakes);
-    setHintsUsed(last.hints);
     setHintCell(null);
     setSolved(false);
     setRunning(true);
@@ -533,6 +558,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
         : [];
     completedLinesRef.current = new Set(resetCelebratedLines);
     invalidCompletedLinesRef.current = new Set();
+    window.clearTimeout(invalidMistakeTimerRef.current);
     // Keep the elapsed time when resetting the current puzzle.
     setSolved(false);
     setRunning(true);
