@@ -2,7 +2,7 @@
  * Shared Card component.
  * variant: "default" (white card with border + shadow), "interactive" (adds hover/press).
  */
-export default function Card({ variant = "default", children, style: externalStyle, onClick, ...rest }) {
+export default function Card({ as: Component = "div", variant = "default", children, style: externalStyle, onClick, ...rest }) {
   const isInteractive = variant === "interactive";
   const baseStyle = {
     background: "var(--color-surface)",
@@ -15,13 +15,13 @@ export default function Card({ variant = "default", children, style: externalSty
   };
 
   return (
-    <div
+    <Component
       className="design-card"
       style={{ ...baseStyle, ...externalStyle }}
       onClick={onClick}
       {...rest}
     >
       {children}
-    </div>
+    </Component>
   );
 }
