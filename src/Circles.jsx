@@ -395,7 +395,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
         }
         .circle-portal-comet {
           position:absolute; inset:1px; border-radius:50%;
-          animation:circle-comet-orbit 3.8s cubic-bezier(.2,.7,.2,1) both;
+          transform:rotate(0deg); animation:circle-comet-orbit 3.8s linear both;
         }
         .circle-portal-spark {
           position:absolute; border-radius:50%; background:var(--color-warning-gold);
@@ -410,8 +410,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
         @keyframes circle-portal-spin { from { transform:rotate(0deg) scale(.65); } to { transform:rotate(720deg) scale(1); } }
         @keyframes circle-comet-orbit {
           0% { opacity:0; transform:rotate(0deg) scale(.6); }
-          12% { opacity:1; }
-          82% { opacity:1; transform:rotate(990deg) scale(1); }
+          10% { opacity:1; transform:rotate(108deg) scale(.92); }
           100% { opacity:.72; transform:rotate(1080deg) scale(1); }
         }
         @media (prefers-reduced-motion: reduce) {
