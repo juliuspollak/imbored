@@ -3,10 +3,9 @@ import { Users } from "lucide-react";
 import { GAME_META } from "./Home.jsx";
 import { sendPoke } from "./lib/pokes.js";
 
-const PANEL = "#FFFFFF";
-const CREAM = "#1B2129";
-const GREEN = "#22C55E";
-const ACCENT = "#2F6FED";
+const PANEL = "var(--color-surface)";
+const TEXT = "var(--color-text-primary)";
+const GREEN = "var(--color-success-text)";
 
 export default function OnlineWidget({ players, userId, myName, onOpenChat, unreadBySender = {}, unreadTotal = 0 }) {
   const [open, setOpen] = useState(false);
@@ -79,13 +78,13 @@ export default function OnlineWidget({ players, userId, myName, onOpenChat, unre
         className={`online-btn relative flex items-center justify-center ${shouldWiggle ? "online-wiggle" : ""}`}
         aria-label="Who's online"
       >
-        <div className="online-ring absolute inset-0 rounded-full" style={{ background: `conic-gradient(from 0deg, ${GREEN}, #BBF7D0, ${GREEN})` }} />
-        <div className="absolute rounded-full flex items-center justify-center" style={{ inset: 2.5, background: "rgba(255,255,255,0.95)" }}>
-          <Users className="online-btn-icon" style={{ color: CREAM }} />
+        <div className="online-ring absolute inset-0 rounded-full" style={{ background: `conic-gradient(from 0deg, ${GREEN}, var(--color-success-border), ${GREEN})` }} />
+        <div className="absolute rounded-full flex items-center justify-center" style={{ inset: 2.5, background: PANEL }}>
+          <Users className="online-btn-icon" style={{ color: TEXT }} />
         </div>
         <div
           className="online-btn-count absolute flex items-center justify-center rounded-full"
-          style={{ top: -3, right: -3, minWidth: 15, height: 15, padding: "0 3px", background: GREEN, color: "#FFFFFF", fontSize: 9, fontWeight: 700, border: "1.5px solid #F1F3F7" }}
+          style={{ top: -3, right: -3, minWidth: 15, height: 15, padding: "0 3px", background: GREEN, color: "var(--color-primary-text)", fontSize: 9, fontWeight: 700, border: "1.5px solid var(--color-page-bg)" }}
         >
           {unreadTotal > 0 ? unreadTotal : players.length}
         </div>
@@ -93,7 +92,7 @@ export default function OnlineWidget({ players, userId, myName, onOpenChat, unre
 
       {open && (
         <div className="absolute top-full right-0 mt-2 flex flex-col items-end gap-1.5" style={{ zIndex: 60 }}>
-          <div style={{ color: CREAM, opacity: 0.4, background: PANEL, borderRadius: 999, padding: "2px 10px" }} className="text-[10px] font-semibold uppercase tracking-wide balloon">
+          <div style={{ color: "var(--color-text-secondary)", background: PANEL, borderRadius: 999, padding: "2px 10px" }} className="text-[10px] font-semibold uppercase tracking-wide balloon">
             {players.length} online
           </div>
           {others.map((p, i) => {
@@ -106,9 +105,9 @@ export default function OnlineWidget({ players, userId, myName, onOpenChat, unre
                   className="balloon flex items-center rounded-full p-1"
                   style={{
                     animationDelay: `${i * 0.05}s`,
-                    background: unread > 0 ? "#F1EDFF" : PANEL,
-                    boxShadow: "0 6px 16px rgba(16,24,40,0.14)",
-                    border: unread > 0 ? "1px solid rgba(118,87,255,.28)" : "1px solid rgba(16,24,40,0.06)",
+                    background: unread > 0 ? "var(--color-primary-subtle)" : PANEL,
+                    boxShadow: "var(--shadow-menu)",
+                    border: unread > 0 ? "1px solid var(--color-primary-subtle-border)" : "1px solid var(--color-border)",
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -121,13 +120,13 @@ export default function OnlineWidget({ players, userId, myName, onOpenChat, unre
                   >
                     <span style={{ position: "relative", fontSize: 18 }}>
                       {p.profiles?.icon || "🙂"}
-                      {unread > 0 && <span style={{ position:"absolute", top:-7, right:-9, minWidth:15, height:15, padding:"0 3px", borderRadius:999, display:"grid", placeItems:"center", background:"#7657FF", color:"white", fontSize:9, fontWeight:800 }}>{unread}</span>}
+                      {unread > 0 && <span style={{ position:"absolute", top:-7, right:-9, minWidth:15, height:15, padding:"0 3px", borderRadius:999, display:"grid", placeItems:"center", background:"var(--color-primary)", color:"var(--color-primary-text)", fontSize:9, fontWeight:800 }}>{unread}</span>}
                     </span>
                     <div>
-                      <div style={{ color: CREAM, fontWeight: 700 }} className="text-xs leading-tight">
+                      <div style={{ color: TEXT, fontWeight: 700 }} className="text-xs leading-tight">
                         {p.profiles?.name || "Someone"}
                       </div>
-                      <div style={{ color: meta ? meta.accent : CREAM, opacity: meta ? 1 : 0.48 }} className="text-[10px] leading-tight">
+                      <div style={{ color: meta ? meta.accent : "var(--color-text-secondary)" }} className="text-[10px] leading-tight">
                         {unread > 0 ? `${unread} new message${unread === 1 ? "" : "s"}` : meta ? `playing ${meta.label}` : "tap to chat"}
                       </div>
                     </div>
@@ -137,7 +136,7 @@ export default function OnlineWidget({ players, userId, myName, onOpenChat, unre
                     onClick={() => handlePoke(p)}
                     title={`Poke ${p.profiles?.name || "player"}`}
                     aria-label={`Poke ${p.profiles?.name || "player"}`}
-                    style={{ width:30, height:30, borderRadius:999, border:0, background:isPoked ? "rgba(47,111,237,.15)" : "rgba(27,33,41,.05)", fontSize:15 }}
+                    style={{ width:30, height:30, borderRadius:999, border:0, background:isPoked ? "var(--color-primary-subtle)" : "var(--color-surface-elevated)", color: "var(--color-text-primary)", fontSize:15 }}
                   >
                     {isPoked ? "✓" : "👋"}
                   </button>

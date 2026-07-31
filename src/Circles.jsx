@@ -24,12 +24,9 @@ const DEFAULT_GAMES = ["queens","tango","zip","minisudoku","geo","zoom"];
 const GAME_LABELS = { queens:"Queens",tango:"Tango",zip:"Zip",minisudoku:"Mini Sudoku",geo:"Geo",zoom:"Zoom" };
 const MAX_CHALLENGE_REWARD_POINTS = 50;
 
-const CIRCLE_ICON_BG = { JM: "#EEF4FF", Family: "#F5F0FF", "Sk team": "#ECFDF3" };
-const CIRCLE_ICON_BG_DARK = { JM: "#172849", Family: "#28203F", "Sk team": "#15342B" };
-
 function challengeChoiceStyle(selected) {
   return {
-    background: selected ? "var(--color-primary-subtle)" : "rgba(16,24,40,0.05)",
+    background: selected ? "var(--color-primary-subtle)" : "var(--color-surface-elevated)",
     color: selected ? "var(--color-primary)" : "var(--color-text-primary)",
     border: selected ? "1px solid var(--color-primary-subtle-border)" : "1px solid transparent",
   };
@@ -45,10 +42,6 @@ const defaultChallenge = () => ({
   rewardLabel:"", schedule:null, durationWeeks:4, locked:false, challengeId:null,
   stakeRewardId:null, stakeRewardName:"", stakeSplitMethod:"equal", stakeAccepted:false,
 });
-
-function circleIconBg(circleName) {
-  return `var(--ds-icon-bg, ${CIRCLE_ICON_BG[circleName] || "#EEF4FF"})`;
-}
 
 export default function Circles({ onBack, initialCircleId = null, initialChallengeId = null }) {
   const { user, profile, createCircle, addPlayerToCircle, joinCircle, leaveCircle } = useAuth();
@@ -333,22 +326,12 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
     const config = gameConfig?.[game]; return config?.available !== false && config?.challenge_enabled !== false;
   });
 
-  // ---- Circle icon background mapping (light/dark) ----
-  const iconBgStyle = (circleName) => {
-    const lightBg = CIRCLE_ICON_BG[circleName] || "#EEF4FF";
-    const darkBg = CIRCLE_ICON_BG_DARK[circleName] || "#172849";
-    return { "--ds-icon-bg": lightBg, background: "var(--color-primary-subtle, #EEF4FF)" };
-  };
-
   return (
     <Page>
       <style>{`
         .design-circle-card:active { transform: scale(0.985); transition: transform var(--transition-fast); }
         .design-circle-card .design-btn:active { transform: scale(0.96); }
         .design-circle-card .design-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-ring); outline: none; }
-        [data-theme="dark"] .design-circle-icon[data-circle="JM"] { background: ${CIRCLE_ICON_BG_DARK.JM} !important; }
-        [data-theme="dark"] .design-circle-icon[data-circle="Family"] { background: ${CIRCLE_ICON_BG_DARK.Family} !important; }
-        [data-theme="dark"] .design-circle-icon[data-circle="Sk team"] { background: ${CIRCLE_ICON_BG_DARK["Sk team"]} !important; }
         @media (max-width: 520px) {
           .circles-page-header { margin-top: calc(max(16px, env(safe-area-inset-top, 0px)) + 16px); padding-right: calc(60px + env(safe-area-inset-right, 0px)); }
         }
@@ -374,12 +357,12 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
           <div style={{ fontSize: "var(--text-body-size)", lineHeight: "var(--text-body-line)", color: "var(--color-text-secondary)", marginTop: "var(--space-1)" }}>Give it a name. We'll suggest an icon.</div>
           <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-4)" }}>
             <button type="button" onClick={() => setEmojiPickerOpen((o) => !o)} aria-label="Choose circle icon"
-              style={{ width: 52, height: 52, borderRadius: "var(--radius-md)", background: "rgba(16,24,40,0.04)", border: "none", fontSize: 24, display: "flex", alignItems: "center", justifyContent: "center", gap: 2, cursor: "pointer", flexShrink: 0 }}>
+              style={{ width: 52, height: 52, borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", color: "var(--color-text-primary)", border: "1px solid var(--color-border)", fontSize: 24, display: "flex", alignItems: "center", justifyContent: "center", gap: 2, cursor: "pointer", flexShrink: 0 }}>
               {emoji}<ChevronDown size={11} style={{ opacity: 0.35 }} />
             </button>
             <TextInput autoFocus value={name} onChange={(e) => updateName(e.target.value)} placeholder="Circle name" />
           </div>
-          {emojiPickerOpen && <div style={{ marginTop: "var(--space-3)", borderRadius: "var(--radius-md)", padding: 10, background: "rgba(16,24,40,0.035)" }}><div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 4 }}>{CIRCLE_EMOJIS.map((item) => <button key={item} type="button" onClick={() => { setEmoji(item); setEmojiTouched(true); setEmojiPickerOpen(false); }} style={{ height: 34, borderRadius: "var(--radius-sm)", fontSize: 18, background: item === emoji ? "rgba(36,107,253,0.14)" : "transparent", border: "none", cursor: "pointer" }}>{item}</button>)}</div></div>}
+          {emojiPickerOpen && <div style={{ marginTop: "var(--space-3)", borderRadius: "var(--radius-md)", padding: 10, background: "var(--color-surface-elevated)" }}><div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 4 }}>{CIRCLE_EMOJIS.map((item) => <button key={item} type="button" onClick={() => { setEmoji(item); setEmojiTouched(true); setEmojiPickerOpen(false); }} style={{ height: 34, borderRadius: "var(--radius-sm)", fontSize: 18, background: item === emoji ? "var(--color-primary-subtle)" : "transparent", border: "none", cursor: "pointer" }}>{item}</button>)}</div></div>}
           <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-3)" }}>
             <Button variant="ghost" fullWidth onClick={() => setComposerOpen(false)}>Cancel</Button>
             <Button variant="primary" fullWidth disabled={!name.trim()} onClick={create} loading={false}>Create circle</Button>
@@ -393,7 +376,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
           {!emailInviteOpen ? (
             <Card onClick={() => setEmailInviteOpen(true)} style={{ cursor: "pointer" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-                <span style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(36,107,253,0.08)", color: "var(--color-primary)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Mail size={18} /></span>
+                <span style={{ width: 44, height: 44, borderRadius: "50%", background: "var(--color-info-bg)", color: "var(--color-primary)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Mail size={18} /></span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 16, fontWeight: 600, color: "var(--color-text-primary)" }}>Invite someone new</div>
                   <div style={{ fontSize: "var(--text-body-secondary-size)", color: "var(--color-text-secondary)", marginTop: 2 }}>Send an email to someone who isn't here yet</div>
@@ -447,7 +430,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
       {/* Loading / Empty / Circle cards */}
       {loading ? (
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }} role="status" aria-label="Loading circles">
-          {[0,1,2].map((i) => <div key={i} style={{ height: 96, borderRadius: "var(--radius-lg)", background: "linear-gradient(90deg, #E9ECF2, #F5F6F9, #E9ECF2)", animation: "pulse 1.5s ease-in-out infinite" }} />)}
+          {[0,1,2].map((i) => <div key={i} style={{ height: 96, borderRadius: "var(--radius-lg)", background: "linear-gradient(90deg, var(--color-surface-elevated), var(--color-surface), var(--color-surface-elevated))", animation: "pulse 1.5s ease-in-out infinite" }} />)}
         </div>
       ) : circles.length === 0 ? (
         <Card style={{ textAlign: "center", padding: "var(--space-8)" }}>
@@ -468,12 +451,11 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
               const pending = requests.filter((r) => r.circle_id === circle.id && r.status === "pending");
               const approvalDismissed = dismissedApprovals[circle.id];
               const menuOpen = cardMenuCircleId === circle.id;
-              const bg = CIRCLE_ICON_BG[circle.name] || "#EEF4FF";
 
               return (
                 <article key={circle.id} className="design-circle-card" style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)", padding: "var(--space-4)", minHeight: 88, boxShadow: "var(--shadow-card)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-                    <div className="design-circle-icon" data-circle={circle.name} style={{ width: 52, height: 52, borderRadius: "var(--space-4)", background: bg, fontSize: 26, display: "grid", placeItems: "center", flexShrink: 0 }}>{circle.emoji || "⭐"}</div>
+                    <div className="design-circle-icon" data-circle={circle.name} style={{ width: 52, height: 52, borderRadius: "var(--space-4)", background: "var(--color-primary-subtle)", fontSize: 26, display: "grid", placeItems: "center", flexShrink: 0 }}>{circle.emoji || "⭐"}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                         <span style={{ fontSize: 17, fontWeight: 700, color: "var(--color-text-primary)", lineHeight: "22px" }} className="truncate">{circle.name}</span>
@@ -564,7 +546,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
             <div style={{ width: "100%", maxWidth: "var(--page-max-width)", padding: "calc(var(--space-4) + env(safe-area-inset-top, 0px)) var(--space-4) var(--space-4)", display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", marginBottom: "var(--space-3)" }}>
                 <BackButton onClick={() => { setRosterCircle(null); setDeleteCircleTarget(null); setDeleteConfirmation(""); }} ariaLabel="Back to circles" />
-                <div style={{ width: 44, height: 44, borderRadius: "var(--radius-md)", background: CIRCLE_ICON_BG[rosterCircle.name] || "#EEF4FF", fontSize: 22, display: "grid", placeItems: "center", flexShrink: 0 }}>{rosterCircle.emoji || "⭐"}</div>
+                <div style={{ width: 44, height: 44, borderRadius: "var(--radius-md)", background: "var(--color-primary-subtle)", fontSize: 22, display: "grid", placeItems: "center", flexShrink: 0 }}>{rosterCircle.emoji || "⭐"}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, color: "var(--color-text-primary)" }} className="truncate">{owner ? `Manage ${rosterCircle.name}` : rosterCircle.name}</div>
                   <div style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>Challenges, members and invites</div>
@@ -576,7 +558,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
               {member && (
                 <Card style={{ marginBottom: "var(--space-3)", padding: "var(--space-4)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginBottom: "var(--space-3)" }}>
-                    <div style={{ width: 34, height: 34, borderRadius: "var(--radius-sm)", background: "rgba(18,148,106,0.09)", color: "#0B7C58", display: "grid", placeItems: "center", flexShrink: 0 }}><CalendarDays size={15} /></div>
+                    <div style={{ width: 34, height: 34, borderRadius: "var(--radius-sm)", background: "var(--color-success-bg)", color: "var(--color-success-text)", display: "grid", placeItems: "center", flexShrink: 0 }}><CalendarDays size={15} /></div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: "var(--text-body-size)", fontWeight: 700, color: "var(--color-text-primary)" }}>Challenges</div>
                       <div style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>{rosterChallenges.length} this week</div>
@@ -619,7 +601,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                             const chosen = edit.days.includes(day.id);
                             return <button key={day.id} type="button" disabled={!owner || edit.locked} onClick={() => toggleDay(ck, day.id)} aria-pressed={chosen} style={{ borderRadius: "var(--radius-sm)", padding: "8px 12px", fontSize: "var(--text-caption-size)", fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, ...challengeChoiceStyle(chosen), opacity: (!owner || edit.locked) ? 0.7 : 1 }}>{chosen && <Check size={12} strokeWidth={3} />}{day.label}</button>;
                           })}</div>
-                          {!!edit.games.length && !!edit.days.length && <div style={{ borderRadius: "var(--radius-md)", padding: "var(--space-3)", marginTop: "var(--space-3)", background: "rgba(36,107,253,0.055)", border: "1px solid rgba(36,107,253,0.10)" }}><div style={{ fontSize: 11, fontWeight: 600, color: "var(--color-text-primary)", marginBottom: "var(--space-2)" }}>Daily game schedule</div><div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{buildCircleChallengeRounds({ activeDays: edit.days, gameIds: edit.games }).map((r) => <span key={r.date} style={{ borderRadius: "var(--radius-full)", padding: "4px 10px", fontSize: 11, fontWeight: 600, background: "var(--color-surface)", color: "var(--color-text-primary)", textTransform: "capitalize" }}>{DAYS[r.isoDay-1]?.label} · {r.game}</span>)}</div></div>}
+                          {!!edit.games.length && !!edit.days.length && <div style={{ borderRadius: "var(--radius-md)", padding: "var(--space-3)", marginTop: "var(--space-3)", background: "var(--color-primary-subtle)", border: "1px solid var(--color-primary-subtle-border)" }}><div style={{ fontSize: 11, fontWeight: 600, color: "var(--color-text-primary)", marginBottom: "var(--space-2)" }}>Daily game schedule</div><div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{buildCircleChallengeRounds({ activeDays: edit.days, gameIds: edit.games }).map((r) => <span key={r.date} style={{ borderRadius: "var(--radius-full)", padding: "4px 10px", fontSize: 11, fontWeight: 600, background: "var(--color-surface)", color: "var(--color-text-primary)", textTransform: "capitalize" }}>{DAYS[r.isoDay-1]?.label} · {r.game}</span>)}</div></div>}
                           {/* Schedule */}
                           <fieldset style={{ marginTop: "var(--space-4)", border: "none", padding: 0 }} disabled={!owner || edit.locked}>
                             <legend style={{ fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-text-primary)" }}>Schedule</legend>
@@ -670,13 +652,13 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                           <div style={{ fontSize: 11, color: "var(--color-text-secondary)" }} className="truncate">{circleOwner ? "Circle owner" : member.mood || "Circle member"}</div>
                         </div>
                         {manager && !circleOwner && !isMe && (
-                          <button disabled={!!moderationBusy} onClick={() => setMemberMenu(memberMenu === member.id ? null : member.id)} style={{ width: 32, height: 32, borderRadius: "var(--radius-sm)", background: "rgba(16,24,40,0.045)", border: "none", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}><Ellipsis size={16} /></button>
+                          <button disabled={!!moderationBusy} onClick={() => setMemberMenu(memberMenu === member.id ? null : member.id)} style={{ width: 32, height: 32, borderRadius: "var(--radius-sm)", background: "var(--color-surface-elevated)", color: "var(--color-text-primary)", border: "none", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}><Ellipsis size={16} /></button>
                         )}
                       </div>
                       {memberMenu === member.id && (
                         <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-2)", marginTop: "var(--space-3)", paddingTop: "var(--space-3)", borderTop: "1px solid var(--color-border)" }}>
-                          <button onClick={() => { setMemberConfirm({ id: member.id, action: "owner" }); setMemberMenu(null); }} style={{ borderRadius: "var(--radius-full)", padding: "6px 12px", fontSize: "var(--text-caption-size)", fontWeight: 500, display: "flex", alignItems: "center", gap: "var(--space-1)", background: "rgba(16,24,40,0.05)", color: "var(--color-text-primary)", border: "none", cursor: "pointer" }}><Crown size={11} /> Make owner</button>
-                          <button onClick={() => { setMemberConfirm({ id: member.id, action: "remove" }); setMemberMenu(null); }} style={{ borderRadius: "var(--radius-full)", padding: "6px 12px", fontSize: "var(--text-caption-size)", fontWeight: 500, display: "flex", alignItems: "center", gap: "var(--space-1)", background: "rgba(16,24,40,0.05)", color: "var(--color-text-primary)", border: "none", cursor: "pointer" }}><UserMinus size={11} /> Remove</button>
+                          <button onClick={() => { setMemberConfirm({ id: member.id, action: "owner" }); setMemberMenu(null); }} style={{ borderRadius: "var(--radius-full)", padding: "6px 12px", fontSize: "var(--text-caption-size)", fontWeight: 500, display: "flex", alignItems: "center", gap: "var(--space-1)", background: "var(--color-surface-elevated)", color: "var(--color-text-primary)", border: "none", cursor: "pointer" }}><Crown size={11} /> Make owner</button>
+                          <button onClick={() => { setMemberConfirm({ id: member.id, action: "remove" }); setMemberMenu(null); }} style={{ borderRadius: "var(--radius-full)", padding: "6px 12px", fontSize: "var(--text-caption-size)", fontWeight: 500, display: "flex", alignItems: "center", gap: "var(--space-1)", background: "var(--color-surface-elevated)", color: "var(--color-text-primary)", border: "none", cursor: "pointer" }}><UserMinus size={11} /> Remove</button>
                           <button onClick={() => { setMemberConfirm({ id: member.id, action: "block" }); setMemberMenu(null); }} style={{ borderRadius: "var(--radius-full)", padding: "6px 12px", fontSize: "var(--text-caption-size)", fontWeight: 500, display: "flex", alignItems: "center", gap: "var(--space-1)", background: "var(--color-danger-bg)", color: "var(--color-danger-text)", border: "none", cursor: "pointer" }}><Ban size={11} /> Block</button>
                         </div>
                       )}
@@ -685,17 +667,17 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                         <div style={{ borderRadius: "var(--radius-sm)", padding: "10px 12px", marginTop: "var(--space-2)", fontSize: "var(--text-caption-size)", background: "var(--color-warning-bg)", color: "var(--color-warning-text)" }}>
                           <div style={{ marginBottom: "var(--space-2)" }}>Make {member.name} the owner of {rosterCircle.name}? You'll remain a member, but lose owner-only controls.</div>
                           <div style={{ display: "flex", gap: "var(--space-2)" }}>
-                            <button onClick={() => { transferOwnership(rosterCircle, member); }} style={{ borderRadius: "var(--radius-full)", padding: "6px 14px", fontSize: "var(--text-caption-size)", fontWeight: 600, color: "#fff", background: "#9A6A12", border: "none", cursor: "pointer" }}>Make owner</button>
-                            <button onClick={() => setMemberConfirm(null)} style={{ borderRadius: "var(--radius-full)", padding: "6px 14px", fontSize: "var(--text-caption-size)", fontWeight: 600, background: "rgba(16,24,40,0.06)", color: "var(--color-text-primary)", border: "none", cursor: "pointer" }}>Cancel</button>
+                            <button onClick={() => { transferOwnership(rosterCircle, member); }} style={{ borderRadius: "var(--radius-full)", padding: "6px 14px", fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-page-bg)", background: "var(--color-warning-text)", border: "none", cursor: "pointer" }}>Make owner</button>
+                            <button onClick={() => setMemberConfirm(null)} style={{ borderRadius: "var(--radius-full)", padding: "6px 14px", fontSize: "var(--text-caption-size)", fontWeight: 600, background: "var(--color-surface-elevated)", color: "var(--color-text-primary)", border: "none", cursor: "pointer" }}>Cancel</button>
                           </div>
                         </div>
                       )}
                       {memberConfirm?.id === member.id && memberConfirm.action === "remove" && (
-                        <div style={{ borderRadius: "var(--radius-sm)", padding: "10px 12px", marginTop: "var(--space-2)", fontSize: "var(--text-caption-size)", background: "rgba(16,24,40,0.06)", color: "var(--color-text-primary)" }}>
+                        <div style={{ borderRadius: "var(--radius-sm)", padding: "10px 12px", marginTop: "var(--space-2)", fontSize: "var(--text-caption-size)", background: "var(--color-surface-elevated)", color: "var(--color-text-primary)" }}>
                           <div style={{ marginBottom: "var(--space-2)" }}>Remove {member.name} from {rosterCircle.name}? They can rejoin later.</div>
                           <div style={{ display: "flex", gap: "var(--space-2)" }}>
-                            <button onClick={() => { moderateMember(rosterCircle, member, "remove"); setMemberConfirm(null); }} style={{ borderRadius: "var(--radius-full)", padding: "6px 14px", fontSize: "var(--text-caption-size)", fontWeight: 600, color: "#fff", background: "#4B5563", border: "none", cursor: "pointer" }}>Remove</button>
-                            <button onClick={() => setMemberConfirm(null)} style={{ borderRadius: "var(--radius-full)", padding: "6px 14px", fontSize: "var(--text-caption-size)", fontWeight: 600, background: "rgba(16,24,40,0.06)", color: "var(--color-text-primary)", border: "none", cursor: "pointer" }}>Cancel</button>
+                            <button onClick={() => { moderateMember(rosterCircle, member, "remove"); setMemberConfirm(null); }} style={{ borderRadius: "var(--radius-full)", padding: "6px 14px", fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-primary-text)", background: "var(--color-icon-primary)", border: "none", cursor: "pointer" }}>Remove</button>
+                            <button onClick={() => setMemberConfirm(null)} style={{ borderRadius: "var(--radius-full)", padding: "6px 14px", fontSize: "var(--text-caption-size)", fontWeight: 600, background: "var(--color-surface-elevated)", color: "var(--color-text-primary)", border: "none", cursor: "pointer" }}>Cancel</button>
                           </div>
                         </div>
                       )}
@@ -703,8 +685,8 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                         <div style={{ borderRadius: "var(--radius-sm)", padding: "10px 12px", marginTop: "var(--space-2)", fontSize: "var(--text-caption-size)", background: "var(--color-danger-bg)", color: "var(--color-danger-text)" }}>
                           <div style={{ marginBottom: "var(--space-2)" }}>Block {member.name} from {rosterCircle.name}? They won't be able to join or be invited again until unblocked.</div>
                           <div style={{ display: "flex", gap: "var(--space-2)" }}>
-                            <button onClick={() => { moderateMember(rosterCircle, member, "block"); setMemberConfirm(null); }} style={{ borderRadius: "var(--radius-full)", padding: "6px 14px", fontSize: "var(--text-caption-size)", fontWeight: 600, color: "#fff", background: "var(--color-danger-solid)", border: "none", cursor: "pointer" }}>Block</button>
-                            <button onClick={() => setMemberConfirm(null)} style={{ borderRadius: "var(--radius-full)", padding: "6px 14px", fontSize: "var(--text-caption-size)", fontWeight: 600, background: "rgba(16,24,40,0.06)", color: "var(--color-text-primary)", border: "none", cursor: "pointer" }}>Cancel</button>
+                            <button onClick={() => { moderateMember(rosterCircle, member, "block"); setMemberConfirm(null); }} style={{ borderRadius: "var(--radius-full)", padding: "6px 14px", fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-primary-text)", background: "var(--color-danger-solid)", border: "none", cursor: "pointer" }}>Block</button>
+                            <button onClick={() => setMemberConfirm(null)} style={{ borderRadius: "var(--radius-full)", padding: "6px 14px", fontSize: "var(--text-caption-size)", fontWeight: 600, background: "var(--color-surface-elevated)", color: "var(--color-text-primary)", border: "none", cursor: "pointer" }}>Cancel</button>
                           </div>
                         </div>
                       )}

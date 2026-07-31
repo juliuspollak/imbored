@@ -6,11 +6,13 @@ export default function ModePill({ mode, onSwitch }) {
   const targetIsChallenge = mode !== "challenge";
   return (
     <button
+      type="button"
       onClick={onSwitch}
+      aria-label={targetIsChallenge ? `Switch to ${t("common.challenge")}` : `Switch to ${t("common.practice")}`}
       style={{
         position: "fixed",
-        top: 16,
-        right: "max(16px, calc((100vw - var(--game-nav-width, 512px)) / 2))",
+        top: "max(16px, env(safe-area-inset-top))",
+        right: "max(var(--global-header-safe-right), calc((100vw - var(--game-nav-width, 512px)) / 2))",
         zIndex: 50,
         display: "flex",
         alignItems: "center",

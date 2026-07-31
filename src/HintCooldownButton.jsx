@@ -15,7 +15,7 @@ export default function HintCooldownButton({ cooldown, label = "Hint", onClick, 
       aria-label={accessibleLabel}
       aria-disabled={unavailable}
       data-disabled-by-game={disabled ? "true" : "false"}
-      className={`hint-liquid-button gloss-button flex-1 rounded-lg py-2 text-xs font-semibold${cooling ? " is-filling" : ""}`}
+      className={`hint-liquid-button flex-1${cooling ? " is-filling" : ""}`}
       style={{ "--hint-fill": `${percent}%` }}
     >
       <span className="hint-liquid-fill" aria-hidden="true">
@@ -29,7 +29,14 @@ export default function HintCooldownButton({ cooldown, label = "Hint", onClick, 
           overflow: hidden;
           cursor: pointer;
           color: var(--color-text-primary);
-          background: rgba(16,24,40,.06);
+          min-height: var(--control-height-sm);
+          padding: 0 12px;
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-md);
+          background: var(--color-surface-elevated);
+          font: inherit;
+          font-size: var(--text-caption-size);
+          font-weight: var(--text-button-weight);
           transition: transform .16s ease, box-shadow .2s ease, border-color .2s ease;
         }
         .hint-liquid-button:disabled,
@@ -46,7 +53,7 @@ export default function HintCooldownButton({ cooldown, label = "Hint", onClick, 
           inset: 0 auto 0 0;
           width: var(--hint-fill);
           overflow: hidden;
-          background: linear-gradient(90deg, #78A7FF 0%, #4D83ED 62%, var(--color-primary) 100%);
+          background: linear-gradient(90deg, var(--color-info-text) 0%, var(--color-primary) 100%);
           box-shadow: inset -5px 0 12px rgba(255,255,255,.32);
           transition: width 1s linear;
         }
@@ -66,28 +73,22 @@ export default function HintCooldownButton({ cooldown, label = "Hint", onClick, 
           text-shadow: 0 1px 0 rgba(255,255,255,.48);
         }
         .hint-liquid-button:not(.is-filling):not(:disabled) {
-          color: #fff;
-          box-shadow: 0 6px 16px rgba(47,111,237,.22), inset 0 1px 0 rgba(255,255,255,.35);
+          color: var(--color-primary-text);
+          box-shadow: var(--shadow-primary);
         }
         @keyframes hint-liquid-wave {
           0%, 100% { transform: translateX(-1px) rotate(0deg) scaleY(1); }
           50% { transform: translateX(3px) rotate(8deg) scaleY(1.08); }
         }
-        [data-theme="dark"] .hint-liquid-button,
-        [data-theme="dark"] .hint-liquid-button:disabled {
-          color: var(--color-text-primary) !important;
-          background: rgba(255,255,255,.07) !important;
-          border-color: var(--color-border) !important;
-        }
         [data-theme="dark"] .game-toolbar .hint-liquid-button[data-disabled-by-game="true"] {
           color: var(--color-disabled-text) !important;
-          background: rgba(255,255,255,.035) !important;
+          background: var(--color-disabled-bg) !important;
           border-color: var(--color-border) !important;
           box-shadow: none !important;
         }
         [data-theme="dark"] .game-toolbar .hint-liquid-button[data-disabled-by-game="true"] .hint-liquid-fill { display: none; }
         [data-theme="dark"] .hint-liquid-label { text-shadow: 0 1px 1px rgba(0,0,0,.32); }
-        [data-theme="dark"] .hint-liquid-button:not(.is-filling):not(:disabled) { color: #fff; }
+        [data-theme="dark"] .hint-liquid-button:not(.is-filling):not(:disabled) { color: var(--color-primary-text); }
         @media (prefers-reduced-motion: reduce) {
           .hint-liquid-fill { transition: none; }
           .hint-liquid-wave { animation: none; }

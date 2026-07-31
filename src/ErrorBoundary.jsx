@@ -1,4 +1,5 @@
 import React from "react";
+import Button from "./components/Button.jsx";
 
 // Class component is required here — error boundaries have no hooks
 // equivalent yet. Without this, an uncaught render error anywhere in the
@@ -42,13 +43,9 @@ export default class ErrorBoundary extends React.Component {
             <div style={{ color: "var(--color-text-secondary)", fontSize: 13 }}>
               That wasn't supposed to happen. You can try again — your progress on other games is safe.
             </div>
-            <button
-              onClick={this.reset}
-              className="mt-1 rounded-full px-5 py-2 text-sm font-semibold"
-              style={{ background: "var(--color-primary)", color: "#FFFFFF" }}
-            >
+            <Button onClick={this.reset} style={{ marginTop: "var(--space-1)" }}>
               Try again
-            </button>
+            </Button>
           </div>
         </div>
       );
