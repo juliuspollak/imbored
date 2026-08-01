@@ -32,8 +32,8 @@
   transition: transform 180ms cubic-bezier(.2,.8,.2,1), filter 180ms ease;
 }
 
-/* Hive uses the supplied full-card artwork and stretches to the same grid-row
-   height as the other tiles on both desktop and mobile. */
+/* Hive fills the same grid row as the neighbouring cards. The square artwork
+   keeps its original proportions and is cropped, never stretched. */
 .home-game-tile:has(.hive-tile-icon) {
   min-height: 154px !important;
   height: auto !important;
@@ -46,8 +46,8 @@
   background-color: #f9c543 !important;
   background-image: url('/assets/hive-tile-bg.webp') !important;
   background-repeat: no-repeat !important;
-  background-size: 100% 100% !important;
-  background-position: center !important;
+  background-size: cover !important;
+  background-position: 43% center !important;
   box-shadow: 0 10px 24px rgba(174,108,0,.16) !important;
 }
 
@@ -61,7 +61,6 @@
   z-index: 1;
 }
 
-/* Keep completion and live-player badges above the artwork. */
 .home-game-tile:has(.hive-tile-icon) > span[title],
 .home-game-tile:has(.hive-tile-icon) > span[style*="right: 12px"] {
   z-index: 4;
@@ -72,26 +71,25 @@
   box-shadow: 0 4px 12px rgba(114,72,0,.14);
 }
 
-/* The hive illustration already exists in the background artwork. */
+/* The hive illustration is already present in the background artwork. */
 .home-game-tile:has(.hive-tile-icon) > span:has(> .hive-tile-icon) {
   display: none !important;
 }
 
-/* Retain the live title and today's play count in a compact readable panel on
-   the clear right side, without covering the hive illustration. */
+/* Keep only the live title and play count in the artwork's clear right side. */
 .home-game-tile:has(.hive-tile-icon) > span:last-of-type {
   position: absolute !important;
   z-index: 2;
-  top: 52%;
-  right: 9px;
-  width: 45%;
-  transform: translateY(-38%);
+  top: 50%;
+  right: 10px;
+  width: 41%;
+  transform: translateY(-32%);
   margin: 0 !important;
-  padding: 8px 9px;
+  padding: 7px 8px;
   text-align: left;
-  border-radius: 12px;
-  background: rgba(255,248,216,.78);
-  box-shadow: 0 4px 14px rgba(119,72,0,.10), inset 0 1px 0 rgba(255,255,255,.68);
+  border-radius: 11px;
+  background: rgba(255,250,227,.80);
+  box-shadow: 0 3px 12px rgba(119,72,0,.09), inset 0 1px 0 rgba(255,255,255,.72);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
 }
@@ -102,23 +100,22 @@
 
 .home-game-tile:has(.hive-tile-icon) > span:last-of-type strong {
   color: #251706 !important;
-  font-size: 17px !important;
+  font-size: 16px !important;
   line-height: 1.08;
   letter-spacing: -.01em;
 }
 
-/* The description is intentionally omitted from this illustrated tile. */
 .home-game-tile:has(.hive-tile-icon) > span:last-of-type > span:nth-child(2) {
   display: none !important;
 }
 
 .home-game-tile:has(.hive-tile-icon) > span:last-of-type > span:nth-child(3) {
   display: block !important;
-  margin-top: 7px !important;
+  margin-top: 6px !important;
   color: #75684f !important;
-  font-size: 11px !important;
+  font-size: 10px !important;
   font-weight: 700 !important;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -143,18 +140,22 @@
 }
 
 @media (max-width: 390px) {
+  .home-game-tile:has(.hive-tile-icon) {
+    background-position: 40% center !important;
+  }
+
   .home-game-tile:has(.hive-tile-icon) > span:last-of-type {
-    right: 7px;
-    width: 44%;
-    padding: 7px;
+    right: 6px;
+    width: 40%;
+    padding: 6px;
   }
 
   .home-game-tile:has(.hive-tile-icon) > span:last-of-type strong {
-    font-size: 16px !important;
+    font-size: 15px !important;
   }
 
   .home-game-tile:has(.hive-tile-icon) > span:last-of-type > span:nth-child(3) {
-    font-size: 10px !important;
+    font-size: 9px !important;
   }
 }
 
