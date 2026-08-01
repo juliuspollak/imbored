@@ -8,11 +8,9 @@ import Page from "./components/Page.jsx";
 import PageHeader from "./components/PageHeader.jsx";
 import Card from "./components/Card.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
+import { GAME_NAMES } from "./lib/gameBranding.jsx";
 
-const GAME_LABELS = {
-  queens: "Queens", tango: "Tango", zip: "Zip",
-  minisudoku: "Sudoku", geo: "Geo", zoom: "Zoom", animalrush: "Animal Rush",
-};
+const GAME_LABELS = { ...GAME_NAMES, minisudoku: "Sudoku" };
 
 function rankStyle(rank) {
   if (rank === 1) return { bg: "linear-gradient(145deg,#FFF9E8,#FFE9A8)", color: "#8A6414", Icon: Trophy };

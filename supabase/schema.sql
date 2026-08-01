@@ -20,7 +20,7 @@ create table profiles (
 create table game_stats (
   id bigint generated always as identity primary key,
   user_id uuid references profiles(id) on delete cascade not null,
-  game text not null,                -- 'queens' | 'tango' | 'zip'
+  game text not null,                -- 'hive' | 'tango' | 'zip'
   day_index int not null,            -- 0=Mon .. 6=Sun, which difficulty was played
   seconds int not null,
   mistakes int not null default 0,

@@ -6,10 +6,11 @@ import HintCooldownButton from "../HintCooldownButton.jsx";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import BoardReviewToggle from "../BoardReviewToggle.jsx";
-import { Crown, Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock, X } from "lucide-react";
+import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock, X } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
 import Button from "../components/Button.jsx";
+import { HIVE_BRAND } from "../lib/gameBranding.jsx";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -154,10 +155,10 @@ function isContiguous(cells) {
 function repairToUnique(n, solution, grid, budget = 1200) {
   let best = grid.map((row) => row.slice());
   let bestCount = countSolutions(n, best, 6);
-  const queenCell = new Set(solution.map((c, r) => `${r},${c}`));
+  const beeCell = new Set(solution.map((c, r) => `${r},${c}`));
   for (let iter = 0; iter < budget && bestCount > 1; iter++) {
     const r = Math.floor(Math.random() * n), c = Math.floor(Math.random() * n);
-    if (queenCell.has(`${r},${c}`)) continue; // never move a cell holding a queen
+    if (beeCell.has(`${r},${c}`)) continue; // never move a cell holding a bee
     const from = best[r][c];
     const neigh = [];
     for (const [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
@@ -180,21 +181,21 @@ function repairToUnique(n, solution, grid, budget = 1200) {
 }
 
 function findNextLogicalStepPure(board, regionGrid, n) {
-  const rowHasQueen = new Array(n).fill(false);
-  const colHasQueen = new Array(n).fill(false);
-  const regionHasQueen = {};
+  const rowHasBee = new Array(n).fill(false);
+  const colHasBee = new Array(n).fill(false);
+  const regionHasBee = {};
   for (let r = 0; r < n; r++) {
     for (let c = 0; c < n; c++) {
       if (board[r][c] === 2) {
-        rowHasQueen[r] = true;
-        colHasQueen[c] = true;
-        regionHasQueen[regionGrid[r][c]] = true;
+        rowHasBee[r] = true;
+        colHasBee[c] = true;
+        regionHasBee[regionGrid[r][c]] = true;
       }
     }
   }
   function isCandidate(r, c) {
     if (board[r][c] !== 0) return false;
-    if (rowHasQueen[r] || colHasQueen[c] || regionHasQueen[regionGrid[r][c]]) return false;
+    if (rowHasBee[r] || colHasBee[c] || regionHasBee[regionGrid[r][c]]) return false;
     for (let dr = -1; dr <= 1; dr++) {
       for (let dc = -1; dc <= 1; dc++) {
         if (dr === 0 && dc === 0) continue;
@@ -205,9 +206,9 @@ function findNextLogicalStepPure(board, regionGrid, n) {
     return true;
   }
 
-  // Checked first: any cell directly ruled out by a crown already on the
+  // Checked first: any cell directly ruled out by a bee already on the
   // board. These are the most obvious follow-up moves ("you placed a
-  // crown, now mark what it eliminates"), so they should be offered
+  // bee, now mark what it eliminates"), so they should be offered
   // before anything requiring deeper reasoning.
   for (let r = 0; r < n; r++) {
     for (let c = 0; c < n; c++) {
@@ -219,7 +220,7 @@ function findNextLogicalStepPure(board, regionGrid, n) {
           if (board[rr][cc] !== 0) continue;
           const sameRow = rr === r, sameCol = cc === c, sameRegion = regionGrid[rr][cc] === region;
           const adjacent = Math.abs(rr - r) <= 1 && Math.abs(cc - c) <= 1;
-          if (sameRow || sameCol || sameRegion || adjacent) return { r: rr, c: cc, type: "cross", src: "crown-elim" };
+          if (sameRow || sameCol || sameRegion || adjacent) return { r: rr, c: cc, type: "cross", src: "bee-elim" };
         }
       }
     }
@@ -227,25 +228,25 @@ function findNextLogicalStepPure(board, regionGrid, n) {
 
   // naked singles: a row, column, or region with exactly one candidate left
   for (let r = 0; r < n; r++) {
-    if (rowHasQueen[r]) continue;
+    if (rowHasBee[r]) continue;
     const cands = [];
     for (let c = 0; c < n; c++) if (isCandidate(r, c)) cands.push(c);
-    if (cands.length === 1) return { r, c: cands[0], type: "queen", src: "naked" };
+    if (cands.length === 1) return { r, c: cands[0], type: "bee", src: "naked" };
   }
   for (let c = 0; c < n; c++) {
-    if (colHasQueen[c]) continue;
+    if (colHasBee[c]) continue;
     const cands = [];
     for (let r = 0; r < n; r++) if (isCandidate(r, c)) cands.push(r);
-    if (cands.length === 1) return { r: cands[0], c, type: "queen", src: "naked" };
+    if (cands.length === 1) return { r: cands[0], c, type: "bee", src: "naked" };
   }
   const regionCells = {};
   for (let r = 0; r < n; r++) {
     for (let c = 0; c < n; c++) (regionCells[regionGrid[r][c]] ||= []).push([r, c]);
   }
   for (const reg in regionCells) {
-    if (regionHasQueen[reg]) continue;
+    if (regionHasBee[reg]) continue;
     const cands = regionCells[reg].filter(([r, c]) => isCandidate(r, c));
-    if (cands.length === 1) return { r: cands[0][0], c: cands[0][1], type: "queen", src: "naked" };
+    if (cands.length === 1) return { r: cands[0][0], c: cands[0][1], type: "bee", src: "naked" };
   }
 
   function subsetsOfSize(arr, k) {
@@ -265,9 +266,9 @@ function findNextLogicalStepPure(board, regionGrid, n) {
   }
 
   const openRows = [];
-  for (let r = 0; r < n; r++) if (!rowHasQueen[r]) openRows.push(r);
+  for (let r = 0; r < n; r++) if (!rowHasBee[r]) openRows.push(r);
   const openCols = [];
-  for (let c = 0; c < n; c++) if (!colHasQueen[c]) openCols.push(c);
+  for (let c = 0; c < n; c++) if (!colHasBee[c]) openCols.push(c);
   // built from actual regionGrid values (not Object.keys, which returns
   // strings — comparing those against regionGrid's numeric IDs via
   // Set.has() would silently fail every check, since unlike plain object
@@ -275,7 +276,7 @@ function findNextLogicalStepPure(board, regionGrid, n) {
   const regionIdSet = new Set();
   for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) regionIdSet.add(regionGrid[r][c]);
 
-  const openRegions = [...regionIdSet].filter((reg) => !regionHasQueen[reg]);
+  const openRegions = [...regionIdSet].filter((reg) => !regionHasBee[reg]);
   const unitDefs = [
     ...openRows.map((r) => ({ type: "row", id: r, cells: Array.from({ length: n }, (_, c) => [r, c]) })),
     ...openCols.map((c) => ({ type: "col", id: c, cells: Array.from({ length: n }, (_, r) => [r, c]) })),
@@ -348,7 +349,7 @@ function createPuzzleForSeed(n, seedKey) {
 // day-based seed used for challenge mode (where every player must see the
 // same board), practice should never hand back the same layout twice.
 function createRandomPuzzle(n) {
-  return createPuzzleForSeed(n, `queens:${Date.now()}:${Math.random()}:${n}`);
+  return createPuzzleForSeed(n, `hive:${Date.now()}:${Math.random()}:${n}`);
 }
 
 function todayKey() {
@@ -369,7 +370,7 @@ function fmtTime(sec) {
   return m ? `${m}:${s.toString().padStart(2, "0")}` : `${s}s`;
 }
 
-export default function Queens({
+export default function Hive({
   userId,
   mode = "practice",
   seed = null,
@@ -391,7 +392,7 @@ export default function Queens({
   const [dayIdx, setDayIdx] = useState(isChallenge ? forcedDayIdx ?? requestedDayIdx : requestedDayIdx);
   const n = SIZES[dayIdx];
   const [puzzle, setPuzzle] = useState(() => isChallenge
-    ? createPuzzleForSeed(n, seed || `queens:${todayKey()}:day:${requestedDayIdx}:${n}`)
+    ? createPuzzleForSeed(n, seed || `hive:${todayKey()}:day:${requestedDayIdx}:${n}`)
     : createRandomPuzzle(n));
   const [board, setBoard] = useState(() => initialBoard(n));
   const [history, setHistory] = useState([]);
@@ -425,7 +426,7 @@ export default function Queens({
   const rewardResult = completedReward ?? localRewardResult;
 
   const boardSize = board.length;
-  const queensCount = board.flat().filter((v) => v === 2).length;
+  const beesCount = board.flat().filter((v) => v === 2).length;
 
   useEffect(() => {
     if (!isChallenge || isIncluded || !challengeName) return;
@@ -446,7 +447,7 @@ export default function Queens({
       const solvedStats = statsRef.current;
       const payload = {
         userId,
-        game: "queens",
+        game: "hive",
         dayIndex: dayIdx,
         seconds: solvedStats.seconds,
         mistakes: solvedStats.mistakes,
@@ -455,7 +456,7 @@ export default function Queens({
         challengeDate:isChallenge ? challengeDate : undefined,
       };
       const legacyPayload = {
-        game:"queens",
+        game:"hive",
         seconds:solvedStats.seconds,
         mistakes:solvedStats.mistakes,
         hints:solvedStats.hintsUsed,
@@ -477,7 +478,7 @@ export default function Queens({
           saveInFlightRef.current = false;
           setCompletionFinished(true);
         } catch (error) {
-          console.error("Unable to save Queens result", error);
+          console.error("Unable to save Hive result", error);
           saveInFlightRef.current = false;
           window.setTimeout(() => setSyncRetryTick((tick) => tick + 1), 1500);
         }
@@ -486,7 +487,7 @@ export default function Queens({
       const result = await onChallengeComplete?.(legacyPayload);
       if (cancelled) return;
       if (result?.error) {
-        console.error("Unable to save Queens result", result.error);
+        console.error("Unable to save Hive result", result.error);
         saveInFlightRef.current = false;
         window.setTimeout(() => setSyncRetryTick((tick) => tick + 1), 1500);
         return;
@@ -502,7 +503,7 @@ export default function Queens({
 
   const newPuzzle = useCallback((size = n) => {
     puzzleKeyRef.current += 1;
-    const key = seed ? `${seed}:retry:${puzzleKeyRef.current}` : `queens:${Date.now()}:${Math.random()}:${size}`;
+    const key = seed ? `${seed}:retry:${puzzleKeyRef.current}` : `hive:${Date.now()}:${Math.random()}:${size}`;
     setPuzzle(createPuzzleForSeed(size, key));
     setBoard(initialBoard(size));
     setHistory([]);
@@ -558,16 +559,16 @@ export default function Queens({
 
   function validate(next) {
     const conflicts = new Set();
-    const queenPositions = [];
+    const beePositions = [];
     for (let r = 0; r < boardSize; r++) {
       for (let c = 0; c < boardSize; c++) {
-        if (next[r][c] === 2) queenPositions.push([r, c]);
+        if (next[r][c] === 2) beePositions.push([r, c]);
       }
     }
-    for (let i = 0; i < queenPositions.length; i++) {
-      const [r1, c1] = queenPositions[i];
-      for (let j = i + 1; j < queenPositions.length; j++) {
-        const [r2, c2] = queenPositions[j];
+    for (let i = 0; i < beePositions.length; i++) {
+      const [r1, c1] = beePositions[i];
+      for (let j = i + 1; j < beePositions.length; j++) {
+        const [r2, c2] = beePositions[j];
         if (r1 === r2 || c1 === c2 || Math.abs(r1 - r2) <= 1 && Math.abs(c1 - c2) <= 1 || puzzle.regionGrid[r1][c1] === puzzle.regionGrid[r2][c2]) {
           conflicts.add(`${r1}-${c1}`);
           conflicts.add(`${r2}-${c2}`);
@@ -582,7 +583,7 @@ export default function Queens({
   function handleCellClick(r, c, event) {
     // Some iOS versions still emit a compatibility click even when the
     // touchstart was prevented. Touches are applied directly in onUp, so that
-    // delayed click must not cycle the freshly painted × into a queen.
+    // delayed click must not cycle the freshly painted × into a bee.
     if (event && event.detail !== 0 && Date.now() < ignoreCompatibilityClickUntilRef.current) return;
     if (solved || pointerActiveRef.current) return;
     setRunning(true);
@@ -591,7 +592,7 @@ export default function Queens({
       const next = prev.map((row) => row.slice());
       next[r][c] = (next[r][c] + 1) % 3;
       // Cell editing is exploratory: do not penalise a second tap that cycles
-      // × to a crown. Invalid crown combinations are already shown as conflicts.
+      // × to a bee. Invalid bee combinations are already shown as conflicts.
       const allCorrect = next.every((row, rr) => row[puzzle.solution[rr]] === 2) && next.flat().filter((v) => v === 2).length === boardSize;
       if (allCorrect) {
         setSolved(true);
@@ -609,7 +610,7 @@ export default function Queens({
     const isTouch = !!e.touches;
     // iOS may emit its synthetic click after touchend and after a zero-delay
     // guard has already cleared. Own touch taps ourselves so one gesture can
-    // never paint an × and then cycle that same cell again into a queen.
+    // never paint an × and then cycle that same cell again into a bee.
     e.preventDefault();
     const target = e.target.closest(".qp-cell");
     if (!target) return;
@@ -730,10 +731,10 @@ export default function Queens({
     for (let r = 0; r < boardSize; r++) {
       for (let c = 0; c < boardSize; c++) {
         // Use the same striped answer style as a normal suggestion. A wrong
-        // × on the solution cell should preview a queen; a misplaced queen
+        // × on the solution cell should preview a bee; a misplaced bee
         // should be identified as a cell that needs eliminating.
         if (board[r][c] === 2 && puzzle.solution[r] !== c) wrong.push({ r, c, type: "cross", src: "wrong" });
-        if (board[r][c] === 1 && puzzle.solution[r] === c) wrong.push({ r, c, type: "queen", src: "wrong" });
+        if (board[r][c] === 1 && puzzle.solution[r] === c) wrong.push({ r, c, type: "bee", src: "wrong" });
       }
     }
     if (wrong.length) {
@@ -741,23 +742,23 @@ export default function Queens({
       return;
     }
 
-    // A correctly placed queen rules out its row, column, region and every
+    // A correctly placed bee rules out its row, column, region and every
     // touching cell. Highlight all still-blank eliminations together so the
     // same rule is not split across two visually different hint steps.
-    for (let queenRow = 0; queenRow < boardSize; queenRow++) {
-      const queenCol = puzzle.solution[queenRow];
-      if (board[queenRow][queenCol] !== 2) continue;
-      const queenRegion = puzzle.regionGrid[queenRow][queenCol];
+    for (let beeRow = 0; beeRow < boardSize; beeRow++) {
+      const beeCol = puzzle.solution[beeRow];
+      if (board[beeRow][beeCol] !== 2) continue;
+      const beeRegion = puzzle.regionGrid[beeRow][beeCol];
       const eliminated = [];
       for (let r = 0; r < boardSize; r++) {
         for (let c = 0; c < boardSize; c++) {
-          if (r === queenRow && c === queenCol || board[r][c] !== 0) continue;
-          const sameRow = r === queenRow;
-          const sameColumn = c === queenCol;
-          const sameRegion = puzzle.regionGrid[r][c] === queenRegion;
-          const touching = Math.abs(r - queenRow) <= 1 && Math.abs(c - queenCol) <= 1;
+          if (r === beeRow && c === beeCol || board[r][c] !== 0) continue;
+          const sameRow = r === beeRow;
+          const sameColumn = c === beeCol;
+          const sameRegion = puzzle.regionGrid[r][c] === beeRegion;
+          const touching = Math.abs(r - beeRow) <= 1 && Math.abs(c - beeCol) <= 1;
           if (sameRow || sameColumn || sameRegion || touching) {
-            eliminated.push({ r, c, type: "cross", src: "queen-elimination" });
+            eliminated.push({ r, c, type: "cross", src: "bee-elimination" });
           }
         }
       }
@@ -773,11 +774,11 @@ export default function Queens({
       return;
     }
     // Safety fallback for any generated board that still defeats the logical
-    // solver: reveal the next required crown rather than doing nothing.
+    // solver: reveal the next required bee rather than doing nothing.
     for (let r = 0; r < boardSize; r++) {
       const c = puzzle.solution[r];
       if (board[r][c] !== 2) {
-        showHints([{ r, c, type: "queen", src: "fallback" }]);
+        showHints([{ r, c, type: "bee", src: "fallback" }]);
         return;
       }
     }
@@ -799,7 +800,7 @@ export default function Queens({
       <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="flex items-center justify-center p-4">
         <div className="w-full max-w-sm rounded-3xl p-6 text-center" style={{ background:PANEL,border:"1px solid rgba(16,24,40,.09)",boxShadow:"0 16px 38px rgba(16,24,40,.10)" }}>
           <span className="grid place-items-center rounded-2xl mx-auto mb-3" style={{ width:54,height:54,background:"rgba(47,111,237,.09)",color:GOLD }}><Lock size={23}/></span>
-          <h1 className="text-xl font-bold" style={{ fontFamily:"'Fredoka',sans-serif",color:INK }}>{t("challenge.notIncluded", { game:"Queens" })}</h1>
+          <h1 className="text-xl font-bold" style={{ fontFamily:"'Fredoka',sans-serif",color:INK }}>{t("challenge.notIncluded", { game:HIVE_BRAND.name })}</h1>
           <p className="text-xs mt-2" style={{ color:"rgba(27,33,41,.50)" }}>{t("challenge.notIncludedBody", { circle:challengeName || "This circle" })}</p>
           <div className="flex flex-col gap-2 mt-5">
             <Button type="button" onClick={onPlayPersonalChallenge} fullWidth>{t("challenge.playMine")}</Button>
@@ -851,15 +852,13 @@ export default function Queens({
               }}
             >
               {val === 2 && (
-                <Crown
-                  key={`crown-${r}-${c}`}
-                  className="qp-crown"
-                  size={Math.max(17, 27 - boardSize)}
+                <HIVE_BRAND.PieceIcon
+                  key={`bee-${r}-${c}`}
+                  className="qp-bee"
+                  size={Math.max(25, 34 - boardSize)}
                   style={{
                     color: isConflict ? RED : INK,
-                    fill: isConflict ? "rgba(217,105,92,0.22)" : "#F6C453",
                   }}
-                  strokeWidth={2.6}
                 />
               )}
               {val === 1 && (
@@ -870,17 +869,16 @@ export default function Queens({
                   style={{ color: "rgba(17,24,39,0.60)" }}
                 />
               )}
-              {isHint && cellHint.type === "queen" && val === 0 && (
-                <Crown
-                  className="qp-crown"
-                  size={Math.max(17, 27 - boardSize)}
-                  strokeWidth={2.6}
-                  style={{ color: "#047857", fill: "rgba(16,185,129,0.28)", opacity: 0.82, pointerEvents: "none" }}
+              {isHint && cellHint.type === "bee" && val === 0 && (
+                <HIVE_BRAND.PieceIcon
+                  className="qp-bee"
+                  size={Math.max(25, 34 - boardSize)}
+                  style={{ color: "#047857", opacity: 0.82, pointerEvents: "none" }}
                 />
               )}
-              {isHint && cellHint.type === "queen" && val === 1 && (
+              {isHint && cellHint.type === "bee" && val === 1 && (
                 <span
-                  aria-label="This cell should contain a queen"
+                  aria-label={`This cell should contain a ${HIVE_BRAND.piece}`}
                   style={{
                     position: "absolute", top: 3, right: 3, width: 16, height: 16,
                     borderRadius: "50%", display: "grid", placeItems: "center",
@@ -888,7 +886,7 @@ export default function Queens({
                     boxShadow: "var(--shadow-control)", pointerEvents: "none", zIndex: 3,
                   }}
                 >
-                  <Crown size={10} strokeWidth={2.6} style={{ color: "#047857", fill: "rgba(16,185,129,0.28)" }} />
+                  <HIVE_BRAND.PieceIcon size={14} style={{ color: "#047857" }} />
                 </span>
               )}
             </button>
@@ -911,14 +909,14 @@ export default function Queens({
           0%,100% { box-shadow: inset 0 0 0 3px rgba(47,111,237,0.5), 0 0 0 0 rgba(47,111,237,0.3); }
           50% { box-shadow: inset 0 0 0 3px rgba(47,111,237,0.9), 0 0 0 8px rgba(47,111,237,0); }
         }
-        @keyframes qp-hint-queen {
+        @keyframes qp-hint-bee {
           0%,100% { box-shadow: inset 0 0 0 3px rgba(18,148,106,0.45), 0 0 0 0 rgba(18,148,106,0.28); }
           50% { box-shadow: inset 0 0 0 3px rgba(18,148,106,0.9), 0 0 0 8px rgba(18,148,106,0); }
         }
-        .qp-crown { animation: qp-pop 0.22s ease-out; }
+        .qp-bee { animation: qp-pop 0.22s ease-out; }
         .qp-hint-cross { animation: qp-hint-pulse 0.7s ease-in-out infinite; z-index: 2; }
-        .qp-hint-queen { animation: qp-hint-queen 0.7s ease-in-out infinite; z-index: 2; }
-        .qp-hint-cross::after, .qp-hint-queen::after {
+        .qp-hint-bee { animation: qp-hint-bee 0.7s ease-in-out infinite; z-index: 2; }
+        .qp-hint-cross::after, .qp-hint-bee::after {
           content: "";
           position: absolute;
           inset: 0;
@@ -926,13 +924,13 @@ export default function Queens({
           pointer-events: none;
           background: repeating-linear-gradient(135deg, rgba(255,255,255,.58) 0 3px, rgba(47,111,237,.24) 3px 5px);
         }
-        .qp-hint-queen::after {
+        .qp-hint-bee::after {
           background: repeating-linear-gradient(135deg, rgba(255,255,255,.58) 0 3px, rgba(18,148,106,.28) 3px 5px);
         }
         .qp-cell > svg { position: relative; z-index: 2; }
         .qp-card { container-type: inline-size; }
         @container (min-width: 430px) {
-          .qp-cell .qp-crown { width: 26px; height: 26px; }
+          .qp-cell .qp-bee { width: 32px; height: 32px; }
           .qp-cell .qp-cross { width: 16px; height: 16px; }
         }
         @media (hover: hover) and (pointer: fine) {
@@ -964,10 +962,10 @@ export default function Queens({
             style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }}
             className="text-4xl lg:text-5xl"
           >
-            Queens
+            {HIVE_BRAND.name}
           </h1>
           <p style={{ color: CREAM, opacity: 0.45 }} className="text-xs mt-1">
-            one crown per row, column &amp; region
+            {HIVE_BRAND.tagline.toLowerCase()}
           </p>
         </div>
 
@@ -1057,19 +1055,19 @@ export default function Queens({
             className="text-xs rounded-lg p-2.5 mb-3"
             style={{ background: "rgba(16,24,40,0.05)", color: CREAM, opacity: 0.75, lineHeight: 1.4 }}
           >
-            Tap a cell once to mark it with ×, tap again to place a crown — or press and drag
+            Tap a cell once to mark it with ×, tap again to place a bee — or press and drag
             across cells to paint or clear × marks in one stroke. Every row, column, and colored
-            region needs exactly one crown, and crowns can't touch — not even diagonally. Hint
-            first stripes any cell that's wrong (a crown where none belongs, or an × on a cell that
-            must hold a crown). Otherwise it stripes the next move you can deduce — blue marks
-            cells to eliminate and green previews a crown.
+            region needs exactly one bee, and bees can't touch — not even diagonally. Hint
+            first stripes any cell that's wrong (a bee where none belongs, or an × on a cell that
+            must hold a bee). Otherwise it stripes the next move you can deduce — blue marks
+            cells to eliminate and green previews a bee.
           </div>
         )}
 
         <GameSolvedPanel
           solved={solved}
           difficultyRating={difficultyRating}
-          icon={<Crown size={32} style={{ color: GOLD }} />}
+          icon={<HIVE_BRAND.PieceIcon size={38} style={{ color: GOLD }} />}
           stats={
             <>
               {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
@@ -1088,7 +1086,7 @@ export default function Queens({
 
         {!solved && (
           <p style={{ color: CREAM, opacity: 0.35 }} className="text-center text-[11px] mt-3">
-            {queensCount}/{boardSize} crowns placed
+            {beesCount}/{boardSize} {HIVE_BRAND.pieces} placed
           </p>
         )}
       </div>

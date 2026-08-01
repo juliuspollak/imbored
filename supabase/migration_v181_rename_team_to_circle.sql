@@ -595,7 +595,7 @@ declare player_name text; game_label text; notification_body text;
 begin
   if new.mode is distinct from 'challenge' or new.challenge_date is null or new.circle_challenge_id is null or new.circle_id is null then return new; end if;
   select coalesce(nullif(btrim(p.name),''),'A teammate') into player_name from public.profiles p where p.id=new.user_id;
-  game_label:=case lower(new.game) when 'queens' then 'Queens' when 'tango' then 'Tango' when 'zip' then 'Zip' when 'minisudoku' then 'Mini Sudoku' when 'geo' then 'Geo' else initcap(replace(new.game,'_',' ')) end;
+  game_label:=case lower(new.game) when 'hive' then 'Hive' when 'tango' then 'Tango' when 'zip' then 'Zip' when 'minisudoku' then 'Mini Sudoku' when 'geo' then 'Geo' else initcap(replace(new.game,'_',' ')) end;
   notification_body:=format('🏁 %s finished the %s circle challenge! Think you can beat them? 🎮',coalesce(player_name,'A teammate'),game_label);
   insert into public.direct_messages(sender_id,recipient_id,body,system_generated,activity_type,source_stat_id)
   select new.user_id,cm.user_id,notification_body,true,'circle_daily_challenge',new.id
@@ -1654,7 +1654,7 @@ begin
   from (
     select game,min(selected.ordinality) as first_position
     from unnest(selected_games) with ordinality selected(game,ordinality)
-    where game in ('queens','tango','zip','minisudoku','geo','zoom')
+    where game in ('hive','tango','zip','minisudoku','geo','zoom')
     group by game
   ) valid_games;
 

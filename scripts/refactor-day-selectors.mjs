@@ -3,7 +3,7 @@ import fs from "node:fs";
 // Idempotent codemod: every game must use the same DaySelector component.
 // This branch change intentionally triggers the rollout workflow after merge.
 const targets = [
-  ["src/games/Queens.jsx", "qp-day-btn"],
+  ["src/games/Hive.jsx", "qp-day-btn"],
   ["src/games/Tango.jsx", "tg-day-btn"],
   ["src/games/Zip.jsx", "zp-day-btn"],
   ["src/games/MiniSudoku.jsx", "ms-day-btn"],

@@ -109,7 +109,7 @@ begin
   select array_agg(distinct game order by game)
   into clean_games
   from unnest(selected_games) game
-  where game in ('queens','tango','zip','minisudoku','geo');
+  where game in ('hive','tango','zip','minisudoku','geo');
 
   select array_agg(distinct day order by day)
   into clean_days

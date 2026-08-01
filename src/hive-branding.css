@@ -39,8 +39,7 @@
   filter: drop-shadow(0 3px 3px rgba(83,47,0,.28));
 }
 
-.qp-bee.hive-bee-icon,
-.qp-crown.hive-bee-icon {
+.qp-bee.hive-bee-icon {
   animation: hive-bee-arrive 180ms cubic-bezier(.2,.9,.25,1.25) both;
 }
 
@@ -55,6 +54,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .qp-bee.hive-bee-icon,
-  .qp-crown.hive-bee-icon { animation: none; }
+  .qp-bee.hive-bee-icon { animation: none; }
 }

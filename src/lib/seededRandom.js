@@ -27,7 +27,7 @@ function mulberry32(seed) {
 }
 
 // seedString should uniquely identify (game, calendar date) — e.g.
-// "queens-2026-07-22" — so the same day always produces the same puzzle,
+// "hive-2026-07-22" — so the same day always produces the same puzzle,
 // for everyone, forever (not just within one session).
 export function withSeededRandom(seedString, fn) {
   const original = Math.random;

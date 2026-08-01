@@ -2,7 +2,7 @@
 --
 -- v137 documented "first 3 Practice completions per Sydney day" as a single
 -- limit shared across every game. In practice this meant a player who warmed
--- up with a few rounds of Queens and Tango could hit the cap before ever
+-- up with a few rounds of Hive and Tango could hit the cap before ever
 -- opening Geo that day, and see "practice limit reached" on a game they had
 -- not played yet. Scope the count to the same game as the result being
 -- scored so each game gets its own daily allowance.

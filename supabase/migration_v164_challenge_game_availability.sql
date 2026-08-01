@@ -11,7 +11,7 @@ insert into public.game_config(
   challenge_enabled
 )
 values
-  ('queens', true, true, 0, true),
+  ('hive', true, true, 0, true),
   ('tango', true, true, 1, true),
   ('zip', true, true, 2, true),
   ('minisudoku', true, true, 3, true),
@@ -21,7 +21,7 @@ on conflict(game_id) do nothing;
 
 update public.game_config
 set challenge_enabled = game_id in (
-  'queens',
+  'hive',
   'tango',
   'zip',
   'minisudoku',

@@ -55,7 +55,7 @@ begin
   end if;
   select array_agg(distinct g) into clean_games
   from unnest(selected_games) g
-  where g in ('queens','tango','zip','minisudoku','geo');
+  where g in ('hive','tango','zip','minisudoku','geo');
   if coalesce(array_length(clean_games,1),0)=0 then raise exception 'Choose at least one game.'; end if;
   insert into public.team_weekly_challenges(team_id,week_start,game_ids,created_by)
   values(target_team_id,public.current_week_start(),clean_games,auth.uid())

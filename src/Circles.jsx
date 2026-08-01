@@ -17,12 +17,13 @@ import Card from "./components/Card.jsx";
 import TextInput from "./components/TextInput.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
 import AvatarGroup from "./components/AvatarGroup.jsx";
+import { GAME_NAMES } from "./lib/gameBranding.jsx";
 
 
 const CIRCLE_EMOJIS = ["🎮","🧩","🚀","🔥","⭐","🏆","🦄","🐉","🦊","🐼","🌈","⚡","💎","👑","🎯","🛸"];
 const DAYS = [{id:1,label:"Mon"},{id:2,label:"Tue"},{id:3,label:"Wed"},{id:4,label:"Thu"},{id:5,label:"Fri"},{id:6,label:"Sat"},{id:7,label:"Sun"}];
-const DEFAULT_GAMES = ["queens","tango","zip","minisudoku","geo","zoom"];
-const GAME_LABELS = { queens:"Queens",tango:"Tango",zip:"Zip",minisudoku:"Mini Sudoku",geo:"Geo",zoom:"Zoom" };
+const DEFAULT_GAMES = ["hive","tango","zip","minisudoku","geo","zoom"];
+const GAME_LABELS = GAME_NAMES;
 const MAX_CHALLENGE_REWARD_POINTS = 50;
 const CIRCLE_MONOGRAM_COLORS = ["#315A9B", "#7251A8", "#177B68", "#A55245", "#8A641C", "#236B86"];
 

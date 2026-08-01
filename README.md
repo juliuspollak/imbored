@@ -1,6 +1,6 @@
 # Puzzle Games
 
-Currently: Queens. Structured so more games can be dropped into `src/games/`
+Currently: Hive. Structured so more games can be dropped into `src/games/`
 and wired into `src/App.jsx` as they're built.
 
 ## Local dev

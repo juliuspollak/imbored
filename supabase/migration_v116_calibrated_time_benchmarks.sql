@@ -18,7 +18,7 @@ create table if not exists public.game_time_benchmarks (
 -- automatically diluted by real clean completions using a prior weight of 20.
 with provisional(game,times) as (
   values
-    ('queens',      array[75,75,100,120,160,210,300]),
+    ('hive',        array[75,75,100,120,160,210,300]),
     ('tango',       array[75,90,105,120,145,175,210]),
     ('zip',         array[75,90,110,135,165,210,260]),
     ('minisudoku',  array[60,75,90,110,140,175,220]),

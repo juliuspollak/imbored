@@ -32,7 +32,7 @@ begin
   where p.id = new.user_id;
 
   game_label := case lower(new.game)
-    when 'queens' then 'Queens'
+    when 'hive' then 'Hive'
     when 'tango' then 'Tango'
     when 'zip' then 'Zip'
     when 'minisudoku' then 'Mini Sudoku'

@@ -1,7 +1,7 @@
 import { supabase, supabaseReady } from "./supabase.js";
 import { useSupabaseWatchedState } from "./useSupabaseWatchedState.js";
 
-const storageKey = (userId) => `queens-seen-closed-feedback-${userId}`;
+const storageKey = (userId) => `hive-seen-closed-feedback-${userId}`;
 
 // Corrupted or unexpectedly-shaped localStorage data (manual edits, a future
 // schema change, a partial write) shouldn't throw and break the read/write

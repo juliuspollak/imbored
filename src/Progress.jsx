@@ -9,10 +9,11 @@ import Page from "./components/Page.jsx";
 import Button from "./components/Button.jsx";
 import Card from "./components/Card.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
+import { GAME_NAMES } from "./lib/gameBranding.jsx";
 
 const ACTIVITY_LIMIT=8;
 const TRANSFER_HISTORY_LIMIT=100;
-const GAME_LABELS={queens:"Queens",tango:"Tango",zip:"Zip",minisudoku:"Mini Sudoku",geo:"Geo",zoom:"Zoom"};
+const GAME_LABELS=GAME_NAMES;
 function nextLevelThreshold(level){ return 500 * level * level; }
 function activityDetails(item){
   const game=item.gameStat?.game,mode=item.gameStat?.mode;

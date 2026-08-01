@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Crown, Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle, Check, Star, Flame, ChevronRight, ChevronDown, Globe2, Users, ZoomIn, PawPrint } from "lucide-react";
+import { Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle, Check, Star, Flame, ChevronRight, ChevronDown, Globe2, Users, ZoomIn, PawPrint } from "lucide-react";
 import { useGameConfig } from "./lib/useGameConfig.js";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useI18n } from "./lib/i18n.jsx";
@@ -11,6 +11,7 @@ import Page from "./components/Page.jsx";
 import Button from "./components/Button.jsx";
 import Card from "./components/Card.jsx";
 import AvatarGroup from "./components/AvatarGroup.jsx";
+import { HIVE_BRAND } from "./lib/gameBranding.jsx";
 
 const buttonReset = {
   appearance: "none",
@@ -24,7 +25,7 @@ function accentSurface(accent, amount = 12) {
 }
 
 export const GAME_META = [
-  { id: "queens", label: "Queens", desc: "One crown per row, column & region", icon: Crown, accent: "#2F6FED", available: true, challenge: true },
+  { id: "hive", label: HIVE_BRAND.name, desc: HIVE_BRAND.tagline, icon: HIVE_BRAND.GameIcon, accent: "#D99A18", available: true, challenge: true },
   { id: "tango", label: "Tango", desc: "Balance sun & moon in every line", icon: Moon, accent: "#4A6FA5", available: true, challenge: true },
   { id: "zip", label: "Zip", desc: "Trace one path through every cell", icon: Waypoints, accent: "#12946A", available: true, challenge: true },
   { id: "pinpoint", label: "Pinpoint", desc: "Guess the category from five clues", icon: Target, accent: "#8B5CF6", available: false },

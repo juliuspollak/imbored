@@ -228,7 +228,7 @@
     "version": "v95",
     "date": "2026-07-24",
     "title": "UI polish, Zip clarity and chat resilience",
-    "body": "Simplified Zip, improved checkpoint and path readability, softened the Queens palette, refreshed game controls and made chat opening more resilient."
+    "body": "Simplified Zip, improved checkpoint and path readability, softened the Hive palette, refreshed game controls and made chat opening more resilient."
   },
   {
     "id": "v81-team-daily-challenge-messages",
@@ -403,7 +403,7 @@
     "id": "2026-07-19-mistakes-fix",
     "version": "v10",
     "title": "Fixed mistake counting in Tango",
-    "body": "Mistakes now only count when Hint actually catches something wrong — not on every tap. Matches how Queens already worked.",
+    "body": "Mistakes now only count when Hint actually catches something wrong — not on every tap. Matches how Hive already worked.",
     "date": "2026-07-19"
   },
   {
@@ -522,7 +522,7 @@
     "id": "2026-07-22-mini-sudoku",
     "version": "v27",
     "title": "New game: Mini Sudoku",
-    "body": "6x6 sudoku, verified unique every time, difficulty scales through the week via clue count. Hint uses real solving techniques (naked/hidden singles, contradiction test) — never a guess. Works in both Challenge and Practice mode, same as the others. Also brought Queens/Tango/Zip's fonts in line with the rest of the app.",
+    "body": "6x6 sudoku, verified unique every time, difficulty scales through the week via clue count. Hint uses real solving techniques (naked/hidden singles, contradiction test) — never a guess. Works in both Challenge and Practice mode, same as the others. Also brought Hive/Tango/Zip's fonts in line with the rest of the app.",
     "date": "2026-07-22"
   },
   {
@@ -596,9 +596,9 @@
     "date": "2026-07-22"
   },
   {
-    "id": "2026-07-22-queens-no-guessing-fix",
+    "id": "2026-07-22-hive-no-guessing-fix",
     "version": "v38",
-    "title": "Fixed Queens sometimes requiring a guess",
+    "title": "Fixed Hive sometimes requiring a guess",
     "body": "Found the real cause: some puzzles needed a brute-force deduction technique that's essentially unspottable by eye. Generation now rejects any layout that ever needs it — every hint step is now something a person could actually reason out, verified across dozens of test puzzles at every size.",
     "date": "2026-07-22"
   },
@@ -612,7 +612,7 @@
   {
     "id": "2026-07-22-reset-mistake",
     "version": "v40",
-    "title": "Reset now counts as a mistake in Queens",
+    "title": "Reset now counts as a mistake in Hive",
     "body": "Starting over after making progress counts against you, same spirit as everything else.",
     "date": "2026-07-22"
   },
@@ -844,14 +844,14 @@
     "id": "2026-07-25-gameplay-visual-polish",
     "version": "v111",
     "title": "Game polish: bigger grids, thicker walls, gloss effects, smarter errors",
-    "body": "Zip: 6x6 → 7x7 grid for more substance; walls thicker (3px → 5px). Queens: board border-radius reduced from rounded-xl to rounded-lg, less cartoonish. Tango: sun/moon icons 40% bigger; constraint symbols (=/×) bigger and in larger containers; sun now fully filled instead of outline. Home: practice/challenge toggle now has a gloss effect with gradient overlay and enhanced shadows. Tango validation: errors no longer show instantly while typing — now debounced to 2 seconds, only shown after the full pause (not during continuous editing). Fixed race condition in practice-mode checkboxes that showed incomplete state before data finished loading.",
+    "body": "Zip: 6x6 → 7x7 grid for more substance; walls thicker (3px → 5px). Hive: board border-radius reduced from rounded-xl to rounded-lg, less cartoonish. Tango: sun/moon icons 40% bigger; constraint symbols (=/×) bigger and in larger containers; sun now fully filled instead of outline. Home: practice/challenge toggle now has a gloss effect with gradient overlay and enhanced shadows. Tango validation: errors no longer show instantly while typing — now debounced to 2 seconds, only shown after the full pause (not during continuous editing). Fixed race condition in practice-mode checkboxes that showed incomplete state before data finished loading.",
     "date": "2026-07-25"
   },
   {
     "id": "2026-07-25-gameplay-fixes-and-polish-part-2",
     "version": "v111",
     "title": "Game fixes: Zip difficulty scaling, Tango smart delays, gloss effects, green dot bug, no more holes",
-    "body": "Zip: checkpoint numbers now scale Monday (4) → Sunday (16); walls increase 0→7; black holes removed entirely (visual & gameplay); tunnels capped at 1; grid size 7×7. Tango: conflict errors now debounced to 2 seconds but clear instantly (no delayed clearing). Queens: board border-radius refined. App: iOS-style gloss effect applied globally via new .gloss-button class; Home toggle now uses it. Home: fixed race condition in practice-mode checkmarks — only show after data loads. Presence: immediately clears when exiting a game (was delayed up to 45s, caused 'playing' indicator to persist).",
+    "body": "Zip: checkpoint numbers now scale Monday (4) → Sunday (16); walls increase 0→7; black holes removed entirely (visual & gameplay); tunnels capped at 1; grid size 7×7. Tango: conflict errors now debounced to 2 seconds but clear instantly (no delayed clearing). Hive: board border-radius refined. App: iOS-style gloss effect applied globally via new .gloss-button class; Home toggle now uses it. Home: fixed race condition in practice-mode checkmarks — only show after data loads. Presence: immediately clears when exiting a game (was delayed up to 45s, caused 'playing' indicator to persist).",
     "date": "2026-07-25"
   },
   {

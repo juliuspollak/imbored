@@ -18,7 +18,7 @@ import { AuthProvider, useAuth } from "./lib/AuthContext.jsx";
 // code-split so a first-time visitor's initial bundle only has to include
 // Home + Login + auth plumbing, not all five puzzle games and every admin
 // tool. Each chunk loads on demand the first time its screen is opened.
-const QueensGame = lazy(() => import("./games/Queens.jsx"));
+const HiveGame = lazy(() => import("./games/Hive.jsx"));
 const TangoGame = lazy(() => import("./games/Tango.jsx"));
 const ZipGame = lazy(() => import("./games/Zip.jsx"));
 const MiniSudokuGame = lazy(() => import("./games/MiniSudoku.jsx"));
@@ -52,9 +52,10 @@ import { usePokes } from "./lib/pokes.js";
 import { useUnreadMessages } from "./lib/useUnreadMessages.js";
 import { useI18n } from "./lib/i18n.jsx";
 import { applyThemePreference, cacheThemePreference } from "./lib/theme.js";
+import { HIVE_BRAND } from "./lib/gameBranding.jsx";
 
 const GAME_COMPONENTS = {
-  queens: { Component: QueensGame, label: "Queens" },
+  hive: { Component: HiveGame, label: HIVE_BRAND.name },
   tango: { Component: TangoGame, label: "Tango" },
   zip: { Component: ZipGame, label: "Zip" },
   minisudoku: { Component: MiniSudokuGame, label: "Mini Sudoku" },
@@ -176,7 +177,7 @@ function AppShell() {
     if (appliedDefaultModeRef.current || !user?.id) return;
     let stored = null;
     try {
-      stored = window.localStorage.getItem(`queens-play-mode-${user.id}`);
+      stored = window.localStorage.getItem(`hive-play-mode-${user.id}`);
     } catch {
       // localStorage unavailable — fall through to the profile default below
     }
@@ -194,7 +195,7 @@ function AppShell() {
     // stored preference before the effect above has had a chance to read it.
     if (!user?.id || !appliedDefaultModeRef.current) return;
     try {
-      window.localStorage.setItem(`queens-play-mode-${user.id}`, playMode);
+      window.localStorage.setItem(`hive-play-mode-${user.id}`, playMode);
     } catch {
       // non-fatal — the choice just won't survive a refresh this time
     }
@@ -202,7 +203,7 @@ function AppShell() {
   const players = useOnlinePlayers();
   const { config: gameConfig, refetch: refetchGameConfig } = useGameConfig();
   usePresence(
-    ["queens", "tango", "zip", "minisudoku", "geo", "zoom", "animalrush"].includes(active) ? active : null,
+    ["hive", "tango", "zip", "minisudoku", "geo", "zoom", "animalrush"].includes(active) ? active : null,
     active === "animalrush" ? "live" : playMode,
     incognito,
   );
