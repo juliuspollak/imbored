@@ -28,6 +28,7 @@ export const GRIDLY_BRAND = gameBrand({
   name: "Gridly",
   tagline: "Connect the numbers. Fill the grid.",
   GameIcon: GridlyIcon,
+  tileIconSize: 28,
   tileBackground: null,
   seasons: {},
 });

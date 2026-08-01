@@ -11,17 +11,16 @@ export default function GridlyIcon({ size = 24, className = "", style, ...props 
       {...props}
     >
       <path
-        d="M6 25V18h8V8h12v9h-6v9"
+        d="M6 7h12.5c4.8 0 6.2 6.1 1.8 8.2l-8.6 4.1c-4.2 2-2.7 6.7 1.5 6.7H26"
         stroke="currentColor"
-        strokeWidth="3.2"
+        strokeWidth="3.4"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx="6" cy="25" r="3.2" fill="var(--color-surface, white)" stroke="currentColor" strokeWidth="2" />
-      <circle cx="26" cy="8" r="3.2" fill="var(--color-surface, white)" stroke="currentColor" strokeWidth="2" />
-      <rect x="17.2" y="22.8" width="5.6" height="5.6" rx="1.2" fill="currentColor" opacity=".32" />
-      <text x="6" y="26.7" textAnchor="middle" fontSize="5" fontWeight="800" fill="currentColor">1</text>
-      <text x="26" y="9.7" textAnchor="middle" fontSize="5" fontWeight="800" fill="currentColor">4</text>
+      <circle cx="6" cy="7" r="3.4" fill="var(--color-surface, white)" stroke="currentColor" strokeWidth="2.2" />
+      <circle cx="26" cy="26" r="3.4" fill="currentColor" />
+      <circle cx="26" cy="26" r="1.25" fill="var(--color-surface, white)" opacity=".9" />
+      <rect x="21.5" y="10.5" width="5.8" height="5.8" rx="1.6" fill="var(--color-surface, white)" stroke="currentColor" strokeWidth="1.8" transform="rotate(12 24.4 13.4)" />
     </svg>
   );
 }
