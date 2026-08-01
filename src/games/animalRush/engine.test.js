@@ -97,10 +97,11 @@ test("standard conceals cards while easy keeps them visible", () => {
   assert.equal(cardsConcealed({ difficulty: "standard", status: "countdown" }, "open"), false);
 });
 
-test("supports a shape-only palette and an easier individual-colour palette", () => {
-  assert.deepEqual(COLOUR_MODES.map((mode) => mode.id), ["uniform", "individual"]);
+test("supports individual, uniform, and mixed colour modes", () => {
+  assert.deepEqual(COLOUR_MODES.map((mode) => mode.id), ["individual", "uniform", "mixed"]);
   assert.equal(new Set(ANIMALS.map((animal) => animalColour(animal.id, "uniform"))).size, 1);
   assert.equal(new Set(ANIMALS.map((animal) => animalColour(animal.id, "individual"))).size, ANIMALS.length);
+  assert.equal(new Set(ANIMALS.map((animal) => animalColour(animal.id, "mixed"))).size, ANIMALS.length);
   assert.equal(animalColour("fox", "unknown"), animalColour("fox", "uniform"));
 });
 
