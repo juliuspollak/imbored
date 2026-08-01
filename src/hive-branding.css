@@ -32,8 +32,8 @@
   transition: transform 180ms cubic-bezier(.2,.8,.2,1), filter 180ms ease;
 }
 
-/* Artwork-only Hive card. It keeps the exact same footprint as every other
-   home tile and clips all decoration inside the rounded card boundary. */
+/* Hive uses the supplied full-card artwork while retaining the same footprint
+   as Geo and the other home tiles. */
 .home-game-tile:has(.hive-tile-icon) {
   min-height: 154px !important;
   height: 154px;
@@ -41,42 +41,18 @@
   isolation: isolate;
   padding: 0 !important;
   gap: 0 !important;
-  border: 1px solid rgba(232, 169, 43, .55) !important;
-  background:
-    radial-gradient(circle at 18% 16%, rgba(255,255,255,.86) 0 10%, transparent 34%),
-    radial-gradient(circle at 82% 76%, rgba(255,205,72,.20) 0 2px, transparent 3px),
-    linear-gradient(145deg, #fffdf2 0%, #fff4ca 58%, #ffe8a8 100%) !important;
-  box-shadow: 0 10px 24px rgba(174, 108, 0, .14), inset 0 1px 0 rgba(255,255,255,.96) !important;
+  border: 1px solid rgba(232,169,43,.60) !important;
+  background-color: #f9c543 !important;
+  background-image: url('/assets/hive-tile-bg.webp') !important;
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+  background-position: center !important;
+  box-shadow: 0 10px 24px rgba(174,108,0,.16) !important;
 }
 
-/* Honeycomb artwork is part of the tile itself and never extends outside it. */
-.home-game-tile:has(.hive-tile-icon)::before {
-  content: "";
-  position: absolute;
-  z-index: 0;
-  inset: 0;
-  pointer-events: none;
-  opacity: .64;
-  background-image:
-    linear-gradient(30deg, rgba(205, 138, 13, .10) 12%, transparent 12.5%, transparent 87%, rgba(205, 138, 13, .10) 87.5%),
-    linear-gradient(150deg, rgba(205, 138, 13, .10) 12%, transparent 12.5%, transparent 87%, rgba(205, 138, 13, .10) 87.5%),
-    linear-gradient(30deg, rgba(255,255,255,.72) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,.72) 87.5%),
-    linear-gradient(150deg, rgba(255,255,255,.72) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,.72) 87.5%);
-  background-size: 30px 52px;
-  background-position: 0 0, 0 0, 15px 26px, 15px 26px;
-}
-
-/* Soft internal honey glow only; no drip or decoration can leak past the tile. */
+.home-game-tile:has(.hive-tile-icon)::before,
 .home-game-tile:has(.hive-tile-icon)::after {
-  content: "";
-  position: absolute;
-  z-index: 0;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 50% 48%, rgba(255,255,255,.42) 0 22%, transparent 49%),
-    radial-gradient(circle at 16% 88%, rgba(255,190,28,.16) 0 2px, transparent 3px),
-    radial-gradient(circle at 86% 18%, rgba(255,190,28,.17) 0 2px, transparent 3px);
+  content: none !important;
 }
 
 .home-game-tile:has(.hive-tile-icon) > * {
@@ -84,39 +60,58 @@
   z-index: 1;
 }
 
-/* Keep completion and live-player badges above the full-card artwork. */
+/* Keep completion and live-player badges above the artwork. */
 .home-game-tile:has(.hive-tile-icon) > span[title],
 .home-game-tile:has(.hive-tile-icon) > span[style*="right: 12px"] {
   z-index: 4;
 }
 
 .home-game-tile:has(.hive-tile-icon) > span[title] {
-  background: rgba(255,255,255,.90) !important;
-  box-shadow: 0 4px 12px rgba(114,72,0,.12);
+  background: rgba(255,255,255,.92) !important;
+  box-shadow: 0 4px 12px rgba(114,72,0,.14);
 }
 
-/* The hive becomes the complete visual content of the tile. */
+/* The hive illustration already exists in the background artwork. */
 .home-game-tile:has(.hive-tile-icon) > span:has(> .hive-tile-icon) {
-  position: absolute !important;
-  inset: 0;
-  width: 100% !important;
-  height: 100% !important;
-  display: grid !important;
-  place-items: center !important;
-  border-radius: inherit !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-.home-game-tile:has(.hive-tile-icon) .hive-tile-icon {
-  width: 102px !important;
-  height: 102px !important;
-  filter: drop-shadow(0 10px 10px rgba(112,66,0,.24));
-}
-
-/* No duplicate title, description or play-count text on the artwork tile. */
-.home-game-tile:has(.hive-tile-icon) > span:has(strong) {
   display: none !important;
+}
+
+/* Retain only the live title and today's play count on the clear right side. */
+.home-game-tile:has(.hive-tile-icon) > span:last-of-type {
+  position: absolute !important;
+  z-index: 2;
+  top: 50%;
+  right: 13px;
+  width: 47%;
+  transform: translateY(-42%);
+  margin: 0 !important;
+  text-align: left;
+  text-shadow: 0 1px 3px rgba(255,255,255,.72);
+}
+
+.home-game-tile:has(.hive-tile-icon) > span:last-of-type > span:first-child {
+  display: block !important;
+}
+
+.home-game-tile:has(.hive-tile-icon) > span:last-of-type strong {
+  color: #251706 !important;
+  font-size: 18px !important;
+  line-height: 1.1;
+  letter-spacing: -.01em;
+}
+
+/* The description is intentionally omitted from this illustrated tile. */
+.home-game-tile:has(.hive-tile-icon) > span:last-of-type > span:nth-child(2) {
+  display: none !important;
+}
+
+.home-game-tile:has(.hive-tile-icon) > span:last-of-type > span:nth-child(3) {
+  display: block !important;
+  margin-top: 10px !important;
+  color: #75684f !important;
+  font-size: var(--text-caption-size) !important;
+  font-weight: 700 !important;
+  line-height: 1.2;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -126,8 +121,8 @@
   }
 
   .home-game-tile:has(.hive-tile-icon):not(:disabled):hover {
-    border-color: rgba(218,145,8,.76) !important;
-    box-shadow: 0 14px 30px rgba(176,109,0,.20), inset 0 1px 0 rgba(255,255,255,.98) !important;
+    border-color: rgba(218,145,8,.78) !important;
+    box-shadow: 0 14px 30px rgba(176,109,0,.22) !important;
   }
 }
 
@@ -140,14 +135,14 @@
   to { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
 }
 
-@media (prefers-color-scheme: dark) {
-  .hive-bee-icon { color: #392100; }
+@media (max-width: 390px) {
+  .home-game-tile:has(.hive-tile-icon) > span:last-of-type {
+    right: 10px;
+    width: 45%;
+  }
 
-  .home-game-tile:has(.hive-tile-icon) {
-    border-color: rgba(228,162,31,.58) !important;
-    background:
-      radial-gradient(circle at 18% 16%, rgba(255,255,255,.50) 0 10%, transparent 34%),
-      linear-gradient(145deg, #fff6d3 0%, #f3d886 58%, #e7bd59 100%) !important;
+  .home-game-tile:has(.hive-tile-icon) > span:last-of-type strong {
+    font-size: 17px !important;
   }
 }
 
