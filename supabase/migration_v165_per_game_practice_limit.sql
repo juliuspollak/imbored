@@ -44,7 +44,7 @@ declare
   old_level integer;
   new_level integer;
   award_date date := (now() at time zone 'Australia/Sydney')::date;
-  challenge_date date;
+  effective_challenge_date date;
   practice_count integer := 0;
   challenge_games_on_date integer := 0;
   daily_earned integer := 0;
@@ -219,7 +219,7 @@ begin
 
   -- Challenge streak state is advanced by the insert trigger before this RPC.
   -- Only the first Challenge result on milestone days 7, 14, 21, ... pays.
-  challenge_date:=coalesce(
+  effective_challenge_date:=coalesce(
     s.challenge_date,
     (s.completed_at at time zone 'Australia/Sydney')::date
   );
@@ -234,7 +234,7 @@ begin
       and coalesce(
         gs.challenge_date,
         (gs.completed_at at time zone 'Australia/Sydney')::date
-      )=challenge_date;
+      )=effective_challenge_date;
 
     if challenge_games_on_date=1 then
       streak_points:=r.streak_weekly_bonus;
