@@ -316,6 +316,7 @@ const DARK_REGION_COLORS = ["#29466F", "#66502B", "#285841", "#633B59", "#4C3E70
 const BG = "var(--color-page-bg)";
 const PANEL = "var(--color-surface)";
 const INK = "var(--color-text-primary)";
+const BEE_INK = "#5d3a05";
 const BOARD_LINE = "#000000";
 const CREAM = "var(--color-text-primary)";
 const GOLD = "var(--color-primary)";
@@ -857,7 +858,7 @@ export default function Hive({
                   className="qp-bee"
                   size={Math.max(25, 34 - boardSize)}
                   style={{
-                    color: isConflict ? RED : INK,
+                    color: isConflict ? RED : BEE_INK,
                   }}
                 />
               )}

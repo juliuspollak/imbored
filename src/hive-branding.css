@@ -41,7 +41,7 @@
   isolation: isolate;
   padding: 0 !important;
   gap: 0 !important;
-  border: 1px solid rgba(232,169,43,.60) !important;
+  border-color: transparent !important;
   background-color: #f9c543 !important;
   background-image: url('/assets/hive-tile-bg.webp') !important;
   background-repeat: no-repeat !important;
@@ -50,7 +50,15 @@
   box-shadow: 0 10px 24px rgba(174,108,0,.16) !important;
 }
 
-.home-game-tile:has(.hive-tile-icon)::before,
+.home-game-tile:has(.hive-tile-icon)::before {
+  content: "" !important;
+  position: absolute;
+  inset: -2px;
+  z-index: 0;
+  pointer-events: none;
+  background: url('/assets/hive-tile-bg.webp') center / cover no-repeat;
+}
+
 .home-game-tile:has(.hive-tile-icon)::after {
   content: none !important;
 }

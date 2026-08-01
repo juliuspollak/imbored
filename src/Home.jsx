@@ -889,9 +889,6 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
             box-shadow: var(--shadow-card-hover);
           }
         }
-        @media (min-width: 640px) {
-          .home-game-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-        }
         @media (prefers-reduced-motion: reduce) {
           .home-game-tile { transition: none !important; }
           .home-game-tile:hover { transform: none !important; }
