@@ -205,7 +205,7 @@ function fmtTime(s) {
 
 /* ---------------- component ---------------- */
 
-function NumBtn({ onClick, disabled, used = false, active = false, children, ...rest }) {
+function NumBtn({ onClick, disabled, used = false, active = false, action = false, children, ...rest }) {
   return (
     <button
       type="button"
@@ -213,17 +213,17 @@ function NumBtn({ onClick, disabled, used = false, active = false, children, ...
       disabled={disabled}
       className="ms-num-btn"
       style={{
-        minHeight: 52,
+        minHeight: action ? 44 : 46,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         border: active ? "2px solid var(--color-primary)" : "1px solid var(--color-border)",
-        borderRadius: "var(--radius-md)",
+        borderRadius: "var(--radius-sm)",
         background: active ? "var(--color-primary-subtle)" : used ? "var(--color-page-bg)" : "var(--color-surface-elevated)",
         color: disabled ? "var(--color-disabled-text)" : active ? "var(--color-primary)" : used ? "var(--color-text-muted)" : "var(--color-text-primary)",
         cursor: disabled ? "not-allowed" : "pointer",
         font: "inherit",
-        fontSize: 18,
+        fontSize: action ? "var(--text-caption-size)" : 17,
         fontWeight: 600,
         transition: "transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast)",
       }}
@@ -706,28 +706,27 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         )}
         {(!solved || reviewing) && boardGrid}
 
-        {/* number palette — every button is a no-op once solved */}
+        {/* Stable numeric order, with secondary actions on their own row. */}
         {!solved && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "var(--space-2)", marginTop: "var(--space-4)" }}>
-            {paletteDigits.slice(0, 3).map((d) => (
-              <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={!selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d || !!(noteMode && selected && notes[selected.r][selected.c].has(d))} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
-                {d}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: "var(--space-3)" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: 5 }}>
+              {paletteDigits.map((d) => (
+                <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={!selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d || !!(noteMode && selected && notes[selected.r][selected.c].has(d))} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
+                  {d}
+                </NumBtn>
+              ))}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6 }}>
+              <NumBtn action onClick={handleErase} disabled={!selected} aria-label={t("common.erase")}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Delete size={15} />Erase</span>
               </NumBtn>
-            ))}
-            <NumBtn onClick={handleErase} disabled={!selected} aria-label={t("common.erase")}>
-              <Delete size={18} />
-            </NumBtn>
-            {paletteDigits.slice(3).map((d) => (
-              <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={!selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d || !!(noteMode && selected && notes[selected.r][selected.c].has(d))} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
-                {d}
+              <NumBtn action onClick={handleUndo} disabled={history.length === 0} aria-label={t("common.undo")}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><CornerUpLeft size={15} />Undo</span>
               </NumBtn>
-            ))}
-            <NumBtn onClick={handleUndo} disabled={history.length === 0} aria-label={t("common.undo")}>
-              <CornerUpLeft size={18} />
-            </NumBtn>
-            <NumBtn onClick={() => setNoteMode((value) => !value)} active={noteMode} aria-label={`Notes ${noteMode ? "on" : "off"}`}>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Pencil size={16} />Notes</span>
-            </NumBtn>
+              <NumBtn action onClick={() => setNoteMode((value) => !value)} active={noteMode} aria-label={`Notes ${noteMode ? "on" : "off"}`}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Pencil size={15} />Notes</span>
+              </NumBtn>
+            </div>
           </div>
         )}
 
