@@ -816,11 +816,11 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         )}
 
         {gameConfigLoading ? (
-          <div aria-live="polite" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-3)" }}>
+          <div aria-live="polite" style={{ width: "100%", maxWidth: 400, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-3)" }}>
             {[0, 1, 2, 3].map((item) => <div key={item} className="home-skeleton" style={{ height: 154, borderRadius: "var(--radius-lg)", background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)" }} />)}
           </div>
         ) : (
-          <div className="home-game-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-3)" }}>
+          <div className="home-game-grid" style={{ width: "100%", maxWidth: 400, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-3)" }}>
             {visibleGames.filter((game) => game.live || !circleChallengeIsActive || (!!todayRound && game.id === todayRound.game)).map((game) => {
               const Icon = game.icon;
               const playingCount = players.filter((player) => player.game === game.id && player.mode === (game.live ? "live" : playMode)).length;
@@ -837,6 +837,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                     ...buttonReset,
                     position: "relative",
                     minHeight: 154,
+                    height: 154,
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "flex-start",

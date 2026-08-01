@@ -36,8 +36,8 @@
    proportions; it is never stretched to match the card. */
 .home-game-tile:has(.hive-tile-icon) {
   min-height: 154px !important;
-  height: auto !important;
-  align-self: stretch;
+  height: 154px !important;
+  align-self: start;
   overflow: hidden !important;
   isolation: isolate;
   padding: 0 !important;
