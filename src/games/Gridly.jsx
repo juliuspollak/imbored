@@ -10,6 +10,7 @@ import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
 import Button from "../components/Button.jsx";
 import { GRIDLY_BRAND } from "../lib/gameBranding.jsx";
+import { createGameAttemptSeed } from "../lib/gameAttemptSeed.js";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -337,6 +338,7 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
   const [history, setHistory] = useState([]);
   const [showHelp, setShowHelp] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const attemptSeedRef = useRef(seed || createGameAttemptSeed("gridly"));
   const boardRef = useRef(null);
   const dragRef = useRef({ active: false, historyPushed: false, lastKey: null, startCell: null, moved: false, rollbackCounted: false });
   const suppressClickRef = useRef(false);
@@ -350,7 +352,9 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
     const walls = configuredDayValue(hintCooldownConfig, "zip_wall_counts", dIdx, WALL_COUNTS, 0, 30);
     const tunnels = configuredDayValue(hintCooldownConfig, "zip_tunnel_pair_counts", dIdx, TUNNEL_PAIR_COUNTS, 0, Math.min(4, Math.floor(visitableCells / 2)));
     const gen = () => generatePuzzle(size, checkpoints, walls, blackHoles, tunnels);
-    const p = isChallenge && seed ? withSeededRandom(seed, gen) : gen();
+    const attemptSeed = isChallenge ? (seed || attemptSeedRef.current) : createGameAttemptSeed("gridly");
+    attemptSeedRef.current = attemptSeed;
+    const p = withSeededRandom(attemptSeed, gen);
     setPuzzle(p);
     setPath(p ? [p.path[0]] : null);
     setSeconds(0);
@@ -390,6 +394,7 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
         seconds,
         mistakes:gridlyEfficiencyPenaltyUnits(mistakes) + resets,
         hints:hintsUsed,
+        seed:attemptSeedRef.current,
         gridlyBacktrackedCells:mistakes,
         gridlyRequiredMoves:requiredMoves,
         gridlyEfficiency:gridlyEfficiency(requiredMoves,mistakes),

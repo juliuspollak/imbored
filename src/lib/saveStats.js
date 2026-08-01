@@ -8,7 +8,7 @@ import { supabase, supabaseReady } from "./supabase.js";
 // afterward) or { alreadyPlayed: true } if this was a challenge-mode save
 // that hit the one-per-day constraint — a real, expected outcome (two tabs
 // open, a stale page finishing late), not an error to swallow silently.
-export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hints, correctCount = null, totalCount = null, roundsNailed = null, gridlyBacktrackedCells = null, gridlyRequiredMoves = null, mode = "practice", challengeDate, circleChallengeId = null, circleId = null }) {
+export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hints, seed = null, correctCount = null, totalCount = null, roundsNailed = null, gridlyBacktrackedCells = null, gridlyRequiredMoves = null, mode = "practice", challengeDate, circleChallengeId = null, circleId = null }) {
   if (!supabaseReady || !userId) return {};
   try {
     const payload = {
@@ -18,6 +18,7 @@ export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hin
       seconds,
       mistakes,
       hints,
+      seed,
       correct_count: correctCount,
       total_count: totalCount,
       rounds_nailed: roundsNailed,
@@ -35,6 +36,17 @@ export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hin
       .insert(payload)
       .select()
       .single();
+    const missingSeedColumn = error
+      && (error.code === "PGRST204" || /\bseed\b/i.test(error.message || ""));
+    if (missingSeedColumn) {
+      const compatiblePayload = { ...payload };
+      delete compatiblePayload.seed;
+      ({ data, error } = await supabase
+        .from("game_stats")
+        .insert(compatiblePayload)
+        .select()
+        .single());
+    }
     const missingGridlyColumns = game === "gridly"
       && error
       && (
@@ -43,6 +55,7 @@ export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hin
       );
     if (missingGridlyColumns) {
       const legacyPayload = { ...payload };
+      if (missingSeedColumn) delete legacyPayload.seed;
       delete legacyPayload.zip_backtracked_cells;
       delete legacyPayload.zip_required_moves;
       ({ data, error } = await supabase

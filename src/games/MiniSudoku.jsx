@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { withSeededRandom, shuffle } from "../lib/seededRandom.js";
 import { useGameTimer } from "../lib/useGameTimer.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
@@ -12,6 +12,7 @@ import Page from "../components/Page.jsx";
 import Card from "../components/Card.jsx";
 import Button from "../components/Button.jsx";
 import StatusBanner from "../components/StatusBanner.jsx";
+import { createGameAttemptSeed } from "../lib/gameAttemptSeed.js";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -258,10 +259,13 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   const [noteMode, setNoteMode] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const attemptSeedRef = useRef(seed || createGameAttemptSeed("minisudoku"));
 
   const newPuzzle = useCallback((dIdx) => {
     const gen = () => generatePuzzle(GIVEN_TARGETS[dIdx]);
-    const p = isChallenge && seed ? withSeededRandom(seed, gen) : gen();
+    const attemptSeed = isChallenge ? (seed || attemptSeedRef.current) : createGameAttemptSeed("minisudoku");
+    attemptSeedRef.current = attemptSeed;
+    const p = withSeededRandom(attemptSeed, gen);
     setPuzzle(p);
     setBoard(p.givens.map((row) => row.slice()));
     setSelected(null);
@@ -294,7 +298,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     if (getConflicts(board).size === 0 && !solved) {
       setSolved(true);
       setRunning(false);
-      onSolved && onSolved({ userId, game: "minisudoku", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed, mode, challengeDate: isChallenge ? challengeDate : undefined });
+      onSolved && onSolved({ userId, game: "minisudoku", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed, seed: attemptSeedRef.current, mode, challengeDate: isChallenge ? challengeDate : undefined });
     }
   }, [board, puzzle]);
 

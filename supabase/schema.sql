@@ -25,6 +25,7 @@ create table game_stats (
   seconds int not null,
   mistakes int not null default 0,
   hints int not null default 0,
+  seed text,
   mode text not null default 'practice', -- 'practice' | 'challenge'
   challenge_date date,               -- the calendar date, only set for mode='challenge'
   difficulty_rating int,             -- 0-100, null until rated

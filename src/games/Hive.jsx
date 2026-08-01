@@ -10,6 +10,7 @@ import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
 import Button from "../components/Button.jsx";
 import { HIVE_BRAND } from "../lib/gameBranding.jsx";
+import { createGameAttemptSeed } from "../lib/gameAttemptSeed.js";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -345,21 +346,6 @@ function createPuzzleForSeed(n, seedKey) {
   return generated;
 }
 
-// A genuinely fresh puzzle for practice mode - unlike the deterministic,
-// day-based seed used for challenge mode (where every player must see the
-// same board), practice should never hand back the same layout twice.
-function createRandomPuzzle(n) {
-  return createPuzzleForSeed(n, `hive:${Date.now()}:${Math.random()}:${n}`);
-}
-
-function todayKey() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 function initialBoard(n) {
   return Array.from({ length: n }, () => Array(n).fill(0));
 }
@@ -391,9 +377,8 @@ export default function Hive({
   const requestedDayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
   const [dayIdx, setDayIdx] = useState(isChallenge ? forcedDayIdx ?? requestedDayIdx : requestedDayIdx);
   const n = SIZES[dayIdx];
-  const [puzzle, setPuzzle] = useState(() => isChallenge
-    ? createPuzzleForSeed(n, seed || `hive:${todayKey()}:day:${requestedDayIdx}:${n}`)
-    : createRandomPuzzle(n));
+  const attemptSeedRef = useRef(seed || createGameAttemptSeed("hive"));
+  const [puzzle, setPuzzle] = useState(() => createPuzzleForSeed(n, attemptSeedRef.current));
   const [board, setBoard] = useState(() => initialBoard(n));
   const [history, setHistory] = useState([]);
   const [seconds, setSeconds] = useState(0);
@@ -452,6 +437,7 @@ export default function Hive({
         seconds: solvedStats.seconds,
         mistakes: solvedStats.mistakes,
         hints: solvedStats.hintsUsed,
+        seed: attemptSeedRef.current,
         mode,
         challengeDate:isChallenge ? challengeDate : undefined,
       };
@@ -503,7 +489,10 @@ export default function Hive({
 
   const newPuzzle = useCallback((size = n) => {
     puzzleKeyRef.current += 1;
-    const key = seed ? `${seed}:retry:${puzzleKeyRef.current}` : `hive:${Date.now()}:${Math.random()}:${size}`;
+    const key = isChallenge
+      ? (seed || attemptSeedRef.current)
+      : createGameAttemptSeed("hive");
+    attemptSeedRef.current = key;
     setPuzzle(createPuzzleForSeed(size, key));
     setBoard(initialBoard(size));
     setHistory([]);
@@ -522,7 +511,7 @@ export default function Hive({
     hintCooldown.reset();
     savedOnceRef.current = false;
     saveInFlightRef.current = false;
-  }, [n, seed]);
+  }, [isChallenge, n, seed]);
 
   useEffect(() => {
     if (isChallenge) return;
@@ -533,7 +522,9 @@ export default function Hive({
       return;
     }
     const size = SIZES[dayIdx];
-    setPuzzle(createRandomPuzzle(size));
+    const nextSeed = createGameAttemptSeed("hive");
+    attemptSeedRef.current = nextSeed;
+    setPuzzle(createPuzzleForSeed(size, nextSeed));
     setBoard(initialBoard(size));
     setHistory([]);
     setSeconds(0);

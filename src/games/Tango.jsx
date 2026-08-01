@@ -9,6 +9,7 @@ import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpC
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
 import Button from "../components/Button.jsx";
+import { createGameAttemptSeed } from "../lib/gameAttemptSeed.js";
 
 function SunIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
   const gradientId = React.useId().replace(/:/g, "");
@@ -376,6 +377,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
   const [reviewing, setReviewing] = useState(false);
   const [celebratingLines, setCelebratingLines] = useState([]);
   const [displayedConflicts, setDisplayedConflicts] = useState(new Set());
+  const attemptSeedRef = useRef(seed || createGameAttemptSeed("tango"));
   const completedLinesRef = useRef(new Set());
   const invalidCompletedLinesRef = useRef(new Set());
   const invalidMistakeTimerRef = useRef(null);
@@ -385,7 +387,9 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
 
   const newPuzzle = useCallback((dIdx) => {
     const gen = () => generatePuzzle(GIVEN_TARGETS[dIdx], EDGE_TARGETS[dIdx]);
-    const p = isChallenge && seed ? withSeededRandom(seed, gen) : gen();
+    const attemptSeed = isChallenge ? (seed || attemptSeedRef.current) : createGameAttemptSeed("tango");
+    attemptSeedRef.current = attemptSeed;
+    const p = withSeededRandom(attemptSeed, gen);
     setPuzzle(p);
     setBoard(p.givens.map((row) => row.slice()));
     setSeconds(0);
@@ -425,7 +429,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     if (getConflicts(board, puzzle.edgeMap).size === 0 && !solved) {
       setSolved(true);
       setRunning(false);
-      onSolved && onSolved({ userId, game: "tango", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed, mode, challengeDate: isChallenge ? challengeDate : undefined });
+      onSolved && onSolved({ userId, game: "tango", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed, seed: attemptSeedRef.current, mode, challengeDate: isChallenge ? challengeDate : undefined });
     }
   }, [board, puzzle]);
 
