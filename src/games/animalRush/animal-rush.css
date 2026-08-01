@@ -317,9 +317,15 @@
 
 .rush-topbar {
   display: grid !important;
-  grid-template-columns: 36px minmax(0, 1fr) auto;
+  grid-template-columns: var(--control-height-md) minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px;
+}
+
+.rush-topbar__home-space {
+  display: block;
+  width: var(--control-height-md);
+  height: 1px;
 }
 
 .rush-topbar__status {
@@ -337,9 +343,6 @@
 }
 
 .rush-topbar__status .rush-mode-badge {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -890,7 +893,7 @@
     min-height: 34px;
     margin-bottom: 5px !important;
     padding-right: 0;
-    grid-template-columns: 36px minmax(0, 1fr) auto;
+    grid-template-columns: var(--control-height-md) minmax(0, 1fr) auto;
   }
 
   .rush-topbar__status {
