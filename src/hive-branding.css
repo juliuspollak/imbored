@@ -32,8 +32,8 @@
   transition: transform 180ms cubic-bezier(.2,.8,.2,1), filter 180ms ease;
 }
 
-/* Hive fills the same grid row as the neighbouring cards. The square artwork
-   keeps its original proportions and is cropped, never stretched. */
+/* The card follows the grid row height. The square artwork keeps its original
+   proportions; it is never stretched to match the card. */
 .home-game-tile:has(.hive-tile-icon) {
   min-height: 154px !important;
   height: auto !important;
@@ -43,11 +43,11 @@
   padding: 0 !important;
   gap: 0 !important;
   border: 1px solid rgba(232,169,43,.60) !important;
-  background-color: #f9c543 !important;
+  background-color: #f6c33d !important;
   background-image: url('/assets/hive-tile-bg.webp') !important;
   background-repeat: no-repeat !important;
-  background-size: cover !important;
-  background-position: 43% center !important;
+  background-size: auto 100% !important;
+  background-position: 42% center !important;
   box-shadow: 0 10px 24px rgba(174,108,0,.16) !important;
 }
 
@@ -71,38 +71,43 @@
   box-shadow: 0 4px 12px rgba(114,72,0,.14);
 }
 
-/* The hive illustration is already present in the background artwork. */
+/* The hive illustration is already part of the supplied background artwork. */
 .home-game-tile:has(.hive-tile-icon) > span:has(> .hive-tile-icon) {
   display: none !important;
 }
 
-/* Keep only the live title and play count in the artwork's clear right side. */
+/* Use the existing content wrapper only as a positioning layer. There is no
+   secondary card or tinted panel over the artwork. */
 .home-game-tile:has(.hive-tile-icon) > span:last-of-type {
   position: absolute !important;
   z-index: 2;
-  top: 50%;
-  right: 10px;
-  width: 41%;
-  transform: translateY(-32%);
+  inset: 0;
+  width: auto !important;
   margin: 0 !important;
-  padding: 7px 8px;
-  text-align: left;
-  border-radius: 11px;
-  background: rgba(255,250,227,.80);
-  box-shadow: 0 3px 12px rgba(119,72,0,.09), inset 0 1px 0 rgba(255,255,255,.72);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  text-align: right;
+  pointer-events: none;
 }
 
 .home-game-tile:has(.hive-tile-icon) > span:last-of-type > span:first-child {
+  position: absolute;
+  top: 18px;
+  right: 14px;
   display: block !important;
+  max-width: 48%;
 }
 
 .home-game-tile:has(.hive-tile-icon) > span:last-of-type strong {
   color: #251706 !important;
-  font-size: 16px !important;
-  line-height: 1.08;
-  letter-spacing: -.01em;
+  font-size: 18px !important;
+  line-height: 1.05;
+  letter-spacing: -.015em;
+  text-shadow: 0 1px 2px rgba(255,255,255,.72), 0 2px 8px rgba(105,58,0,.10);
 }
 
 .home-game-tile:has(.hive-tile-icon) > span:last-of-type > span:nth-child(2) {
@@ -110,12 +115,18 @@
 }
 
 .home-game-tile:has(.hive-tile-icon) > span:last-of-type > span:nth-child(3) {
+  position: absolute;
+  right: 13px;
+  bottom: 13px;
   display: block !important;
-  margin-top: 6px !important;
-  color: #75684f !important;
-  font-size: 10px !important;
+  max-width: 56%;
+  margin: 0 !important;
+  color: #6f6047 !important;
+  font-size: 11px !important;
   font-weight: 700 !important;
   line-height: 1.15;
+  text-align: right;
+  text-shadow: 0 1px 2px rgba(255,255,255,.82);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -144,18 +155,20 @@
     background-position: 40% center !important;
   }
 
-  .home-game-tile:has(.hive-tile-icon) > span:last-of-type {
-    right: 6px;
-    width: 40%;
-    padding: 6px;
+  .home-game-tile:has(.hive-tile-icon) > span:last-of-type > span:first-child {
+    top: 16px;
+    right: 11px;
   }
 
   .home-game-tile:has(.hive-tile-icon) > span:last-of-type strong {
-    font-size: 15px !important;
+    font-size: 17px !important;
   }
 
   .home-game-tile:has(.hive-tile-icon) > span:last-of-type > span:nth-child(3) {
-    font-size: 9px !important;
+    right: 10px;
+    bottom: 11px;
+    max-width: 60%;
+    font-size: 10px !important;
   }
 }
 
