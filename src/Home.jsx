@@ -38,7 +38,7 @@ export const GAME_META = [
   { id: "animalrush", label: "Animal Rush", desc: "Live animal race for 2–6 phones", icon: PawPrint, accent: "#15966F", available: false, live: true, requiresConfig: true },
 ];
 
-const SHARED_ARTWORK_TILES = new Set(["tango", "minisudoku", "geo", "zoom", "animalrush"]);
+const SHARED_ARTWORK_TILES = new Set(["hive", "tango", "gridly", "minisudoku", "geo", "zoom", "animalrush"]);
 
 function todayString() {
   const date = new Date();
