@@ -706,34 +706,41 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         )}
         {(!solved || reviewing) && boardGrid}
 
-        {/* Stable numeric order, with secondary actions on their own row. */}
+        {/* Preserve the original two-row keypad muscle memory. */}
         {!solved && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: "var(--space-3)" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: 5 }}>
-              {paletteDigits.map((d) => (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6, marginTop: "var(--space-3)" }}>
+              {paletteDigits.slice(0, 3).map((d) => (
                 <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={!selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d || !!(noteMode && selected && notes[selected.r][selected.c].has(d))} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
                   {d}
                 </NumBtn>
               ))}
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6 }}>
-              <NumBtn action onClick={handleErase} disabled={!selected} aria-label={t("common.erase")}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Delete size={15} />Erase</span>
-              </NumBtn>
               <NumBtn action onClick={handleUndo} disabled={history.length === 0} aria-label={t("common.undo")}>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><CornerUpLeft size={15} />Undo</span>
               </NumBtn>
-              <NumBtn action onClick={() => setNoteMode((value) => !value)} active={noteMode} aria-label={`Notes ${noteMode ? "on" : "off"}`}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Pencil size={15} />Notes</span>
+              {paletteDigits.slice(3).map((d) => (
+                <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={!selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d || !!(noteMode && selected && notes[selected.r][selected.c].has(d))} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
+                  {d}
+                </NumBtn>
+              ))}
+              <NumBtn action onClick={handleErase} disabled={!selected} aria-label={t("common.erase")}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Delete size={15} />Delete</span>
               </NumBtn>
-            </div>
           </div>
         )}
 
         {!solved && (
-          <p style={{ margin: "var(--space-3) 0 0", color: "var(--color-text-secondary)", textAlign: "center", fontSize: "var(--text-caption-size)" }}>
-            {filledCount}/{N * N} filled
-          </p>
+          <div style={{ minHeight: 44, marginTop: 6, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-2)" }}>
+            <span style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{filledCount}/{N * N} filled</span>
+            <button
+              type="button"
+              onClick={() => setNoteMode((value) => !value)}
+              aria-pressed={noteMode}
+              aria-label={`Notes ${noteMode ? "on" : "off"}`}
+              style={{ minHeight: 40, padding: "0 12px", display: "inline-flex", alignItems: "center", gap: 6, border: noteMode ? "2px solid var(--color-primary)" : "1px solid var(--color-border)", borderRadius: "var(--radius-full)", background: noteMode ? "var(--color-primary-subtle)" : "var(--color-surface-elevated)", color: noteMode ? "var(--color-primary)" : "var(--color-text-secondary)", font: "inherit", fontSize: "var(--text-caption-size)", fontWeight: 600, cursor: "pointer" }}
+            >
+              <Pencil size={15} /> Notes {noteMode ? "On" : "Off"}
+            </button>
+          </div>
         )}
       </Card>
     </Page>
