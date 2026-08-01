@@ -6,7 +6,7 @@ import HintCooldownButton from "../HintCooldownButton.jsx";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import BoardReviewToggle from "../BoardReviewToggle.jsx";
-import { CornerUpLeft, Timer as TimerIcon, HelpCircle, Eraser, Pencil } from "lucide-react";
+import { Grid3x3, CornerUpLeft, Timer as TimerIcon, HelpCircle, Eraser, Pencil } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
 import Page from "../components/Page.jsx";

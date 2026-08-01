@@ -826,7 +826,7 @@ export default function Hive({
         gridTemplateRows: `repeat(${boardSize}, 1fr)`,
         touchAction: "none",
         border: `2.5px solid ${BOARD_LINE}`,
-        width: "calc(100% + 40px)",
+        width: "auto",
       }}
     >
       {board.map((row, r) =>

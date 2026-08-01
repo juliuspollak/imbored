@@ -670,7 +670,7 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
         background: "var(--color-surface)",
         border: "2px solid var(--color-border-strong)",
         touchAction: "none",
-        width: "calc(100% + 40px)",
+        width: "auto",
       }}
     >
       {Array.from({ length: boardSize }, (_, r) =>

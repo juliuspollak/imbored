@@ -615,7 +615,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
         border: "4px solid var(--color-border-strong)",
         boxShadow: "var(--shadow-card)",
         containerType: "inline-size",
-        width: "calc(100% + 40px)",
+        width: "auto",
       }}
     >
       {board.map((row, r) =>
