@@ -88,6 +88,7 @@ function AppShell() {
   const [chatReturn, setChatReturn] = useState(null);
   const [rewardRequestsReturn, setRewardRequestsReturn] = useState(null);
   const [circlesTarget, setCirclesTarget] = useState(null);
+  const [scoreChallenge, setScoreChallenge] = useState(null);
   // Challenge mode needs an account to mean anything (once-per-day + history
   // are tied to a user) — default to it when logged in, otherwise practice
   // is the only real option.
@@ -241,6 +242,24 @@ function AppShell() {
     openSection("circles");
   }
 
+  async function openScoreChallenge(sourceStatId) {
+    const { data,error } = await supabase.rpc("get_score_challenge", {
+      target_source_stat_id:Number(sourceStatId),
+    });
+    if (error || !data) {
+      window.alert(error?.message || "This score challenge is no longer available.");
+      return;
+    }
+    if (data.completed_stat_id) {
+      window.alert("You already completed this score challenge.");
+      return;
+    }
+    setChatPlayer(null);
+    setChatReturn(null);
+    setScoreChallenge(data);
+    setActive(data.game);
+  }
+
   function openAccountSection(section, markViewed = false) {
     // Chat is rendered before the regular section routes. Clear it first so
     // an account-menu selection can actually replace the active conversation.
@@ -344,6 +363,7 @@ function AppShell() {
           currentProfile={profile}
           peer={chatPlayer}
           onBack={() => { setChatPlayer(null); if (chatReturn === "chats") setActive("chats"); setChatReturn(null); }}
+          onOpenScoreChallenge={openScoreChallenge}
         />
       </Suspense>
     );
@@ -451,6 +471,26 @@ function AppShell() {
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
         <Rewards onBack={() => { setActive(rewardRequestsReturn === "progress" ? "progress" : null); setRewardRequestsReturn(null); }} />
       </Suspense>
+    );
+  }
+
+  if (scoreChallenge) {
+    const scoreGame = GAME_COMPONENTS[scoreChallenge.game];
+    if (!scoreGame) {
+      return <FullScreenMessage text="This score challenge is unavailable." />;
+    }
+    return (
+      <ErrorBoundary key={`score-${scoreChallenge.id}`} onReset={() => { setScoreChallenge(null);setActive(null); }}>
+        <Suspense fallback={<FullScreenMessage text="Opening score challenge…" />}>
+          <ScoreChallengePlay
+            Current={scoreGame.Component}
+            challenge={scoreChallenge}
+            userId={user?.id}
+            onExit={() => { setScoreChallenge(null);setActive(null); }}
+            hintCooldownConfig={gameConfig?.[scoreChallenge.game]}
+          />
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 
@@ -608,6 +648,56 @@ function PracticePlay({ Current, gameId, gameLabel, userId, onExit, onSwitchMode
             <button type="button" onClick={chooseChallenge} className="w-full rounded-full py-3 mt-2 text-sm font-semibold" style={{ background:"rgba(16,24,40,.06)" }}>{t("challenge.chooseAnother")}</button>
             <button type="button" onClick={() => setShowChallengeChoice(false)} className="w-full py-2.5 mt-1 text-xs" style={{ color:"rgba(27,33,41,.48)" }}>{t("challenge.stayPractice")}</button>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ScoreChallengePlay({ Current,challenge,userId,onExit,hintCooldownConfig }) {
+  const [savedStatId,setSavedStatId] = useState(null);
+  const [rewardResult,setRewardResult] = useState(null);
+  const [saveError,setSaveError] = useState("");
+
+  async function handleSolved(stats) {
+    setSaveError("");
+    const saved = await saveStats({ ...stats,mode:"practice",challengeDate:null });
+    if (!saved?.data) {
+      setSaveError(saved?.error?.message || "Your score-challenge result could not be saved.");
+      return saved;
+    }
+    setSavedStatId(saved.data.id);
+    setRewardResult(saved.rewardError
+      ? { completed:true,error:true,message:saved.rewardError.message,eventId:Date.now() }
+      : { ...(saved.reward || {}),completed:true,eventId:Date.now() });
+    const { error } = await supabase.rpc("complete_score_challenge", {
+      target_challenge_id:Number(challenge.id),
+      target_stat_id:saved.data.id,
+    });
+    if (error) {
+      setSaveError(error.message || "Your result was saved, but the challenger could not be notified.");
+    }
+    return saved;
+  }
+
+  return (
+    <div style={{ position:"relative" }}>
+      <GameHomeButton onClick={onExit} />
+      <Current
+        userId={userId}
+        onSolved={handleSolved}
+        mode="challenge"
+        forcedDayIdx={Number(challenge.day_index)}
+        seed={challenge.seed}
+        hintCooldownConfig={hintCooldownConfig}
+        savedStatId={savedStatId}
+        rewardResult={rewardResult}
+        scoreToBeatSeconds={Number(challenge.seconds)}
+        scoreChallengerName={challenge.challenger_name}
+      />
+      {saveError && (
+        <div className="fixed left-4 right-4 bottom-5 z-[130] mx-auto max-w-sm rounded-2xl p-3 text-xs font-semibold" role="alert" style={{ background:"var(--color-danger-bg)",border:"1px solid var(--color-danger-solid)",color:"var(--color-danger-text)" }}>
+          {saveError}
         </div>
       )}
     </div>

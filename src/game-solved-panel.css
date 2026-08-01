@@ -27,6 +27,41 @@
   margin-bottom: 4px;
 }
 
+.game-solved-comparison,
+.game-solved-head-to-head {
+  margin: 5px 0 0;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.game-solved-head-to-head.is-win { color: var(--color-success-text); }
+
+.game-solved-challenge-wrap { margin-top: 10px; text-align: center; }
+.game-solved-challenge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 8px 15px;
+  border: 1px solid var(--color-primary-subtle-border);
+  border-radius: 999px;
+  color: var(--color-primary);
+  background: var(--color-primary-subtle);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+  transition: transform var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+}
+.game-solved-challenge:active:not(:disabled) { transform: scale(.97); }
+.game-solved-challenge:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.game-solved-challenge:disabled { cursor: default; opacity: .7; }
+.game-solved-challenge-status { margin: 6px 0 0; color: var(--color-text-secondary); font-size: 11px; line-height: 1.35; }
+.game-solved-challenge-status.is-error { color: var(--color-danger-text); }
+
 .game-solved-reward {
   border-radius: 999px;
   padding: 4px 12px;

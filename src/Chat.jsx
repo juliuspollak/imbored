@@ -86,7 +86,7 @@ function dayLabel(value) {
   return new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric", month: "short" }).format(date);
 }
 
-export default function Chat({ currentUser, currentProfile, peer, onBack }) {
+export default function Chat({ currentUser, currentProfile, peer, onBack, onOpenScoreChallenge }) {
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(true);
@@ -133,7 +133,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
 
       let { data,error:loadError } = await supabase
         .from("direct_messages")
-        .select("id,sender_id,recipient_id,body,created_at,read_at,system_generated,activity_type,reactions:direct_message_reactions(user_id,reaction)")
+        .select("id,sender_id,recipient_id,body,created_at,read_at,system_generated,activity_type,source_stat_id,reactions:direct_message_reactions(user_id,reaction)")
         .or(
           `and(sender_id.eq.${currentUser.id},recipient_id.eq.${peerId}),and(sender_id.eq.${peerId},recipient_id.eq.${currentUser.id})`
         )
@@ -145,7 +145,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
       if (loadError) {
         const fallback = await supabase
           .from("direct_messages")
-          .select("id,sender_id,recipient_id,body,created_at,read_at,system_generated,activity_type")
+          .select("id,sender_id,recipient_id,body,created_at,read_at,system_generated,activity_type,source_stat_id")
           .or(
             `and(sender_id.eq.${currentUser.id},recipient_id.eq.${peerId}),and(sender_id.eq.${peerId},recipient_id.eq.${currentUser.id})`
           )
@@ -515,6 +515,18 @@ export default function Chat({ currentUser, currentProfile, peer, onBack }) {
                     </div>
                   ) : (
                     <div className="chat-text">{item.body}</div>
+                  )}
+                  {item.activity_type === "score_challenge" && item.source_stat_id && (
+                    <Button
+                      size="sm"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onOpenScoreChallenge?.(item.source_stat_id);
+                      }}
+                      style={{ marginTop:8 }}
+                    >
+                      Play now
+                    </Button>
                   )}
                   <div className="chat-meta">
                     <span>{formatMessageTime(item.created_at)}</span>

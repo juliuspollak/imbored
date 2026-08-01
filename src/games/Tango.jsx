@@ -354,7 +354,7 @@ function fmtTime(s) {
 
 /* ---------------- component ---------------- */
 
-export default function TangoGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId, rewardResult } = {}) {
+export default function TangoGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId, rewardResult, scoreToBeatSeconds = null, scoreChallengerName = null } = {}) {
   const { t } = useI18n();
   const todayIdx = (() => {
     const d = new Date().getDay();
@@ -961,6 +961,10 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           rewardResult={rewardResult}
           savedStatId={savedStatId}
           onRated={setDifficultyRating}
+          completionSeconds={seconds}
+          allowScoreChallenge
+          scoreToBeatSeconds={scoreToBeatSeconds}
+          scoreChallengerName={scoreChallengerName}
           showPlayAgain={!isChallenge}
           onPlayAgain={() => newPuzzle(dayIdx)}
         />

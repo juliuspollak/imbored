@@ -33,7 +33,7 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
     if (!supabaseReady || !currentUser?.id) return;
     const cutoff = new Date(Date.now() - 45000).toISOString();
     const [messageResult, profileResult, presenceResult] = await Promise.all([
-      supabase.from("direct_messages").select("id,sender_id,recipient_id,body,created_at,read_at,system_generated,activity_type").or(`sender_id.eq.${currentUser.id},recipient_id.eq.${currentUser.id}`).order("created_at", { ascending: false }).limit(500),
+      supabase.from("direct_messages").select("id,sender_id,recipient_id,body,created_at,read_at,system_generated,activity_type,source_stat_id").or(`sender_id.eq.${currentUser.id},recipient_id.eq.${currentUser.id}`).order("created_at", { ascending: false }).limit(500),
       supabase.from("profiles").select("id,name,icon,mood,is_private,hidden_from_others,is_admin,is_approved,is_blocked,account_deleted_at").neq("id", currentUser.id).order("name"),
       supabase.from("presence").select("user_id").gte("last_seen", cutoff),
     ]);
@@ -185,11 +185,13 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
                   <span className="chats-timestamp">{formatWhen(latest.created_at)}</span>
                 </div>
                 <div className={`chats-preview chats-truncate${unread ? " unread" : ""}`}>
-                  {latest.activity_type === "user_approval_required" ? "" : latest.activity_type === "feedback_completed" ? "Feedback update · " : latest.activity_type === "circle_invitation" ? "Circle invitation · " : latest.activity_type === "circle_challenge_winner" ? "Challenge result · " : latest.system_generated ? "Circle update · " : latest.sender_id === currentUser.id ? "You: " : ""}
+                  {latest.activity_type === "user_approval_required" ? "" : latest.activity_type === "feedback_completed" ? "Feedback update · " : latest.activity_type === "circle_invitation" ? "Circle invitation · " : latest.activity_type === "score_challenge" ? "Beat my score · " : latest.activity_type === "score_challenge_result" || latest.activity_type === "circle_challenge_winner" ? "Challenge result · " : latest.system_generated ? "Circle update · " : latest.sender_id === currentUser.id ? "You: " : ""}
                   {latest.body}
                 </div>
               </div>
-              {latest.activity_type === "user_approval_required"
+              {latest.activity_type === "score_challenge"
+                ? <span className="chats-review-pill">Play</span>
+                : latest.activity_type === "user_approval_required"
                 ? <span className="chats-review-pill">Review</span>
                 : unread > 0 && <span className="chats-unread-pill">{unread}</span>}
             </button>

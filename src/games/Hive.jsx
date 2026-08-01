@@ -372,6 +372,8 @@ export default function Hive({
   challengeName = null,
   onPlayPersonalChallenge,
   onChooseAnotherChallenge,
+  scoreToBeatSeconds = null,
+  scoreChallengerName = null,
 }) {
   const { t } = useI18n();
   const isChallenge = mode === "challenge";
@@ -1074,6 +1076,10 @@ export default function Hive({
           savedStatId={savedStatId}
           onRated={setDifficultyRating}
           completionFinished={completionFinished}
+          completionSeconds={seconds}
+          allowScoreChallenge
+          scoreToBeatSeconds={scoreToBeatSeconds}
+          scoreChallengerName={scoreChallengerName}
           showPlayAgain={!isChallenge}
           onPlayAgain={() => newPuzzle(n)}
         />
