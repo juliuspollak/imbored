@@ -3,7 +3,7 @@ import { withSeededRandom } from "../lib/seededRandom.js";
 import { useGameTimer } from "../lib/useGameTimer.js";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
-import { ZoomIn, Timer as TimerIcon, HelpCircle } from "lucide-react";
+import { Timer as TimerIcon, HelpCircle } from "lucide-react";
 import { generateZoomQuiz, ROUNDS_PER_QUIZ, LEVELS_PER_ROUND } from "./zoom/zoomGenerator.js";
 import { getTargetHistory, rememberTargets } from "./zoom/zoomHistory.js";
 import FlagImage from "./geo/FlagImage.jsx";
@@ -217,7 +217,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
           <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)" }} className="mt-1">{t("zoom.subtitle")}</p>
         </div>
 
-        {isChallenge ? (
+        {!solved && (isChallenge ? (
           <div className="flex justify-center mb-4">
             <div className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: "var(--color-primary-subtle)", color: ACCENT, border: "1px solid var(--color-primary-subtle-border)" }}>
               <span className="text-xs font-semibold">{t("common.todaysChallenge")}</span>
@@ -229,9 +229,9 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
             value={dayIdx}
             onChange={setDayIdx}
           />
-        )}
+        ))}
 
-        <div className="flex items-center justify-center gap-4 mb-3 px-1">
+        {!solved && <div className="flex items-center justify-center gap-4 mb-3 px-1">
           <div className="flex items-center gap-1.5" style={{ color: "var(--color-text-secondary)" }}>
             <TimerIcon size={14} />
             <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
@@ -239,10 +239,10 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
           <div style={{ color: "var(--color-text-secondary)" }} className="text-xs">
             {t("zoom.round")} <span style={{ color: ACCENT, fontWeight: 600 }}>{roundNumber}</span>/{totalRounds}
           </div>
-        </div>
+        </div>}
 
         {/* toolbar - text labels, spread at top */}
-        <div className="flex items-center justify-between gap-2 mb-3 px-1">
+        {!solved && <div className="flex items-center justify-between gap-2 mb-3 px-1">
           {[
             { label: t("common.restart"), onClick: handleReset, disabled: solved },
           ].map(({ label, onClick, disabled }) => (
@@ -258,8 +258,8 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
               {label}
             </Button>
           ))}
-        </div>
-        {showHelp && (
+        </div>}
+        {!solved && showHelp && (
           <StatusBanner variant="info" style={{ marginBottom: "var(--space-3)" }}>
             {t("zoom.help")}
           </StatusBanner>
@@ -388,11 +388,9 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
         <GameSolvedPanel
           solved={solved}
           difficultyRating={difficultyRating}
-          icon={<ZoomIn size={32} style={{ color: ACCENT }} />}
-          title={t("zoom.result", { correct: correctLog.filter(Boolean).length, total: steps.length })}
           stats={
             <>
-              {fmtTime(seconds)} &middot; {t("zoom.roundsNailed", { count: roundsNailed, total: totalRounds })}
+              {t("zoom.result", { correct: correctLog.filter(Boolean).length, total: steps.length })} &middot; {fmtTime(seconds)} &middot; {t("zoom.roundsNailed", { count: roundsNailed, total: totalRounds })}
             </>
           }
           rewardResult={rewardResult}
