@@ -267,6 +267,8 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     setHintCell(null);
     setHistory([]);
     setReviewing(false);
+    setCelebratingCells(new Set());
+    prevCompleteSectionsRef.current = new Set();
     hintCooldown.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isChallenge, seed]);
@@ -296,18 +298,22 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     if (!board) return;
     const currentComplete = new Set();
     for (let r = 0; r < N; r++) {
-      const vals = board[r];
-      if (vals.every((v) => v !== 0) && new Set(vals).size === N) currentComplete.add(`row-${r}`);
+      const matchesSolution = board[r].every((value, c) => value === puzzle.solution[r][c]);
+      if (matchesSolution) currentComplete.add(`row-${r}`);
     }
     for (let c = 0; c < N; c++) {
-      const vals = board.map((row) => row[c]);
-      if (vals.every((v) => v !== 0) && new Set(vals).size === N) currentComplete.add(`col-${c}`);
+      const matchesSolution = board.every((row, r) => row[c] === puzzle.solution[r][c]);
+      if (matchesSolution) currentComplete.add(`col-${c}`);
     }
     for (let br = 0; br < N; br += BOX_R) {
       for (let bc = 0; bc < N; bc += BOX_C) {
-        const vals = [];
-        for (let rr = br; rr < br + BOX_R; rr++) for (let cc = bc; cc < bc + BOX_C; cc++) vals.push(board[rr][cc]);
-        if (vals.every((v) => v !== 0) && new Set(vals).size === N) currentComplete.add(`box-${br}-${bc}`);
+        let matchesSolution = true;
+        for (let rr = br; rr < br + BOX_R; rr++) {
+          for (let cc = bc; cc < bc + BOX_C; cc++) {
+            if (board[rr][cc] !== puzzle.solution[rr][cc]) matchesSolution = false;
+          }
+        }
+        if (matchesSolution) currentComplete.add(`box-${br}-${bc}`);
       }
     }
 
@@ -331,7 +337,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     setCelebratingCells(cellsToFlash);
     const t = setTimeout(() => setCelebratingCells(new Set()), 650);
     return () => clearTimeout(t);
-  }, [board]);
+  }, [board, puzzle]);
 
   if (!board || !puzzle) {
     return (
