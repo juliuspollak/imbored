@@ -32,11 +32,12 @@
   transition: transform 180ms cubic-bezier(.2,.8,.2,1), filter 180ms ease;
 }
 
-/* Hive uses the supplied full-card artwork while retaining the same footprint
-   as Geo and the other home tiles. */
+/* Hive uses the supplied full-card artwork and stretches to the same grid-row
+   height as the other tiles on both desktop and mobile. */
 .home-game-tile:has(.hive-tile-icon) {
   min-height: 154px !important;
-  height: 154px;
+  height: auto !important;
+  align-self: stretch;
   overflow: hidden !important;
   isolation: isolate;
   padding: 0 !important;
@@ -45,7 +46,7 @@
   background-color: #f9c543 !important;
   background-image: url('/assets/hive-tile-bg.webp') !important;
   background-repeat: no-repeat !important;
-  background-size: cover !important;
+  background-size: 100% 100% !important;
   background-position: center !important;
   box-shadow: 0 10px 24px rgba(174,108,0,.16) !important;
 }
@@ -76,17 +77,23 @@
   display: none !important;
 }
 
-/* Retain only the live title and today's play count on the clear right side. */
+/* Retain the live title and today's play count in a compact readable panel on
+   the clear right side, without covering the hive illustration. */
 .home-game-tile:has(.hive-tile-icon) > span:last-of-type {
   position: absolute !important;
   z-index: 2;
-  top: 50%;
-  right: 13px;
-  width: 47%;
-  transform: translateY(-42%);
+  top: 52%;
+  right: 9px;
+  width: 45%;
+  transform: translateY(-38%);
   margin: 0 !important;
+  padding: 8px 9px;
   text-align: left;
-  text-shadow: 0 1px 3px rgba(255,255,255,.72);
+  border-radius: 12px;
+  background: rgba(255,248,216,.78);
+  box-shadow: 0 4px 14px rgba(119,72,0,.10), inset 0 1px 0 rgba(255,255,255,.68);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 .home-game-tile:has(.hive-tile-icon) > span:last-of-type > span:first-child {
@@ -95,8 +102,8 @@
 
 .home-game-tile:has(.hive-tile-icon) > span:last-of-type strong {
   color: #251706 !important;
-  font-size: 18px !important;
-  line-height: 1.1;
+  font-size: 17px !important;
+  line-height: 1.08;
   letter-spacing: -.01em;
 }
 
@@ -107,9 +114,9 @@
 
 .home-game-tile:has(.hive-tile-icon) > span:last-of-type > span:nth-child(3) {
   display: block !important;
-  margin-top: 10px !important;
+  margin-top: 7px !important;
   color: #75684f !important;
-  font-size: var(--text-caption-size) !important;
+  font-size: 11px !important;
   font-weight: 700 !important;
   line-height: 1.2;
 }
@@ -137,12 +144,17 @@
 
 @media (max-width: 390px) {
   .home-game-tile:has(.hive-tile-icon) > span:last-of-type {
-    right: 10px;
-    width: 45%;
+    right: 7px;
+    width: 44%;
+    padding: 7px;
   }
 
   .home-game-tile:has(.hive-tile-icon) > span:last-of-type strong {
-    font-size: 17px !important;
+    font-size: 16px !important;
+  }
+
+  .home-game-tile:has(.hive-tile-icon) > span:last-of-type > span:nth-child(3) {
+    font-size: 10px !important;
   }
 }
 
