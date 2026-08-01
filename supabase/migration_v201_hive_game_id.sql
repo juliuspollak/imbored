@@ -18,7 +18,6 @@ update public.game_config set game_id = 'hive' where game_id = 'queens';
 
 update public.game_stats set game = 'hive' where game = 'queens';
 update public.presence set game = 'hive' where game = 'queens';
-update public.feedback set game = 'hive' where game = 'queens';
 delete from public.game_time_benchmarks
 where game = 'hive'
   and exists (select 1 from public.game_time_benchmarks where game = 'queens');
