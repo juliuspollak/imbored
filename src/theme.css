@@ -153,6 +153,7 @@
 
   /* ---- Page layout ---- */
   --page-max-width: 480px;
+  --game-page-max-width: 560px;
   --page-padding-x: 16px;
   --section-gap: 16px;
 }

@@ -556,7 +556,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   );
 
   return (
-    <Page style={{ alignItems: "flex-start" }}>
+    <Page contentMaxWidth="var(--game-page-max-width)" style={{ alignItems: "flex-start" }}>
       <style>{`
         @keyframes msPulseError { 0%, 100% { box-shadow: inset 0 0 0 3px var(--color-danger-solid); } 50% { box-shadow: inset 0 0 0 1px var(--color-danger-text); } }
         @keyframes msPulseHint { 0%, 100% { box-shadow: inset 0 0 0 3px var(--color-primary); } 50% { box-shadow: inset 0 0 0 1px var(--color-primary); } }

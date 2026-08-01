@@ -171,7 +171,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
   }
 
   return (
-    <Page style={{ alignItems: "flex-start" }}>
+    <Page contentMaxWidth="var(--game-page-max-width)" style={{ alignItems: "flex-start" }}>
       <style>{`
         .geo-toolbar > * { width: 100%; min-width: 0; }
         @media (hover: hover) and (pointer: fine) {

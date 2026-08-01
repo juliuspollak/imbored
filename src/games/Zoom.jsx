@@ -191,7 +191,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
   }).filter(Boolean).length;
 
   return (
-    <Page style={{ alignItems: "flex-start" }}>
+    <Page contentMaxWidth="var(--game-page-max-width)" style={{ alignItems: "flex-start" }}>
       <style>{`
         @media (hover: hover) and (pointer: fine) {
           .zoom-option:not(:disabled):hover { border-color: var(--color-primary-subtle-border) !important; transform: translateY(-1px); }
