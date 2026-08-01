@@ -882,7 +882,6 @@ export default function AnimalRush({ onExit }) {
       <main className="rush-shell rush-shell--play">
         <div className="rush-topbar mb-3 flex items-center justify-between">
           <GameHomeButton onClick={leaveRoom} />
-          <span aria-hidden="true" style={{ width:36, height:36 }} />
           <span className="rush-muted flex items-center gap-2 text-[11px] font-semibold">
             Round {room.round_number}
             <span className="rush-mode-badge">
@@ -890,7 +889,15 @@ export default function AnimalRush({ onExit }) {
             </span>
             {reducedMotion && <span className="rush-motion-badge">Motion reduced</span>}
           </span>
-          <span className="rush-muted text-[11px]">{activePlayers.length} active</span>
+          <button
+            type="button"
+            className="rush-quiet -mr-2"
+            onClick={leaveRoom}
+            disabled={working === "leave"}
+            aria-label="Leave game"
+          >
+            <LogOut size={15} /> Leave
+          </button>
         </div>
 
         <section className="rush-panel rush-stage p-4">

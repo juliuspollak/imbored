@@ -127,22 +127,32 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
       if (!supabaseReady || !userId) return;
       const start = new Date(); start.setHours(0, 0, 0, 0);
       const end = new Date(start); end.setDate(end.getDate() + 1);
-      const { data } = await supabase
-        .from("game_stats")
-        .select("game")
-        .eq("user_id", userId)
-        .gte("completed_at", start.toISOString())
-        .lt("completed_at", end.toISOString());
+      const [{ data }, { data: animalRushResults }] = await Promise.all([
+        supabase
+          .from("game_stats")
+          .select("game")
+          .eq("user_id", userId)
+          .eq("mode", "practice")
+          .gte("completed_at", start.toISOString())
+          .lt("completed_at", end.toISOString()),
+        supabase
+          .from("animal_rush_match_results")
+          .select("id")
+          .eq("user_id", userId)
+          .gte("finished_at", start.toISOString())
+          .lt("finished_at", end.toISOString()),
+      ]);
       if (cancelled) return;
       const counts = {};
       (data || []).forEach((row) => { counts[row.game] = (counts[row.game] || 0) + 1; });
+      if (animalRushResults?.length) counts.animalrush = animalRushResults.length;
       setTodayPlayCounts(counts);
     }
     loadTodayPlayCounts();
     if (!supabaseReady || !userId) return () => { cancelled = true; };
     const detach = attachRealtimeRefresh({
       channelName: `home-today-play-counts-${userId}`,
-      tables: [{ name: "game_stats" }],
+      tables: [{ name: "game_stats" }, { name: "animal_rush_match_results" }],
       refresh: loadTodayPlayCounts,
       fallbackMs: 45000,
     });
@@ -826,7 +836,11 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
             {visibleGames.filter((game) => game.live || !circleChallengeIsActive || (!!todayRound && game.id === todayRound.game)).map((game) => {
               const Icon = game.icon;
               const canOpenGame = game.available && (game.live || selectedChallengePlayable);
-              const completed = !game.live && challengesLoaded && (challengeScope?.type === "circle" ? todayRoundDone : todayCompletions.has(game.id));
+              const completed = game.live
+                ? !!todayPlayCounts[game.id]
+                : playMode === "practice"
+                  ? !!todayPlayCounts[game.id]
+                  : challengesLoaded && (challengeScope?.type === "circle" ? todayRoundDone : todayCompletions.has(game.id));
               return (
                 <button
                   type="button"
