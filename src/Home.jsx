@@ -38,6 +38,8 @@ export const GAME_META = [
   { id: "animalrush", label: "Animal Rush", desc: "Live animal race for 2–6 phones", icon: PawPrint, accent: "#15966F", available: false, live: true, requiresConfig: true },
 ];
 
+const SHARED_ARTWORK_TILES = new Set(["tango", "minisudoku", "geo", "zoom", "animalrush"]);
+
 function todayString() {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -832,7 +834,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                   key={game.id}
                   disabled={!canOpenGame}
                   onClick={() => canOpenGame && onSelect(game.id)}
-                  className={`home-game-tile home-game-tile--${game.id}`}
+                  className={`home-game-tile home-game-tile--${game.id}${SHARED_ARTWORK_TILES.has(game.id) ? " home-game-tile--artwork" : ""}`}
                   style={{
                     ...buttonReset,
                     position: "relative",
