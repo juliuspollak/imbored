@@ -1,3 +1,4 @@
+// Triggered after the migration workflow was added.
 import fs from "node:fs";
 import path from "node:path";
 
@@ -23,7 +24,6 @@ function walk(dir) {
   });
 }
 
-// Remove the unsafe post-render DOM mutation layer.
 let main = read("src/main.jsx")
   .replace(/\nimport "\.\/hive-branding\.css";/g, "")
   .replace(/\nimport "\.\/hive-branding\.js";/g, "");
@@ -115,7 +115,6 @@ for (const file of sourceFiles) {
   fs.writeFileSync(file, source);
 }
 
-// Verify that the unsafe layer is gone and the game itself no longer renders crown icons.
 const queens = read("src/games/Queens.jsx");
 if (queens.includes("<Crown")) throw new Error("Queens.jsx still renders Crown");
 if (!queens.includes("<BeeIcon")) throw new Error("Queens.jsx does not render BeeIcon");
