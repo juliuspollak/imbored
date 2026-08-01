@@ -53,10 +53,90 @@
   transition: transform 180ms cubic-bezier(.2,.8,.2,1), filter 180ms ease;
 }
 
+/* The Hive card is deliberately a full themed tile rather than a normal
+   white game card with a small icon. :has() keeps this styling tied to the
+   Hive artwork without coupling Home.jsx to a one-off class name. */
+.home-game-tile:has(.hive-tile-icon) {
+  overflow: hidden;
+  isolation: isolate;
+  border-color: rgba(225, 158, 22, .48) !important;
+  background:
+    radial-gradient(circle at 83% 24%, rgba(255, 193, 34, .23) 0 2px, transparent 3px),
+    radial-gradient(circle at 14% 82%, rgba(230, 145, 0, .16) 0 2px, transparent 3px),
+    linear-gradient(145deg, #fff9df 0%, #fff0b8 58%, #ffe395 100%) !important;
+  box-shadow: 0 12px 28px rgba(172, 104, 0, .16), inset 0 1px 0 rgba(255,255,255,.92) !important;
+}
+
+.home-game-tile:has(.hive-tile-icon)::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  opacity: .56;
+  background-image:
+    linear-gradient(30deg, rgba(190, 118, 0, .12) 12%, transparent 12.5%, transparent 87%, rgba(190, 118, 0, .12) 87.5%),
+    linear-gradient(150deg, rgba(190, 118, 0, .12) 12%, transparent 12.5%, transparent 87%, rgba(190, 118, 0, .12) 87.5%),
+    linear-gradient(30deg, rgba(255,255,255,.46) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,.46) 87.5%),
+    linear-gradient(150deg, rgba(255,255,255,.46) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,.46) 87.5%);
+  background-size: 30px 52px;
+  background-position: 0 0, 0 0, 15px 26px, 15px 26px;
+}
+
+.home-game-tile:has(.hive-tile-icon)::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: -8px;
+  left: -10px;
+  width: 72%;
+  height: 34px;
+  pointer-events: none;
+  border-radius: 0 0 42% 32%;
+  background:
+    radial-gradient(circle at 17% 100%, #ffc72f 0 9px, transparent 10px),
+    radial-gradient(circle at 42% 100%, #ffcf43 0 12px, transparent 13px),
+    radial-gradient(circle at 70% 100%, #ffc125 0 8px, transparent 9px),
+    linear-gradient(180deg, #ffd75b 0%, #ffbd18 100%);
+  filter: drop-shadow(0 3px 3px rgba(159, 91, 0, .16));
+  opacity: .92;
+}
+
+.home-game-tile:has(.hive-tile-icon) > * {
+  position: relative;
+  z-index: 1;
+}
+
+.home-game-tile:has(.hive-tile-icon) > span:has(> .hive-tile-icon) {
+  width: 66px !important;
+  height: 66px !important;
+  margin-top: 2px;
+  background: rgba(255, 248, 214, .62) !important;
+  box-shadow: 0 7px 17px rgba(137, 78, 0, .14), inset 0 1px 0 rgba(255,255,255,.88);
+}
+
+.home-game-tile:has(.hive-tile-icon) .hive-tile-icon {
+  width: 58px !important;
+  height: 58px !important;
+}
+
+.home-game-tile:has(.hive-tile-icon) strong {
+  color: #422600 !important;
+}
+
+.home-game-tile:has(.hive-tile-icon) span {
+  text-shadow: 0 1px 0 rgba(255,255,255,.34);
+}
+
 @media (hover: hover) and (pointer: fine) {
   button:hover .hive-tile-icon__cluster,
   a:hover .hive-tile-icon__cluster {
     transform: translateY(-1px) scale(1.035);
+  }
+
+  .home-game-tile:has(.hive-tile-icon):not(:disabled):hover {
+    border-color: rgba(211, 137, 0, .72) !important;
+    box-shadow: 0 16px 34px rgba(172, 104, 0, .22), inset 0 1px 0 rgba(255,255,255,.95) !important;
   }
 }
 
