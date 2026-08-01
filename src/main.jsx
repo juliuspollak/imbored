@@ -13,6 +13,7 @@ import "./board-review-toggle.css";
 import "./circle-portal.css";
 import "./hive-branding.css";
 import "./gridly-branding.css";
+import "./game-tile-artwork.css";
 
 enableAutomaticAppUpdates();
 

@@ -1,0 +1,239 @@
+.home-game-tile--tango {
+  --game-tile-art: url('/assets/tango-tile-bg.webp');
+  --game-tile-fallback: #07142f;
+  --game-tile-title: #fff8e7;
+  --game-tile-meta: #bcd7ff;
+  --game-tile-shadow: rgba(3, 16, 47, .30);
+}
+
+.home-game-tile--minisudoku {
+  --game-tile-art: url('/assets/minisudoku-tile-bg.webp');
+  --game-tile-fallback: #111b53;
+  --game-tile-title: #ffffff;
+  --game-tile-meta: #d6ddff;
+  --game-tile-shadow: rgba(20, 24, 79, .30);
+}
+
+.home-game-tile--geo {
+  --game-tile-art: url('/assets/geo-tile-bg.webp');
+  --game-tile-fallback: #168bc2;
+  --game-tile-title: #062f52;
+  --game-tile-meta: #124b67;
+  --game-tile-shadow: rgba(4, 74, 113, .24);
+}
+
+.home-game-tile--zoom {
+  --game-tile-art: url('/assets/zoom-tile-bg.webp');
+  --game-tile-fallback: #170c38;
+  --game-tile-title: #fff5ff;
+  --game-tile-meta: #e9c8ff;
+  --game-tile-shadow: rgba(28, 7, 68, .32);
+}
+
+:is(
+  .home-game-tile--tango,
+  .home-game-tile--minisudoku,
+  .home-game-tile--geo,
+  .home-game-tile--zoom
+) {
+  min-height: 154px !important;
+  height: 154px !important;
+  align-self: start;
+  overflow: hidden !important;
+  isolation: isolate;
+  padding: 0 !important;
+  gap: 0 !important;
+  border-color: transparent !important;
+  background-color: var(--game-tile-fallback) !important;
+  background-image: var(--game-tile-art) !important;
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+  background-position: center !important;
+  box-shadow: 0 10px 24px var(--game-tile-shadow) !important;
+}
+
+:is(
+  .home-game-tile--tango,
+  .home-game-tile--minisudoku,
+  .home-game-tile--geo,
+  .home-game-tile--zoom
+)::before {
+  content: "" !important;
+  position: absolute;
+  inset: -2px;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--game-tile-art) center / cover no-repeat;
+}
+
+:is(
+  .home-game-tile--tango,
+  .home-game-tile--minisudoku,
+  .home-game-tile--geo,
+  .home-game-tile--zoom
+)::after {
+  content: none !important;
+}
+
+:is(
+  .home-game-tile--tango,
+  .home-game-tile--minisudoku,
+  .home-game-tile--geo,
+  .home-game-tile--zoom
+) > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* The full-card illustration replaces the small home-grid icon. */
+:is(
+  .home-game-tile--tango,
+  .home-game-tile--minisudoku,
+  .home-game-tile--geo,
+  .home-game-tile--zoom
+) > span[aria-hidden="true"] {
+  display: none !important;
+}
+
+:is(
+  .home-game-tile--tango,
+  .home-game-tile--minisudoku,
+  .home-game-tile--geo,
+  .home-game-tile--zoom
+) > span[title],
+:is(
+  .home-game-tile--tango,
+  .home-game-tile--minisudoku,
+  .home-game-tile--geo,
+  .home-game-tile--zoom
+) > span[style*="right: 12px"] {
+  z-index: 4;
+}
+
+:is(
+  .home-game-tile--tango,
+  .home-game-tile--minisudoku,
+  .home-game-tile--geo,
+  .home-game-tile--zoom
+) > span[title] {
+  background: rgba(255, 255, 255, .94) !important;
+  box-shadow: 0 4px 12px var(--game-tile-shadow);
+}
+
+:is(
+  .home-game-tile--tango,
+  .home-game-tile--minisudoku,
+  .home-game-tile--geo,
+  .home-game-tile--zoom
+) > span:last-of-type {
+  position: absolute !important;
+  z-index: 2;
+  inset: 0;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  text-align: right;
+  pointer-events: none;
+}
+
+:is(
+  .home-game-tile--tango,
+  .home-game-tile--minisudoku,
+  .home-game-tile--geo,
+  .home-game-tile--zoom
+) > span:last-of-type > span:first-child {
+  position: absolute;
+  top: 18px;
+  right: 14px;
+  display: block !important;
+  max-width: 44%;
+}
+
+:is(
+  .home-game-tile--tango,
+  .home-game-tile--minisudoku,
+  .home-game-tile--geo,
+  .home-game-tile--zoom
+) > span:last-of-type strong {
+  color: var(--game-tile-title) !important;
+  font-size: 18px !important;
+  line-height: 1.05;
+  letter-spacing: -.015em;
+  text-shadow: 0 2px 8px var(--game-tile-shadow);
+}
+
+:is(
+  .home-game-tile--tango,
+  .home-game-tile--minisudoku,
+  .home-game-tile--geo,
+  .home-game-tile--zoom
+) > span:last-of-type > span:nth-child(2) {
+  display: none !important;
+}
+
+:is(
+  .home-game-tile--tango,
+  .home-game-tile--minisudoku,
+  .home-game-tile--geo,
+  .home-game-tile--zoom
+) > span:last-of-type > span:nth-child(3) {
+  position: absolute;
+  right: 13px;
+  bottom: 13px;
+  display: block !important;
+  max-width: 48%;
+  margin: 0 !important;
+  color: var(--game-tile-meta) !important;
+  font-size: var(--text-caption-size) !important;
+  font-weight: 700 !important;
+  line-height: 1.15;
+  text-align: right;
+  text-shadow: 0 2px 7px var(--game-tile-shadow);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :is(
+    .home-game-tile--tango,
+    .home-game-tile--minisudoku,
+    .home-game-tile--geo,
+    .home-game-tile--zoom
+  ):not(:disabled):hover {
+    border-color: color-mix(in srgb, var(--game-tile-meta) 55%, transparent) !important;
+    box-shadow: 0 14px 30px var(--game-tile-shadow) !important;
+  }
+}
+
+@media (max-width: 390px) {
+  :is(
+    .home-game-tile--tango,
+    .home-game-tile--minisudoku,
+    .home-game-tile--geo,
+    .home-game-tile--zoom
+  ) > span:last-of-type > span:first-child {
+    top: 16px;
+    right: 11px;
+  }
+
+  :is(
+    .home-game-tile--tango,
+    .home-game-tile--minisudoku,
+    .home-game-tile--geo,
+    .home-game-tile--zoom
+  ) > span:last-of-type strong {
+    font-size: 17px !important;
+  }
+
+  :is(
+    .home-game-tile--tango,
+    .home-game-tile--minisudoku,
+    .home-game-tile--geo,
+    .home-game-tile--zoom
+  ) > span:last-of-type > span:nth-child(3) {
+    right: 10px;
+    bottom: 11px;
+    font-size: 10px !important;
+  }
+}

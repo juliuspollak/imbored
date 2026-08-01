@@ -832,7 +832,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                   key={game.id}
                   disabled={!canOpenGame}
                   onClick={() => canOpenGame && onSelect(game.id)}
-                  className="home-game-tile"
+                  className={`home-game-tile home-game-tile--${game.id}`}
                   style={{
                     ...buttonReset,
                     position: "relative",
