@@ -203,6 +203,19 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
         @media (max-width: 420px) {
           .zoom-card { padding: 16px !important; }
         }
+        .zoom-answer-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .zoom-answer-grid .zoom-option {
+          min-width: 0;
+          overflow-wrap: anywhere;
+        }
+        @media (max-width: 360px) {
+          .zoom-answer-grid {
+            grid-template-columns: minmax(0, 1fr);
+          }
+        }
       `}</style>
 
       <Card className="zoom-card" style={{ position: "relative", marginTop: "var(--game-content-top)", marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
@@ -334,7 +347,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
               {prompt}
             </p>
 
-            <div className="flex flex-row gap-2.5 mb-3">
+            <div className="zoom-answer-grid gap-2.5 mb-3">
               {step.options.map((option) => {
                 const isPicked = selected === option;
                 const isCorrect = answered && option === step.answer;
@@ -349,7 +362,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
                     key={option}
                     onClick={() => pick(option)}
                     disabled={answered}
-                    className="zoom-option flex-1 rounded-xl px-3 py-4 text-sm sm:text-base font-semibold transition-all min-h-[64px] leading-snug"
+                    className="zoom-option rounded-xl px-3 py-4 text-sm sm:text-base font-semibold transition-all min-h-[64px] leading-snug"
                     style={{ background, color, border, cursor: answered ? "default" : "pointer" }}
                   >
                     {localizeZoomValue(option, language, step)}
