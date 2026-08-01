@@ -6,8 +6,10 @@
 /* The generated artwork matches the fixed home-tile ratio, so it can fill
    the card without the cropping required by a square source image. */
 .home-game-tile:has(.gridly-tile-icon) {
-  min-height: 154px !important;
-  height: 154px !important;
+  width: 100%;
+  min-height: 0 !important;
+  height: auto !important;
+  aspect-ratio: 5 / 4;
   align-self: start;
   overflow: hidden !important;
   isolation: isolate;

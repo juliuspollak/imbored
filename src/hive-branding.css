@@ -35,8 +35,10 @@
 /* The card follows the grid row height. The square artwork keeps its original
    proportions; it is never stretched to match the card. */
 .home-game-tile:has(.hive-tile-icon) {
-  min-height: 154px !important;
-  height: 154px !important;
+  width: 100%;
+  min-height: 0 !important;
+  height: auto !important;
+  aspect-ratio: 5 / 4;
   align-self: start;
   overflow: hidden !important;
   isolation: isolate;

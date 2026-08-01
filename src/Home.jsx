@@ -818,8 +818,8 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
         )}
 
         {gameConfigLoading ? (
-          <div aria-live="polite" style={{ width: "100%", maxWidth: 400, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-3)" }}>
-            {[0, 1, 2, 3].map((item) => <div key={item} className="home-skeleton" style={{ height: 154, borderRadius: "var(--radius-lg)", background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)" }} />)}
+          <div aria-live="polite" className="home-game-skeleton-grid" style={{ width: "100%", maxWidth: 400, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-3)" }}>
+            {[0, 1, 2, 3].map((item) => <div key={item} className="home-skeleton" style={{ width: "100%", aspectRatio: "5 / 4", borderRadius: "var(--radius-lg)", background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)" }} />)}
           </div>
         ) : (
           <div className="home-game-grid" style={{ width: "100%", maxWidth: 400, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-3)" }}>
@@ -838,8 +838,9 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                   style={{
                     ...buttonReset,
                     position: "relative",
-                    minHeight: 154,
-                    height: 154,
+                    width: "100%",
+                    minHeight: 0,
+                    aspectRatio: "5 / 4",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "flex-start",
@@ -890,6 +891,13 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
             transform: translateY(-2px);
             border-color: var(--color-primary-subtle-border);
             box-shadow: var(--shadow-card-hover);
+          }
+        }
+        @media (max-width: 319px) {
+          .home-game-grid,
+          .home-game-skeleton-grid {
+            max-width: 250px !important;
+            grid-template-columns: minmax(0, 1fr) !important;
           }
         }
         @media (prefers-reduced-motion: reduce) {

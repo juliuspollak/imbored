@@ -39,8 +39,10 @@
 }
 
 .home-game-tile--artwork {
-  min-height: 154px !important;
-  height: 154px !important;
+  width: 100%;
+  min-height: 0 !important;
+  height: auto !important;
+  aspect-ratio: 5 / 4;
   align-self: start;
   overflow: hidden !important;
   isolation: isolate;
