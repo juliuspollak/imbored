@@ -635,12 +635,22 @@ export default function Hive({
     function onMove(e) {
       if (!dragRef.current.active || !boardRef.current) return;
       const point = e.touches ? e.touches[0] : e;
-      const el = document.elementFromPoint(point.clientX, point.clientY);
-      const cell = el?.closest?.(".qp-cell");
-      if (!cell || !boardRef.current.contains(cell)) return;
-      const cells = Array.from(boardRef.current.querySelectorAll(".qp-cell"));
-      const idx = cells.indexOf(cell);
-      const r = Math.floor(idx / boardSize), c = idx % boardSize;
+      const rect = boardRef.current.getBoundingClientRect();
+      const cellSize = rect.width / boardSize;
+      // Keep a drag attached when a finger briefly strays across the outer
+      // border. Mapping coordinates to the grid avoids overlapping hit areas,
+      // so stationary taps still belong to exactly one cell.
+      const edgeTolerance = Math.min(10, cellSize * 0.22);
+      if (
+        point.clientX < rect.left - edgeTolerance
+        || point.clientX > rect.right + edgeTolerance
+        || point.clientY < rect.top - edgeTolerance
+        || point.clientY > rect.bottom + edgeTolerance
+      ) return;
+      const localX = Math.min(rect.width - 0.01, Math.max(0, point.clientX - rect.left));
+      const localY = Math.min(rect.height - 0.01, Math.max(0, point.clientY - rect.top));
+      const r = Math.floor(localY / (rect.height / boardSize));
+      const c = Math.floor(localX / cellSize);
       const key = `${r},${c}`;
       if (dragRef.current.visited.has(key)) return;
       const isFirstMove = !dragRef.current.moved;
@@ -856,7 +866,7 @@ export default function Hive({
                 <HIVE_BRAND.PieceIcon
                   key={`bee-${r}-${c}`}
                   className="qp-bee"
-                  size={Math.max(25, 34 - boardSize)}
+                  size={Math.max(26, 35 - boardSize)}
                   style={{
                     color: isConflict ? RED : BEE_INK,
                   }}
@@ -865,7 +875,7 @@ export default function Hive({
               {val === 1 && (
                 <X
                   className="qp-cross"
-                  size={Math.max(13, 22 - boardSize)}
+                  size={Math.max(15, 23 - boardSize)}
                   strokeWidth={2.6}
                   style={{ color: "rgba(17,24,39,0.60)" }}
                 />
@@ -873,7 +883,7 @@ export default function Hive({
               {isHint && cellHint.type === "bee" && val === 0 && (
                 <HIVE_BRAND.PieceIcon
                   className="qp-bee"
-                  size={Math.max(25, 34 - boardSize)}
+                  size={Math.max(26, 35 - boardSize)}
                   style={{ color: "#047857", opacity: 0.82, pointerEvents: "none" }}
                 />
               )}
