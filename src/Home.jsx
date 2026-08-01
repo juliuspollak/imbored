@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Moon, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle, Check, Star, Flame, ChevronRight, ChevronDown, Globe2, Users, ZoomIn, PawPrint } from "lucide-react";
+import { Moon, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Check, Star, Flame, ChevronRight, ChevronDown, Globe2, Users, ZoomIn, PawPrint } from "lucide-react";
 import { useGameConfig } from "./lib/useGameConfig.js";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useI18n } from "./lib/i18n.jsx";
@@ -30,7 +30,7 @@ export const GAME_META = [
   { id: "gridly", label: GRIDLY_BRAND.name, desc: GRIDLY_BRAND.tagline, icon: GRIDLY_BRAND.GameIcon, tileIconSize: GRIDLY_BRAND.tileIconSize, tileBackground: GRIDLY_BRAND.tileBackground, accent: "#12946A", available: true, challenge: true },
   { id: "pinpoint", label: "Pinpoint", desc: "Guess the category from five clues", icon: Target, accent: "#8B5CF6", available: false },
   { id: "crossclimb", label: "Crossclimb", desc: "Solve the word ladder", icon: ArrowUpDown, accent: "#EA580C", available: false },
-  { id: "minisudoku", label: "Mini Sudoku", desc: "Classic sudoku, bite-sized", icon: Grid3x3, accent: "#0E7490", available: true, challenge: true },
+  { id: "minisudoku", label: "Sudoku", desc: "Classic sudoku, bite-sized", icon: Grid3x3, accent: "#0E7490", available: true, challenge: true },
   { id: "patches", label: "Patches", desc: "Fit every shape into the frame", icon: Puzzle, accent: "#B45309", available: false },
   { id: "wend", label: "Wend", desc: "Weave hidden words through the grid", icon: Waves, accent: "#0EA5E9", available: false },
   { id: "geo", label: "Geo", desc: "Capitals, landmarks & wildlife by continent", icon: Globe2, accent: "#DB2777", available: true, challenge: true },
@@ -78,7 +78,7 @@ function challengeWeekLabel(weekStart) {
   return `${format(monday)} – ${format(sunday)}`;
 }
 
-export default function Home({ onSelect, playMode, onPlayModeChange, players = [], userId, onOpenProgress, onOpenCircles, challengeScope, onChallengeScopeChange }) {
+export default function Home({ onSelect, playMode, onPlayModeChange, userId, onOpenProgress, onOpenCircles, challengeScope, onChallengeScopeChange }) {
   const { t, language } = useI18n();
   const { config: gameConfig, loading: gameConfigLoading } = useGameConfig();
   const [progress, setProgress] = useState(null);
@@ -825,7 +825,6 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
           <div className="home-game-grid" style={{ width: "100%", maxWidth: 400, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-3)" }}>
             {visibleGames.filter((game) => game.live || !circleChallengeIsActive || (!!todayRound && game.id === todayRound.game)).map((game) => {
               const Icon = game.icon;
-              const playingCount = players.filter((player) => player.game === game.id && player.mode === (game.live ? "live" : playMode)).length;
               const canOpenGame = game.available && (game.live || selectedChallengePlayable);
               const completed = !game.live && challengesLoaded && (challengeScope?.type === "circle" ? todayRoundDone : todayCompletions.has(game.id));
               return (
@@ -856,7 +855,6 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                   }}
                 >
                   {completed && <span title={t("home.alreadyPlayed")} style={{ position: "absolute", top: 12, left: 12, width: 22, height: 22, display: "grid", placeItems: "center", borderRadius: "50%", background: "var(--color-info-bg)" }}><Check size={13} style={{ color: "var(--color-info-text)" }} strokeWidth={3} /></span>}
-                  {playingCount > 0 && <span style={{ position: "absolute", top: 12, right: 12, display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 7px", borderRadius: "var(--radius-full)", background: "var(--color-success-bg)", color: "var(--color-success-text)", fontSize: "var(--text-caption-size)", fontWeight: 700 }}><Circle size={6} fill="currentColor" />{playingCount}</span>}
                   <span aria-hidden="true" style={{ width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: "var(--radius-md)", background: game.tileBackground || accentSurface(game.accent), color: game.accent }}><Icon size={game.tileIconSize || 22} /></span>
                   <span>
                     <span style={{ display: "flex", alignItems: "center", gap: "var(--space-1)" }}>

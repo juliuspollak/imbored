@@ -37,7 +37,7 @@ export const GAME_NAMES = {
   hive: HIVE_BRAND.name,
   tango: "Tango",
   gridly: GRIDLY_BRAND.name,
-  minisudoku: "Mini Sudoku",
+  minisudoku: "Sudoku",
   geo: "Geo",
   zoom: "Zoom",
   animalrush: "Animal Rush",

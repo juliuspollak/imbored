@@ -58,7 +58,7 @@ const GAME_COMPONENTS = {
   hive: { Component: HiveGame, label: HIVE_BRAND.name },
   tango: { Component: TangoGame, label: "Tango" },
   gridly: { Component: GridlyGame, label: GRIDLY_BRAND.name },
-  minisudoku: { Component: MiniSudokuGame, label: "Mini Sudoku" },
+  minisudoku: { Component: MiniSudokuGame, label: "Sudoku" },
   geo: { Component: GeoGame, label: "Geo" },
   zoom: { Component: ZoomGame, label: "Zoom" },
   animalrush: { Component: AnimalRushGame, label: "Animal Rush" },
