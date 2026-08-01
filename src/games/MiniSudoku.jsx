@@ -6,7 +6,7 @@ import HintCooldownButton from "../HintCooldownButton.jsx";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import BoardReviewToggle from "../BoardReviewToggle.jsx";
-import { Grid3x3, CornerUpLeft, Timer as TimerIcon, HelpCircle, Delete, Pencil } from "lucide-react";
+import { Grid3x3, CornerUpLeft, Timer as TimerIcon, HelpCircle, Eraser, Pencil } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
 import Page from "../components/Page.jsx";
@@ -213,18 +213,18 @@ function NumBtn({ onClick, disabled, used = false, active = false, action = fals
       disabled={disabled}
       className="ms-num-btn"
       style={{
-        minHeight: action ? 44 : 46,
+        minHeight: "clamp(54px, 15vw, 68px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         border: active ? "2px solid var(--color-primary)" : "1px solid var(--color-border)",
-        borderRadius: "var(--radius-sm)",
+        borderRadius: "var(--radius-md)",
         background: active ? "var(--color-primary-subtle)" : used ? "var(--color-page-bg)" : "var(--color-surface-elevated)",
         color: disabled ? "var(--color-disabled-text)" : active ? "var(--color-primary)" : used ? "var(--color-text-muted)" : "var(--color-text-primary)",
         cursor: disabled ? "not-allowed" : "pointer",
         font: "inherit",
-        fontSize: action ? "var(--text-caption-size)" : 17,
-        fontWeight: 600,
+        fontSize: action ? "var(--text-body-secondary-size)" : 22,
+        fontWeight: 700,
         transition: "transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast)",
       }}
       {...rest}
@@ -706,41 +706,43 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         )}
         {(!solved || reviewing) && boardGrid}
 
-        {/* Preserve the original two-row keypad muscle memory. */}
         {!solved && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6, marginTop: "var(--space-3)" }}>
-              {paletteDigits.slice(0, 3).map((d) => (
-                <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={!selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d || !!(noteMode && selected && notes[selected.r][selected.c].has(d))} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
-                  {d}
-                </NumBtn>
-              ))}
-              <NumBtn action onClick={handleUndo} disabled={history.length === 0} aria-label={t("common.undo")}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><CornerUpLeft size={15} />Undo</span>
-              </NumBtn>
-              {paletteDigits.slice(3).map((d) => (
-                <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={!selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d || !!(noteMode && selected && notes[selected.r][selected.c].has(d))} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
-                  {d}
-                </NumBtn>
-              ))}
-              <NumBtn action onClick={handleErase} disabled={!selected} aria-label={t("common.erase")}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Delete size={15} />Delete</span>
-              </NumBtn>
-          </div>
-        )}
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", marginTop: "var(--space-3)", padding: 3, border: "1px solid var(--color-border)", borderRadius: "var(--radius-full)", background: "var(--color-surface-elevated)", boxShadow: "var(--shadow-control)" }}>
+              {[
+                { notes:false, label:"Number", Icon:Pencil },
+                { notes:true, label:"Notes", Icon:Grid3x3 },
+              ].map(({ notes:notesMode, label, Icon }) => {
+                const active = noteMode === notesMode;
+                return (
+                  <button key={label} type="button" onClick={() => setNoteMode(notesMode)} aria-pressed={active} style={{ minHeight: 42, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, border: 0, borderRadius: "var(--radius-full)", background: active ? "var(--color-primary)" : "transparent", color: active ? "#fff" : "var(--color-text-secondary)", boxShadow: active ? "var(--shadow-control)" : "none", font: "inherit", fontSize: "var(--text-body-secondary-size)", fontWeight: 700, cursor: "pointer", transition: "background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast)" }}>
+                    <Icon size={16} /> {label}
+                  </button>
+                );
+              })}
+            </div>
 
-        {!solved && (
-          <div style={{ minHeight: 44, marginTop: 6, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-2)" }}>
-            <span style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{filledCount}/{N * N} filled</span>
-            <button
-              type="button"
-              onClick={() => setNoteMode((value) => !value)}
-              aria-pressed={noteMode}
-              aria-label={`Notes ${noteMode ? "on" : "off"}`}
-              style={{ minHeight: 40, padding: "0 12px", display: "inline-flex", alignItems: "center", gap: 6, border: noteMode ? "2px solid var(--color-primary)" : "1px solid var(--color-border)", borderRadius: "var(--radius-full)", background: noteMode ? "var(--color-primary-subtle)" : "var(--color-surface-elevated)", color: noteMode ? "var(--color-primary)" : "var(--color-text-secondary)", font: "inherit", fontSize: "var(--text-caption-size)", fontWeight: 600, cursor: "pointer" }}
-            >
-              <Pencil size={15} /> Notes {noteMode ? "On" : "Off"}
-            </button>
-          </div>
+            <div style={{ marginTop: 8, padding: 10, display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 8, border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)", background: "var(--color-surface)", boxShadow: "var(--shadow-card)" }}>
+                {paletteDigits.slice(0, 3).map((d) => (
+                  <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={!selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d || !!(noteMode && selected && notes[selected.r][selected.c].has(d))} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
+                    {d}
+                  </NumBtn>
+                ))}
+                <NumBtn action onClick={handleUndo} disabled={history.length === 0} aria-label={t("common.undo")}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><CornerUpLeft size={18} />Undo</span>
+                </NumBtn>
+                {paletteDigits.slice(3).map((d) => (
+                  <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={!selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d || !!(noteMode && selected && notes[selected.r][selected.c].has(d))} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
+                    {d}
+                  </NumBtn>
+                ))}
+                <NumBtn action onClick={handleErase} disabled={!selected} aria-label={t("common.erase")}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Eraser size={18} />Erase</span>
+                </NumBtn>
+            </div>
+
+            <p style={{ margin: "var(--space-3) 0 0", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{filledCount}/{N * N} filled</p>
+          </>
         )}
       </Card>
     </Page>
