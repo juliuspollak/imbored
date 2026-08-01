@@ -882,8 +882,8 @@ export default function AnimalRush({ onExit }) {
       <main className="rush-shell rush-shell--play">
         <div className="rush-topbar mb-3 flex items-center justify-between">
           <GameHomeButton onClick={leaveRoom} />
-          <span className="rush-muted flex items-center gap-2 text-[11px] font-semibold">
-            Round {room.round_number}
+          <span className="rush-topbar__status rush-muted flex items-center gap-2 text-[11px] font-semibold">
+            <span className="rush-topbar__round">Round {room.round_number}</span>
             <span className="rush-mode-badge">
               {room.difficulty || "standard"} · {room.colour_mode === "individual" ? "animal colours" : room.colour_mode === "mixed" ? "mixed colours" : "one colour"}
             </span>
@@ -891,7 +891,7 @@ export default function AnimalRush({ onExit }) {
           </span>
           <button
             type="button"
-            className="rush-quiet -mr-2"
+            className="rush-topbar__leave rush-quiet"
             onClick={leaveRoom}
             disabled={working === "leave"}
             aria-label="Leave game"

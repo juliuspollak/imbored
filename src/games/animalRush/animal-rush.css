@@ -315,6 +315,38 @@
   text-transform: capitalize;
 }
 
+.rush-topbar {
+  display: grid !important;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.rush-topbar__status {
+  min-width: 0;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 3px 6px !important;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.rush-topbar__round,
+.rush-topbar__leave {
+  white-space: nowrap;
+}
+
+.rush-topbar__status .rush-mode-badge {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rush-topbar__leave {
+  margin: 0;
+}
+
 .rush-player {
   display: flex;
   min-height: 54px;
@@ -857,7 +889,12 @@
   .rush-topbar {
     min-height: 34px;
     margin-bottom: 5px !important;
-    padding-right: 64px;
+    padding-right: 0;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+  }
+
+  .rush-topbar__status {
+    flex-wrap: nowrap;
   }
 
   .rush-motion-badge {
