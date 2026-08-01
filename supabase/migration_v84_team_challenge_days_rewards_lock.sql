@@ -65,7 +65,7 @@ begin
   if not exists(select 1 from public.teams t where t.id=target_team_id and t.created_by=auth.uid()) then
     raise exception 'Only this team creator can set its challenge.' using errcode='42501';
   end if;
-  select array_agg(distinct g order by g) into clean_games from unnest(selected_games) g where g in ('hive','tango','zip','minisudoku','geo');
+  select array_agg(distinct g order by g) into clean_games from unnest(selected_games) g where g in ('hive','tango','gridly','minisudoku','geo');
   select array_agg(distinct d order by d) into clean_days from unnest(selected_days) d where d between 1 and 7;
   if coalesce(array_length(clean_games,1),0)=0 then raise exception 'Choose at least one game.'; end if;
   if coalesce(array_length(clean_days,1),0)=0 then raise exception 'Choose at least one challenge day.'; end if;

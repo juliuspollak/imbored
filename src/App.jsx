@@ -20,7 +20,7 @@ import { AuthProvider, useAuth } from "./lib/AuthContext.jsx";
 // tool. Each chunk loads on demand the first time its screen is opened.
 const HiveGame = lazy(() => import("./games/Hive.jsx"));
 const TangoGame = lazy(() => import("./games/Tango.jsx"));
-const ZipGame = lazy(() => import("./games/Zip.jsx"));
+const GridlyGame = lazy(() => import("./games/Gridly.jsx"));
 const MiniSudokuGame = lazy(() => import("./games/MiniSudoku.jsx"));
 const GeoGame = lazy(() => import("./games/Geo.jsx"));
 const ZoomGame = lazy(() => import("./games/Zoom.jsx"));
@@ -52,12 +52,12 @@ import { usePokes } from "./lib/pokes.js";
 import { useUnreadMessages } from "./lib/useUnreadMessages.js";
 import { useI18n } from "./lib/i18n.jsx";
 import { applyThemePreference, cacheThemePreference } from "./lib/theme.js";
-import { HIVE_BRAND } from "./lib/gameBranding.jsx";
+import { GRIDLY_BRAND, HIVE_BRAND } from "./lib/gameBranding.jsx";
 
 const GAME_COMPONENTS = {
   hive: { Component: HiveGame, label: HIVE_BRAND.name },
   tango: { Component: TangoGame, label: "Tango" },
-  zip: { Component: ZipGame, label: "Zip" },
+  gridly: { Component: GridlyGame, label: GRIDLY_BRAND.name },
   minisudoku: { Component: MiniSudokuGame, label: "Mini Sudoku" },
   geo: { Component: GeoGame, label: "Geo" },
   zoom: { Component: ZoomGame, label: "Zoom" },
@@ -203,7 +203,7 @@ function AppShell() {
   const players = useOnlinePlayers();
   const { config: gameConfig, refetch: refetchGameConfig } = useGameConfig();
   usePresence(
-    ["hive", "tango", "zip", "minisudoku", "geo", "zoom", "animalrush"].includes(active) ? active : null,
+    ["hive", "tango", "gridly", "minisudoku", "geo", "zoom", "animalrush"].includes(active) ? active : null,
     active === "animalrush" ? "live" : playMode,
     incognito,
   );

@@ -22,7 +22,7 @@ import { GAME_NAMES } from "./lib/gameBranding.jsx";
 
 const CIRCLE_EMOJIS = ["🎮","🧩","🚀","🔥","⭐","🏆","🦄","🐉","🦊","🐼","🌈","⚡","💎","👑","🎯","🛸"];
 const DAYS = [{id:1,label:"Mon"},{id:2,label:"Tue"},{id:3,label:"Wed"},{id:4,label:"Thu"},{id:5,label:"Fri"},{id:6,label:"Sat"},{id:7,label:"Sun"}];
-const DEFAULT_GAMES = ["hive","tango","zip","minisudoku","geo","zoom"];
+const DEFAULT_GAMES = ["hive","tango","gridly","minisudoku","geo","zoom"];
 const GAME_LABELS = GAME_NAMES;
 const MAX_CHALLENGE_REWARD_POINTS = 50;
 const CIRCLE_MONOGRAM_COLORS = ["#315A9B", "#7251A8", "#177B68", "#A55245", "#8A641C", "#236B86"];

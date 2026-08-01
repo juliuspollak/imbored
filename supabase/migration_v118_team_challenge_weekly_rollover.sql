@@ -649,7 +649,7 @@ begin
   from (
     select game,min(selected.ordinality) as first_position
     from unnest(selected_games) with ordinality selected(game,ordinality)
-    where game in ('hive','tango','zip','minisudoku','geo','zoom')
+    where game in ('hive','tango','gridly','minisudoku','geo','zoom')
     group by game
   ) valid_games;
 

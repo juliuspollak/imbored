@@ -40,7 +40,7 @@ alter table public.team_weekly_challenges
   add constraint team_weekly_challenges_reward_points_check check (reward_points between 0 and 500);
 
 alter table public.team_weekly_challenges
-  alter column game_ids set default array['hive','tango','zip','minisudoku','geo','zoom']::text[];
+  alter column game_ids set default array['hive','tango','gridly','minisudoku','geo','zoom']::text[];
 
 -- Re-validate and re-cap on every write, defense-in-depth alongside the
 -- table constraint above (a constraint can be dropped by a future
@@ -83,7 +83,7 @@ begin
   select array_agg(distinct game order by game)
   into clean_games
   from unnest(selected_games) game
-  where game in ('hive','tango','zip','minisudoku','geo','zoom');
+  where game in ('hive','tango','gridly','minisudoku','geo','zoom');
 
   select array_agg(distinct day order by day)
   into clean_days

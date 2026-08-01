@@ -38,6 +38,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/games/Hive.jsx src/games/Tango.jsx src/games/Zip.jsx src/games/MiniSudoku.jsx src/games/Geo.jsx src/games/Zoom.jsx
+          git add src/games/Hive.jsx src/games/Tango.jsx src/games/Gridly.jsx src/games/MiniSudoku.jsx src/games/Geo.jsx src/games/Zoom.jsx
           git commit -m "Unify practice day selectors across games"
           git push origin main

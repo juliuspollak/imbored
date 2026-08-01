@@ -6,7 +6,7 @@ import "./game-solved-panel.css";
 
 // Shared "you solved it" panel for every puzzle game. Each game used to hand-roll
 // this block with its own inline colours, which is why dark mode only ever got
-// fixed for whichever game someone happened to be working on at the time (Zip).
+// fixed for whichever game someone happened to be working on at the time (Gridly).
 // One component + one stylesheet means a contrast fix here reaches every game.
 //
 // It also owns the bits every caller used to repeat verbatim: the

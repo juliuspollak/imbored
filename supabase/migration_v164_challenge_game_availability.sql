@@ -13,7 +13,7 @@ insert into public.game_config(
 values
   ('hive', true, true, 0, true),
   ('tango', true, true, 1, true),
-  ('zip', true, true, 2, true),
+  ('gridly', true, true, 2, true),
   ('minisudoku', true, true, 3, true),
   ('geo', true, true, 4, true),
   ('zoom', true, true, 5, true)
@@ -23,7 +23,7 @@ update public.game_config
 set challenge_enabled = game_id in (
   'hive',
   'tango',
-  'zip',
+  'gridly',
   'minisudoku',
   'geo',
   'zoom'

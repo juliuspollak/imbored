@@ -19,7 +19,7 @@ create table if not exists public.team_challenge_rounds (
     references public.team_weekly_challenges(id) on delete cascade,
   challenge_date date not null,
   game text not null
-    check (game in ('hive','tango','zip','minisudoku','geo','zoom')),
+    check (game in ('hive','tango','gridly','minisudoku','geo','zoom')),
   round_number integer not null check (round_number between 1 and 7),
   created_at timestamptz not null default now(),
   primary key (challenge_id,challenge_date),

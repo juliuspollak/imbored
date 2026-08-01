@@ -32,7 +32,7 @@ function patchZipDay(row, field, dayIndex, value) {
 }
 
 function zipConfigPayload(row) {
-  if (row.game_id !== "zip") return {};
+  if (row.game_id !== "gridly") return {};
   const out = {};
   for (const [field] of ZIP_FIELDS) out[field] = row[field] || ZIP_DEFAULTS[field];
   return out;
@@ -111,7 +111,7 @@ export default function AdminGames({ onBack }) {
       game_id: g.id, visible: true, available: g.available,
       challenge_enabled: g.challenge === true, sort_order: (data?.length || 0) + i,
       hint_cooldown_base: 0, hint_cooldown_per_day: 0, zip_path_style: "solid",
-      ...(g.id === "zip" ? ZIP_DEFAULTS : {}),
+      ...(g.id === "gridly" ? ZIP_DEFAULTS : {}),
     }));
     setRows([...(data || []), ...missing]); setLoading(false);
   }, [isAdmin]);
@@ -291,7 +291,7 @@ export default function AdminGames({ onBack }) {
                           </label>
                         </div>
 
-                        {r.game_id === "zip" && (
+                        {r.game_id === "gridly" && (
                           <div style={{ marginTop: "var(--space-4)", paddingTop: "var(--space-4)", borderTop: "1px solid var(--color-border)" }}>
                             <div style={{ fontSize: "var(--text-body-size)", fontWeight: 600, color: "var(--color-text-primary)", marginBottom: "var(--space-3)" }}>Snake appearance</div>
                             <select value={r.zip_path_style || "solid"} onChange={(e) => updateRow(r.game_id, { zip_path_style: e.target.value }, "zip_path_style")} disabled={busy}
@@ -305,7 +305,7 @@ export default function AdminGames({ onBack }) {
                               <div style={{ fontSize: "var(--text-body-size)", fontWeight: 600, color: "var(--color-text-primary)", marginBottom: 4 }}>Daily puzzle complexity</div>
                               <div style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)", marginBottom: "var(--space-3)" }}>Changes apply to newly generated puzzles.</div>
                               {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day, di) => {
-                                const dayBusy = isSavingField(r.game_id, `zip:${di}:any`);
+                                const dayBusy = isSavingField(r.game_id, `gridly:${di}:any`);
                                 return (
                                   <div key={day} style={{ marginBottom: "var(--space-3)", padding: "var(--space-3)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)" }}>
                                     <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-primary)", marginBottom: "var(--space-2)" }}>{day}</div>

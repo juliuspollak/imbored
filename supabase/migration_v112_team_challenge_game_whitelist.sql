@@ -35,7 +35,7 @@ begin
 
   select array_agg(distinct game order by game) into clean_games
   from unnest(selected_games) game
-  where game in ('hive','tango','zip','minisudoku','geo','zoom');
+  where game in ('hive','tango','gridly','minisudoku','geo','zoom');
 
   select array_agg(distinct day order by day) into clean_days
   from unnest(selected_days) day where day between 1 and 7;

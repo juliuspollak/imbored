@@ -10,7 +10,7 @@ create table game_config (
 insert into game_config (game_id, visible, available, sort_order) values
   ('hive', true, true, 0),
   ('tango', true, true, 1),
-  ('zip', true, true, 2),
+  ('gridly', true, true, 2),
   ('minisudoku', true, true, 3),
   ('pinpoint', false, false, 4),
   ('crossclimb', false, false, 5),

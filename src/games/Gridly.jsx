@@ -10,6 +10,7 @@ import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpC
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
 import Button from "../components/Button.jsx";
+import { GRIDLY_BRAND } from "../lib/gameBranding.jsx";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -313,7 +314,7 @@ function rainbowStepColor(index, total) {
 
 /* ---------------- component ---------------- */
 
-export default function ZipGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId, rewardResult } = {}) {
+export default function GridlyGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId, rewardResult } = {}) {
   const { t } = useI18n();
   const todayIdx = (() => {
     const d = new Date().getDay();
@@ -329,7 +330,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
   const [seconds, setSeconds] = useState(0);
   const [running, setRunning] = useState(false);
   const [solved, setSolved] = useState(false);
-  const [mistakes, setMistakes] = useState(0); // ZIP: cells deliberately backtracked
+  const [mistakes, setMistakes] = useState(0); // Gridly: cells deliberately backtracked
   const [resets, setResets] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
   const [difficultyRating, setDifficultyRating] = useState(null);
@@ -385,7 +386,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
       setRunning(false);
       onSolved && onSolved({
         userId,
-        game:"zip",
+        game:"gridly",
         dayIndex:dayIdx,
         seconds,
         mistakes:zipEfficiencyPenaltyUnits(mistakes) + resets,
@@ -927,7 +928,7 @@ export default function ZipGame({ userId, onSolved, mode = "practice", forcedDay
             style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }}
             className="text-4xl lg:text-5xl"
           >
-            Zip
+            {GRIDLY_BRAND.name}
           </h1>
           <p style={{ color: CREAM, opacity: 0.45 }} className="text-xs mt-1">
             trace one path through every cell, in order

@@ -34,7 +34,7 @@ begin
   game_label := case lower(new.game)
     when 'hive' then 'Hive'
     when 'tango' then 'Tango'
-    when 'zip' then 'Zip'
+    when 'gridly' then 'Gridly'
     when 'minisudoku' then 'Mini Sudoku'
     when 'geo' then 'Geo'
     else initcap(replace(new.game, '_', ' '))

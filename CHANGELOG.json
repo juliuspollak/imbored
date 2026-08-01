@@ -224,11 +224,11 @@
     "body": "Any approved player can now invite somebody who does not yet use the app by entering their email address. What’s New syncing has also been repaired so newer product updates appear again."
   },
   {
-    "id": "v95-ui-zip-chat-polish",
+    "id": "v95-ui-gridly-chat-polish",
     "version": "v95",
     "date": "2026-07-24",
-    "title": "UI polish, Zip clarity and chat resilience",
-    "body": "Simplified Zip, improved checkpoint and path readability, softened the Hive palette, refreshed game controls and made chat opening more resilient."
+    "title": "UI polish, Gridly clarity and chat resilience",
+    "body": "Simplified Gridly, improved checkpoint and path readability, softened the Hive palette, refreshed game controls and made chat opening more resilient."
   },
   {
     "id": "v81-team-daily-challenge-messages",
@@ -259,11 +259,11 @@
     "body": "Fixed completed-feedback notification errors without requiring the user_seen_at column. Practice and Challenge switches now show the destination mode and share aligned navigation. What's New displays the current app version, hides hidden entries by default and removes Delete controls. My Profile now uses a compact modern avatar picker."
   },
   {
-    "id": "v64-geo-zip-admin-polish",
+    "id": "v64-geo-gridly-admin-polish",
     "version": "v64",
     "date": "2026-07-23",
-    "title": "Smarter Geo hints, unique questions, Zip snake and admin soft delete",
-    "body": "Geo hints can be used repeatedly, question repetition protection is stricter, and the repeated McMurdo item was removed. Zip now draws a colourful snake along the route. Tango reset keeps elapsed time. Admins can soft-delete and restore Feedback and What's New items."
+    "title": "Smarter Geo hints, unique questions, Gridly snake and admin soft delete",
+    "body": "Geo hints can be used repeatedly, question repetition protection is stricter, and the repeated McMurdo item was removed. Gridly now draws a colourful snake along the route. Tango reset keeps elapsed time. Admins can soft-delete and restore Feedback and What's New items."
   },
   {
     "id": "v61-8-greenland-new-zealand",
@@ -522,7 +522,7 @@
     "id": "2026-07-22-mini-sudoku",
     "version": "v27",
     "title": "New game: Mini Sudoku",
-    "body": "6x6 sudoku, verified unique every time, difficulty scales through the week via clue count. Hint uses real solving techniques (naked/hidden singles, contradiction test) — never a guess. Works in both Challenge and Practice mode, same as the others. Also brought Hive/Tango/Zip's fonts in line with the rest of the app.",
+    "body": "6x6 sudoku, verified unique every time, difficulty scales through the week via clue count. Hint uses real solving techniques (naked/hidden singles, contradiction test) — never a guess. Works in both Challenge and Practice mode, same as the others. Also brought Hive/Tango/Gridly's fonts in line with the rest of the app.",
     "date": "2026-07-22"
   },
   {
@@ -844,35 +844,35 @@
     "id": "2026-07-25-gameplay-visual-polish",
     "version": "v111",
     "title": "Game polish: bigger grids, thicker walls, gloss effects, smarter errors",
-    "body": "Zip: 6x6 → 7x7 grid for more substance; walls thicker (3px → 5px). Hive: board border-radius reduced from rounded-xl to rounded-lg, less cartoonish. Tango: sun/moon icons 40% bigger; constraint symbols (=/×) bigger and in larger containers; sun now fully filled instead of outline. Home: practice/challenge toggle now has a gloss effect with gradient overlay and enhanced shadows. Tango validation: errors no longer show instantly while typing — now debounced to 2 seconds, only shown after the full pause (not during continuous editing). Fixed race condition in practice-mode checkboxes that showed incomplete state before data finished loading.",
+    "body": "Gridly: 6x6 → 7x7 grid for more substance; walls thicker (3px → 5px). Hive: board border-radius reduced from rounded-xl to rounded-lg, less cartoonish. Tango: sun/moon icons 40% bigger; constraint symbols (=/×) bigger and in larger containers; sun now fully filled instead of outline. Home: practice/challenge toggle now has a gloss effect with gradient overlay and enhanced shadows. Tango validation: errors no longer show instantly while typing — now debounced to 2 seconds, only shown after the full pause (not during continuous editing). Fixed race condition in practice-mode checkboxes that showed incomplete state before data finished loading.",
     "date": "2026-07-25"
   },
   {
     "id": "2026-07-25-gameplay-fixes-and-polish-part-2",
     "version": "v111",
-    "title": "Game fixes: Zip difficulty scaling, Tango smart delays, gloss effects, green dot bug, no more holes",
-    "body": "Zip: checkpoint numbers now scale Monday (4) → Sunday (16); walls increase 0→7; black holes removed entirely (visual & gameplay); tunnels capped at 1; grid size 7×7. Tango: conflict errors now debounced to 2 seconds but clear instantly (no delayed clearing). Hive: board border-radius refined. App: iOS-style gloss effect applied globally via new .gloss-button class; Home toggle now uses it. Home: fixed race condition in practice-mode checkmarks — only show after data loads. Presence: immediately clears when exiting a game (was delayed up to 45s, caused 'playing' indicator to persist).",
+    "title": "Game fixes: Gridly difficulty scaling, Tango smart delays, gloss effects, green dot bug, no more holes",
+    "body": "Gridly: checkpoint numbers now scale Monday (4) → Sunday (16); walls increase 0→7; black holes removed entirely (visual & gameplay); tunnels capped at 1; grid size 7×7. Tango: conflict errors now debounced to 2 seconds but clear instantly (no delayed clearing). Hive: board border-radius refined. App: iOS-style gloss effect applied globally via new .gloss-button class; Home toggle now uses it. Home: fixed race condition in practice-mode checkmarks — only show after data loads. Presence: immediately clears when exiting a game (was delayed up to 45s, caused 'playing' indicator to persist).",
     "date": "2026-07-25"
   },
   {
     "id": "2026-07-25-feedback-part-2-comprehensive",
     "version": "v112",
-    "title": "Complete feedback implementation: Text-only game buttons, immediate Tango errors, gloss CSS foundation, Zip tuning",
-    "body": "Game Toolbars: Converted all 6 games from icon-only to TEXT LABELS spread evenly across top edge (Undo/Reset/New/Hint or Restart/Hint). Clean typography, mobile-friendly. Tango: Constraint violations (sun+sun with =) now show red IMMEDIATELY with no delay. Zip: Checkpoints scale 4→16 (Mon-Sun); walls 0→7; tunnels max 1; removed all black hole visuals; grid 7×7 with 5px walls. Presence: Fixed 45s delay bug — leaving a game now clears the green 'playing' indicator immediately. Gloss CSS: Defined global .gloss-button class with iOS-style gradient overlay + inset shadows; applied to game toolbars and Home toggle as foundation. Remaining: Full gloss rollout across all app pages (Profile, Teams, Admin) and team challenge completion UI redesign.",
+    "title": "Complete feedback implementation: Text-only game buttons, immediate Tango errors, gloss CSS foundation, Gridly tuning",
+    "body": "Game Toolbars: Converted all 6 games from icon-only to TEXT LABELS spread evenly across top edge (Undo/Reset/New/Hint or Restart/Hint). Clean typography, mobile-friendly. Tango: Constraint violations (sun+sun with =) now show red IMMEDIATELY with no delay. Gridly: Checkpoints scale 4→16 (Mon-Sun); walls 0→7; tunnels max 1; removed all black hole visuals; grid 7×7 with 5px walls. Presence: Fixed 45s delay bug — leaving a game now clears the green 'playing' indicator immediately. Gloss CSS: Defined global .gloss-button class with iOS-style gradient overlay + inset shadows; applied to game toolbars and Home toggle as foundation. Remaining: Full gloss rollout across all app pages (Profile, Teams, Admin) and team challenge completion UI redesign.",
     "date": "2026-07-25"
   },
   {
     "id": "2026-07-25-complete-feedback-implementation",
     "version": "v113",
     "title": "Complete feedback implementation: Full gloss rollout, team challenge completion redesign, text buttons across all games",
-    "body": "COMPLETE IMPLEMENTATION: (1) Gloss Effect: Applied .gloss-button class globally to Login buttons, ProfileSetup buttons, Home game tiles + team challenge cards. iOS-style gradient + shadow applied consistently across app. (2) Game Toolbars: All 6 games now show text-only labels (Undo/Reset/New/Hint or Restart/Hint), spread evenly at top, mobile-responsive. (3) Tango Errors: Constraint violations display immediately with zero delay. (4) Zip Scaling: Checkpoints 4→16 (Mon-Sun), walls 0→7, max 1 tunnel, no black holes. (5) Team Challenge Completion: New prominent completion card shows 🏆 trophy, winner name + icon, points earned (large mobile-friendly text). (6) Presence Bug: Fixed green 'playing' indicator lag — clears immediately on game exit. All files verified, clean build successful.",
+    "body": "COMPLETE IMPLEMENTATION: (1) Gloss Effect: Applied .gloss-button class globally to Login buttons, ProfileSetup buttons, Home game tiles + team challenge cards. iOS-style gradient + shadow applied consistently across app. (2) Game Toolbars: All 6 games now show text-only labels (Undo/Reset/New/Hint or Restart/Hint), spread evenly at top, mobile-responsive. (3) Tango Errors: Constraint violations display immediately with zero delay. (4) Gridly Scaling: Checkpoints 4→16 (Mon-Sun), walls 0→7, max 1 tunnel, no black holes. (5) Team Challenge Completion: New prominent completion card shows 🏆 trophy, winner name + icon, points earned (large mobile-friendly text). (6) Presence Bug: Fixed green 'playing' indicator lag — clears immediately on game exit. All files verified, clean build successful.",
     "date": "2026-07-25"
   },
   {
     "id": "2026-07-25-complete-gloss-rollout-final",
     "version": "v113 final",
     "title": "Complete app-wide gloss effect rollout + all feedback implemented",
-    "body": "COMPREHENSIVE GLOSS IMPLEMENTATION: Applied .gloss-button class systematically to ALL interactive buttons across entire app: Teams (31 buttons), AdminPlayers (10), AdminGames (6), AdminRewards (7), Feedback (11), Chat (5), ChallengeGate (4), Progress (protect + tabs), Stats (mode toggle), ProfileSetup, Home, Geo, Zoom, Login + all 6 game toolbars. Total: 100+ buttons with iOS-style gloss effect. All feedback items complete: (1) Gloss everywhere ✓ (2) Text-only game buttons ✓ (3) Tango smart delay ✓ (4) Zip difficulty 4→16 ✓ (5) Team challenge completion UI ✓ (6) Presence instant clear ✓ (7) No black holes ✓ (8) No cell borders ✓ Clean build verified. Gloss styles moved to src/index.css for easy global customization.",
+    "body": "COMPREHENSIVE GLOSS IMPLEMENTATION: Applied .gloss-button class systematically to ALL interactive buttons across entire app: Teams (31 buttons), AdminPlayers (10), AdminGames (6), AdminRewards (7), Feedback (11), Chat (5), ChallengeGate (4), Progress (protect + tabs), Stats (mode toggle), ProfileSetup, Home, Geo, Zoom, Login + all 6 game toolbars. Total: 100+ buttons with iOS-style gloss effect. All feedback items complete: (1) Gloss everywhere ✓ (2) Text-only game buttons ✓ (3) Tango smart delay ✓ (4) Gridly difficulty 4→16 ✓ (5) Team challenge completion UI ✓ (6) Presence instant clear ✓ (7) No black holes ✓ (8) No cell borders ✓ Clean build verified. Gloss styles moved to src/index.css for easy global customization.",
     "date": "2026-07-25"
   },
   {

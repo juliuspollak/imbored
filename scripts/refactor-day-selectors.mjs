@@ -5,7 +5,7 @@ import fs from "node:fs";
 const targets = [
   ["src/games/Hive.jsx", "qp-day-btn"],
   ["src/games/Tango.jsx", "tg-day-btn"],
-  ["src/games/Zip.jsx", "zp-day-btn"],
+  ["src/games/Gridly.jsx", "zp-day-btn"],
   ["src/games/MiniSudoku.jsx", "ms-day-btn"],
   ["src/games/Geo.jsx", "geo-day-btn"],
   ["src/games/Zoom.jsx", "zoom-day-btn"],

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Moon, Waypoints, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle, Check, Star, Flame, ChevronRight, ChevronDown, Globe2, Users, ZoomIn, PawPrint } from "lucide-react";
+import { Moon, Target, ArrowUpDown, Grid3x3, Puzzle, Waves, Circle, Check, Star, Flame, ChevronRight, ChevronDown, Globe2, Users, ZoomIn, PawPrint } from "lucide-react";
 import { useGameConfig } from "./lib/useGameConfig.js";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useI18n } from "./lib/i18n.jsx";
@@ -11,7 +11,7 @@ import Page from "./components/Page.jsx";
 import Button from "./components/Button.jsx";
 import Card from "./components/Card.jsx";
 import AvatarGroup from "./components/AvatarGroup.jsx";
-import { HIVE_BRAND } from "./lib/gameBranding.jsx";
+import { GRIDLY_BRAND, HIVE_BRAND } from "./lib/gameBranding.jsx";
 
 const buttonReset = {
   appearance: "none",
@@ -25,9 +25,9 @@ function accentSurface(accent, amount = 12) {
 }
 
 export const GAME_META = [
-  { id: "hive", label: HIVE_BRAND.name, desc: HIVE_BRAND.tagline, icon: HIVE_BRAND.GameIcon, tileIconSize: 32, accent: "#D99A18", available: true, challenge: true },
+  { id: "hive", label: HIVE_BRAND.name, desc: HIVE_BRAND.tagline, icon: HIVE_BRAND.GameIcon, tileIconSize: 32, tileBackground: HIVE_BRAND.tileBackground, accent: "#D99A18", available: true, challenge: true },
   { id: "tango", label: "Tango", desc: "Balance sun & moon in every line", icon: Moon, accent: "#4A6FA5", available: true, challenge: true },
-  { id: "zip", label: "Zip", desc: "Trace one path through every cell", icon: Waypoints, accent: "#12946A", available: true, challenge: true },
+  { id: "gridly", label: GRIDLY_BRAND.name, desc: GRIDLY_BRAND.tagline, icon: GRIDLY_BRAND.GameIcon, tileBackground: GRIDLY_BRAND.tileBackground, accent: "#12946A", available: true, challenge: true },
   { id: "pinpoint", label: "Pinpoint", desc: "Guess the category from five clues", icon: Target, accent: "#8B5CF6", available: false },
   { id: "crossclimb", label: "Crossclimb", desc: "Solve the word ladder", icon: ArrowUpDown, accent: "#EA580C", available: false },
   { id: "minisudoku", label: "Mini Sudoku", desc: "Classic sudoku, bite-sized", icon: Grid3x3, accent: "#0E7490", available: true, challenge: true },
@@ -853,7 +853,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                 >
                   {completed && <span title={t("home.alreadyPlayed")} style={{ position: "absolute", top: 12, left: 12, width: 22, height: 22, display: "grid", placeItems: "center", borderRadius: "50%", background: "var(--color-info-bg)" }}><Check size={13} style={{ color: "var(--color-info-text)" }} strokeWidth={3} /></span>}
                   {playingCount > 0 && <span style={{ position: "absolute", top: 12, right: 12, display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 7px", borderRadius: "var(--radius-full)", background: "var(--color-success-bg)", color: "var(--color-success-text)", fontSize: "var(--text-caption-size)", fontWeight: 700 }}><Circle size={6} fill="currentColor" />{playingCount}</span>}
-                  <span aria-hidden="true" style={{ width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: "var(--radius-md)", background: accentSurface(game.accent), color: game.accent }}><Icon size={game.tileIconSize || 22} /></span>
+                  <span aria-hidden="true" style={{ width: 44, height: 44, display: "grid", placeItems: "center", borderRadius: "var(--radius-md)", background: game.tileBackground || accentSurface(game.accent), color: game.accent }}><Icon size={game.tileIconSize || 22} /></span>
                   <span>
                     <span style={{ display: "flex", alignItems: "center", gap: "var(--space-1)" }}>
                       <strong style={{ color: "var(--color-text-primary)", fontSize: "var(--text-body-size)" }}>{game.label}</strong>

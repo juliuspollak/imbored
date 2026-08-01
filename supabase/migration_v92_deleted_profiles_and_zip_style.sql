@@ -61,7 +61,7 @@ alter table public.game_config
 
 update public.game_config
 set zip_path_style = 'solid'
-where game_id = 'zip' and zip_path_style is null;
+where game_id = 'gridly' and zip_path_style is null;
 
 notify pgrst, 'reload schema';
 commit;

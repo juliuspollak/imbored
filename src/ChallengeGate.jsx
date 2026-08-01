@@ -338,8 +338,8 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                       <div className="grid grid-cols-3 gap-2 mb-2">
                         <Stat label="Time" value={fmtTime(result.seconds)} />
                         <Stat
-                          label={gameId === "zip" && result.zip_required_moves ? "Efficiency" : "Mistakes"}
-                          value={gameId === "zip" && result.zip_required_moves
+                          label={gameId === "gridly" && result.zip_required_moves ? "Efficiency" : "Mistakes"}
+                          value={gameId === "gridly" && result.zip_required_moves
                             ? `${Math.round((result.zip_required_moves/(result.zip_required_moves+(result.zip_backtracked_cells || 0)*2))*100)}%`
                             : result.mistakes}
                         />

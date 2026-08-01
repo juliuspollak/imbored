@@ -21,7 +21,7 @@ export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hin
       correct_count: correctCount,
       total_count: totalCount,
       rounds_nailed: roundsNailed,
-      ...(game === "zip" ? {
+      ...(game === "gridly" ? {
         zip_backtracked_cells: zipBacktrackedCells,
         zip_required_moves: zipRequiredMoves,
       } : {}),
@@ -35,7 +35,7 @@ export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hin
       .insert(payload)
       .select()
       .single();
-    const missingZipColumns = game === "zip"
+    const missingZipColumns = game === "gridly"
       && error
       && (
         error.code === "PGRST204"

@@ -1,8 +1,8 @@
 # v65 changes
 
-- Zip no longer counts normal route exploration, backtracking, or alternative-path testing as mistakes.
-- Replaced the Zip snake face with a clean high-contrast drag handle.
-- Fixed Zip solved overlay layering and hides checkpoint numbers after completion.
+- Gridly no longer counts normal route exploration, backtracking, or alternative-path testing as mistakes.
+- Replaced the Gridly snake face with a clean high-contrast drag handle.
+- Fixed Gridly solved overlay layering and hides checkpoint numbers after completion.
 - Replaced old Home icon+text navigation on updated screens with a compact back arrow.
 - Restyled challenge headings to match game title typography.
 - Constrained in-game Back and Practice/Challenge controls to the centred game width on large Windows screens.
