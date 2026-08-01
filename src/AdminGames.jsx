@@ -10,14 +10,14 @@ import Card from "./components/Card.jsx";
 import TextInput from "./components/TextInput.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
 
-const ZIP_DEFAULTS = {
+const GRIDLY_DEFAULTS = {
   zip_grid_sizes: [7, 7, 7, 7, 7, 7, 7],
   zip_checkpoint_counts: [4, 6, 8, 10, 12, 14, 16],
   zip_wall_counts: [0, 1, 2, 3, 5, 6, 7],
   zip_black_hole_counts: [0, 0, 0, 0, 0, 0, 0],
   zip_tunnel_pair_counts: [0, 0, 0, 0, 0, 1, 1],
 };
-const ZIP_FIELDS = [
+const GRIDLY_FIELDS = [
   ["zip_grid_sizes", "Grid size", 4, 9],
   ["zip_checkpoint_counts", "Checkpoints", 2, 30],
   ["zip_wall_counts", "Walls", 0, 30],
@@ -25,16 +25,16 @@ const ZIP_FIELDS = [
   ["zip_tunnel_pair_counts", "Tunnel pairs", 0, 4],
 ];
 
-function patchZipDay(row, field, dayIndex, value) {
-  const values = [...(row[field] || ZIP_DEFAULTS[field])];
+function patchGridlyDay(row, field, dayIndex, value) {
+  const values = [...(row[field] || GRIDLY_DEFAULTS[field])];
   values[dayIndex] = value;
   return { [field]: values };
 }
 
-function zipConfigPayload(row) {
+function gridlyConfigPayload(row) {
   if (row.game_id !== "gridly") return {};
   const out = {};
-  for (const [field] of ZIP_FIELDS) out[field] = row[field] || ZIP_DEFAULTS[field];
+  for (const [field] of GRIDLY_FIELDS) out[field] = row[field] || GRIDLY_DEFAULTS[field];
   return out;
 }
 
@@ -111,7 +111,7 @@ export default function AdminGames({ onBack }) {
       game_id: g.id, visible: true, available: g.available,
       challenge_enabled: g.challenge === true, sort_order: (data?.length || 0) + i,
       hint_cooldown_base: 0, hint_cooldown_per_day: 0, zip_path_style: "solid",
-      ...(g.id === "gridly" ? ZIP_DEFAULTS : {}),
+      ...(g.id === "gridly" ? GRIDLY_DEFAULTS : {}),
     }));
     setRows([...(data || []), ...missing]); setLoading(false);
   }, [isAdmin]);
@@ -132,7 +132,7 @@ export default function AdminGames({ onBack }) {
       hint_cooldown_base: updated.hint_cooldown_base ?? 0,
       hint_cooldown_per_day: updated.hint_cooldown_per_day ?? 0,
       zip_path_style: updated.zip_path_style || "solid",
-      ...zipConfigPayload(updated),
+      ...gridlyConfigPayload(updated),
     };
     if (Object.prototype.hasOwnProperty.call(updated, "challenge_enabled")) {
       payload.challenge_enabled = updated.challenge_enabled;
@@ -185,7 +185,7 @@ export default function AdminGames({ onBack }) {
     const results = await Promise.all(reordered.map((r) => supabase.from("game_config").upsert({
       game_id: r.game_id, visible: r.visible, available: r.available, challenge_enabled: r.challenge_enabled,
       sort_order: r.sort_order, hint_cooldown_base: r.hint_cooldown_base ?? 0, hint_cooldown_per_day: r.hint_cooldown_per_day ?? 0,
-      zip_path_style: r.zip_path_style || "solid", ...zipConfigPayload(r),
+      zip_path_style: r.zip_path_style || "solid", ...gridlyConfigPayload(r),
     })));
     setSaving(null);
     const failed = results.find((r) => r.error);
@@ -310,8 +310,8 @@ export default function AdminGames({ onBack }) {
                                   <div key={day} style={{ marginBottom: "var(--space-3)", padding: "var(--space-3)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)" }}>
                                     <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-primary)", marginBottom: "var(--space-2)" }}>{day}</div>
                                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-2)" }}>
-                                      {ZIP_FIELDS.map(([field, label, min, max]) => {
-                                        const currentVal = (r[field] || ZIP_DEFAULTS[field])[di];
+                                      {GRIDLY_FIELDS.map(([field, label, min, max]) => {
+                                        const currentVal = (r[field] || GRIDLY_DEFAULTS[field])[di];
                                         const draftKey = `${field}:${di}`;
                                         const fieldSavingKey = `${field}:${di}`;
                                         return (
@@ -325,7 +325,7 @@ export default function AdminGames({ onBack }) {
                                                 const v = raw === "" || !Number.isFinite(raw) ? currentVal : Math.min(max, Math.max(min, raw));
                                                 if (v !== currentVal) {
                                                   if (v !== raw) setMessage({ type: "info", text: `${day} ${label} adjusted to ${v} (allowed: ${min}–${max}).` });
-                                                  updateRow(r.game_id, patchZipDay(r, field, di, v), fieldSavingKey);
+                                                  updateRow(r.game_id, patchGridlyDay(r, field, di, v), fieldSavingKey);
                                                 }
                                                 setDrafts((d) => { const n = { ...d }; delete n[`${r.game_id}:${draftKey}`]; return n; });
                                               }}

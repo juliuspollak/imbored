@@ -1,6 +1,6 @@
 import BeeIcon from "../components/BeeIcon.jsx";
 import HiveTileIcon from "../components/HiveTileIcon.jsx";
-import { Waypoints } from "lucide-react";
+import GridlyIcon from "../components/GridlyIcon.jsx";
 
 const ACTIVE_SEASON = import.meta.env?.VITE_SEASONAL_THEME || "default";
 
@@ -27,7 +27,7 @@ export const GRIDLY_BRAND = gameBrand({
   id: "gridly",
   name: "Gridly",
   tagline: "Connect the numbers. Fill the grid.",
-  GameIcon: Waypoints,
+  GameIcon: GridlyIcon,
   tileBackground: null,
   seasons: {},
 });

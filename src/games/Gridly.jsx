@@ -260,7 +260,7 @@ const PANEL = "var(--color-surface)";
 const CREAM = "var(--color-text-primary)";
 const GOLD = "var(--color-primary)";
 const RED = "#E5484D";
-const ZIP_GREEN = "#12946A";
+const GRIDLY_GREEN = "#12946A";
 const WALL_COLOR = "#E5484D";
 const TUNNEL_COLORS = ["#6D5BD0", "#2878B5", "#B7791F", "#B24C7C"];
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -281,13 +281,13 @@ function fmtTime(s) {
   return `${m}:${ss.toString().padStart(2, "0")}`;
 }
 
-function zipEfficiency(requiredMoves, backtrackedCells) {
+function gridlyEfficiency(requiredMoves, backtrackedCells) {
   const required = Math.max(1, Number(requiredMoves) || 1);
   const retraced = Math.max(0, Number(backtrackedCells) || 0);
   return Math.round((required / (required + retraced * 2)) * 100);
 }
 
-function zipEfficiencyPenaltyUnits(backtrackedCells) {
+function gridlyEfficiencyPenaltyUnits(backtrackedCells) {
   // The first nine retraced cells are free exploration. Thereafter one
   // existing mistake-penalty unit applies per ten cells, capped at two.
   return Math.min(2, Math.floor(Math.max(0, Number(backtrackedCells) || 0) / 10));
@@ -324,7 +324,7 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
   const [dayIdx, setDayIdx] = useState(isChallenge ? forcedDayIdx ?? todayIdx : todayIdx);
   const hintCooldownSeconds = (hintCooldownConfig?.hint_cooldown_base || 0) + (hintCooldownConfig?.hint_cooldown_per_day || 0) * dayIdx;
   const hintCooldown = useHintCooldown(hintCooldownSeconds);
-  const zipPathStyle = hintCooldownConfig?.zip_path_style === "rainbow" ? "rainbow" : "solid";
+  const gridlyPathStyle = hintCooldownConfig?.zip_path_style === "rainbow" ? "rainbow" : "solid";
   const [puzzle, setPuzzle] = useState(null);
   const [path, setPath] = useState(null);
   const [seconds, setSeconds] = useState(0);
@@ -389,11 +389,11 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
         game:"gridly",
         dayIndex:dayIdx,
         seconds,
-        mistakes:zipEfficiencyPenaltyUnits(mistakes) + resets,
+        mistakes:gridlyEfficiencyPenaltyUnits(mistakes) + resets,
         hints:hintsUsed,
-        zipBacktrackedCells:mistakes,
-        zipRequiredMoves:requiredMoves,
-        zipEfficiency:zipEfficiency(requiredMoves,mistakes),
+        gridlyBacktrackedCells:mistakes,
+        gridlyRequiredMoves:requiredMoves,
+        gridlyEfficiency:gridlyEfficiency(requiredMoves,mistakes),
         mode,
         challengeDate:isChallenge ? challengeDate : undefined,
       });
@@ -478,16 +478,16 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
   function visitedCellBg(key) {
     if (!visited.has(key)) return "transparent";
     if (orderConflict) return "rgba(229,72,77,0.14)";
-    if (zipPathStyle === "rainbow") {
+    if (gridlyPathStyle === "rainbow") {
       return rgba(rainbowStepColor(visitedIndex.get(key) || 0, path.length), 0.20);
     }
-    return rgba(ZIP_GREEN, 0.20);
+    return rgba(GRIDLY_GREEN, 0.20);
   }
 
   function visitedDotBg(key) {
     if (orderConflict) return RED;
-    if (zipPathStyle === "rainbow") return rainbowStepColor(visitedIndex.get(key) || 0, path.length);
-    return ZIP_GREEN;
+    if (gridlyPathStyle === "rainbow") return rainbowStepColor(visitedIndex.get(key) || 0, path.length);
+    return GRIDLY_GREEN;
   }
 
   const tunnelInfo = new Map();
@@ -655,7 +655,7 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
   const requiredMoves = puzzle
     ? Math.max(1,puzzle.numberGrid.length*puzzle.numberGrid.length-puzzle.blocked.length-1)
     : 1;
-  const efficiency = zipEfficiency(requiredMoves,mistakes);
+  const efficiency = gridlyEfficiency(requiredMoves,mistakes);
 
   const boardGrid = (
     <div
@@ -745,7 +745,7 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
                 </span>
               )}
               {isCurrent && !solved && (
-                <span style={{ position: "absolute", inset: 0, borderRadius: 8, boxShadow: `inset 0 0 0 2px ${ZIP_GREEN}`, pointerEvents: "none" }} />
+                <span style={{ position: "absolute", inset: 0, borderRadius: 8, boxShadow: `inset 0 0 0 2px ${GRIDLY_GREEN}`, pointerEvents: "none" }} />
               )}
             </div>
           );
@@ -779,7 +779,7 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
 
       <svg className="absolute inset-0 pointer-events-none" style={{ width: "100%", height: "100%" }} viewBox="0 0 100 100" preserveAspectRatio="none">
         <defs>
-          <linearGradient id="zipSnakeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id="gridlyPathGradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#FF6B6B" />
             <stop offset="24%" stopColor="#F6C85F" />
             <stop offset="48%" stopColor="#62C370" />
@@ -789,7 +789,7 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
         </defs>
         {pathSegments.map((seg, idx) => {
           const points = seg.map(([r, c]) => `${((c + 0.5) / boardSize) * 100},${((r + 0.5) / boardSize) * 100}`).join(" ");
-          const mainStroke = orderConflict ? RED : zipPathStyle === "rainbow" ? "url(#zipSnakeGradient)" : ZIP_GREEN;
+          const mainStroke = orderConflict ? RED : gridlyPathStyle === "rainbow" ? "url(#gridlyPathGradient)" : GRIDLY_GREEN;
           return (
             <g key={idx}>
               <polyline
@@ -817,7 +817,7 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
             cx={((path[0][1] + 0.5) / boardSize) * 100}
             cy={((path[0][0] + 0.5) / boardSize) * 100}
             r="1.75"
-            fill={ZIP_GREEN}
+            fill={GRIDLY_GREEN}
             stroke="#FFFFFF"
             strokeWidth="0.6"
             vectorEffect="non-scaling-stroke"
@@ -828,14 +828,14 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
           cy={((path[path.length - 1][0] + 0.5) / boardSize) * 100}
           r="1.9"
           fill="#FFFFFF"
-          stroke={ZIP_GREEN}
+          stroke={GRIDLY_GREEN}
           strokeWidth="1"
           vectorEffect="non-scaling-stroke"
         />
         {lastMoveIsTunnel && lastMove && (
           <>
             {[lastMove[0], lastMove[1]].map(([r, c], idx) => {
-              const warpColor = tunnelInfo.get(`${r},${c}`)?.color || ZIP_GREEN;
+              const warpColor = tunnelInfo.get(`${r},${c}`)?.color || GRIDLY_GREEN;
               const cx = ((c + 0.5) / boardSize) * 100;
               const cy = ((r + 0.5) / boardSize) * 100;
               return (
@@ -959,7 +959,7 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
               <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
             </div>
             <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
-              efficiency: <span style={{ color: efficiency < 85 ? RED : ZIP_GREEN }}>{efficiency}%</span>
+              efficiency: <span style={{ color: efficiency < 85 ? RED : GRIDLY_GREEN }}>{efficiency}%</span>
             </div>
             <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
               hints: <span style={{ color: hintsUsed > 0 ? GOLD : CREAM }}>{hintsUsed}</span>
@@ -1027,7 +1027,7 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
         <GameSolvedPanel
           solved={solved}
           difficultyRating={difficultyRating}
-          icon={<Flag size={28} style={{ color: ZIP_GREEN }} />}
+          icon={<Flag size={28} style={{ color: GRIDLY_GREEN }} />}
           stats={
             <>
               {fmtTime(seconds)} &middot; {efficiency}% efficient

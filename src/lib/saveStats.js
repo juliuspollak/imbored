@@ -8,7 +8,7 @@ import { supabase, supabaseReady } from "./supabase.js";
 // afterward) or { alreadyPlayed: true } if this was a challenge-mode save
 // that hit the one-per-day constraint — a real, expected outcome (two tabs
 // open, a stale page finishing late), not an error to swallow silently.
-export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hints, correctCount = null, totalCount = null, roundsNailed = null, zipBacktrackedCells = null, zipRequiredMoves = null, mode = "practice", challengeDate, circleChallengeId = null, circleId = null }) {
+export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hints, correctCount = null, totalCount = null, roundsNailed = null, gridlyBacktrackedCells = null, gridlyRequiredMoves = null, mode = "practice", challengeDate, circleChallengeId = null, circleId = null }) {
   if (!supabaseReady || !userId) return {};
   try {
     const payload = {
@@ -22,8 +22,8 @@ export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hin
       total_count: totalCount,
       rounds_nailed: roundsNailed,
       ...(game === "gridly" ? {
-        zip_backtracked_cells: zipBacktrackedCells,
-        zip_required_moves: zipRequiredMoves,
+        zip_backtracked_cells: gridlyBacktrackedCells,
+        zip_required_moves: gridlyRequiredMoves,
       } : {}),
       mode,
       challenge_date: mode === "challenge" ? challengeDate : null,
@@ -35,13 +35,13 @@ export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hin
       .insert(payload)
       .select()
       .single();
-    const missingZipColumns = game === "gridly"
+    const missingGridlyColumns = game === "gridly"
       && error
       && (
         error.code === "PGRST204"
         || /zip_(backtracked_cells|required_moves)/i.test(error.message || "")
       );
-    if (missingZipColumns) {
+    if (missingGridlyColumns) {
       const legacyPayload = { ...payload };
       delete legacyPayload.zip_backtracked_cells;
       delete legacyPayload.zip_required_moves;

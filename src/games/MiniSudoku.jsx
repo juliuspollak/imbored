@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { withSeededRandom, shuffle } from "../lib/seededRandom.js";
 import { useGameTimer } from "../lib/useGameTimer.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
@@ -6,7 +6,7 @@ import HintCooldownButton from "../HintCooldownButton.jsx";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import BoardReviewToggle from "../BoardReviewToggle.jsx";
-import { Grid3x3, CornerUpLeft, Timer as TimerIcon, HelpCircle, Delete } from "lucide-react";
+import { Grid3x3, CornerUpLeft, Timer as TimerIcon, HelpCircle, Delete, Pencil } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
 import Page from "../components/Page.jsx";
@@ -17,6 +17,14 @@ import StatusBanner from "../components/StatusBanner.jsx";
 /* ---------------- puzzle generation ---------------- */
 
 const N = 6, BOX_R = 2, BOX_C = 3;
+
+function emptyNotes() {
+  return Array.from({ length: N }, () => Array.from({ length: N }, () => new Set()));
+}
+
+function cloneNotes(notes) {
+  return notes.map((row) => row.map((cell) => new Set(cell)));
+}
 
 function isValid(grid, r, c, val) {
   for (let cc = 0; cc < N; cc++) if (grid[r][cc] === val) return false;
@@ -247,10 +255,10 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   const [difficultyRating, setDifficultyRating] = useState(null);
   const [hintCell, setHintCell] = useState(null);
   const [history, setHistory] = useState([]);
+  const [notes, setNotes] = useState(emptyNotes);
+  const [noteMode, setNoteMode] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [reviewing, setReviewing] = useState(false);
-  const [celebratingCells, setCelebratingCells] = useState(new Set());
-  const prevCompleteSectionsRef = useRef(new Set());
 
   const newPuzzle = useCallback((dIdx) => {
     const gen = () => generatePuzzle(GIVEN_TARGETS[dIdx]);
@@ -266,9 +274,9 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     setDifficultyRating(null);
     setHintCell(null);
     setHistory([]);
+    setNotes(emptyNotes());
+    setNoteMode(false);
     setReviewing(false);
-    setCelebratingCells(new Set());
-    prevCompleteSectionsRef.current = new Set();
     hintCooldown.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isChallenge, seed]);
@@ -291,54 +299,6 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     }
   }, [board, puzzle]);
 
-  // Detect any row, column, or box that just became fully and correctly
-  // filled (compared to what was complete a moment ago) and flash it —
-  // small satisfying feedback along the way, not just at the very end.
-  useEffect(() => {
-    if (!board) return;
-    const currentComplete = new Set();
-    for (let r = 0; r < N; r++) {
-      const matchesSolution = board[r].every((value, c) => value === puzzle.solution[r][c]);
-      if (matchesSolution) currentComplete.add(`row-${r}`);
-    }
-    for (let c = 0; c < N; c++) {
-      const matchesSolution = board.every((row, r) => row[c] === puzzle.solution[r][c]);
-      if (matchesSolution) currentComplete.add(`col-${c}`);
-    }
-    for (let br = 0; br < N; br += BOX_R) {
-      for (let bc = 0; bc < N; bc += BOX_C) {
-        let matchesSolution = true;
-        for (let rr = br; rr < br + BOX_R; rr++) {
-          for (let cc = bc; cc < bc + BOX_C; cc++) {
-            if (board[rr][cc] !== puzzle.solution[rr][cc]) matchesSolution = false;
-          }
-        }
-        if (matchesSolution) currentComplete.add(`box-${br}-${bc}`);
-      }
-    }
-
-    const newlyCompleted = [...currentComplete].filter((k) => !prevCompleteSectionsRef.current.has(k));
-    prevCompleteSectionsRef.current = currentComplete;
-    if (newlyCompleted.length === 0) return;
-
-    const cellsToFlash = new Set();
-    for (const key of newlyCompleted) {
-      if (key.startsWith("row-")) {
-        const r = Number(key.split("-")[1]);
-        for (let c = 0; c < N; c++) cellsToFlash.add(`${r}-${c}`);
-      } else if (key.startsWith("col-")) {
-        const c = Number(key.split("-")[1]);
-        for (let r = 0; r < N; r++) cellsToFlash.add(`${r}-${c}`);
-      } else {
-        const [, br, bc] = key.split("-").map(Number);
-        for (let rr = br; rr < br + BOX_R; rr++) for (let cc = bc; cc < bc + BOX_C; cc++) cellsToFlash.add(`${rr}-${cc}`);
-      }
-    }
-    setCelebratingCells(cellsToFlash);
-    const t = setTimeout(() => setCelebratingCells(new Set()), 650);
-    return () => clearTimeout(t);
-  }, [board, puzzle]);
-
   if (!board || !puzzle) {
     return (
       <Page style={{ alignItems: "center" }}>
@@ -357,7 +317,19 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   const paletteDigits = [1, 2, 3, 4, 5, 6];
 
   function pushHistory() {
-    setHistory((h) => [...h, { board: board.map((row) => row.slice()), mistakes, hints: hintsUsed }].slice(-50));
+    setHistory((h) => [...h, { board: board.map((row) => row.slice()), notes: cloneNotes(notes), mistakes, hints: hintsUsed }].slice(-50));
+  }
+
+  function clearPeerNote(notesGrid, r, c, digit) {
+    for (let i = 0; i < N; i++) {
+      notesGrid[r][i].delete(digit);
+      notesGrid[i][c].delete(digit);
+    }
+    const boxRow = Math.floor(r / BOX_R) * BOX_R;
+    const boxCol = Math.floor(c / BOX_C) * BOX_C;
+    for (let rr = boxRow; rr < boxRow + BOX_R; rr++) {
+      for (let cc = boxCol; cc < boxCol + BOX_C; cc++) notesGrid[rr][cc].delete(digit);
+    }
   }
 
   function handleCellClick(r, c) {
@@ -372,11 +344,28 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     const { r, c } = selected;
     if (puzzle.givens[r][c] !== 0) return;
     const current = board[r][c];
+    if (noteMode) {
+      if (current !== 0) return;
+      pushHistory();
+      setNotes((prev) => {
+        const next = cloneNotes(prev);
+        if (next[r][c].has(d)) next[r][c].delete(d);
+        else next[r][c].add(d);
+        return next;
+      });
+      return;
+    }
     const nextValue = current === d ? 0 : d;
     pushHistory();
     setBoard((prev) => {
       const next = prev.map((row) => row.slice());
       next[r][c] = nextValue;
+      return next;
+    });
+    setNotes((prev) => {
+      const next = cloneNotes(prev);
+      next[r][c].clear();
+      if (nextValue !== 0) clearPeerNote(next, r, c, nextValue);
       return next;
     });
     if (nextValue !== 0 && nextValue !== puzzle.solution[r][c] && nextValue !== current) {
@@ -389,6 +378,14 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     const { r, c } = selected;
     if (puzzle.givens[r][c] !== 0) return;
     pushHistory();
+    if (board[r][c] === 0 && notes[r][c].size > 0) {
+      setNotes((prev) => {
+        const next = cloneNotes(prev);
+        next[r][c].clear();
+        return next;
+      });
+      return;
+    }
     setBoard((prev) => {
       const next = prev.map((row) => row.slice());
       next[r][c] = 0;
@@ -401,6 +398,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     const last = history[history.length - 1];
     setHistory((h) => h.slice(0, -1));
     setBoard(last.board);
+    setNotes(last.notes || emptyNotes());
     setMistakes(last.mistakes);
     setHintsUsed(last.hints);
     setHintCell(null);
@@ -414,12 +412,11 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     // and hint cooldown belong to the same solving attempt and are kept.
     // Clearing the board counts as one additional scoring mistake.
     setBoard(puzzle.givens.map((row) => row.slice()));
+    setNotes(emptyNotes());
     setMistakes((value) => value + 1);
     setSelected(null);
     setHintCell(null);
     setHistory([]);
-    setCelebratingCells(new Set());
-    prevCompleteSectionsRef.current = new Set();
     setSolved(false);
     setRunning(true);
   }
@@ -435,6 +432,12 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
           setBoard((prev) => {
             const next = prev.map((row) => row.slice());
             next[r][c] = puzzle.solution[r][c];
+            return next;
+          });
+          setNotes((prev) => {
+            const next = cloneNotes(prev);
+            next[r][c].clear();
+            clearPeerNote(next, r, c, puzzle.solution[r][c]);
             return next;
           });
           setSelected({ r, c });
@@ -453,6 +456,12 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
       setBoard((prev) => {
         const next = prev.map((row) => row.slice());
         next[step.r][step.c] = puzzle.solution[step.r][step.c];
+        return next;
+      });
+      setNotes((prev) => {
+        const next = cloneNotes(prev);
+        next[step.r][step.c].clear();
+        clearPeerNote(next, step.r, step.c, puzzle.solution[step.r][step.c]);
         return next;
       });
       setSelected({ r: step.r, c: step.c });
@@ -483,7 +492,6 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
           const isConflict = conflicts.has(`${r}-${c}`);
           const isHint = hintCell && hintCell.r === r && hintCell.c === c;
           const isSelected = selected && selected.r === r && selected.c === c;
-          const isCelebrating = celebratingCells.has(`${r}-${c}`);
           const hintClass = isHint ? `ms-hint-${hintCell.type}` : "";
           // thicker border on the right/bottom edge of each 2x3 box
           const rightEdge = (c + 1) % BOX_C === 0 && c !== N - 1;
@@ -493,14 +501,14 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
               key={`${r}-${c}`}
               onClick={() => handleCellClick(r, c)}
               disabled={isGiven}
-              className={`ms-cell ${hintClass} ${isCelebrating ? "ms-celebrate" : ""}`}
+              className={`ms-cell ${hintClass}`}
               style={{
                 position: "relative",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 padding: 0,
-                background: isCelebrating ? "var(--color-success-bg)" : isSelected ? "var(--color-primary-subtle)" : "var(--color-surface)",
+                background: isSelected ? "var(--color-primary-subtle)" : "var(--color-surface)",
                 border: 0,
                 borderRight: rightEdge ? "2px solid var(--color-border-strong)" : "1px solid var(--color-border)",
                 borderBottom: bottomEdge ? "2px solid var(--color-border-strong)" : "1px solid var(--color-border)",
@@ -527,6 +535,19 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
                   {val}
                 </span>
               )}
+              {val === 0 && notes[r][c].size > 0 && (
+                <span
+                  aria-label={`Notes ${[...notes[r][c]].sort((a, b) => a - b).join(", ")}`}
+                  style={{
+                    position: "absolute", inset: 3, display: "grid",
+                    gridTemplateColumns: "repeat(3, 1fr)", gridTemplateRows: "repeat(2, 1fr)",
+                    color: "var(--color-text-secondary)", fontSize: "clamp(7px, 2.1vw, 11px)",
+                    fontWeight: 600, lineHeight: 1, pointerEvents: "none",
+                  }}
+                >
+                  {paletteDigits.map((digit) => <span key={digit} style={{ display: "grid", placeItems: "center" }}>{notes[r][c].has(digit) ? digit : ""}</span>)}
+                </span>
+              )}
             </button>
           );
         })
@@ -541,15 +562,8 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         @keyframes msPulseHint { 0%, 100% { box-shadow: inset 0 0 0 3px var(--color-primary); } 50% { box-shadow: inset 0 0 0 1px var(--color-primary); } }
         .ms-hint-error { animation: msPulseError 1.1s ease-in-out infinite; }
         .ms-hint-naked, .ms-hint-hidden, .ms-hint-forced { animation: msPulseHint 1.1s ease-in-out infinite; }
-        @keyframes msCelebrate {
-          0% { transform: scale(1); }
-          30% { transform: scale(1.08); }
-          60% { transform: scale(0.97); }
-          100% { transform: scale(1); }
-        }
-        .ms-celebrate { animation: msCelebrate 0.5s ease-in-out; z-index: 1; }
         @media (prefers-reduced-motion: reduce) {
-          .ms-hint-error, .ms-hint-naked, .ms-hint-hidden, .ms-hint-forced, .ms-celebrate { animation: none !important; }
+          .ms-hint-error, .ms-hint-naked, .ms-hint-hidden, .ms-hint-forced { animation: none !important; }
         }
         .ms-cell:focus-visible, .ms-num-btn:focus-visible, .ms-help-button:focus-visible {
           outline: 2px solid var(--color-primary);
@@ -661,7 +675,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
 
         {!solved && showHelp && (
           <StatusBanner variant="info" style={{ marginBottom: "var(--space-3)", lineHeight: "var(--text-body-line)" }}>
-            Tap a cell, then tap a number to fill it — tap the same number again to clear it.
+            Tap a cell, then tap a number to fill it. Turn on Notes to add or remove small candidate numbers.
             Every row, column, and bold-bordered 2×3 box needs the digits 1 through 6 exactly once.
             Hint flags one wrong number, or fills in one cell that's already logically forced —
             never a guess.
@@ -694,9 +708,9 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
 
         {/* number palette — every button is a no-op once solved */}
         {!solved && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "var(--space-2)", marginTop: "var(--space-4)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "var(--space-2)", marginTop: "var(--space-4)" }}>
             {paletteDigits.slice(0, 3).map((d) => (
-              <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={!selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
+              <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={!selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d || !!(noteMode && selected && notes[selected.r][selected.c].has(d))} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
                 {d}
               </NumBtn>
             ))}
@@ -704,12 +718,15 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
               <Delete size={18} />
             </NumBtn>
             {paletteDigits.slice(3).map((d) => (
-              <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={!selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
+              <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={!selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d || !!(noteMode && selected && notes[selected.r][selected.c].has(d))} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
                 {d}
               </NumBtn>
             ))}
             <NumBtn onClick={handleUndo} disabled={history.length === 0} aria-label={t("common.undo")}>
               <CornerUpLeft size={18} />
+            </NumBtn>
+            <NumBtn onClick={() => setNoteMode((value) => !value)} active={noteMode} aria-label={`Notes ${noteMode ? "on" : "off"}`}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Pencil size={16} />Notes</span>
             </NumBtn>
           </div>
         )}
