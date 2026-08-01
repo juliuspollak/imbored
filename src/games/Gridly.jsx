@@ -6,7 +6,7 @@ import HintCooldownButton from "../HintCooldownButton.jsx";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import BoardReviewToggle from "../BoardReviewToggle.jsx";
-import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Flag, Lock } from "lucide-react";
+import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
 import Button from "../components/Button.jsx";
@@ -1027,7 +1027,6 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
         <GameSolvedPanel
           solved={solved}
           difficultyRating={difficultyRating}
-          icon={<Flag size={28} style={{ color: GRIDLY_GREEN }} />}
           stats={
             <>
               {fmtTime(seconds)} &middot; {efficiency}% efficient

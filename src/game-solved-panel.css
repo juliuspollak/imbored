@@ -17,6 +17,10 @@
   color: inherit;
 }
 
+.game-solved-icon {
+  color: var(--color-success-text);
+}
+
 .game-solved-stats {
   font-size: var(--text-body-secondary-size);
   color: var(--color-text-secondary);

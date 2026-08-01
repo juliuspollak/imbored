@@ -1068,7 +1068,6 @@ export default function Hive({
         <GameSolvedPanel
           solved={solved}
           difficultyRating={difficultyRating}
-          icon={<HIVE_BRAND.PieceIcon size={38} style={{ color: GOLD }} />}
           stats={
             <>
               {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}

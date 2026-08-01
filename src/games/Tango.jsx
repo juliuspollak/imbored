@@ -830,7 +830,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
 
         {/* header */}
         <div className="text-center mb-4">
-          <div
+          {!solved && <div
             className="mx-auto mb-2 flex items-center justify-center gap-1.5 rounded-full"
             style={{ width: 66, height: 30, background: "linear-gradient(135deg, rgba(246,196,83,.16), rgba(74,111,165,.13))", border: "1px solid rgba(16,24,40,.06)" }}
             aria-hidden="true"
@@ -838,7 +838,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
             <SunIcon size={14} style={{ color: SUN_COLOR }} />
             <span style={{ width: 1, height: 12, background: "rgba(27,33,41,.12)" }} />
             <ModernMoonIcon size={14} />
-          </div>
+          </div>}
           <h1
             style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }}
             className="text-4xl lg:text-5xl"
@@ -943,12 +943,6 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
         <GameSolvedPanel
           solved={solved}
           difficultyRating={difficultyRating}
-          icon={
-            <div className="flex items-center gap-1">
-              <SunIcon size={27} style={{ color: SUN_COLOR }} />
-              <ModernMoonIcon size={26} style={{ color: "#40557D" }} />
-            </div>
-          }
           stats={
             <>
               {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}

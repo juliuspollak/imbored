@@ -6,7 +6,7 @@ import HintCooldownButton from "../HintCooldownButton.jsx";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import BoardReviewToggle from "../BoardReviewToggle.jsx";
-import { Grid3x3, CornerUpLeft, Timer as TimerIcon, HelpCircle, Eraser, Pencil } from "lucide-react";
+import { CornerUpLeft, Timer as TimerIcon, HelpCircle, Eraser, Pencil } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
 import Page from "../components/Page.jsx";
@@ -682,7 +682,6 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         <GameSolvedPanel
           solved={solved}
           difficultyRating={difficultyRating}
-          icon={<Grid3x3 size={26} style={{ color: "var(--color-primary)" }} />}
           stats={
             <>
               {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}

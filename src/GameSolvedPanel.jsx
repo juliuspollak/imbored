@@ -2,6 +2,7 @@ import DifficultyRating, { DifficultyRatingBadge } from "./DifficultyRating.jsx"
 import { rewardStatusText } from "./lib/rewardStatus.js";
 import { rateDifficulty } from "./lib/saveStats.js";
 import { useI18n } from "./lib/i18n.jsx";
+import { CircleCheckBig } from "lucide-react";
 import "./game-solved-panel.css";
 
 // Shared "you solved it" panel for every puzzle game. Each game used to hand-roll
@@ -44,7 +45,7 @@ export default function GameSolvedPanel({
 
   return (
     <div className="game-solved-panel">
-      {icon}
+      {icon ?? <CircleCheckBig className="game-solved-icon" size={30} aria-hidden="true" />}
       <p className="game-solved-title">{title ?? t("common.solved")}</p>
       {stats && <p className="game-solved-stats">{stats}</p>}
       {rewardResult && (

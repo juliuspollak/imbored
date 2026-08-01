@@ -5,7 +5,7 @@ import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
 import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
-import { Globe2, Timer as TimerIcon, HelpCircle } from "lucide-react";
+import { Timer as TimerIcon, HelpCircle } from "lucide-react";
 import { MAP_REGIONS, CONTINENT_SHAPES, MAP_VIEWBOX, REGION_HIT_AREAS } from "./geo/geoRegions.js";
 import { shuffle, generateQuiz } from "./geo/geoGenerator.js";
 import { getQuestionHistory, rememberQuestions } from "./geo/geoHistory.js";
@@ -203,7 +203,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
           <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)" }} className="mt-1">{t("geo.subtitle")}</p>
         </div>
 
-        {isChallenge ? (
+        {!solved && (isChallenge ? (
           <div className="flex justify-center mb-4">
             <div className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: "var(--color-primary-subtle)", color: ACCENT, border: "1px solid var(--color-primary-subtle-border)" }}>
               <span className="text-xs font-semibold">{t("common.todaysChallenge")}</span>
@@ -215,9 +215,9 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
             value={dayIdx}
             onChange={setDayIdx}
           />
-        )}
+        ))}
 
-        <div className="flex items-center justify-center gap-4 mb-3 px-1">
+        {!solved && <div className="flex items-center justify-center gap-4 mb-3 px-1">
           <div className="flex items-center gap-1.5" style={{ color: "var(--color-text-secondary)" }}>
             <TimerIcon size={14} />
             <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
@@ -226,10 +226,10 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
             {t("geo.question")} <span style={{ color: ACCENT, fontWeight: 600 }}>{Math.min(qIdx + 1, questions.length)}</span>/{questions.length}
           </div>
 
-        </div>
+        </div>}
 
         {/* toolbar - text labels, spread at top */}
-        <div className="game-toolbar geo-toolbar mb-3 px-1" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-2)" }}>
+        {!solved && <div className="game-toolbar geo-toolbar mb-3 px-1" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-2)" }}>
           {[
             { label: t("common.restart"), onClick: handleReset, disabled: solved },
             {
@@ -259,8 +259,8 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
               {label}
             </Button>
           ))}
-        </div>
-        {showHelp && (
+        </div>}
+        {!solved && showHelp && (
           <StatusBanner variant="info" style={{ marginBottom: "var(--space-3)" }}>
             {t("geo.help")}
           </StatusBanner>
@@ -420,11 +420,9 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
         <GameSolvedPanel
           solved={solved}
           difficultyRating={difficultyRating}
-          icon={<Globe2 size={32} style={{ color: ACCENT }} />}
-          title={t("geo.result", { correct: questions.length - mistakes, total: questions.length })}
           stats={
             <>
-              {fmtTime(seconds)} &middot; {t(hintsUsed === 1 ? "geo.hints.one" : "geo.hints.other", { count: hintsUsed })}
+              {t("geo.result", { correct: questions.length - mistakes, total: questions.length })} &middot; {fmtTime(seconds)} &middot; {t(hintsUsed === 1 ? "geo.hints.one" : "geo.hints.other", { count: hintsUsed })}
             </>
           }
           rewardResult={rewardResult}
