@@ -44,7 +44,7 @@
   gap: 0 !important;
   border-color: transparent !important;
   background-color: #f9c543 !important;
-  background-image: url('/assets/hive-tile-bg.webp') !important;
+  background-image: url('/assets/hive-tile-bg-landscape.webp') !important;
   background-repeat: no-repeat !important;
   background-size: cover !important;
   background-position: center !important;
@@ -57,7 +57,7 @@
   inset: -2px;
   z-index: 0;
   pointer-events: none;
-  background: url('/assets/hive-tile-bg.webp') center / cover no-repeat;
+  background: url('/assets/hive-tile-bg-landscape.webp') center / cover no-repeat;
 }
 
 .home-game-tile:has(.hive-tile-icon)::after {
