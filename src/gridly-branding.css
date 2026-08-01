@@ -1,0 +1,130 @@
+.gridly-tile-icon {
+  display: inline-block;
+  overflow: visible;
+}
+
+/* The generated artwork matches the fixed home-tile ratio, so it can fill
+   the card without the cropping required by a square source image. */
+.home-game-tile:has(.gridly-tile-icon) {
+  min-height: 154px !important;
+  height: 154px !important;
+  align-self: start;
+  overflow: hidden !important;
+  isolation: isolate;
+  padding: 0 !important;
+  gap: 0 !important;
+  border-color: transparent !important;
+  background-color: #063e42 !important;
+  background-image: url('/assets/gridly-tile-bg.webp') !important;
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+  background-position: center !important;
+  box-shadow: 0 10px 24px rgba(2, 55, 58, .22) !important;
+}
+
+/* Overscan under the clipped radius prevents sub-pixel seams on iOS. */
+.home-game-tile:has(.gridly-tile-icon)::before {
+  content: "" !important;
+  position: absolute;
+  inset: -2px;
+  z-index: 0;
+  pointer-events: none;
+  background: url('/assets/gridly-tile-bg.webp') center / cover no-repeat;
+}
+
+.home-game-tile:has(.gridly-tile-icon)::after {
+  content: none !important;
+}
+
+.home-game-tile:has(.gridly-tile-icon) > * {
+  position: relative;
+  z-index: 1;
+}
+
+.home-game-tile:has(.gridly-tile-icon) > span[title],
+.home-game-tile:has(.gridly-tile-icon) > span[style*="right: 12px"] {
+  z-index: 4;
+}
+
+.home-game-tile:has(.gridly-tile-icon) > span[title] {
+  background: rgba(255, 255, 255, .94) !important;
+  box-shadow: 0 4px 12px rgba(0, 30, 32, .2);
+}
+
+/* The board illustration replaces the small icon on the home tile only. */
+.home-game-tile:has(.gridly-tile-icon) > span:has(> .gridly-tile-icon) {
+  display: none !important;
+}
+
+.home-game-tile:has(.gridly-tile-icon) > span:last-of-type {
+  position: absolute !important;
+  z-index: 2;
+  inset: 0;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  text-align: right;
+  pointer-events: none;
+}
+
+.home-game-tile:has(.gridly-tile-icon) > span:last-of-type > span:first-child {
+  position: absolute;
+  top: 18px;
+  right: 14px;
+  display: block !important;
+  max-width: 44%;
+}
+
+.home-game-tile:has(.gridly-tile-icon) > span:last-of-type strong {
+  color: #f4fffd !important;
+  font-size: 18px !important;
+  line-height: 1.05;
+  letter-spacing: -.015em;
+  text-shadow: 0 2px 8px rgba(0, 18, 20, .65);
+}
+
+.home-game-tile:has(.gridly-tile-icon) > span:last-of-type > span:nth-child(2) {
+  display: none !important;
+}
+
+.home-game-tile:has(.gridly-tile-icon) > span:last-of-type > span:nth-child(3) {
+  position: absolute;
+  right: 13px;
+  bottom: 13px;
+  display: block !important;
+  max-width: 48%;
+  margin: 0 !important;
+  color: #baf8ed !important;
+  font-size: var(--text-caption-size) !important;
+  font-weight: 700 !important;
+  line-height: 1.15;
+  text-align: right;
+  text-shadow: 0 2px 7px rgba(0, 18, 20, .7);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .home-game-tile:has(.gridly-tile-icon):not(:disabled):hover {
+    border-color: rgba(76, 231, 202, .55) !important;
+    box-shadow: 0 14px 30px rgba(2, 55, 58, .30) !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .home-game-tile:has(.gridly-tile-icon) > span:last-of-type > span:first-child {
+    top: 16px;
+    right: 11px;
+  }
+
+  .home-game-tile:has(.gridly-tile-icon) > span:last-of-type strong {
+    font-size: 17px !important;
+  }
+
+  .home-game-tile:has(.gridly-tile-icon) > span:last-of-type > span:nth-child(3) {
+    right: 10px;
+    bottom: 11px;
+    font-size: 10px !important;
+  }
+}

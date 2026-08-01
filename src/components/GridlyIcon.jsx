@@ -1,7 +1,7 @@
 export default function GridlyIcon({ size = 24, className = "", style, ...props }) {
   return (
     <svg
-      className={className}
+      className={`gridly-tile-icon ${className}`.trim()}
       width={size}
       height={size}
       viewBox="0 0 32 32"

@@ -12,6 +12,7 @@ import "./game-solved-panel.css";
 import "./board-review-toggle.css";
 import "./circle-portal.css";
 import "./hive-branding.css";
+import "./gridly-branding.css";
 
 enableAutomaticAppUpdates();
 
