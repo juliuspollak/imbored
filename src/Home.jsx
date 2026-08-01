@@ -861,7 +861,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, players = [
                       {game.live && <span style={{ padding: "3px 6px", borderRadius: "var(--radius-full)", background: "var(--color-success-bg)", color: "var(--color-success-text)", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Live</span>}
                     </span>
                     <span style={{ display: "block", marginTop: 3, color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)", lineHeight: "var(--text-body-line)" }}>{t(`game.${game.id}.desc`)}</span>
-                    {!!todayPlayCounts[game.id] && <span style={{ display: "block", marginTop: "var(--space-1)", color: "var(--color-text-muted)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>Played {todayPlayCounts[game.id]}× today</span>}
+                    {playMode === "practice" && !!todayPlayCounts[game.id] && <span style={{ display: "block", marginTop: "var(--space-1)", color: "var(--color-text-muted)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>Played {todayPlayCounts[game.id]}× today</span>}
                   </span>
                   {!game.available && <span style={{ marginTop: "auto", color: "var(--color-text-muted)", fontSize: "var(--text-caption-size)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{t("home.comingSoon")}</span>}
                 </button>
