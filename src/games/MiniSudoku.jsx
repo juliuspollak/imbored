@@ -574,9 +574,25 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
           .ms-cell:not(:disabled):hover { background: var(--color-primary-subtle) !important; }
           .ms-num-btn:not(:disabled):hover { transform: translateY(-1px); border-color: var(--color-primary-subtle-border) !important; }
         }
+        @media (max-height: 760px) {
+          .ms-card {
+            margin-top: calc(var(--game-content-top) - 8px) !important;
+            padding: var(--space-4) !important;
+          }
+          .ms-header { margin-bottom: var(--space-2) !important; }
+          .ms-card .day-selector,
+          .ms-challenge-badge,
+          .ms-stats,
+          .ms-toolbar { margin-bottom: var(--space-2) !important; }
+          .ms-stats { gap: var(--space-3) !important; }
+          .ms-toolbar { gap: 6px !important; }
+          .ms-entry-mode { margin-top: var(--space-2) !important; }
+          .ms-keypad { margin-top: 6px !important; padding: 8px !important; gap: 6px !important; }
+          .ms-filled { margin-top: var(--space-2) !important; }
+        }
       `}</style>
 
-      <Card style={{ position: "relative", marginTop: "var(--game-content-top)", marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
+      <Card className="ms-card" style={{ position: "relative", marginTop: "var(--game-content-top)", marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
         <button
           type="button"
           onClick={() => setShowHelp((h) => !h)}
@@ -588,7 +604,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
           <HelpCircle size={18} />
         </button>
 
-        <header style={{ marginBottom: "var(--space-4)", padding: "0 44px", textAlign: "center" }}>
+        <header className="ms-header" style={{ marginBottom: "var(--space-4)", padding: "0 44px", textAlign: "center" }}>
           <h1 style={{ margin: 0, color: "var(--color-text-primary)", fontSize: "var(--text-page-title-size)", lineHeight: "var(--text-page-title-line)", fontWeight: "var(--text-page-title-weight)" }}>Sudoku</h1>
         </header>
 
@@ -596,7 +612,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
             relevant before solving: you already picked the day you just
             played, and it belongs on the next puzzle, not this result. */}
         {!solved && (isChallenge ? (
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "var(--space-4)" }}>
+          <div className="ms-challenge-badge" style={{ display: "flex", justifyContent: "center", marginBottom: "var(--space-4)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", padding: "7px var(--space-3)", border: "1px solid var(--color-primary-subtle-border)", borderRadius: "var(--radius-full)", background: "var(--color-primary-subtle)", color: "var(--color-primary)" }}>
               <span style={{ fontSize: "var(--text-body-secondary-size)", fontWeight: 600 }}>{t("common.todaysChallenge")}</span>
               <span style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>{GIVEN_TARGETS[dayIdx]} givens</span>
@@ -618,7 +634,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
 
         {/* stats row — redundant with GameSolvedPanel's own stats once solved */}
         {!solved && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexWrap: "wrap", gap: "var(--space-4)", marginBottom: "var(--space-3)", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>
+          <div className="ms-stats" style={{ display: "flex", alignItems: "center", justifyContent: "center", flexWrap: "wrap", gap: "var(--space-4)", marginBottom: "var(--space-3)", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <TimerIcon size={14} />
               <span style={{ fontVariantNumeric: "tabular-nums" }}>{fmtTime(seconds)}</span>
@@ -636,7 +652,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
             progress; once solved there's nothing left for any of them to do
             (Play Again in the solved panel below replaces "New"). */}
         {!solved && (
-          <div className="game-toolbar" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "var(--space-2)", marginBottom: "var(--space-3)" }}>
+          <div className="game-toolbar ms-toolbar" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "var(--space-2)", marginBottom: "var(--space-3)" }}>
             {[
               { label: t("common.reset"), onClick: handleReset, disabled: solved },
               { label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
@@ -704,7 +720,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
 
         {!solved && (
           <>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", marginTop: "var(--space-3)", padding: 3, border: "1px solid var(--color-border)", borderRadius: "var(--radius-full)", background: "var(--color-surface-elevated)", boxShadow: "var(--shadow-control)" }}>
+            <div className="ms-entry-mode" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", marginTop: "var(--space-3)", padding: 3, border: "1px solid var(--color-border)", borderRadius: "var(--radius-full)", background: "var(--color-surface-elevated)", boxShadow: "var(--shadow-control)" }}>
               {[
                 { notes:false, label:"Number", Icon:Pencil },
                 { notes:true, label:"Notes", Icon:Grid3x3 },
@@ -718,7 +734,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
               })}
             </div>
 
-            <div style={{ marginTop: 8, padding: 10, display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 8, border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)", background: "var(--color-surface)", boxShadow: "var(--shadow-card)" }}>
+            <div className="ms-keypad" style={{ marginTop: 8, padding: 10, display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 8, border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)", background: "var(--color-surface)", boxShadow: "var(--shadow-card)" }}>
                 {paletteDigits.slice(0, 3).map((d) => (
                   <NumBtn key={d} onClick={() => handleNumberPick(d)} disabled={!selected || digitFullyUsed(d)} used={digitFullyUsed(d)} active={selectedValue === d || !!(noteMode && selected && notes[selected.r][selected.c].has(d))} aria-label={`${d}${digitFullyUsed(d) ? ", fully used" : ""}`}>
                     {d}
@@ -737,7 +753,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
                 </NumBtn>
             </div>
 
-            <p style={{ margin: "var(--space-3) 0 0", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{filledCount}/{N * N} filled</p>
+            <p className="ms-filled" style={{ margin: "var(--space-3) 0 0", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{filledCount}/{N * N} filled</p>
           </>
         )}
       </Card>
