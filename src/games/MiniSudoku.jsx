@@ -196,6 +196,7 @@ function getConflicts(board) {
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const GIVEN_TARGETS = [24, 22, 20, 18, 16, 14, 12];
+const SUDOKU_GENERATOR_VERSION = "minisudoku-v1";
 
 function fmtTime(s) {
   const m = Math.floor(s / 60);
@@ -298,7 +299,19 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     if (getConflicts(board).size === 0 && !solved) {
       setSolved(true);
       setRunning(false);
-      onSolved && onSolved({ userId, game: "minisudoku", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed, seed: attemptSeedRef.current, mode, challengeDate: isChallenge ? challengeDate : undefined });
+      onSolved && onSolved({
+        userId,
+        game: "minisudoku",
+        dayIndex: dayIdx,
+        seconds,
+        mistakes,
+        hints: hintsUsed,
+        seed: attemptSeedRef.current,
+        generatorVersion: SUDOKU_GENERATOR_VERSION,
+        generatorConfig: { size: N, boxRows: BOX_R, boxColumns: BOX_C, givenCount: GIVEN_TARGETS[dayIdx] },
+        mode,
+        challengeDate: isChallenge ? challengeDate : undefined,
+      });
     }
   }, [board, puzzle]);
 

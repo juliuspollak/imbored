@@ -263,6 +263,7 @@ const RED = "#E5484D";
 const GRIDLY_GREEN = "#12946A";
 const WALL_COLOR = "#E5484D";
 const TUNNEL_COLORS = ["#6D5BD0", "#2878B5", "#B7791F", "#B24C7C"];
+const GRIDLY_GENERATOR_VERSION = "gridly-v1";
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const CHECKPOINT_COUNTS = [4, 6, 8, 10, 12, 14, 16];
 const WALL_COUNTS = [0, 1, 2, 3, 5, 6, 7];
@@ -339,6 +340,7 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
   const [showHelp, setShowHelp] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const attemptSeedRef = useRef(seed || createGameAttemptSeed("gridly"));
+  const generationConfigRef = useRef(null);
   const boardRef = useRef(null);
   const dragRef = useRef({ active: false, historyPushed: false, lastKey: null, startCell: null, moved: false, rollbackCounted: false });
   const suppressClickRef = useRef(false);
@@ -351,6 +353,7 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
     const checkpoints = configuredDayValue(hintCooldownConfig, "zip_checkpoint_counts", dIdx, CHECKPOINT_COUNTS, 2, Math.min(30, visitableCells));
     const walls = configuredDayValue(hintCooldownConfig, "zip_wall_counts", dIdx, WALL_COUNTS, 0, 30);
     const tunnels = configuredDayValue(hintCooldownConfig, "zip_tunnel_pair_counts", dIdx, TUNNEL_PAIR_COUNTS, 0, Math.min(4, Math.floor(visitableCells / 2)));
+    generationConfigRef.current = { size, checkpoints, walls, blackHoles, tunnels };
     const gen = () => generatePuzzle(size, checkpoints, walls, blackHoles, tunnels);
     const attemptSeed = isChallenge ? (seed || attemptSeedRef.current) : createGameAttemptSeed("gridly");
     attemptSeedRef.current = attemptSeed;
@@ -395,6 +398,8 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
         mistakes:gridlyEfficiencyPenaltyUnits(mistakes) + resets,
         hints:hintsUsed,
         seed:attemptSeedRef.current,
+        generatorVersion:GRIDLY_GENERATOR_VERSION,
+        generatorConfig:generationConfigRef.current,
         gridlyBacktrackedCells:mistakes,
         gridlyRequiredMoves:requiredMoves,
         gridlyEfficiency:gridlyEfficiency(requiredMoves,mistakes),

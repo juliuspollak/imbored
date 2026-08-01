@@ -344,6 +344,7 @@ const SUN_COLOR = "#F2A43A";
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const GIVEN_TARGETS = [16, 14, 12, 10, 9, 8, 7];
 const EDGE_TARGETS = [6, 5, 5, 4, 4, 3, 3];
+const TANGO_GENERATOR_VERSION = "tango-v1";
 
 function fmtTime(s) {
   const m = Math.floor(s / 60);
@@ -429,7 +430,19 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
     if (getConflicts(board, puzzle.edgeMap).size === 0 && !solved) {
       setSolved(true);
       setRunning(false);
-      onSolved && onSolved({ userId, game: "tango", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed, seed: attemptSeedRef.current, mode, challengeDate: isChallenge ? challengeDate : undefined });
+      onSolved && onSolved({
+        userId,
+        game: "tango",
+        dayIndex: dayIdx,
+        seconds,
+        mistakes,
+        hints: hintsUsed,
+        seed: attemptSeedRef.current,
+        generatorVersion: TANGO_GENERATOR_VERSION,
+        generatorConfig: { size: SIZE, givenTarget: GIVEN_TARGETS[dayIdx], edgeTarget: EDGE_TARGETS[dayIdx] },
+        mode,
+        challengeDate: isChallenge ? challengeDate : undefined,
+      });
     }
   }, [board, puzzle]);
 

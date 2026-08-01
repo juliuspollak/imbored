@@ -26,6 +26,8 @@ create table game_stats (
   mistakes int not null default 0,
   hints int not null default 0,
   seed text,
+  generator_version text,
+  generator_config jsonb,
   mode text not null default 'practice', -- 'practice' | 'challenge'
   challenge_date date,               -- the calendar date, only set for mode='challenge'
   difficulty_rating int,             -- 0-100, null until rated

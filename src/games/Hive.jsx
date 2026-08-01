@@ -311,6 +311,7 @@ function findNextLogicalStepPure(board, regionGrid, n) {
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const SIZES = [5, 5, 6, 6, 7, 7, 9];
+const HIVE_GENERATOR_VERSION = "hive-v1";
 const REGION_COLORS = ["#96BEFF", "#DFDFDF", "#DFA0BF", "#FF7B60", "#FFC992", "#B9B29E", "#B3DFA0", "#BBA3E2", "#E6F388"];
 const DARK_REGION_COLORS = ["#29466F", "#66502B", "#285841", "#633B59", "#4C3E70", "#704039", "#285967", "#5B5337"];
 const BG = "var(--color-page-bg)";
@@ -438,6 +439,8 @@ export default function Hive({
         mistakes: solvedStats.mistakes,
         hints: solvedStats.hintsUsed,
         seed: attemptSeedRef.current,
+        generatorVersion: HIVE_GENERATOR_VERSION,
+        generatorConfig: { size: n },
         mode,
         challengeDate:isChallenge ? challengeDate : undefined,
       };
