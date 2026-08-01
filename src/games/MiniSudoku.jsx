@@ -590,9 +590,6 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
 
         <header style={{ marginBottom: "var(--space-4)", padding: "0 44px", textAlign: "center" }}>
           <h1 style={{ margin: 0, color: "var(--color-text-primary)", fontSize: "var(--text-page-title-size)", lineHeight: "var(--text-page-title-line)", fontWeight: "var(--text-page-title-weight)" }}>Mini Sudoku</h1>
-          <p style={{ margin: "var(--space-1) 0 0", color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)", lineHeight: "var(--text-body-line)" }}>
-            classic sudoku, bite-sized — every row, column &amp; box gets 1&ndash;6
-          </p>
         </header>
 
         {/* day selector — locked to today's date in challenge mode. Only
