@@ -3,7 +3,6 @@ import { withSeededRandom } from "../lib/seededRandom.js";
 import { useGameTimer } from "../lib/useGameTimer.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
-import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import { Timer as TimerIcon, HelpCircle } from "lucide-react";
 import { MAP_REGIONS, CONTINENT_SHAPES, MAP_VIEWBOX, REGION_HIT_AREAS } from "./geo/geoRegions.js";
@@ -433,16 +432,6 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
           playAgainLabel={t("geo.playAgain")}
         />
 
-        {solved && difficultyRating !== null && (
-          <div className="flex flex-col items-center gap-3 py-4">
-            <DifficultyRatingBadge value={difficultyRating} />
-            {!isChallenge && (
-              <Button onClick={() => newQuiz(dayIdx)} size="sm">
-                {t("geo.playAgain")}
-              </Button>
-            )}
-          </div>
-        )}
       </Card>
     </Page>
   );

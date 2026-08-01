@@ -41,7 +41,7 @@ export default function GameSolvedPanel({
   resultCompletedLabel = "Result completed",
 }) {
   const { t } = useI18n();
-  if (!solved || difficultyRating !== null) return null;
+  if (!solved) return null;
 
   return (
     <div className="game-solved-panel">
@@ -54,7 +54,9 @@ export default function GameSolvedPanel({
         </div>
       )}
       <div className="game-solved-rating-in" key={savedStatId ? "rated" : completionFinished ? "completed" : "pending"}>
-        {savedStatId ? (
+        {difficultyRating !== null ? (
+          <DifficultyRatingBadge value={difficultyRating} />
+        ) : savedStatId ? (
           <DifficultyRating onRate={(value) => rateDifficulty(savedStatId, value)} onRated={onRated} />
         ) : completionFinished ? (
           <p className="game-solved-finalising-text">{resultCompletedLabel}</p>

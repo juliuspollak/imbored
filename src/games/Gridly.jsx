@@ -3,7 +3,6 @@ import { withSeededRandom, shuffle } from "../lib/seededRandom.js";
 import { useGameTimer } from "../lib/useGameTimer.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
-import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import BoardReviewToggle from "../BoardReviewToggle.jsx";
 import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
@@ -1043,12 +1042,6 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
 
         {solved && <BoardReviewToggle reviewing={reviewing} onToggle={() => setReviewing((value) => !value)} />}
         {(!solved || reviewing) && boardGrid}
-
-        {solved && difficultyRating !== null && (
-          <div className="flex justify-center mt-3">
-            <DifficultyRatingBadge value={difficultyRating} />
-          </div>
-        )}
 
       </div>
     </div>

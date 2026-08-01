@@ -3,7 +3,6 @@ import { withSeededRandom, shuffle } from "../lib/seededRandom.js";
 import { useGameTimer } from "../lib/useGameTimer.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
-import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import BoardReviewToggle from "../BoardReviewToggle.jsx";
 import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock, X } from "lucide-react";
@@ -999,12 +998,6 @@ export default function Hive({
             onChange={setDayIdx}
           />
         ))}
-
-        {solved && difficultyRating !== null && (
-          <div className="flex justify-center mb-3">
-            <DifficultyRatingBadge value={difficultyRating} />
-          </div>
-        )}
 
         {/* stats row — redundant with GameSolvedPanel's own stats once solved */}
         {!solved && (

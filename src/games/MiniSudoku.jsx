@@ -3,7 +3,6 @@ import { withSeededRandom, shuffle } from "../lib/seededRandom.js";
 import { useGameTimer } from "../lib/useGameTimer.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
-import { DifficultyRatingBadge } from "../DifficultyRating.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import BoardReviewToggle from "../BoardReviewToggle.jsx";
 import { Grid3x3, CornerUpLeft, Timer as TimerIcon, HelpCircle, Eraser, Pencil } from "lucide-react";
@@ -625,12 +624,6 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
             onChange={setDayIdx}
           />
         ))}
-
-        {solved && difficultyRating !== null && (
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "var(--space-3)" }}>
-            <DifficultyRatingBadge value={difficultyRating} />
-          </div>
-        )}
 
         {/* stats row — redundant with GameSolvedPanel's own stats once solved */}
         {!solved && (
