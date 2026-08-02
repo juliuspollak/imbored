@@ -5846,6 +5846,42 @@ begin
     raise exception 'You can only save your own result.' using errcode='42501';
   end if;
   if new.circle_challenge_id is null then new.circle_id:=null; end if;
+
+  -- seconds, hints and mistakes all arrive from the browser and drive points,
+  -- benchmarks and standings. Reject the physically impossible rather than
+  -- trusting the client; the bounds are deliberately wide so ordinary play is
+  -- never refused.
+  if new.seconds is null or new.seconds < 1 or new.seconds > 86400 then
+    raise exception 'That result has an implausible time.' using errcode='22023';
+  end if;
+  if coalesce(new.hints,0) < 0 or coalesce(new.hints,0) > 1000
+     or coalesce(new.mistakes,0) < 0 or coalesce(new.mistakes,0) > 1000 then
+    raise exception 'That result has an implausible hint or mistake count.'
+      using errcode='22023';
+  end if;
+
+  if new.mode='challenge' then
+    -- game_stats_one_challenge_per_day is a partial unique index on
+    -- (user_id, game, challenge_date). NULLs compare as distinct, so a
+    -- challenge row without a date sidesteps the once-per-day rule entirely.
+    if new.challenge_date is null then
+      raise exception 'A challenge result must record which day it belongs to.'
+        using errcode='22023';
+    end if;
+
+    -- Circle rounds are already pinned to their scheduled day by
+    -- validate_circle_challenge_attempt, but the personal challenge had no
+    -- date bound at all: a crafted insert could claim a week of unplayed days
+    -- and the streak milestone built on them. Allow the catch-up the UI
+    -- offers (any earlier day of the current week) plus a day of slack for
+    -- players whose local date runs ahead of Sydney.
+    if new.challenge_date < public.app_today() - 7
+       or new.challenge_date > public.app_today() + 1 then
+      raise exception 'Challenge results can only be saved for the current week.'
+        using errcode='22023';
+    end if;
+  end if;
+
   return new;
 end;
 $$;
