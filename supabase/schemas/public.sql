@@ -6516,7 +6516,7 @@ CREATE TABLE public.reward_rules (
     streak_bonus_cap integer DEFAULT 70 NOT NULL,
     minimum_points integer DEFAULT 20 NOT NULL,
     maximum_points integer DEFAULT 250 NOT NULL,
-    practice_daily_limit integer DEFAULT 5 NOT NULL,
+    practice_daily_limit integer DEFAULT 3 NOT NULL,
     streak_protection_cost integer DEFAULT 250 NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_by uuid,
@@ -8778,4 +8778,3 @@ CREATE POLICY "visible release notes are readable" ON public.release_notes FOR S
 --
 
 \unrestrict GDl9r0oUnfj9f4kqB9DSLqVfNREn4ua9LnNsJSim6gO77re34TUGlrms2ygUCJ0
-
