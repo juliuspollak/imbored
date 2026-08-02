@@ -1562,30 +1562,20 @@ begin
 
   -- day_index is zero-based: Monday 0 through Sunday 6.
   day_number:=greatest(0,least(coalesce(s.day_index,0),6));
-  day_bonus:=(array[0,1,1,2,2,3,3])[day_number+1];
+  day_bonus:=(array[0,0,1,1,1,2,2])[day_number+1];
 
-  if s.game='zoom' and zoom_correct<zoom_total then
-    time_points:=0;
-  elsif benchmark_seconds is not null
-    and s.seconds<=benchmark_seconds*0.8 then
-    time_points:=r.fast_time_bonus;
-  elsif benchmark_seconds is not null
-    and s.seconds<=benchmark_seconds then
-    time_points:=r.average_time_bonus;
-  elsif benchmark_seconds is not null
-    and s.seconds>benchmark_seconds*1.5 then
-    time_points:=-r.fast_time_bonus;
-  elsif benchmark_seconds is not null
-    and s.seconds>benchmark_seconds*1.2 then
-    time_points:=-r.average_time_bonus;
+  scored_seconds:=public.scored_game_seconds(
+    s.seconds,
+    s.hints,
+    s.mistakes,
+    coalesce(benchmark_seconds,100)
+  );
+  if not (s.game='zoom' and zoom_correct<zoom_total) then
+    performance_adjustment:=greatest(-4,least(4,round(
+      10*(1-scored_seconds/coalesce(nullif(benchmark_seconds,0),100))
+    )::integer));
   end if;
-
-  if s.hints>0 then
-    hint_points:=-(s.hints*r.hint_penalty);
-  end if;
-  if s.mistakes>0 then
-    mistake_points:=-(s.mistakes*r.mistake_penalty);
-  end if;
+  time_points:=performance_adjustment;
 
   unscaled_game_points:=
     effective_base_points
@@ -1626,40 +1616,13 @@ begin
     capped_game_points:=0;
   end if;
 
-  -- Only Practice earnings consume the daily allowance. Challenge awards,
-  -- winner prizes, transfers, refunds and streak milestones remain separate.
-  if s.mode='practice' then
-    select coalesce(sum(
-      case
-        when pt.metadata ? 'daily_game_points' then
-          greatest(coalesce((pt.metadata->>'daily_game_points')::integer,0),0)
-        else greatest(
-          pt.points
-            - coalesce((pt.metadata->>'weekly_streak')::integer,0),
-          0
-        )
-      end
-    ),0)::integer
-    into daily_earned
-    from public.points_transactions pt
-    join public.game_stats gs on gs.id=pt.game_stat_id
-    where pt.player_id=s.user_id
-      and pt.reason_code='GAME_COMPLETED'
-      and gs.mode='practice'
-      and (pt.created_at at time zone 'Australia/Sydney')::date=award_date;
-
-    daily_remaining:=greatest(r.daily_points_cap-daily_earned,0);
-    daily_game_points:=least(capped_game_points,daily_remaining);
-    daily_cap_adjustment:=daily_game_points-capped_game_points;
-    daily_cap_reached:=daily_remaining=0
-      or (capped_game_points>daily_game_points);
-  else
-    daily_earned:=0;
-    daily_remaining:=r.daily_points_cap;
-    daily_game_points:=capped_game_points;
-    daily_cap_adjustment:=0;
-    daily_cap_reached:=false;
-  end if;
+  -- The only Practice limit is the rewarded-round count for this game.
+  -- Challenge games and other Practice games have independent allowances.
+  daily_earned:=0;
+  daily_remaining:=0;
+  daily_game_points:=capped_game_points;
+  daily_cap_adjustment:=0;
+  daily_cap_reached:=false;
 
   -- Challenge streak state is advanced by the insert trigger before this RPC.
   -- Only the first Challenge result on milestone days 7, 14, 21, ... pays.
@@ -1744,7 +1707,7 @@ begin
       'benchmark_clean_sample_count',benchmark.clean_sample_count,
       'benchmark_prior_weight',20,
       'rule_id',r.id,
-      'economy_version','v207'
+      'economy_version','v211'
     ),
     s.user_id
   );
@@ -3132,7 +3095,7 @@ CREATE FUNCTION public.get_my_practice_reward_usage() RETURNS jsonb
   select jsonb_build_object(
     'date',(now() at time zone 'Australia/Sydney')::date,
     'rewarded_count',coalesce(
-      (select max(rewarded_count) from rewarded),
+      (select sum(rewarded_count) from rewarded),
       0
     ),
     'daily_limit',coalesce(
@@ -4117,21 +4080,6 @@ $$;
 
 
 --
--- Name: normalise_reward_rules_daily_points_cap(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.normalise_reward_rules_daily_points_cap() RETURNS trigger
-    LANGUAGE plpgsql
-    SET search_path TO 'public'
-    AS $$
-begin
-  new.daily_points_cap:=1000000;
-  return new;
-end;
-$$;
-
-
---
 -- Name: normalise_reward_rules_practice_limit(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -4140,7 +4088,10 @@ CREATE FUNCTION public.normalise_reward_rules_practice_limit() RETURNS trigger
     SET search_path TO 'public'
     AS $$
 begin
-  new.practice_daily_limit:=1000;
+  new.practice_daily_limit:=least(
+    greatest(coalesce(new.practice_daily_limit,3),1),
+    1000
+  );
   return new;
 end;
 $$;
@@ -6710,7 +6661,7 @@ CREATE TABLE public.reward_rules (
     streak_bonus_cap integer DEFAULT 70 NOT NULL,
     minimum_points integer DEFAULT 20 NOT NULL,
     maximum_points integer DEFAULT 250 NOT NULL,
-    practice_daily_limit integer DEFAULT 5 NOT NULL,
+    practice_daily_limit integer DEFAULT 3 NOT NULL,
     streak_protection_cost integer DEFAULT 250 NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_by uuid,
@@ -7615,13 +7566,6 @@ CREATE TRIGGER require_approved_actor_trigger BEFORE INSERT ON public.pokes FOR 
 --
 
 CREATE TRIGGER require_approved_actor_trigger BEFORE INSERT ON public.presence FOR EACH ROW EXECUTE FUNCTION public.require_approved_actor();
-
-
---
--- Name: reward_rules reward_rules_normalise_daily_points_cap; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER reward_rules_normalise_daily_points_cap BEFORE INSERT OR UPDATE OF daily_points_cap ON public.reward_rules FOR EACH ROW EXECUTE FUNCTION public.normalise_reward_rules_daily_points_cap();
 
 
 --
@@ -8979,4 +8923,3 @@ CREATE POLICY "visible release notes are readable" ON public.release_notes FOR S
 --
 
 \unrestrict d80dvnJ1byuVTRW7elAYPwrthjVwx7RIVe4MbXua0tE1VpbOdekhJvcMychyC5R
-
