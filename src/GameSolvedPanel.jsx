@@ -48,18 +48,31 @@ export default function GameSolvedPanel({
 }) {
   const { t } = useI18n();
   const [challengeState, setChallengeState] = useState({ status:"idle", message:"" });
+  const [challengeEligible, setChallengeEligible] = useState(false);
   useEffect(() => setChallengeState({ status:"idle",message:"" }), [savedStatId]);
+  useEffect(() => {
+    let active = true;
+    setChallengeEligible(false);
+    if (!allowScoreChallenge || !supabaseReady || !savedStatId) return () => { active = false; };
+    supabase.rpc("get_score_challenge_eligibility", { target_stat_id:savedStatId })
+      .then(({ data,error }) => {
+        if (active && !error) setChallengeEligible(data?.eligible === true);
+      });
+    return () => { active = false; };
+  }, [allowScoreChallenge,savedStatId]);
   const benchmarkSeconds = Number(
     rewardResult?.time_benchmark_seconds
       ?? rewardResult?.breakdown?.benchmark_seconds
   );
+  const benchmarkSampleCount = Number(rewardResult?.time_clean_sample_count) || 0;
+  const completionScore = Number(rewardResult?.scored_seconds ?? completionSeconds);
   const timeComparison = useMemo(() => {
-    const played = Number(completionSeconds);
-    if (completionSeconds===null || !(played>=0) || !(benchmarkSeconds>0)) return null;
+    const played = completionScore;
+    if (!Number.isFinite(played) || benchmarkSampleCount<6 || !(played>=0) || !(benchmarkSeconds>0)) return null;
     const difference = Math.round(Math.abs(benchmarkSeconds-played));
-    if (difference===0) return `Right on the average · ${formatTime(benchmarkSeconds)}`;
-    return `${difference}s ${played<benchmarkSeconds ? "faster" : "slower"} than average · Avg ${formatTime(benchmarkSeconds)}`;
-  }, [benchmarkSeconds,completionSeconds]);
+    if (difference===0) return `Right on the typical time · ${formatTime(benchmarkSeconds)}`;
+    return `${difference}s ${played<benchmarkSeconds ? "faster" : "slower"} than typical · Typical ${formatTime(benchmarkSeconds)}`;
+  }, [benchmarkSampleCount,benchmarkSeconds,completionScore]);
 
   async function challengeCircles() {
     if (!supabaseReady || !savedStatId || challengeState.status==="sending") return;
@@ -87,9 +100,9 @@ export default function GameSolvedPanel({
       {timeComparison && <p className="game-solved-comparison">{timeComparison}</p>}
       {scoreToBeatSeconds!==null && Number.isFinite(Number(scoreToBeatSeconds)) && (
         <p className={`game-solved-head-to-head ${Number(completionSeconds)<Number(scoreToBeatSeconds) ? "is-win" : ""}`}>
-          {Number(completionSeconds)<Number(scoreToBeatSeconds)
-            ? `You beat ${scoreChallengerName || "their"} score by ${Number(scoreToBeatSeconds)-Number(completionSeconds)}s!`
-            : Number(completionSeconds)===Number(scoreToBeatSeconds)
+          {completionScore<Number(scoreToBeatSeconds)
+            ? `You beat ${scoreChallengerName || "their"} score by ${Math.round(Number(scoreToBeatSeconds)-completionScore)}s!`
+            : completionScore===Number(scoreToBeatSeconds)
               ? `You tied ${scoreChallengerName || "their"} score.`
               : `${scoreChallengerName || "Their"} score was ${formatTime(scoreToBeatSeconds)}.`}
         </p>
@@ -113,7 +126,7 @@ export default function GameSolvedPanel({
           </div>
         )}
       </div>
-      {allowScoreChallenge && savedStatId && (
+      {allowScoreChallenge && savedStatId && challengeEligible && (
         <div className="game-solved-challenge-wrap">
           <button
             type="button"

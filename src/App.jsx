@@ -692,7 +692,7 @@ function ScoreChallengePlay({ Current,challenge,userId,onExit,hintCooldownConfig
         hintCooldownConfig={hintCooldownConfig}
         savedStatId={savedStatId}
         rewardResult={rewardResult}
-        scoreToBeatSeconds={Number(challenge.seconds)}
+        scoreToBeatSeconds={Number(challenge.scored_seconds ?? challenge.seconds)}
         scoreChallengerName={challenge.challenger_name}
       />
       {saveError && (

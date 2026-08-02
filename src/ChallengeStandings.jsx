@@ -1,19 +1,13 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, LockKeyhole, Trophy } from "lucide-react";
-
-const HINT_PENALTY_SECONDS = 30;
-const MISTAKE_PENALTY_SECONDS = 15;
-const MIN_DAILY_SCORE = 20;
-const MAX_DAILY_SCORE = 150;
+import { challengeScore } from "./lib/performanceScoring.js";
 
 function isoDayIndex(dateString) {
   return (new Date(`${dateString}T12:00:00`).getDay() || 7) - 1;
 }
 
 function dailyChallengeScore(result, benchmark) {
-  const adjusted = Math.max(1, (Number(result.seconds) || 0) + (Number(result.hints) || 0) * HINT_PENALTY_SECONDS + (Number(result.mistakes) || 0) * MISTAKE_PENALTY_SECONDS);
-  const score = Math.round((100 * Math.max(1, Number(benchmark) || 100)) / adjusted);
-  return { adjusted, score: Math.max(MIN_DAILY_SCORE, Math.min(MAX_DAILY_SCORE, score)) };
+  return challengeScore(result, benchmark);
 }
 
 function pooledChallengeScore(results, benchmarkMap) {
