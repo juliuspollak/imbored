@@ -160,10 +160,20 @@ do $migration$
 declare definition text; updated text;
 begin
   select pg_get_functiondef('public.finalize_circle_challenge(bigint)'::regprocedure) into definition;
-  updated:=replace(definition,
-    E'greatest(coalesce(seconds,0),0)\n          + greatest(coalesce(hints,0),0)*30\n          + greatest(coalesce(mistakes,0),0)*15',
-    E'public.scored_game_seconds(seconds,hints,mistakes,coalesce((select b.effective_seconds from public.game_time_benchmarks b where b.game=member_rounds.game and b.day_index=extract(isodow from member_rounds.challenge_date)::integer-1 and b.mode=\'challenge\' limit 1),100))');
-  if updated=definition and strpos(definition,')*30')>0 then
+  updated:=regexp_replace(
+    definition,
+    E'greatest\\(coalesce\\(hints,\\s*0\\),\\s*0\\)\\s*\\*\\s*30',
+    E'greatest(coalesce(hints,0),0)*coalesce((select b.effective_seconds from public.game_time_benchmarks b where b.game=member_rounds.game and b.day_index=extract(isodow from member_rounds.challenge_date)::integer-1 and b.mode=\'challenge\' limit 1),100)*0.20',
+    'g'
+  );
+  updated:=regexp_replace(
+    updated,
+    E'greatest\\(coalesce\\(mistakes,\\s*0\\),\\s*0\\)\\s*\\*\\s*15',
+    E'greatest(coalesce(mistakes,0),0)*coalesce((select b.effective_seconds from public.game_time_benchmarks b where b.game=member_rounds.game and b.day_index=extract(isodow from member_rounds.challenge_date)::integer-1 and b.mode=\'challenge\' limit 1),100)*0.10',
+    'g'
+  );
+  if updated ~ E'greatest\\(coalesce\\(hints,\\s*0\\),\\s*0\\)\\s*\\*\\s*30'
+    or updated ~ E'greatest\\(coalesce\\(mistakes,\\s*0\\),\\s*0\\)\\s*\\*\\s*15' then
     raise exception 'finalize_circle_challenge has an unexpected definition; v207 was not applied';
   end if;
   execute updated;
