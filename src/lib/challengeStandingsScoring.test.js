@@ -4,6 +4,7 @@ import {
   MISSED_ROUND_PENALTY,
   buildChallengeStandings,
   compareStandings,
+  fromServerStandings,
   pooledChallengeSummary,
   rankStandings,
 } from "./challengeStandingsScoring.js";
@@ -121,6 +122,66 @@ test("your own results are never masked by your own privacy setting", () => {
   assert.equal(standings[0].isPrivate, false);
   assert.equal(standings[0].score, 100);
   assert.equal(standings[0].dailyResults[0].is_private, undefined);
+});
+
+function serverRow(overrides = {}) {
+  return {
+    member_id: "a",
+    member_name: "Ada",
+    member_icon: "🙂",
+    standing_rank: 1,
+    challenge_score: 100,
+    rounds_played: 2,
+    rounds_total: 3,
+    is_private: false,
+    round_scores: [
+      { challenge_date: MONDAY, game: "hive", score: 100 },
+      { challenge_date: TUESDAY, game: "tango", score: 100 },
+      { challenge_date: "2026-08-05", game: "hive", score: null },
+    ],
+    ...overrides,
+  };
+}
+
+test("server standings are rendered in the order and score the database gave", () => {
+  const [player] = fromServerStandings([serverRow()], "me");
+  assert.equal(player.rank, 1);
+  assert.equal(player.score, 100);
+  assert.equal(player.played, 2);
+  assert.equal(player.missed, 1);
+  assert.equal(player.unranked, false);
+  assert.equal(player.isCurrentUser, false);
+  assert.deepEqual(player.dailyScores, [100, 100, null]);
+});
+
+// The per-round tiles used to be recomputed in the browser and could not be
+// reconciled with the headline. Both now come from the same server row.
+test("per-round tiles reconcile with the headline score", () => {
+  const [player] = fromServerStandings([serverRow()], "me");
+  const fromTiles = player.dailyScores.reduce(
+    (total, score) => total + (score == null ? MISSED_ROUND_PENALTY : score),
+    0,
+  );
+  assert.equal(fromTiles, player.score);
+});
+
+test("a private player keeps a real rank and score, with only per-round detail withheld", () => {
+  const [player] = fromServerStandings(
+    [serverRow({ member_id: "quiet", member_name: "Quiet", is_private: true, round_scores: null })],
+    "me",
+  );
+  assert.equal(player.unranked, false);
+  assert.equal(player.rank, 1);
+  assert.equal(player.score, 100);
+  assert.equal(player.played, 2);
+  assert.equal(player.detailHidden, true);
+  assert.deepEqual(player.dailyScores, []);
+});
+
+test("your own row is marked so the standings can label it", () => {
+  const [player] = fromServerStandings([serverRow({ member_id: "me" })], "me");
+  assert.equal(player.isCurrentUser, true);
+  assert.equal(player.isPrivate, false);
 });
 
 test("circle rounds match on day and game, the personal challenge on game alone", () => {

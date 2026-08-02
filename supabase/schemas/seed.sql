@@ -2,8 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict nLOebvvsbdj2EAWFimdcCkEG8B4mDBkbmE7OpSQ4XHn629tbLEMzubc4v5LQn6e
-
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.10
 
@@ -150,5 +148,3 @@ SELECT pg_catalog.setval('public.reward_rules_id_seq', 1, true);
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict nLOebvvsbdj2EAWFimdcCkEG8B4mDBkbmE7OpSQ4XHn629tbLEMzubc4v5LQn6e

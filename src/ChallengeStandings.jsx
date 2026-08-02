@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, LockKeyhole, Trophy } from "lucide-react";
-import { MISSED_ROUND_PENALTY, buildChallengeStandings } from "./lib/challengeStandingsScoring.js";
+import { MISSED_ROUND_PENALTY, buildChallengeStandings, fromServerStandings } from "./lib/challengeStandingsScoring.js";
 
 function toBenchmarkMap(benchmarks) {
   return Object.fromEntries(benchmarks.map((item) => [`${item.game}:${item.day_index}`, Number(item.effective_seconds) || 100]));
@@ -12,11 +12,14 @@ function toSlots({ isCircle, rounds, games }) {
     : games.map((game) => ({ game: game.id }));
 }
 
-export default function ChallengeStandings({ rows = [], roster = [], games = [], rounds = [], benchmarks = [], previousRows = [], previousRounds = [], isCircle = false, userId, loading = false, defaultOpen = true, embedded = false, closed = false, winnerId = null }) {
+export default function ChallengeStandings({ rows = [], roster = [], games = [], rounds = [], benchmarks = [], serverStandings = null, previousRows = [], previousRounds = [], isCircle = false, userId, loading = false, defaultOpen = true, embedded = false, closed = false, winnerId = null }) {
   const [open, setOpen] = useState(defaultOpen);
   const [expandedPlayerId, setExpandedPlayerId] = useState(null);
 
   const standings = useMemo(() => {
+    // The database ranks circle challenges so the standings agree with the
+    // winner it pays. Score locally only when that RPC is unavailable.
+    if (isCircle && serverStandings?.length) return fromServerStandings(serverStandings, userId);
     const slots = toSlots({ isCircle, rounds, games });
     if (slots.length === 0) return [];
     return buildChallengeStandings({
@@ -27,7 +30,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
       userId,
       missedPenalty: isCircle ? MISSED_ROUND_PENALTY : 0,
     });
-  }, [rows, roster, games, rounds, benchmarks, isCircle, userId]);
+  }, [rows, roster, games, rounds, benchmarks, serverStandings, isCircle, userId]);
 
   const previousStandings = useMemo(() => {
     const slots = toSlots({ isCircle, rounds: previousRounds, games });
@@ -118,7 +121,7 @@ function StandingsList({ standings, expandedPlayerId, setExpandedPlayerId, previ
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--color-text-primary)", fontSize: "var(--text-body-size)", fontWeight: 600 }}>{player.name}{player.isCurrentUser ? " (you)" : ""}</span>
                 <span style={{ display: "block", marginTop: 2, color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>
-                  {player.unranked ? "Results hidden" : `${player.played}/${player.dailyResults.length} played`}
+                  {player.unranked ? "Results hidden" : `${player.played}/${player.total} played`}
                   {!player.unranked && player.missed > 0 && ` · ${player.missed} missed`}
                   {player.isPrivate && " · Private"}
                   {delta !== 0 && ` · ${delta > 0 ? "↑" : "↓"}${Math.abs(delta)}`}
@@ -132,9 +135,9 @@ function StandingsList({ standings, expandedPlayerId, setExpandedPlayerId, previ
             </button>
             {expanded && (
               <div id={`player-results-${player.userId}`} style={{ padding: "var(--space-3)", borderTop: "1px solid var(--color-border)" }}>
-                {player.unranked ? (
+                {player.detailHidden ? (
                   <p style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, margin: 0, minHeight: 36, color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>
-                    <LockKeyhole size={13} /> {player.name} keeps their results private, so they are not ranked here.
+                    <LockKeyhole size={13} /> {player.name} keeps their per-round results private.
                   </p>
                 ) : (
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-2)" }}>

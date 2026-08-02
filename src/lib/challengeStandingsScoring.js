@@ -111,8 +111,10 @@ export function buildChallengeStandings({
       return {
         ...entry,
         unranked: true,
+        detailHidden: true,
         score: null,
         played: null,
+        total: slots.length,
         missed: null,
         hints: 0,
         mistakes: 0,
@@ -123,6 +125,40 @@ export function buildChallengeStandings({
     }
 
     const summary = pooledChallengeSummary(dailyResults, benchmarkMap, missedPenalty);
-    return { ...entry, ...summary, unranked: false, missed: slots.length - summary.played };
+    return {
+      ...entry,
+      ...summary,
+      unranked: false,
+      detailHidden: false,
+      total: slots.length,
+      missed: slots.length - summary.played,
+    };
   }));
+}
+
+// Circle standings computed and ranked by the database, so the browser holds
+// no copy of the weekly scoring formula. round_scores is null when the viewer
+// may not see a player's per-round detail; the aggregate is still shown.
+export function fromServerStandings(serverRows = [], userId = null) {
+  return serverRows.map((row) => {
+    const rounds = Array.isArray(row.round_scores) ? row.round_scores : null;
+    return {
+      userId: row.member_id,
+      name: row.member_name,
+      icon: row.member_icon,
+      rank: Number(row.standing_rank),
+      score: Number(row.challenge_score),
+      played: Number(row.rounds_played),
+      total: Number(row.rounds_total),
+      missed: Number(row.rounds_total) - Number(row.rounds_played),
+      isCurrentUser: row.member_id === userId,
+      isPrivate: !!row.is_private,
+      unranked: false,
+      detailHidden: rounds === null,
+      dailyResults: rounds
+        ? rounds.map((round) => (round.score == null ? null : { game: round.game, challenge_date: round.challenge_date }))
+        : [],
+      dailyScores: rounds ? rounds.map((round) => round.score) : [],
+    };
+  });
 }

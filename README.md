@@ -47,7 +47,7 @@ The current application-owned database is defined by:
 - `supabase/schemas/public.sql` — tables, functions, triggers, policies and grants.
 - `supabase/schemas/seed.sql` — non-personal game, benchmark and reward configuration.
 
-The schema was baselined from the test project after the v211 scoring cleanup.
-Historical root-level migrations are no longer the source of truth. Make schema
-changes declaratively, review the generated diff, and deploy only the new
-forward migration. Never commit player or authentication data.
+These two files are the whole story. While the project is still in testing there
+are no migration scripts to follow: edit the schema in place, apply it, and the
+file always describes what the database should be. Never commit player or
+authentication data.

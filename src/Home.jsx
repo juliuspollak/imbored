@@ -93,6 +93,9 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
   const [challengeRows, setChallengeRows] = useState([]);
   const [challengeRounds, setChallengeRounds] = useState([]);
   const [challengeBenchmarks, setChallengeBenchmarks] = useState([]);
+  // Server-ranked circle standings. Null until loaded, and left null when the
+  // RPC is unavailable so ChallengeStandings falls back to scoring locally.
+  const [serverStandings, setServerStandings] = useState(null);
   const [previousChallengeRows, setPreviousChallengeRows] = useState([]);
   const [previousChallengeRounds, setPreviousChallengeRounds] = useState([]);
   const [previousChallengeLabel, setPreviousChallengeLabel] = useState(null);
@@ -240,6 +243,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
         setChallengeRows([]);
         setChallengeRounds([]);
         setChallengeBenchmarks([]);
+        setServerStandings(null);
         setPreviousChallengeRows([]);
         setPreviousChallengeRounds([]);
         setPreviousChallengeLabel(null);
@@ -305,7 +309,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
         }
       }
       if (cancelled) return;
-      const [{ data:roundRows }, { data:benchmarkRows }, { data:personalProfiles }, { data:historyRows }] = await Promise.all([
+      const [{ data:roundRows }, { data:benchmarkRows }, { data:personalProfiles }, { data:historyRows }, { data:rankedRows, error:rankedError }] = await Promise.all([
         challengeScope?.type === "circle"
           ? supabase.from("circle_challenge_rounds")
             .select("challenge_date,game,round_number")
@@ -327,6 +331,9 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
             end_date_in:daysAgoDate(1),
           })
           : Promise.resolve({ data:[] }),
+        challengeScope?.type === "circle"
+          ? supabase.rpc("get_circle_challenge_standings", { target_challenge_id:challengeScope.id })
+          : Promise.resolve({ data:null }),
       ]);
       if (cancelled) return;
 
@@ -389,6 +396,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
           roundNumber:round.round_number,
         })));
         setChallengeBenchmarks(benchmarkRows || []);
+        setServerStandings(rankedError ? null : (rankedRows || null));
         setPreviousChallengeRows(previousRows);
         setPersonalHistoryRows((historyRows || []).map((row) => ({
           ...row,
@@ -771,7 +779,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
                                 {onOpenCircles && <Button variant="secondary" size="sm" before={<Users size={14} />} onClick={() => onOpenCircles({ circleId: item.circle_id, challengeId: item.challenge_id })}>{t("home.circleDetails")}</Button>}
                               </div>
                             </div>
-                            {selected && <ChallengeStandings rows={challengeRows} roster={standingsRoster} games={selectedChallengeGames} rounds={challengeRounds.length ? challengeRounds : selectedRounds} benchmarks={challengeBenchmarks} previousRows={previousChallengeRows} previousRounds={previousChallengeRounds} previousWeekLabel={previousChallengeLabel} isCircle userId={userId} loading={standingsLoading || !selectedCircle} refreshing={standingsRefreshing} defaultOpen embedded rewardPoints={challengeScope?.rewardPoints || 0} closed={!!challengeLifecycle[String(challengeScope.id)]?.closed_at} winnerId={challengeLifecycle[String(challengeScope.id)]?.winner_id} stakeRewardName={challengeScope?.stakeRewardName || null} stakeSplitMethod={challengeScope?.stakeSplitMethod || null} />}
+                            {selected && <ChallengeStandings rows={challengeRows} roster={standingsRoster} games={selectedChallengeGames} rounds={challengeRounds.length ? challengeRounds : selectedRounds} benchmarks={challengeBenchmarks} serverStandings={serverStandings} previousRows={previousChallengeRows} previousRounds={previousChallengeRounds} previousWeekLabel={previousChallengeLabel} isCircle userId={userId} loading={standingsLoading || !selectedCircle} refreshing={standingsRefreshing} defaultOpen embedded rewardPoints={challengeScope?.rewardPoints || 0} closed={!!challengeLifecycle[String(challengeScope.id)]?.closed_at} winnerId={challengeLifecycle[String(challengeScope.id)]?.winner_id} stakeRewardName={challengeScope?.stakeRewardName || null} stakeSplitMethod={challengeScope?.stakeSplitMethod || null} />}
                           </div>
                         )}
                       </div>

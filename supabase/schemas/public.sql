@@ -2,8 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict GDl9r0oUnfj9f4kqB9DSLqVfNREn4ua9LnNsJSim6gO77re34TUGlrms2ygUCJ0
-
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.10
 
@@ -1684,19 +1682,32 @@ $$;
 -- Name: circle_challenge_daily_score(text, date, integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
+CREATE FUNCTION public.challenge_benchmark_seconds(target_game text, target_challenge_date date) RETURNS numeric
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select coalesce((
+    select nullif(benchmark.effective_seconds,0)
+    from public.game_time_benchmarks benchmark
+    where benchmark.game=target_game
+      and benchmark.mode='challenge'
+      and benchmark.day_index=extract(isodow from target_challenge_date)::integer-1
+    order by benchmark.updated_at desc nulls last
+    limit 1
+  ),100)::numeric
+$$;
+
+
+--
+-- Name: circle_challenge_daily_score(text, date, integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
 CREATE FUNCTION public.circle_challenge_daily_score(target_game text, target_challenge_date date, elapsed_seconds integer, hint_count integer, mistake_count integer) RETURNS integer
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
   with typical as (
-    select coalesce((
-      select benchmark.effective_seconds
-      from public.game_time_benchmarks benchmark
-      where benchmark.game=target_game
-        and benchmark.mode='challenge'
-        and benchmark.day_index=extract(isodow from target_challenge_date)::integer-1
-      order by benchmark.updated_at desc nulls last limit 1
-    ),100)::numeric as seconds
+    select public.challenge_benchmark_seconds(target_game,target_challenge_date) as seconds
   )
   select greatest(20,least(150,round(
     100*typical.seconds/greatest(1,public.scored_game_seconds(
@@ -1704,6 +1715,148 @@ CREATE FUNCTION public.circle_challenge_daily_score(target_game text, target_cha
     ))
   )::integer))
   from typical
+$$;
+
+
+--
+-- Name: circle_challenge_member_totals(bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.circle_challenge_member_totals(target_challenge_id bigint) RETURNS TABLE(member_id uuid, challenge_score integer, rounds_played integer, rounds_total integer, total_hints integer, total_mistakes integer, adjusted_seconds bigint, finished_at timestamp with time zone, last_stat_id bigint, round_scores jsonb)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  with challenge as (
+    select item.id,item.circle_id
+    from public.circle_weekly_challenges item
+    where item.id=target_challenge_id
+  ),
+  member_rounds as (
+    select
+      member.user_id,
+      round_item.challenge_date,
+      round_item.game,
+      round_item.round_number,
+      result.id as stat_id,
+      result.seconds,
+      result.hints,
+      result.mistakes,
+      result.completed_at,
+      case
+        when result.id is null then null
+        else public.circle_challenge_daily_score(
+          round_item.game,
+          round_item.challenge_date,
+          result.seconds,
+          result.hints,
+          result.mistakes
+        )
+      end as round_score
+    from challenge
+    join public.circle_members member
+      on member.circle_id=challenge.circle_id
+    join public.circle_challenge_rounds round_item
+      on round_item.challenge_id=challenge.id
+    left join lateral (
+      select stat.*
+      from public.game_stats stat
+      where stat.circle_challenge_id=challenge.id
+        and stat.user_id=member.user_id
+        and stat.mode='challenge'
+        and stat.challenge_date=round_item.challenge_date
+        and stat.game=round_item.game
+      order by stat.completed_at,stat.id
+      limit 1
+    ) result on true
+  )
+  select
+    member_rounds.user_id,
+    sum(coalesce(member_rounds.round_score,-100))::integer,
+    count(member_rounds.stat_id)::integer,
+    count(*)::integer,
+    sum(greatest(coalesce(member_rounds.hints,0),0))::integer,
+    sum(greatest(coalesce(member_rounds.mistakes,0),0))::integer,
+    sum(
+      case
+        when member_rounds.stat_id is null then 0
+        else public.scored_game_seconds(
+          member_rounds.seconds,
+          member_rounds.hints,
+          member_rounds.mistakes,
+          public.challenge_benchmark_seconds(member_rounds.game,member_rounds.challenge_date)
+        )
+      end
+    )::bigint,
+    max(member_rounds.completed_at),
+    max(member_rounds.stat_id),
+    jsonb_agg(
+      jsonb_build_object(
+        'challenge_date',member_rounds.challenge_date,
+        'game',member_rounds.game,
+        'score',member_rounds.round_score
+      )
+      order by member_rounds.round_number,member_rounds.challenge_date
+    )
+  from member_rounds
+  group by member_rounds.user_id
+$$;
+
+
+--
+-- Name: get_circle_challenge_standings(bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_circle_challenge_standings(target_challenge_id bigint) RETURNS TABLE(member_id uuid, member_name text, member_icon text, standing_rank integer, challenge_score integer, rounds_played integer, rounds_total integer, is_private boolean, round_scores jsonb)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  with visible_challenge as (
+    select item.id
+    from public.circle_weekly_challenges item
+    where item.id=target_challenge_id
+      and (
+        public.is_admin(auth.uid())
+        or exists(
+          select 1
+          from public.circle_members member
+          where member.circle_id=item.circle_id
+            and member.user_id=auth.uid()
+        )
+      )
+  )
+  select
+    totals.member_id,
+    profile.name::text,
+    profile.icon::text,
+    row_number() over(
+      order by
+        (totals.rounds_played>0) desc,
+        totals.challenge_score desc,
+        totals.rounds_played desc,
+        totals.total_hints,
+        totals.total_mistakes,
+        totals.adjusted_seconds,
+        totals.finished_at,
+        totals.member_id
+    )::integer,
+    totals.challenge_score,
+    totals.rounds_played,
+    totals.rounds_total,
+    (
+      totals.member_id<>auth.uid()
+      and coalesce(profile.show_stats_to_others,false)=false
+    ),
+    case
+      when totals.member_id<>auth.uid()
+        and coalesce(profile.show_stats_to_others,false)=false
+      then null
+      else totals.round_scores
+    end
+  from visible_challenge
+  cross join public.circle_challenge_member_totals(visible_challenge.id) totals
+  join public.profiles profile on profile.id=totals.member_id
+  where profile.account_deleted_at is null
+    and coalesce(profile.hidden_from_others,false)=false
 $$;
 
 
@@ -2287,21 +2440,8 @@ begin
 
   select count(*)
   into finisher_count
-  from (
-    select member.user_id
-    from public.circle_members member
-    cross join public.circle_challenge_rounds round_item
-    left join public.game_stats result
-      on result.circle_challenge_id=challenge.id
-     and result.user_id=member.user_id
-     and result.mode='challenge'
-     and result.challenge_date=round_item.challenge_date
-     and result.game=round_item.game
-    where member.circle_id=challenge.circle_id
-      and round_item.challenge_id=challenge.id
-    group by member.user_id
-    having count(distinct result.challenge_date)=required_rounds
-  ) finishers;
+  from public.circle_challenge_member_totals(challenge.id) totals
+  where totals.rounds_played=required_rounds;
 
   if required_rounds=0
      or (
@@ -2311,68 +2451,9 @@ begin
     return null;
   end if;
 
-  with member_rounds as (
-    select
-      member.user_id,
-      round_item.challenge_date,
-      round_item.game,
-      result.id as stat_id,
-      result.seconds,
-      result.hints,
-      result.mistakes,
-      result.completed_at
-    from public.circle_members member
-    cross join public.circle_challenge_rounds round_item
-    left join lateral (
-      select stat.*
-      from public.game_stats stat
-      where stat.circle_challenge_id=challenge.id
-        and stat.user_id=member.user_id
-        and stat.mode='challenge'
-        and stat.challenge_date=round_item.challenge_date
-        and stat.game=round_item.game
-      order by stat.completed_at,stat.id
-      limit 1
-    ) result on true
-    where member.circle_id=challenge.circle_id
-      and round_item.challenge_id=challenge.id
-  ),
-  totals as (
-    select
-      user_id,
-      count(stat_id)::integer as rounds_played,
-      sum(
-        case
-          when stat_id is null then -100
-          else public.circle_challenge_daily_score(
-            game,
-            challenge_date,
-            seconds,
-            hints,
-            mistakes
-          )
-        end
-      )::integer as challenge_score,
-      sum(greatest(coalesce(hints,0),0))::integer as total_hints,
-      sum(greatest(coalesce(mistakes,0),0))::integer as total_mistakes,
-      sum(
-        case when stat_id is null then 0 else
-          greatest(coalesce(seconds,0),0)
-          + greatest(coalesce(hints,0),0)*coalesce((select b.effective_seconds from public.game_time_benchmarks b where b.game=member_rounds.game and b.day_index=extract(isodow from member_rounds.challenge_date)::integer-1 and b.mode='challenge' limit 1),100)*0.20
-          + greatest(coalesce(mistakes,0),0)*coalesce((select b.effective_seconds from public.game_time_benchmarks b where b.game=member_rounds.game and b.day_index=extract(isodow from member_rounds.challenge_date)::integer-1 and b.mode='challenge' limit 1),100)*0.10
-        end
-      )::bigint as adjusted_seconds,
-      max(completed_at) as finished_at,
-      max(stat_id) as last_stat_id
-    from member_rounds
-    group by user_id
-  )
-  select
-    totals.user_id,
-    totals.last_stat_id,
-    totals.challenge_score
+  select totals.member_id,totals.last_stat_id,totals.challenge_score
   into winner_id,winner_stat_id,winning_score
-  from totals
+  from public.circle_challenge_member_totals(challenge.id) totals
   where totals.rounds_played>0
   order by
     totals.challenge_score desc,
@@ -2381,7 +2462,7 @@ begin
     totals.total_mistakes,
     totals.adjusted_seconds,
     totals.finished_at,
-    totals.user_id
+    totals.member_id
   limit 1;
 
   if winner_id is null then
@@ -3480,8 +3561,9 @@ $$;
 
 CREATE FUNCTION public.is_admin(uid uuid) RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
     AS $$
-  select coalesce((select is_admin from profiles where id = uid), false);
+  select coalesce((select p.is_admin from public.profiles p where p.id = uid), false);
 $$;
 
 
@@ -4993,8 +5075,8 @@ begin
   if char_length(clean_title)>60 then
     raise exception 'Challenge names can be up to 60 characters.';
   end if;
-  if coalesce(reward_points_in,0) not between 0 and 500 then
-    raise exception 'Reward must be between 0 and 500 points.';
+  if coalesce(reward_points_in,0) not between 0 and 50 then
+    raise exception 'A circle challenge winner''s prize must be between 0 and 50 points.';
   end if;
   if clean_reward_type not in ('points','prize') then
     raise exception 'Invalid reward type.';
@@ -5190,10 +5272,11 @@ $$;
 
 CREATE FUNCTION public.set_user_hidden(target_user_id uuid, hidden boolean) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
     AS $$
 begin
-  if exists (select 1 from profiles where id = auth.uid() and is_admin = true) then
-    update profiles set hidden_from_others = hidden where id = target_user_id;
+  if exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true) then
+    update public.profiles set hidden_from_others = hidden where id = target_user_id;
   end if;
 end;
 $$;
@@ -8774,7 +8857,27 @@ CREATE POLICY "visible release notes are readable" ON public.release_notes FOR S
 
 
 --
--- PostgreSQL database dump complete
+-- Name: FUNCTION ACLs; Type: ACL; Schema: public; Owner: -
 --
 
-\unrestrict GDl9r0oUnfj9f4kqB9DSLqVfNREn4ua9LnNsJSim6gO77re34TUGlrms2ygUCJ0
+-- PostgreSQL grants EXECUTE on a new function to PUBLIC by default, which
+-- would expose these to the anon role. Every SECURITY DEFINER function is
+-- revoked and then granted only to authenticated, and helpers that exist only
+-- to be called by another definer function are not granted at all.
+--
+-- NOTE: this export was taken without privileges, so the rest of the schema's
+-- functions have no ACL recorded here even though the deployed database has
+-- them. Re-export including privileges to close that gap.
+
+REVOKE ALL ON FUNCTION public.challenge_benchmark_seconds(text, date) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.circle_challenge_daily_score(text, date, integer, integer, integer) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.circle_challenge_member_totals(bigint) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.finalize_circle_challenge(bigint) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.get_circle_challenge_standings(bigint) FROM PUBLIC;
+
+GRANT EXECUTE ON FUNCTION public.get_circle_challenge_standings(bigint) TO authenticated;
+
+
+--
+-- PostgreSQL database dump complete
+--

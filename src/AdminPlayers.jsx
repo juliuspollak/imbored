@@ -52,8 +52,12 @@ export default function AdminPlayers({ onBack }) {
     setApprovingId(playerId);
     const { data, error } = await supabase.rpc("decide_player_approval", { target_user_id: playerId, approve });
     setApprovingId(null);
-    if (error) { setNotice(error.message || "Approval failed."); return; }
-    setNotice(data?.emailSent ? "Player approved. The approval notification was emailed." : `Player approved, but the email was not sent${data?.emailError ? `: ${data.emailError}` : "."}`);
+    if (error) { setNotice(approve ? (error.message || "Approval failed.") : (error.message || "Could not require approval.")); return; }
+    if (!approve) {
+      setNotice("This player now needs approval again before they can play.");
+    } else {
+      setNotice(data?.emailSent ? "Player approved. The approval notification was emailed." : `Player approved, but the email was not sent${data?.emailError ? `: ${data.emailError}` : "."}`);
+    }
     refresh();
   }
   async function handleToggleHidden(player) { await setUserHidden(player.id, !player.hidden_from_others); setExpandedId(null); refresh(); }
