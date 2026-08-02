@@ -19,9 +19,9 @@ test("every hint, mistake, and extra second makes a result no better", () => {
 });
 
 test("performance adjustment is bounded and based on scored time", () => {
-  assert.equal(performanceAdjustment({ seconds: 50 }, 100), 3);
+  assert.equal(performanceAdjustment({ seconds: 50 }, 100), 4);
   assert.equal(performanceAdjustment({ seconds: 100 }, 100), 0);
-  assert.equal(performanceAdjustment({ seconds: 200 }, 100), -3);
+  assert.equal(performanceAdjustment({ seconds: 200 }, 100), -4);
   assert.equal(performanceAdjustment({ seconds: 70, hints: 1, mistakes: 1 }, 100), 0);
 });
 
@@ -31,6 +31,11 @@ test("challenge score uses the same penalties", () => {
   assert.equal(challengeScore({ seconds: 1000 }, 100).score, 20);
 });
 
+test("missing benchmarks use the same 100-second fallback as PostgreSQL", () => {
+  assert.equal(scoredSeconds({ seconds: 70, hints: 1, mistakes: 1 }), 100);
+  assert.deepEqual(challengeScore({ seconds: 70, hints: 1, mistakes: 1 }), { adjusted: 100, score: 100 });
+});
+
 test("weekday progression is modest and monotonic", () => {
-  assert.deepEqual(Array.from({ length: 7 }, (_, day) => weekdayBonus(day)), [0, 1, 1, 2, 2, 3, 3]);
+  assert.deepEqual(Array.from({ length: 7 }, (_, day) => weekdayBonus(day)), [0, 0, 1, 1, 1, 2, 2]);
 });

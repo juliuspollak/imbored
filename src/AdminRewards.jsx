@@ -11,13 +11,8 @@ import StatusBanner from "./components/StatusBanner.jsx";
 const TABS=[["rules","Rules",Settings],["adjust","Adjust",Plus]];
 const FIELDS=[
   ["base_points","Base points","Starting score for every completed game."],
-  ["hint_penalty","Hint penalty","Points deducted for each hint."],
-  ["mistake_penalty","Mistake penalty","Points deducted for each mistake."],
-  ["fast_time_bonus","Fast-time adjustment","Added below 80% of the benchmark; deducted above 150%."],
-  ["average_time_bonus","Average-time adjustment","Added up to the benchmark; deducted above 120%."],
   ["streak_weekly_bonus","Weekly streak bonus","Awarded once on streak days 7, 14, 21 and so on."],
   ["practice_points_percent","Practice points","Percentage of the equivalent Challenge award. Keep below 100%."],
-  ["day_points_step","Daily difficulty step","Points added per day: Monday +0, Tuesday +1 step, through Sunday +6 steps."],
   ["minimum_points","Minimum game points","Lowest possible award for a completed game."],
   ["maximum_points","Maximum game points","Highest possible award before a separate winner's prize."],
   ["practice_daily_limit","Rewarded Practice rounds","Number of Practice rounds per game that award points each Sydney day."],
