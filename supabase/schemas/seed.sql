@@ -137,7 +137,7 @@ INSERT INTO public.points_economy_versions VALUES ('v137-10-to-1', '2026-07-27 2
 -- Data for Name: reward_rules; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO public.reward_rules OVERRIDING SYSTEM VALUE VALUES (1, 'Default', true, 6, 0, 0, 2, 1, 2, 1, 0, 0, 70, 2, 15, 3, 20, '2026-07-27 20:31:05.863053+00', '79bc19af-fc62-48ac-832a-faf955c6a677', 20, 50, 1, 1000000) ON CONFLICT DO NOTHING;
+INSERT INTO public.reward_rules OVERRIDING SYSTEM VALUE VALUES (1, 'Default', true, 6, 0, 0, 2, 1, 2, 1, 0, 0, 70, 2, 15, 3, 20, '2026-07-27 20:31:05.863053+00', NULL, 20, 50, 1, 40) ON CONFLICT DO NOTHING;
 
 
 --
@@ -152,4 +152,3 @@ SELECT pg_catalog.setval('public.reward_rules_id_seq', 1, true);
 --
 
 \unrestrict nLOebvvsbdj2EAWFimdcCkEG8B4mDBkbmE7OpSQ4XHn629tbLEMzubc4v5LQn6e
-
