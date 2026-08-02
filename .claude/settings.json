@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"^\\\\\\\\\\\\\\\\restrict\\\\|^\\\\\\\\\\\\\\\\unrestrict\" supabase/schemas/*.sql)",
+      "Bash(awk '/create table profiles/,/\\\\\\);/' supabase/schema.sql)",
+      "Bash(awk '/SECURITY DEFINER/{f=1; buf=$0; next} f&&/SET search_path/{f=0; next} f&&/AS \\\\$\\\\$/{print \"MISSING search_path near line \" NR; f=0}' supabase/schemas/public.sql)",
+      "Bash(awk '/FUNCTION public.is_approved_user/,/\\\\$\\\\$;/' supabase/schemas/public.sql)"
+    ]
+  }
+}

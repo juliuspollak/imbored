@@ -1,71 +1,52 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, LockKeyhole, Trophy } from "lucide-react";
-import { compareStandings, pooledChallengeSummary } from "./lib/challengeStandingsScoring.js";
+import { MISSED_ROUND_PENALTY, buildChallengeStandings } from "./lib/challengeStandingsScoring.js";
+
+function toBenchmarkMap(benchmarks) {
+  return Object.fromEntries(benchmarks.map((item) => [`${item.game}:${item.day_index}`, Number(item.effective_seconds) || 100]));
+}
+
+function toSlots({ isCircle, rounds, games }) {
+  return isCircle
+    ? rounds.map((round) => ({ game: round.game, date: round.date }))
+    : games.map((game) => ({ game: game.id }));
+}
 
 export default function ChallengeStandings({ rows = [], roster = [], games = [], rounds = [], benchmarks = [], previousRows = [], previousRounds = [], isCircle = false, userId, loading = false, defaultOpen = true, embedded = false, closed = false, winnerId = null }) {
   const [open, setOpen] = useState(defaultOpen);
   const [expandedPlayerId, setExpandedPlayerId] = useState(null);
 
   const standings = useMemo(() => {
-    const rowsByPlayer = rows.reduce((grouped, row) => { (grouped[row.user_id] ||= []).push(row); return grouped; }, {});
-    if (isCircle && rounds.length > 0) {
-      const benchmarkMap = Object.fromEntries(benchmarks.map((item) => [`${item.game}:${item.day_index}`, Number(item.effective_seconds) || 100]));
-      return roster.map((member) => {
-        const privateStats = member.id !== userId && member.show_stats_to_others === false;
-        const memberRows = (rowsByPlayer[member.id] || []).slice().sort((a,b) => String(a.completed_at || "").localeCompare(String(b.completed_at || "")));
-        const dailyResults = rounds.map((round) => {
-          const result = memberRows.find((row) => row.challenge_date === round.date && row.game === round.game);
-          if (!result) return null;
-          return privateStats ? { ...result, is_private: true } : result;
-        });
-        const summary = pooledChallengeSummary(dailyResults, benchmarkMap, -100);
-        return { userId: member.id, name: member.member_name || member.name, icon: member.member_icon || member.icon, ...summary, dailyResults, missed: rounds.length - summary.played, isCurrentUser: member.id === userId, isPrivate: privateStats };
-      }).sort(compareStandings);
-    }
-    if (!isCircle && games.length > 0) {
-      const benchmarkMap = Object.fromEntries(benchmarks.map((item) => [`${item.game}:${item.day_index}`, Number(item.effective_seconds) || 100]));
-      return roster.map((member) => {
-        const privateStats = member.id !== userId && member.show_stats_to_others === false;
-        const memberRows = (rowsByPlayer[member.id] || []).slice().sort((a, b) => String(a.completed_at || "").localeCompare(String(b.completed_at || "")));
-        const dailyResults = games.map((game) => {
-          const result = memberRows.find((row) => row.game === game.id);
-          if (!result) return null;
-          return privateStats ? { ...result, is_private: true } : result;
-        });
-        const summary = pooledChallengeSummary(dailyResults, benchmarkMap);
-        return {
-          userId: member.id,
-          name: member.member_name || member.name,
-          icon: member.member_icon || member.icon,
-          ...summary,
-          dailyResults,
-          missed: games.length - summary.played,
-          isCurrentUser: member.id === userId,
-          isPrivate: privateStats,
-        };
-      }).sort(compareStandings);
-    }
-    return [];
+    const slots = toSlots({ isCircle, rounds, games });
+    if (slots.length === 0) return [];
+    return buildChallengeStandings({
+      rows,
+      roster,
+      slots,
+      benchmarkMap: toBenchmarkMap(benchmarks),
+      userId,
+      missedPenalty: isCircle ? MISSED_ROUND_PENALTY : 0,
+    });
   }, [rows, roster, games, rounds, benchmarks, isCircle, userId]);
 
   const previousStandings = useMemo(() => {
-    if (isCircle && previousRounds.length === 0) return [];
-    if (!isCircle && games.length === 0) return [];
-    const previousRowsByPlayer = previousRows.reduce((g, r) => { (g[r.user_id] ||= []).push(r); return g; }, {});
-    const benchmarkMap = Object.fromEntries(benchmarks.map((i) => [`${i.game}:${i.day_index}`, Number(i.effective_seconds) || 100]));
-    return roster.map((m) => {
-      const results = isCircle
-        ? previousRounds.map((round) => previousRowsByPlayer[m.id]?.find((row) => row.challenge_date === round.date && row.game === round.game) || null)
-        : games.map((game) => previousRowsByPlayer[m.id]?.find((row) => row.game === game.id) || null);
-      return { userId: m.id, ...pooledChallengeSummary(results, benchmarkMap, isCircle ? -100 : 0) };
-    }).sort(compareStandings);
-  }, [previousRows, previousRounds, roster, benchmarks, games, isCircle]);
+    const slots = toSlots({ isCircle, rounds: previousRounds, games });
+    if (slots.length === 0) return [];
+    return buildChallengeStandings({
+      rows: previousRows,
+      roster,
+      slots,
+      benchmarkMap: toBenchmarkMap(benchmarks),
+      userId,
+      missedPenalty: isCircle ? MISSED_ROUND_PENALTY : 0,
+    });
+  }, [previousRows, previousRounds, roster, benchmarks, games, isCircle, userId]);
 
   if (!standings.length) {
     return loading ? <div role="status" style={{ textAlign: "center", padding: "var(--space-4)", color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)" }}>Loading standings…</div> : null;
   }
 
-  const previousRankMap = Object.fromEntries(previousStandings.map((s, i) => [s.userId, i + 1]));
+  const previousRankMap = Object.fromEntries(previousStandings.filter((s) => s.rank != null).map((s) => [s.userId, s.rank]));
 
   if (embedded) {
     return (
@@ -104,10 +85,10 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
 function StandingsList({ standings, expandedPlayerId, setExpandedPlayerId, previousRankMap, closed, winnerId }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-      {standings.map((player, index) => {
-        const rank = index + 1;
-        const previousRank = previousRankMap[player.userId] || rank;
-        const delta = previousRank - rank;
+      {standings.map((player) => {
+        const rank = player.rank;
+        const previousRank = previousRankMap[player.userId] ?? rank;
+        const delta = rank == null || previousRank == null ? 0 : previousRank - rank;
         const isLeader = rank === 1 && player.score > 0;
         const expanded = expandedPlayerId === player.userId;
         const isWinner = closed && winnerId === player.userId;
@@ -131,38 +112,44 @@ function StandingsList({ standings, expandedPlayerId, setExpandedPlayerId, previ
               style={{ width: "100%", minHeight: 64, display: "flex", alignItems: "center", gap: "var(--space-3)", padding: "var(--space-3)", border: 0, background: "transparent", color: "inherit", font: "inherit", textAlign: "left", cursor: "pointer" }}
             >
               <span style={{ minWidth: 24, flexShrink: 0, textAlign: "center", color: "var(--color-text-secondary)", fontSize: "var(--text-body-size)", fontWeight: 700 }}>
-                {isLeader ? <Trophy size={19} style={{ color: "var(--color-warning-gold)", display: "inline" }} /> : rank}
+                {isLeader || isWinner ? <Trophy size={19} style={{ color: "var(--color-warning-gold)", display: "inline" }} /> : player.unranked ? "–" : rank}
               </span>
               <span aria-hidden="true" style={{ width: 36, height: 36, display: "grid", placeItems: "center", flexShrink: 0, borderRadius: "50%", background: "var(--color-avatar-bg)", border: "2px solid var(--color-avatar-border)", fontSize: 20 }}>{player.icon || "🙂"}</span>
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--color-text-primary)", fontSize: "var(--text-body-size)", fontWeight: 600 }}>{player.name}{player.isCurrentUser ? " (you)" : ""}</span>
                 <span style={{ display: "block", marginTop: 2, color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>
-                  {player.played}/{player.dailyResults.length} played
-                  {player.missed > 0 && ` · ${player.missed} missed`}
+                  {player.unranked ? "Results hidden" : `${player.played}/${player.dailyResults.length} played`}
+                  {!player.unranked && player.missed > 0 && ` · ${player.missed} missed`}
                   {player.isPrivate && " · Private"}
                   {delta !== 0 && ` · ${delta > 0 ? "↑" : "↓"}${Math.abs(delta)}`}
                 </span>
               </span>
               <span style={{ flexShrink: 0, textAlign: "right" }}>
-                <span style={{ display: "block", color: isLeader ? "var(--color-warning-text)" : "var(--color-text-primary)", fontSize: 19, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{player.score}</span>
-                <span style={{ display: "block", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>points</span>
+                <span style={{ display: "block", color: isLeader ? "var(--color-warning-text)" : "var(--color-text-primary)", fontSize: 19, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{player.unranked ? "–" : player.score}</span>
+                <span style={{ display: "block", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{player.unranked ? "not shown" : "points"}</span>
               </span>
               <ChevronDown size={17} style={{ flexShrink: 0, color: "var(--color-icon-subtle)", transform: expanded ? "rotate(180deg)" : "none", transition: "transform var(--transition-fast)" }} />
             </button>
             {expanded && (
               <div id={`player-results-${player.userId}`} style={{ padding: "var(--space-3)", borderTop: "1px solid var(--color-border)" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-2)" }}>
-                  {player.dailyResults.map((res, di) => {
-                    if (!res) return <span key={di} style={{ minHeight: 36, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-surface)", color: "var(--color-text-muted)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>Missed</span>;
-                    if (res.is_private) return <span key={di} style={{ minHeight: 36, display: "flex", alignItems: "center", justifyContent: "center", gap: 5, border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-surface)", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}><LockKeyhole size={13} /> Private</span>;
-                    const score = player.dailyScores[di];
-                    return (
-                      <span key={di} style={{ minHeight: 36, display: "flex", alignItems: "center", justifyContent: "center", padding: "6px 8px", border: `1px solid ${score >= 50 ? "var(--color-primary-subtle-border)" : "var(--color-danger-text)"}`, borderRadius: "var(--radius-sm)", background: score >= 50 ? "var(--color-primary-subtle)" : "var(--color-danger-bg)", color: score >= 50 ? "var(--color-primary)" : "var(--color-danger-text)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>
-                        {res.game} {score}pt
-                      </span>
-                    );
-                  })}
-                </div>
+                {player.unranked ? (
+                  <p style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, margin: 0, minHeight: 36, color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>
+                    <LockKeyhole size={13} /> {player.name} keeps their results private, so they are not ranked here.
+                  </p>
+                ) : (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-2)" }}>
+                    {player.dailyResults.map((res, di) => {
+                      if (!res) return <span key={di} style={{ minHeight: 36, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-surface)", color: "var(--color-text-muted)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>Missed</span>;
+                      if (res.is_private) return <span key={di} style={{ minHeight: 36, display: "flex", alignItems: "center", justifyContent: "center", gap: 5, border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-surface)", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}><LockKeyhole size={13} /> Private</span>;
+                      const score = player.dailyScores[di];
+                      return (
+                        <span key={di} style={{ minHeight: 36, display: "flex", alignItems: "center", justifyContent: "center", padding: "6px 8px", border: `1px solid ${score >= 50 ? "var(--color-primary-subtle-border)" : "var(--color-danger-text)"}`, borderRadius: "var(--radius-sm)", background: score >= 50 ? "var(--color-primary-subtle)" : "var(--color-danger-bg)", color: score >= 50 ? "var(--color-primary)" : "var(--color-danger-text)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>
+                          {res.game} {score}pt
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </article>
