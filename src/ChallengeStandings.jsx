@@ -1,20 +1,6 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, LockKeyhole, Trophy } from "lucide-react";
-import { challengeScore } from "./lib/performanceScoring.js";
-
-function isoDayIndex(dateString) {
-  return (new Date(`${dateString}T12:00:00`).getDay() || 7) - 1;
-}
-
-function dailyChallengeScore(result, benchmark) {
-  return challengeScore(result, benchmark);
-}
-
-function pooledChallengeScore(results, benchmarkMap) {
-  const played = results.filter(Boolean);
-  if (played.length === 0) return 0;
-  return played.reduce((total, result) => total + dailyChallengeScore(result, benchmarkMap[`${result.game}:${isoDayIndex(result.challenge_date)}`]).score, 0);
-}
+import { compareStandings, pooledChallengeSummary } from "./lib/challengeStandingsScoring.js";
 
 export default function ChallengeStandings({ rows = [], roster = [], games = [], rounds = [], benchmarks = [], previousRows = [], previousRounds = [], isCircle = false, userId, loading = false, defaultOpen = true, embedded = false, closed = false, winnerId = null }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -30,13 +16,11 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
         const dailyResults = rounds.map((round) => {
           const result = memberRows.find((row) => row.challenge_date === round.date && row.game === round.game);
           if (!result) return null;
-          return privateStats ? { ...result, seconds: 0, hints: 0, mistakes: 0, zip_required_moves: 0, zip_backtracked_cells: 0, is_private: true } : result;
+          return privateStats ? { ...result, is_private: true } : result;
         });
-        const played = dailyResults.filter(Boolean);
-        const score = pooledChallengeScore(dailyResults, benchmarkMap);
-        const missed = rounds.length - played.length;
-        return { userId: member.id, name: member.member_name || member.name, icon: member.member_icon || member.icon, score, dailyResults, played: played.length, missed, isCurrentUser: member.id === userId, isPrivate: privateStats };
-      }).sort((a,b) => b.score - a.score);
+        const summary = pooledChallengeSummary(dailyResults, benchmarkMap, -100);
+        return { userId: member.id, name: member.member_name || member.name, icon: member.member_icon || member.icon, ...summary, dailyResults, missed: rounds.length - summary.played, isCurrentUser: member.id === userId, isPrivate: privateStats };
+      }).sort(compareStandings);
     }
     if (!isCircle && games.length > 0) {
       const benchmarkMap = Object.fromEntries(benchmarks.map((item) => [`${item.game}:${item.day_index}`, Number(item.effective_seconds) || 100]));
@@ -46,21 +30,20 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
         const dailyResults = games.map((game) => {
           const result = memberRows.find((row) => row.game === game.id);
           if (!result) return null;
-          return privateStats ? { ...result, seconds: 0, hints: 0, mistakes: 0, zip_required_moves: 0, zip_backtracked_cells: 0, is_private: true } : result;
+          return privateStats ? { ...result, is_private: true } : result;
         });
-        const played = dailyResults.filter(Boolean);
+        const summary = pooledChallengeSummary(dailyResults, benchmarkMap);
         return {
           userId: member.id,
           name: member.member_name || member.name,
           icon: member.member_icon || member.icon,
-          score: pooledChallengeScore(dailyResults, benchmarkMap),
+          ...summary,
           dailyResults,
-          played: played.length,
-          missed: games.length - played.length,
+          missed: games.length - summary.played,
           isCurrentUser: member.id === userId,
           isPrivate: privateStats,
         };
-      }).sort((a, b) => b.score - a.score);
+      }).sort(compareStandings);
     }
     return [];
   }, [rows, roster, games, rounds, benchmarks, isCircle, userId]);
@@ -74,8 +57,8 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
       const results = isCircle
         ? previousRounds.map((round) => previousRowsByPlayer[m.id]?.find((row) => row.challenge_date === round.date && row.game === round.game) || null)
         : games.map((game) => previousRowsByPlayer[m.id]?.find((row) => row.game === game.id) || null);
-      return { userId: m.id, score: pooledChallengeScore(results, benchmarkMap) };
-    }).sort((a,b) => b.score - a.score);
+      return { userId: m.id, ...pooledChallengeSummary(results, benchmarkMap, isCircle ? -100 : 0) };
+    }).sort(compareStandings);
   }, [previousRows, previousRounds, roster, benchmarks, games, isCircle]);
 
   if (!standings.length) {
@@ -172,7 +155,7 @@ function StandingsList({ standings, expandedPlayerId, setExpandedPlayerId, previ
                   {player.dailyResults.map((res, di) => {
                     if (!res) return <span key={di} style={{ minHeight: 36, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-surface)", color: "var(--color-text-muted)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>Missed</span>;
                     if (res.is_private) return <span key={di} style={{ minHeight: 36, display: "flex", alignItems: "center", justifyContent: "center", gap: 5, border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-surface)", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}><LockKeyhole size={13} /> Private</span>;
-                    const { score } = dailyChallengeScore(res, 100);
+                    const score = player.dailyScores[di];
                     return (
                       <span key={di} style={{ minHeight: 36, display: "flex", alignItems: "center", justifyContent: "center", padding: "6px 8px", border: `1px solid ${score >= 50 ? "var(--color-primary-subtle-border)" : "var(--color-danger-text)"}`, borderRadius: "var(--radius-sm)", background: score >= 50 ? "var(--color-primary-subtle)" : "var(--color-danger-bg)", color: score >= 50 ? "var(--color-primary)" : "var(--color-danger-text)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>
                         {res.game} {score}pt
