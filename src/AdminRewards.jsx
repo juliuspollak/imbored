@@ -20,7 +20,7 @@ const FIELDS=[
   ["day_points_step","Daily difficulty step","Points added per day: Monday +0, Tuesday +1 step, through Sunday +6 steps."],
   ["minimum_points","Minimum game points","Lowest possible award for a completed game."],
   ["maximum_points","Maximum game points","Highest possible award before a separate winner's prize."],
-  ["daily_points_cap","Daily Practice cap","Maximum Practice points earned per Sydney day. Challenge points are not capped."],
+  ["practice_daily_limit","Rewarded Practice rounds","Number of Practice rounds per game that award points each Sydney day."],
   ["streak_protection_cost","Streak protection cost","Points charged to protect a missed streak day."],
 ];
 
@@ -62,7 +62,7 @@ export default function AdminRewards({onBack}){
 
     {loading?<p style={{textAlign:"center",padding:"var(--space-8)",color:"var(--color-text-secondary)"}}>Loading…</p>:<>
     {tab==="rules"&&rules&&<div style={{display:"flex",flexDirection:"column",gap:"var(--space-3)"}}>
-      <div style={{borderRadius:"var(--radius-lg)",padding:"var(--space-3)",fontSize:"var(--text-caption-size)",background:"var(--color-info-bg)",color:"var(--color-text-primary)"}}>Challenge games earn the full award without a daily cap. Practice earns {rules.practice_points_percent || 50}% and can award up to {rules.daily_points_cap || 40} points per Sydney day.</div>
+      <div style={{borderRadius:"var(--radius-lg)",padding:"var(--space-3)",fontSize:"var(--text-caption-size)",background:"var(--color-info-bg)",color:"var(--color-text-primary)"}}>Challenge games earn the full award. Each game’s first {rules.practice_daily_limit || 3} Practice rounds per Sydney day earn {rules.practice_points_percent || 50}% of Challenge points.</div>
       <Card style={{padding:"var(--space-4)",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"var(--space-3)"}}>
         {FIELDS.map(([key,label,help])=><label key={key} style={{fontSize:11}}>
           <span style={{fontWeight:600,color:"var(--color-text-primary)"}}>{label}</span>

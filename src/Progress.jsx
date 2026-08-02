@@ -121,7 +121,7 @@ export default function Progress({ onBack, onOpenRewards }) {
 
         <div style={{borderRadius:"var(--radius-lg)",padding:"var(--space-3)",marginBottom:"var(--space-3)",display:"flex",alignItems:"flex-start",gap:"var(--space-2)",background:"var(--color-info-bg)",color:"var(--color-text-primary)"}}>
           <Info size={14} style={{color:"var(--color-primary)",flexShrink:0,marginTop:2}}/>
-          <span style={{fontSize:10,lineHeight:1.5,opacity:.65}}>Lifetime points raise your level and never decrease when you spend or send points. Practice earns {rules?.practice_points_percent||50}% of Challenge points, up to {rules?.daily_points_cap||40} points per Sydney day. Challenge points are not capped.</span>
+          <span style={{fontSize:10,lineHeight:1.5,opacity:.65}}>Lifetime points raise your level and never decrease when you spend or send points. Each game’s first {rules?.practice_daily_limit||3} Practice rounds per Sydney day earn {rules?.practice_points_percent||50}% of Challenge points. Challenge points are not capped.</span>
         </div>
 
         {onOpenRewards&&<button onClick={onOpenRewards} style={{width:"100%",marginBottom:"var(--space-3)",borderRadius:"var(--radius-lg)",padding:"var(--space-3)",display:"flex",alignItems:"center",gap:"var(--space-3)",textAlign:"left",background:"var(--color-surface)",border:"1px solid var(--color-border)",cursor:"pointer",color:"inherit"}}>

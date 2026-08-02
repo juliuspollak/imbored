@@ -2,9 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { rewardStatusText } from "./rewardStatus.js";
 
-const practiceCapMessage = "You’ve earned all your Practice points for today. You can keep playing for fun — Practice points reset tomorrow.";
+const practiceCapMessage = "You’ve earned points for today’s Practice rounds in this game. Try another game to keep earning, or keep playing for fun.";
 
-test("uses one clear message for the Practice points cap", () => {
+test("uses one clear message for the per-game Practice limit", () => {
   assert.equal(
     rewardStatusText({ daily_points_cap_reached: true, daily_points_earned: 40, daily_points_cap: 40 }),
     practiceCapMessage

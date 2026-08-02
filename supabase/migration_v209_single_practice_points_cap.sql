@@ -1,38 +1,38 @@
 -- v209: Use one player-facing Practice reward rule.
 --
--- The points economy previously combined a per-game rewarded-completion limit
--- with a total daily Practice-points cap. Keep the existing column for RPC and
--- historical migration compatibility, but set it to the database-supported
--- maximum. The daily points cap (maximum 200) is therefore always reached
--- first and is the sole effective Practice limit.
+-- Keep the per-game rewarded-round limit so playing one game never prevents a
+-- player's first rewarded round in another. Retain daily_points_cap for RPC
+-- and historical migration compatibility, but make it non-binding.
 
 begin;
 
+alter table public.reward_rules
+  drop constraint if exists reward_rules_daily_points_cap_range;
+
 update public.reward_rules
-set practice_daily_limit=1000
-where practice_daily_limit<>1000;
+set daily_points_cap=1000000;
 
 -- Prevent future rule rows or unrelated admin updates from restoring the old
--- per-game mechanic.
-create or replace function public.normalise_reward_rules_practice_limit()
+-- global mechanic.
+create or replace function public.normalise_reward_rules_daily_points_cap()
 returns trigger
 language plpgsql
 set search_path=public
 as $$
 begin
-  new.practice_daily_limit:=1000;
+  new.daily_points_cap:=1000000;
   return new;
 end;
 $$;
 
-drop trigger if exists reward_rules_normalise_practice_limit
+drop trigger if exists reward_rules_normalise_daily_points_cap
   on public.reward_rules;
 
-create trigger reward_rules_normalise_practice_limit
-before insert or update of practice_daily_limit
+create trigger reward_rules_normalise_daily_points_cap
+before insert or update of daily_points_cap
 on public.reward_rules
 for each row
-execute function public.normalise_reward_rules_practice_limit();
+execute function public.normalise_reward_rules_daily_points_cap();
 
 notify pgrst,'reload schema';
 
