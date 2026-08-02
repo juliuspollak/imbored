@@ -21,26 +21,24 @@ const FIELDS=[
   ["minimum_points","Minimum game points","Lowest possible award for a completed game."],
   ["maximum_points","Maximum game points","Highest possible award before a separate winner's prize."],
   ["daily_points_cap","Daily Practice cap","Maximum Practice points earned per Sydney day. Challenge points are not capped."],
-  ["practice_daily_limit","Daily practice limit","Number of practice games that can award points each day."],
   ["streak_protection_cost","Streak protection cost","Points charged to protect a missed streak day."],
 ];
 
 export default function AdminRewards({onBack}){
   const {profile}=useAuth();
   const [tab,setTab]=useState("rules");
-  const [rules,setRules]=useState(null),[practiceUsage,setPracticeUsage]=useState(null),[players,setPlayers]=useState([]);
+  const [rules,setRules]=useState(null),[players,setPlayers]=useState([]);
   const [msg,setMsg]=useState(""),[loading,setLoading]=useState(true);
   const [adjust,setAdjust]=useState({player:"",amount:"",reason:""});
 
   const refresh=useCallback(async()=>{
     if(!profile?.is_admin)return;
     setLoading(true);
-    const [{data:r},{data:usage},{data:p}]=await Promise.all([
+    const [{data:r},{data:p}]=await Promise.all([
       supabase.from("reward_rules").select("*").eq("is_active",true).maybeSingle(),
-      supabase.rpc("get_my_practice_reward_usage"),
       supabase.from("profiles").select("id,name,icon").order("name"),
     ]);
-    setRules(r);setPracticeUsage(usage);setPlayers(p||[]);setLoading(false);
+    setRules(r);setPlayers(p||[]);setLoading(false);
   },[profile?.is_admin]);
   useEffect(()=>{refresh()},[refresh]);
 
@@ -64,8 +62,7 @@ export default function AdminRewards({onBack}){
 
     {loading?<p style={{textAlign:"center",padding:"var(--space-8)",color:"var(--color-text-secondary)"}}>Loading…</p>:<>
     {tab==="rules"&&rules&&<div style={{display:"flex",flexDirection:"column",gap:"var(--space-3)"}}>
-      <div style={{borderRadius:"var(--radius-lg)",padding:"var(--space-3)",fontSize:"var(--text-caption-size)",background:"var(--color-info-bg)",color:"var(--color-text-primary)"}}>Challenge games earn the full award without a daily cap. Practice earns half, only three Practice completions of each game score per day, and Practice earnings stop after {rules.daily_points_cap || 40} points in a Sydney day.</div>
-      {practiceUsage&&<div style={{borderRadius:"var(--radius-lg)",padding:"var(--space-3)",fontSize:"var(--text-caption-size)",background:"var(--color-success-bg)",color:"var(--color-text-primary)"}}><div style={{fontWeight:600}}>Your practice rewards today (limit {practiceUsage.daily_limit} per game)</div><div style={{marginTop:"var(--space-1)",opacity:.7}}>{practiceUsage.by_game?.length?practiceUsage.by_game.map(i=>`${i.game} ${i.rewarded_count}/${practiceUsage.daily_limit}`).join(" · "):"None yet"}</div></div>}
+      <div style={{borderRadius:"var(--radius-lg)",padding:"var(--space-3)",fontSize:"var(--text-caption-size)",background:"var(--color-info-bg)",color:"var(--color-text-primary)"}}>Challenge games earn the full award without a daily cap. Practice earns {rules.practice_points_percent || 50}% and can award up to {rules.daily_points_cap || 40} points per Sydney day.</div>
       <Card style={{padding:"var(--space-4)",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"var(--space-3)"}}>
         {FIELDS.map(([key,label,help])=><label key={key} style={{fontSize:11}}>
           <span style={{fontWeight:600,color:"var(--color-text-primary)"}}>{label}</span>

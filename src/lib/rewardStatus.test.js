@@ -2,15 +2,18 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { rewardStatusText } from "./rewardStatus.js";
 
-test("explains the Practice daily limit instead of showing an unexplained fraction", () => {
+const practiceCapMessage = "You’ve earned all your Practice points for today. You can keep playing for fun — Practice points reset tomorrow.";
+
+test("uses one clear message for the Practice points cap", () => {
   assert.equal(
     rewardStatusText({ daily_points_cap_reached: true, daily_points_earned: 40, daily_points_cap: 40 }),
-    "Practice points limit reached: 40 of 40 today · resets tomorrow"
+    practiceCapMessage
   );
   assert.equal(
     rewardStatusText({ message: "40/40" }),
-    "Practice points limit reached: 40 of 40 today · resets tomorrow"
+    practiceCapMessage
   );
+  assert.equal(rewardStatusText({ practice_limit_reached: true }), practiceCapMessage);
 });
 
 test("continues to show awarded Challenge points normally", () => {
