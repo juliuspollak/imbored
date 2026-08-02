@@ -144,7 +144,11 @@ begin
     E'  if s.game=\'zoom\' and zoom_correct<zoom_total then\n    time_points:=0;\n  elsif benchmark_seconds is not null\n    and s.seconds<=benchmark_seconds*0.8 then\n    time_points:=r.fast_time_bonus;\n  elsif benchmark_seconds is not null\n    and s.seconds<=benchmark_seconds then\n    time_points:=r.average_time_bonus;\n  elsif benchmark_seconds is not null\n    and s.seconds>benchmark_seconds*1.5 then\n    time_points:=-r.fast_time_bonus;\n  elsif benchmark_seconds is not null\n    and s.seconds>benchmark_seconds*1.2 then\n    time_points:=-r.average_time_bonus;\n  end if;\n\n  if s.hints>0 then\n    hint_points:=-(s.hints*r.hint_penalty);\n  end if;\n  if s.mistakes>0 then\n    mistake_points:=-(s.mistakes*r.mistake_penalty);\n  end if;',
     E'  scored_seconds:=public.scored_game_seconds(s.seconds,s.hints,s.mistakes,benchmark_seconds);\n  if not (s.game=\'zoom\' and zoom_correct<zoom_total) and benchmark_seconds>0 then\n    performance_adjustment:=greatest(-3,least(3,round(10*(1-scored_seconds/benchmark_seconds))::integer));\n  end if;\n  time_points:=performance_adjustment;');
   updated:=replace(updated,E'    \'time\',time_points,',E'    \'time\',time_points,\n    \'scored_seconds\',scored_seconds,\n    \'hint_penalty_seconds\',greatest(coalesce(s.hints,0),0)*benchmark_seconds*0.20,\n    \'mistake_penalty_seconds\',greatest(coalesce(s.mistakes,0),0)*benchmark_seconds*0.10,');
-  updated:=replace(updated,"'economy_version','v165'","'economy_version','v207'");
+  updated:=replace(
+    updated,
+    E'\'economy_version\',\'v165\'',
+    E'\'economy_version\',\'v207\''
+  );
   updated:=replace(updated,E'    \'time_clean_sample_count\',benchmark.clean_sample_count\n',E'    \'time_clean_sample_count\',benchmark.clean_sample_count,\n    \'scored_seconds\',scored_seconds,\n    \'benchmark_ready\',benchmark.clean_sample_count>=6\n');
   execute updated;
 end;
