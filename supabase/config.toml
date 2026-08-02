@@ -3,6 +3,10 @@ project_id = "imbored"
 [db]
 schema_paths = ["./schemas/public.sql"]
 
+[db.seed]
+enabled = true
+sql_paths = ["./schemas/seed.sql"]
+
 # This function performs its own user-token and admin-profile verification.
 # Gateway JWT verification must remain disabled because the project uses the
 # newer asymmetric ES256 signing-key system.

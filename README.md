@@ -40,20 +40,14 @@ Outputs static files to `dist/`.
 Both Vercel and Netlify let you attach your own domain for free under
 Project Settings → Domains — just point a CNAME/A record at them.
 
-## Hidden-player privacy migration
+## Database schema
 
-After deploying this version, run this file once in **Supabase Dashboard → SQL Editor**:
+The current application-owned database is defined by:
 
-```text
-supabase/migration_complete_hidden_user_privacy.sql
-```
+- `supabase/schemas/public.sql` — tables, functions, triggers, policies and grants.
+- `supabase/schemas/seed.sql` — non-personal game, benchmark and reward configuration.
 
-The earlier implementation hid only the `profiles` row. This migration also hides the player's statistics, leaderboard entries, presence, team memberships, feedback, votes, release-note reactions and pokes at database level. Admins and the hidden player can still see the player's own data.
-
-## Rewards & Progression v60
-
-Run `supabase/migration_rewards_progression_v60.sql` after the v59 migrations.
-It adds secure server-side Points awarding, streaks, levels, transfers, rewards,
-wishes, redemptions, streak protection, and admin configuration. Players only
-see a simple Points/Streak/Level interface; calculation details remain stored
-in the private ledger for tuning and audit.
+The schema was baselined from the test project after the v211 scoring cleanup.
+Historical root-level migrations are no longer the source of truth. Make schema
+changes declaratively, review the generated diff, and deploy only the new
+forward migration. Never commit player or authentication data.
