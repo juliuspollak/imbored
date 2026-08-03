@@ -4,6 +4,7 @@ import { challengeScore } from "./performanceScoring.js";
 // standings a circle sees during the week match the winner the server picks
 // when it closes.
 export const MISSED_ROUND_PENALTY = -100;
+export const MAX_VISIBLE_STANDINGS = 5;
 
 function isoDayIndex(dateString) {
   return (new Date(`${dateString}T12:00:00`).getDay() || 7) - 1;
@@ -66,6 +67,17 @@ export function rankStandings(entries) {
   ];
 }
 
+// Keep the challenge card compact: show the top five participants. When the
+// signed-in player has participated but sits below fifth, include their row as
+// well so they can still see their own position.
+export function limitChallengeStandings(entries, userId, limit = MAX_VISIBLE_STANDINGS) {
+  const participants = entries.filter((entry) => Number(entry.played) > 0);
+  const topPlayers = participants.slice(0, limit);
+  const currentPlayer = participants.find((entry) => entry.userId === userId);
+  if (currentPlayer && !topPlayers.some((entry) => entry.userId === userId)) return [...topPlayers, currentPlayer];
+  return topPlayers;
+}
+
 function matchesSlot(row, slot) {
   return row.game === slot.game && (slot.date == null || row.challenge_date === slot.date);
 }
@@ -86,8 +98,7 @@ export function buildChallengeStandings({
   }, {});
 
   const visibleRoster = roster.filter((member) => member.id === userId || member.is_private !== true);
-
-  return rankStandings(visibleRoster.map((member) => {
+  const entries = visibleRoster.map((member) => {
     const memberRows = (rowsByPlayer[member.id] || []).slice()
       .sort((a, b) => String(a.completed_at || "").localeCompare(String(b.completed_at || "")));
     const dailyResults = slots.map((slot) => memberRows.find((row) => matchesSlot(row, slot)) || null);
@@ -109,15 +120,17 @@ export function buildChallengeStandings({
       total: slots.length,
       missed: slots.length - summary.played,
     };
-  }));
+  }).filter((entry) => entry.played > 0);
+
+  return limitChallengeStandings(rankStandings(entries), userId);
 }
 
 // Circle standings computed and ranked by the database, so the browser holds
 // no copy of the weekly scoring formula. Private profiles are excluded rather
 // than anonymised because private accounts cannot participate in circles.
 export function fromServerStandings(serverRows = [], userId = null) {
-  return serverRows
-    .filter((row) => row.member_id === userId || !row.is_private)
+  const entries = serverRows
+    .filter((row) => (row.member_id === userId || !row.is_private) && Number(row.rounds_played) > 0)
     .map((row) => {
       const rounds = Array.isArray(row.round_scores) ? row.round_scores : null;
       return {
@@ -139,4 +152,6 @@ export function fromServerStandings(serverRows = [], userId = null) {
         dailyScores: rounds ? rounds.map((round) => round.score) : [],
       };
     });
+
+  return limitChallengeStandings(entries, userId);
 }
