@@ -30,7 +30,12 @@ export function AuthProvider({ children }) {
     if (data) {
       const browserZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (browserZone && browserZone !== data.timezone) {
-        supabase.rpc("set_my_timezone", { candidate: browserZone }).catch(() => {});
+        // supabase.rpc() returns a PromiseLike that only implements then() --
+        // it has no .catch(). Calling .catch() on it throws a TypeError, which
+        // initialiseSession() would treat as an invalid session and sign the
+        // player straight back out. Promise.resolve adopts the thenable and
+        // gives us a real promise to swallow failures on.
+        Promise.resolve(supabase.rpc("set_my_timezone", { candidate: browserZone })).catch(() => {});
       }
     }
     return data || null;
