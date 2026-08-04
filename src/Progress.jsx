@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Star, Flame, Trophy, Gift, Send, ShieldCheck, PartyPopper, X, Lock, Gamepad2, ArrowDownLeft, ArrowUpRight, RotateCcw, Info, ChevronDown, ChevronRight } from "lucide-react";
+import { Star, Flame, Trophy, Gift, Send, ShieldCheck, PartyPopper, X, Lock, Gamepad2, ArrowDownLeft, ArrowUpRight, RotateCcw, ChevronDown, ChevronRight } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase } from "./lib/supabase.js";
 import { isCommunityVisibleProfile } from "./lib/profileVisibility.js";
@@ -10,6 +10,7 @@ import Button from "./components/Button.jsx";
 import Card from "./components/Card.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
 import { GAME_NAMES } from "./lib/gameBranding.jsx";
+import ScoringGuide from "./ScoringGuide.jsx";
 
 const ACTIVITY_LIMIT=8;
 const TRANSFER_HISTORY_LIMIT=100;
@@ -33,7 +34,19 @@ function gameBreakdown(item){
   if(item.reason_code!=="GAME_COMPLETED") return [];
   const m=item.metadata||{};
   if(m.economy_rebased) return [["Previous scale",m.pre_v137_points],["Rebalanced",m.rebased_points]].filter(([,v])=>Number(v)!==0);
-  return [["Base",m.base],["Day difficulty",m.day_bonus],["Speed",m.time],["Hints",m.hints],["Mistakes",m.mistakes],["Weekly streak",m.weekly_streak],["Practice rate",m.mode_adjustment],["Adjustment",m.limit_adjustment],["Practice cap",m.daily_cap_adjustment]].filter(([,v])=>Number(v)!==0);
+  // Number(undefined) is NaN, and NaN !== 0, so the old filter let removed
+  // fields through as blank rows: "Hints", "Mistakes" and "Practice cap" have
+  // not been sent since hints and mistakes started costing time instead of
+  // points, and the daily cap was dropped. Require a real number so a field
+  // retired later disappears instead of rendering empty.
+  return [
+    ["Base",m.base],
+    ["Day difficulty",m.day_bonus],
+    ["Speed vs typical",m.performance_adjustment ?? m.time],
+    ["Weekly streak",m.weekly_streak],
+    ["Practice rate",m.mode_adjustment],
+    ["Adjustment",m.limit_adjustment],
+  ].filter(([,v])=>Number.isFinite(Number(v))&&Number(v)!==0);
 }
 
 export default function Progress({ onBack, onOpenRewards }) {
@@ -119,10 +132,7 @@ export default function Progress({ onBack, onOpenRewards }) {
           </div>
         </section>
 
-        <div style={{borderRadius:"var(--radius-lg)",padding:"var(--space-3)",marginBottom:"var(--space-3)",display:"flex",alignItems:"flex-start",gap:"var(--space-2)",background:"var(--color-info-bg)",color:"var(--color-text-primary)"}}>
-          <Info size={14} style={{color:"var(--color-primary)",flexShrink:0,marginTop:2}}/>
-          <span style={{fontSize:10,lineHeight:1.5,opacity:.65}}>Lifetime points raise your level and never decrease when you spend or send points. Each game’s first {rules?.practice_daily_limit||3} Practice rounds per Sydney day earn {rules?.practice_points_percent||50}% of Challenge points. Challenge points are not capped.</span>
-        </div>
+        <ScoringGuide rules={rules} />
 
         {onOpenRewards&&<button onClick={onOpenRewards} style={{width:"100%",marginBottom:"var(--space-3)",borderRadius:"var(--radius-lg)",padding:"var(--space-3)",display:"flex",alignItems:"center",gap:"var(--space-3)",textAlign:"left",background:"var(--color-surface)",border:"1px solid var(--color-border)",cursor:"pointer",color:"inherit"}}>
           <span style={{width:36,height:36,borderRadius:"var(--radius-md)",background:"var(--color-info-bg)",color:"var(--color-primary)",display:"grid",placeItems:"center",flexShrink:0}}><Gift size={16}/></span>

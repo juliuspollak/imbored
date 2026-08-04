@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext.jsx";
+import { useI18n } from "../lib/i18n.jsx";
 import { supabase, supabaseReady } from "../lib/supabase.js";
 import GameHomeButton from "../GameHomeButton.jsx";
 import AnimalDie from "./animalRush/AnimalDie.jsx";
@@ -187,6 +188,7 @@ function PhoneOnly({ onExit }) {
 
 export default function AnimalRush({ onExit }) {
   const { user, profile } = useAuth();
+  const { t } = useI18n();
   const supported = useMemo(phoneSupported, []);
   const reducedMotion = useReducedMotionPreference();
   const [room, setRoom] = useState(null);
@@ -874,11 +876,11 @@ export default function AnimalRush({ onExit }) {
     : null;
   const roundResultText = roundComplete
     ? (room.round_winner_id === user?.id
-      ? "You won this round 🎉"
+      ? t("rush.youWonRound")
       : roundWinner
-        ? `${roundWinner.player_name || "Another player"} won this round`
-        : "Nobody found it in time")
-    : outcome === "win" ? "You got it!" : "You lost this round";
+        ? t("rush.otherWonRound", { name: roundWinner.player_name || t("rush.anotherPlayer") })
+        : t("rush.nobodyWonRound"))
+    : outcome === "win" ? t("rush.youGotIt") : t("rush.youLostRound");
   const rollStartedAt = room.roll_at
     ? new Date(room.roll_at).getTime()
     : new Date(room.reveal_at).getTime() - DIE_ROLL_DURATION_MS;

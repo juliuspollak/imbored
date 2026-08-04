@@ -1,4 +1,5 @@
 import DifficultyRating, { DifficultyRatingBadge } from "./DifficultyRating.jsx";
+import ScoreBreakdown from "./ScoreBreakdown.jsx";
 import { rewardStatusText } from "./lib/rewardStatus.js";
 import { rateDifficulty } from "./lib/saveStats.js";
 import { useI18n } from "./lib/i18n.jsx";
@@ -112,6 +113,7 @@ export default function GameSolvedPanel({
           {rewardStatusText(rewardResult, noPointsLabel ?? t("common.noPoints"))}
         </div>
       )}
+      {rewardResult && !rewardResult.error && <ScoreBreakdown rewardResult={rewardResult} />}
       <div className="game-solved-rating-in" key={savedStatId ? "rated" : completionFinished ? "completed" : "pending"}>
         {difficultyRating !== null ? (
           <DifficultyRatingBadge value={difficultyRating} />

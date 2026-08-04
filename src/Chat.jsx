@@ -3,6 +3,7 @@ import { ArrowLeft, Check, Send, Smile } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { sendPoke } from "./lib/pokes.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
+import { useI18n } from "./lib/i18n.jsx";
 import Button from "./components/Button.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
 import ChatSafetyMenu from "./ChatSafetyMenu.jsx";
@@ -94,6 +95,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [pokeState, setPokeState] = useState("");
+  const { t } = useI18n();
   const [peerAvailable, setPeerAvailable] = useState(true);
   // stat id -> "played" | "unplayed". A missing key means "not looked up yet",
   // which renders no action rather than guessing at one.
@@ -560,7 +562,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
                     if (status === "played") {
                       return (
                         <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:8, fontSize:"var(--text-caption-size)", fontWeight:600, color:"var(--color-text-secondary)" }}>
-                          <Check size={13} /> You already played this one
+                          <Check size={13} /> {t("chat.alreadyPlayed")}
                         </div>
                       );
                     }
@@ -574,7 +576,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
                           }}
                           style={{ marginTop:8 }}
                         >
-                          Play now
+                          {t("chat.playNow")}
                         </Button>
                       );
                     }
