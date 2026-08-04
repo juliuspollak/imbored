@@ -54,60 +54,51 @@ test("unranked players sort last and never take a rank number", () => {
   assert.deepEqual(ranked.map((entry) => [entry.userId, entry.rank]), [["b", 1], ["a", 2], ["c", null]]);
 });
 
-// The database strips a private player's rows before they reach the browser,
-// so "no results" and "missed every round" look identical on the client. The
-// standings must not read that silence as a forfeit.
-test("a player who hides their stats is left unranked, not scored as absent", () => {
+// Standings list participants only. A private player's rows are stripped by
+// the database before they reach the browser, so they arrive with nothing
+// visible and drop out for the same reason a no-show does — no forfeit score
+// is invented for either.
+test("players with nothing visible are left out of the standings entirely", () => {
   const standings = buildChallengeStandings({
     rows: [{ user_id: "me", game: "hive", challenge_date: MONDAY, seconds: 100, hints: 0, mistakes: 0, completed_at: "x" }],
     roster: [
-      { id: "me", name: "Me", show_stats_to_others: true },
-      { id: "quiet", name: "Quiet", show_stats_to_others: false },
+      { id: "me", name: "Me" },
+      { id: "quiet", name: "Quiet" },
+      { id: "absent", name: "Absent" },
     ],
     slots: ROUNDS,
     benchmarkMap: BENCHMARKS,
     userId: "me",
     missedPenalty: MISSED_ROUND_PENALTY,
   });
-  const quiet = standings.find((entry) => entry.userId === "quiet");
-
-  assert.equal(quiet.unranked, true);
-  assert.equal(quiet.rank, null);
-  assert.equal(quiet.score, null);
-  assert.notEqual(quiet.score, ROUNDS.length * MISSED_ROUND_PENALTY);
-  assert.equal(standings.find((entry) => entry.userId === "me").rank, 1);
+  assert.deepEqual(standings.map((entry) => entry.userId), ["me"]);
+  assert.equal(standings[0].rank, 1);
 });
 
-test("a player who is visible but absent is still charged for missed rounds", () => {
+test("a roster member flagged private is dropped before scoring", () => {
   const standings = buildChallengeStandings({
-    rows: [],
-    roster: [{ id: "absent", name: "Absent", show_stats_to_others: true }],
+    rows: [result("hive", MONDAY, { user_id: "quiet" }), result("tango", TUESDAY, { user_id: "quiet" })],
+    roster: [{ id: "quiet", name: "Quiet", is_private: true }],
     slots: ROUNDS,
     benchmarkMap: BENCHMARKS,
     userId: "me",
     missedPenalty: MISSED_ROUND_PENALTY,
   });
-  assert.deepEqual(
-    { unranked: standings[0].unranked, score: standings[0].score, played: standings[0].played },
-    { unranked: false, score: ROUNDS.length * MISSED_ROUND_PENALTY, played: 0 },
-  );
+  assert.deepEqual(standings, []);
 });
 
-// Admins can read private rows, so when the data does arrive the player is a
-// real competitor again — only the per-round detail stays masked.
-test("a private player whose rows are visible is ranked, with per-round detail masked", () => {
+test("a participant whose rows are visible is ranked on those rows", () => {
   const standings = buildChallengeStandings({
     rows: [result("hive", MONDAY), result("tango", TUESDAY)],
-    roster: [{ id: "quiet", name: "Quiet", show_stats_to_others: false }],
+    roster: [{ id: "quiet", name: "Quiet" }],
     slots: ROUNDS,
     benchmarkMap: BENCHMARKS,
     userId: "admin",
     missedPenalty: MISSED_ROUND_PENALTY,
   });
-  assert.equal(standings[0].unranked, false);
   assert.equal(standings[0].rank, 1);
   assert.equal(standings[0].score, 200);
-  assert.ok(standings[0].dailyResults.every((entry) => entry.is_private));
+  assert.equal(standings[0].played, 2);
 });
 
 test("your own results are never masked by your own privacy setting", () => {
@@ -165,17 +156,22 @@ test("per-round tiles reconcile with the headline score", () => {
   assert.equal(fromTiles, player.score);
 });
 
-test("a private player keeps a real rank and score, with only per-round detail withheld", () => {
-  const [player] = fromServerStandings(
-    [serverRow({ member_id: "quiet", member_name: "Quiet", is_private: true, round_scores: null })],
-    "me",
+test("a private player is dropped from server standings, but never your own row", () => {
+  assert.deepEqual(
+    fromServerStandings([serverRow({ member_id: "quiet", is_private: true, round_scores: null })], "me"),
+    [],
   );
-  assert.equal(player.unranked, false);
-  assert.equal(player.rank, 1);
-  assert.equal(player.score, 100);
-  assert.equal(player.played, 2);
-  assert.equal(player.detailHidden, true);
-  assert.deepEqual(player.dailyScores, []);
+  // The RPC computes is_private as "someone else, and hidden", so your own row
+  // always arrives visible even when you have stats hidden from everyone else.
+  const [mine] = fromServerStandings([serverRow({ member_id: "me", is_private: false })], "me");
+  assert.equal(mine.isCurrentUser, true);
+});
+
+test("players who have not started are left out of server standings", () => {
+  assert.deepEqual(
+    fromServerStandings([serverRow({ rounds_played: 0, round_scores: null })], "me"),
+    [],
+  );
 });
 
 test("your own row is marked so the standings can label it", () => {
@@ -193,6 +189,23 @@ test("circle rounds match on day and game, the personal challenge on game alone"
   const anyDay = buildChallengeStandings({
     rows, roster, slots: [{ game: "hive" }], benchmarkMap: BENCHMARKS, userId: "me",
   });
-  assert.equal(onWrongDay[0].played, 0);
+  assert.deepEqual(onWrongDay, []);
   assert.equal(anyDay[0].played, 1);
+});
+
+test("the card shows the top five, plus your own row when you place below them", () => {
+  const rows = (id, score) => ({ member_id: id, member_name: id, member_icon: "🙂", standing_rank: score, challenge_score: 1000 - score, rounds_played: 3, rounds_total: 3, is_private: false, round_scores: [] });
+  const seven = ["a", "b", "c", "d", "e", "f", "me"].map((id, index) => rows(id, index + 1));
+
+  const asStranger = fromServerStandings(seven, "nobody");
+  assert.deepEqual(asStranger.map((entry) => entry.userId), ["a", "b", "c", "d", "e"]);
+
+  const asMe = fromServerStandings(seven, "me");
+  assert.deepEqual(asMe.map((entry) => entry.userId), ["a", "b", "c", "d", "e", "me"]);
+  assert.equal(asMe.at(-1).rank, 7);
+});
+
+test("a top-five finisher is not duplicated at the end of their own card", () => {
+  const rows = ["me", "b", "c"].map((id, index) => ({ member_id: id, member_name: id, member_icon: "🙂", standing_rank: index + 1, challenge_score: 100 - index, rounds_played: 2, rounds_total: 3, is_private: false, round_scores: [] }));
+  assert.deepEqual(fromServerStandings(rows, "me").map((entry) => entry.userId), ["me", "b", "c"]);
 });

@@ -64,7 +64,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
         >
           <Trophy size={17} style={{ color: "var(--color-warning-gold)" }} />
           <span style={{ flex: 1, fontSize: "var(--text-body-size)", fontWeight: 700 }}>Standings</span>
-          <span style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>{standings.length} players</span>
+          <span style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>Top {standings.length}</span>
           <ChevronDown size={17} style={{ color: "var(--color-icon-subtle)", transform: open ? "rotate(180deg)" : "none", transition: "transform var(--transition-fast)" }} />
         </button>
         {open && (
@@ -115,21 +115,21 @@ function StandingsList({ standings, expandedPlayerId, setExpandedPlayerId, previ
               style={{ width: "100%", minHeight: 64, display: "flex", alignItems: "center", gap: "var(--space-3)", padding: "var(--space-3)", border: 0, background: "transparent", color: "inherit", font: "inherit", textAlign: "left", cursor: "pointer" }}
             >
               <span style={{ minWidth: 24, flexShrink: 0, textAlign: "center", color: "var(--color-text-secondary)", fontSize: "var(--text-body-size)", fontWeight: 700 }}>
-                {isLeader || isWinner ? <Trophy size={19} style={{ color: "var(--color-warning-gold)", display: "inline" }} /> : player.unranked ? "–" : rank}
+                {isLeader || isWinner ? <Trophy size={19} style={{ color: "var(--color-warning-gold)", display: "inline" }} /> : rank}
               </span>
               <span aria-hidden="true" style={{ width: 36, height: 36, display: "grid", placeItems: "center", flexShrink: 0, borderRadius: "50%", background: "var(--color-avatar-bg)", border: "2px solid var(--color-avatar-border)", fontSize: 20 }}>{player.icon || "🙂"}</span>
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--color-text-primary)", fontSize: "var(--text-body-size)", fontWeight: 600 }}>{player.name}{player.isCurrentUser ? " (you)" : ""}</span>
                 <span style={{ display: "block", marginTop: 2, color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>
-                  {player.unranked ? "Results hidden" : `${player.played}/${player.total} played`}
-                  {!player.unranked && player.missed > 0 && ` · ${player.missed} missed`}
+                  {`${player.played}/${player.total} played`}
+                  {player.missed > 0 && ` · ${player.missed} missed`}
                   {player.isPrivate && " · Private"}
                   {delta !== 0 && ` · ${delta > 0 ? "↑" : "↓"}${Math.abs(delta)}`}
                 </span>
               </span>
               <span style={{ flexShrink: 0, textAlign: "right" }}>
-                <span style={{ display: "block", color: isLeader ? "var(--color-warning-text)" : "var(--color-text-primary)", fontSize: 19, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{player.unranked ? "–" : player.score}</span>
-                <span style={{ display: "block", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{player.unranked ? "not shown" : "points"}</span>
+                <span style={{ display: "block", color: isLeader ? "var(--color-warning-text)" : "var(--color-text-primary)", fontSize: 19, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{player.score}</span>
+                <span style={{ display: "block", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>points</span>
               </span>
               <ChevronDown size={17} style={{ flexShrink: 0, color: "var(--color-icon-subtle)", transform: expanded ? "rotate(180deg)" : "none", transition: "transform var(--transition-fast)" }} />
             </button>
