@@ -95,7 +95,9 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
   const [error, setError] = useState("");
   const [pokeState, setPokeState] = useState("");
   const [peerAvailable, setPeerAvailable] = useState(true);
-  const [playedChallenges, setPlayedChallenges] = useState(() => new Set());
+  // stat id -> "played" | "unplayed". A missing key means "not looked up yet",
+  // which renders no action rather than guessing at one.
+  const [challengeStatus, setChallengeStatus] = useState({});
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [quickPickerOpen, setQuickPickerOpen] = useState(false);
   const [reactingMessageId, setReactingMessageId] = useState(null);
@@ -175,19 +177,31 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
       setLoading(false);
 
       // Resolve in one batch which "Beat my score" invitations are already
-      // played, so a finished one never renders a live Play now button.
+      // played. Status is tracked per stat id rather than as a set of played
+      // ones: an id we have not checked yet is "unknown", and an unknown id
+      // renders no action at all. Keying a plain set off "not present" made
+      // every unchecked invitation look playable for one frame, so opening a
+      // chat flashed Play now and then corrected itself.
       const challengeStatIds = [...new Set(
         visibleMessages
           .filter((message) => message.activity_type === "score_challenge" && message.source_stat_id)
           .map((message) => Number(message.source_stat_id))
       )];
       if (challengeStatIds.length > 0) {
-        const { data: played } = await supabase.rpc("get_my_played_score_challenges", {
+        const { data: played, error: playedError } = await supabase.rpc("get_my_played_score_challenges", {
           source_stat_ids: challengeStatIds,
         });
-        setPlayedChallenges(new Set((played || []).map((row) => Number(row.source_stat_id))));
-      } else {
-        setPlayedChallenges(new Set());
+        const playedSet = new Set((played || []).map((row) => Number(row.source_stat_id)));
+        setChallengeStatus((previous) => {
+          const next = { ...previous };
+          for (const statId of challengeStatIds) {
+            // If the lookup itself failed, fall back to offering the button:
+            // App.jsx still guards the duplicate, and a missing button would
+            // strand a player who genuinely has not played yet.
+            next[statId] = playedError ? "unplayed" : (playedSet.has(statId) ? "played" : "unplayed");
+          }
+          return next;
+        });
       }
 
       const unreadIds = visibleMessages
@@ -541,24 +555,33 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
                   ) : (
                     <div className="chat-text">{item.body}</div>
                   )}
-                  {item.activity_type === "score_challenge" && item.source_stat_id && (
-                    playedChallenges.has(Number(item.source_stat_id)) ? (
-                      <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:8, fontSize:"var(--text-caption-size)", fontWeight:600, color:"var(--color-text-secondary)" }}>
-                        <Check size={13} /> You already played this one
-                      </div>
-                    ) : (
-                      <Button
-                        size="sm"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onOpenScoreChallenge?.(item.source_stat_id);
-                        }}
-                        style={{ marginTop:8 }}
-                      >
-                        Play now
-                      </Button>
-                    )
-                  )}
+                  {item.activity_type === "score_challenge" && item.source_stat_id && (() => {
+                    const status = challengeStatus[Number(item.source_stat_id)];
+                    if (status === "played") {
+                      return (
+                        <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:8, fontSize:"var(--text-caption-size)", fontWeight:600, color:"var(--color-text-secondary)" }}>
+                          <Check size={13} /> You already played this one
+                        </div>
+                      );
+                    }
+                    if (status === "unplayed") {
+                      return (
+                        <Button
+                          size="sm"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onOpenScoreChallenge?.(item.source_stat_id);
+                          }}
+                          style={{ marginTop:8 }}
+                        >
+                          Play now
+                        </Button>
+                      );
+                    }
+                    // Reserves the row's height while the status resolves, so
+                    // the bubble does not jump when the control appears.
+                    return <div aria-hidden="true" style={{ height:32, marginTop:8 }} />;
+                  })()}
                   <div className="chat-meta">
                     <span>{formatMessageTime(item.created_at)}</span>
                     {mine && <span>{item.read_at ? "Seen" : "Sent"}</span>}
