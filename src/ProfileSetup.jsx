@@ -10,6 +10,7 @@ import Button from "./components/Button.jsx";
 import Card from "./components/Card.jsx";
 import TextInput from "./components/TextInput.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
+import AccountSafety from "./AccountSafety.jsx";
 
 const passkeySupported = typeof window !== "undefined" && !!window.PublicKeyCredential;
 
@@ -291,6 +292,8 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
         {error && <StatusBanner variant="error" style={{ marginBottom: "var(--space-3)" }}>{error}</StatusBanner>}
         <Button type="submit" fullWidth loading={saving} disabled={!name.trim()}>{saving ? t("profile.saving") : isFirstTime ? t("profile.start") : t("profile.save")}</Button>
       </form>
+
+      {!isFirstTime && <div style={{ marginTop: "var(--space-4)" }}><AccountSafety /></div>}
 
       <style>{`
         .profile-avatar-button:focus-visible,

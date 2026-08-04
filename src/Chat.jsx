@@ -5,6 +5,7 @@ import { sendPoke } from "./lib/pokes.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
 import Button from "./components/Button.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
+import ChatSafetyMenu from "./ChatSafetyMenu.jsx";
 
 const QUICK_REACTIONS = ["👍", "👎", "❤️", "😂", "🔥", "👏"];
 const MESSAGE_REACTIONS = [
@@ -456,6 +457,13 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
             <button type="button" disabled={!peerAvailable} onClick={handlePoke} className="chat-poke" style={{ opacity:peerAvailable ? 1 : .4 }}>
               {pokeState === "sending" ? "Poking…" : pokeState === "sent" ? "Poked! 👋" : pokeState === "error" ? "Try again" : "👋 Poke"}
             </button>
+          )}
+          {!isSystemConversation && (
+            <ChatSafetyMenu
+              peerId={peerId}
+              peerName={peerProfile?.name}
+              onBlocked={() => { setPeerAvailable(false); onBack?.(); }}
+            />
           )}
         </header>
 

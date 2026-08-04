@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { MessageCircle, Search, Sparkles, Users } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
-import { canDiscoverProfile } from "./lib/profileVisibility.js";
 import Page from "./components/Page.jsx";
 import PageHeader from "./components/PageHeader.jsx";
 import Card from "./components/Card.jsx";
@@ -34,7 +33,10 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
     const cutoff = new Date(Date.now() - 45000).toISOString();
     const [messageResult, profileResult, presenceResult] = await Promise.all([
       supabase.from("direct_messages").select("id,sender_id,recipient_id,body,created_at,read_at,system_generated,activity_type,source_stat_id").or(`sender_id.eq.${currentUser.id},recipient_id.eq.${currentUser.id}`).order("created_at", { ascending: false }).limit(500),
-      supabase.from("profiles").select("id,name,icon,mood,is_private,hidden_from_others,is_admin,is_approved,is_blocked,account_deleted_at").neq("id", currentUser.id).order("name"),
+      // Who you may message is a server rule (circle-mates plus admins, minus
+      // blocks) shared with send_direct_message, so the list can never offer
+      // someone the send would refuse.
+      supabase.rpc("get_messageable_players"),
       supabase.from("presence").select("user_id").gte("last_seen", cutoff),
     ]);
     if (messageResult.error) setError(messageResult.error.message || "Couldn’t load chats.");
@@ -42,17 +44,10 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
       (message) => !(message.system_generated && message.sender_id === currentUser.id && message.recipient_id !== currentUser.id)
     ));
     if (!profileResult.error) {
-      const visibleProfiles = (profileResult.data || []).filter((p) => {
-        const active = !p.account_deleted_at && !p.is_blocked && (p.is_admin || p.is_approved !== false);
-        const pendingForAdmin = !!currentProfile?.is_admin
-          && !p.account_deleted_at
-          && !p.is_blocked
-          && !p.is_admin
-          && p.is_approved === false;
-        return (active || pendingForAdmin)
-          && canDiscoverProfile(p, { isAdmin: !!currentProfile?.is_admin });
-      });
-      setProfiles([{ ...currentProfile, id: currentUser.id, name: "Challenge results", icon: "🏆" }, ...visibleProfiles]);
+      setProfiles([
+        { ...currentProfile, id: currentUser.id, name: "Challenge results", icon: "🏆" },
+        ...(profileResult.data || []),
+      ]);
     }
     setPresence(new Set((presenceResult.data || []).map((p) => p.user_id)));
     setLoading(false);

@@ -1356,6 +1356,229 @@ $$;
 
 
 --
+-- Name: players_share_circle(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.players_share_circle(first_player uuid, second_player uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select exists(
+    select 1
+    from public.circle_members mine
+    join public.circle_members theirs on theirs.circle_id=mine.circle_id
+    where mine.user_id=first_player
+      and theirs.user_id=second_player
+  )
+$$;
+
+
+--
+-- Name: get_messageable_players(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+-- Who the signed-in player may start a conversation with. Mirrors the rule
+-- send_direct_message enforces, so the list can never offer someone the send
+-- would then refuse: people you share a circle with, plus admins so support
+-- stays reachable. Blocked players in either direction are omitted.
+CREATE FUNCTION public.get_messageable_players() RETURNS TABLE(id uuid, name text, icon text, mood text, is_admin boolean)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select
+    profile.id, profile.name::text, profile.icon::text, profile.mood::text, profile.is_admin
+  from public.profiles profile
+  where profile.id<>auth.uid()
+    and profile.account_deleted_at is null
+    and coalesce(profile.is_blocked,false)=false
+    and coalesce(profile.hidden_from_others,false)=false
+    and (profile.is_admin=true or coalesce(profile.is_approved,false)=true)
+    and (
+      coalesce(profile.is_private,false)=false
+      or public.is_admin(auth.uid())
+    )
+    and not public.is_blocked_between(auth.uid(),profile.id)
+    and (
+      profile.is_admin=true
+      or public.players_share_circle(auth.uid(),profile.id)
+    )
+  order by profile.name
+$$;
+
+
+--
+-- Name: is_blocked_between(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+-- Blocking is symmetric in effect: once either side blocks, neither can reach
+-- the other. Otherwise blocking someone would still leave you reading them.
+CREATE FUNCTION public.is_blocked_between(first_player uuid, second_player uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select exists(
+    select 1 from public.player_blocks
+    where (blocker_id=first_player and blocked_id=second_player)
+       or (blocker_id=second_player and blocked_id=first_player)
+  )
+$$;
+
+
+--
+-- Name: block_player(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.block_player(target_user_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+begin
+  if auth.uid() is null then
+    raise exception 'You must be signed in.' using errcode='42501';
+  end if;
+  if target_user_id is null or target_user_id=auth.uid() then
+    raise exception 'Choose another player to block.' using errcode='22023';
+  end if;
+  insert into public.player_blocks(blocker_id,blocked_id)
+  values(auth.uid(),target_user_id)
+  on conflict do nothing;
+end;
+$$;
+
+
+--
+-- Name: unblock_player(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.unblock_player(target_user_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+begin
+  delete from public.player_blocks
+  where blocker_id=auth.uid() and blocked_id=target_user_id;
+end;
+$$;
+
+
+--
+-- Name: get_my_blocked_players(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_my_blocked_players() RETURNS TABLE(user_id uuid, name text, icon text, created_at timestamp with time zone)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select block.blocked_id, profile.name::text, profile.icon::text, block.created_at
+  from public.player_blocks block
+  join public.profiles profile on profile.id=block.blocked_id
+  where block.blocker_id=auth.uid()
+  order by profile.name
+$$;
+
+
+--
+-- Name: report_content(uuid, bigint, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+-- Filing a report also blocks the reported player: guideline 1.2 expects the
+-- reporter to be able to remove themselves from the situation immediately,
+-- rather than waiting for a human to act.
+CREATE FUNCTION public.report_content(target_user_id uuid, target_message_id bigint, report_reason text, report_details text DEFAULT NULL::text) RETURNS bigint
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+declare
+  me uuid:=auth.uid();
+  subject uuid:=target_user_id;
+  created_id bigint;
+begin
+  if me is null then
+    raise exception 'You must be signed in.' using errcode='42501';
+  end if;
+  if target_user_id is null and target_message_id is null then
+    raise exception 'Tell us what you are reporting.' using errcode='22023';
+  end if;
+
+  if target_message_id is not null then
+    select message.sender_id into subject
+    from public.direct_messages message
+    where message.id=target_message_id
+      and (message.sender_id=me or message.recipient_id=me);
+    if not found then
+      raise exception 'That message could not be found.' using errcode='42501';
+    end if;
+  end if;
+
+  if subject=me then
+    raise exception 'You cannot report your own content.' using errcode='22023';
+  end if;
+
+  insert into public.content_reports(reporter_id,reported_user_id,message_id,reason,details)
+  values(
+    me,
+    subject,
+    target_message_id,
+    coalesce(nullif(btrim(report_reason),''),'other'),
+    nullif(btrim(report_details),'')
+  )
+  returning id into created_id;
+
+  if subject is not null then
+    insert into public.player_blocks(blocker_id,blocked_id)
+    values(me,subject)
+    on conflict do nothing;
+  end if;
+
+  return created_id;
+end;
+$$;
+
+
+--
+-- Name: admin_list_content_reports(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.admin_list_content_reports() RETURNS TABLE(id bigint, reason text, details text, status text, created_at timestamp with time zone, reporter_name text, reported_name text, reported_user_id uuid, message_body text)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select
+    report.id, report.reason, report.details, report.status, report.created_at,
+    reporter.name::text, reported.name::text, report.reported_user_id,
+    message.body::text
+  from public.content_reports report
+  left join public.profiles reporter on reporter.id=report.reporter_id
+  left join public.profiles reported on reported.id=report.reported_user_id
+  left join public.direct_messages message on message.id=report.message_id
+  where public.is_admin(auth.uid())
+  order by (report.status='open') desc, report.created_at desc
+$$;
+
+
+--
+-- Name: admin_resolve_content_report(bigint, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.admin_resolve_content_report(target_report_id bigint, new_status text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+begin
+  if not public.is_admin(auth.uid()) then
+    raise exception 'Admin only.' using errcode='42501';
+  end if;
+  if new_status not in ('open','actioned','dismissed') then
+    raise exception 'Unknown report status.' using errcode='22023';
+  end if;
+  update public.content_reports
+  set status=new_status, reviewed_by=auth.uid(), reviewed_at=now()
+  where id=target_report_id;
+end;
+$$;
+
+
+--
 -- Name: apply_challenge_streak_break(uuid, date); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -4284,32 +4507,100 @@ CREATE FUNCTION public.prepare_account_deletion(target_user_id uuid) RETURNS voi
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
-declare team_row record; replacement uuid;
 begin
   if not public.is_admin(auth.uid()) then raise exception 'Admin only.' using errcode='42501'; end if;
   if target_user_id=auth.uid() then raise exception 'You cannot delete your own account.' using errcode='22023'; end if;
   if exists(select 1 from public.profiles where id=target_user_id and is_admin=true) then raise exception 'Another admin cannot be deleted here.' using errcode='42501'; end if;
 
-  for team_row in select id from public.teams where created_by=target_user_id loop
-    select tm.user_id into replacement
-    from public.team_members tm
-    where tm.team_id=team_row.id and tm.user_id<>target_user_id
-    order by tm.joined_at asc nulls last, tm.user_id
-    limit 1;
-    if replacement is null then delete from public.teams where id=team_row.id;
-    else update public.teams set created_by=replacement where id=team_row.id; end if;
-    replacement:=null;
-  end loop;
+  perform public.strip_player_from_circles(target_user_id);
 
-  delete from public.team_members where user_id=target_user_id;
-  delete from public.team_join_requests where user_id=target_user_id;
-  delete from public.presence where user_id=target_user_id;
   update public.profiles set
     account_deleted_at=now(), account_deleted_by=auth.uid(),
     is_blocked=false, is_approved=false, hidden_from_others=true,
     blocked_at=null, blocked_by=null, blocked_reason=null,
     approved_at=null, approved_by=null
   where id=target_user_id;
+end;
+$$;
+
+
+--
+-- Name: strip_player_from_circles(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+-- Hands each circle the player owns to its longest-standing other member, or
+-- deletes it when they were alone, then removes every membership and request.
+-- Shared by admin deletion and self-service deletion so the two cannot drift.
+CREATE FUNCTION public.strip_player_from_circles(target_user_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+declare circle_row record; replacement uuid;
+begin
+  for circle_row in select id from public.circles where created_by=target_user_id loop
+    select member.user_id into replacement
+    from public.circle_members member
+    where member.circle_id=circle_row.id and member.user_id<>target_user_id
+    order by member.joined_at asc nulls last, member.user_id
+    limit 1;
+    if replacement is null then
+      delete from public.circles where id=circle_row.id;
+    else
+      update public.circles set created_by=replacement where id=circle_row.id;
+      update public.circle_members set can_approve_rewards=true
+      where circle_id=circle_row.id and user_id=replacement;
+    end if;
+    replacement:=null;
+  end loop;
+
+  delete from public.circle_members where user_id=target_user_id;
+  delete from public.circle_join_requests where user_id=target_user_id;
+  delete from public.presence where user_id=target_user_id;
+end;
+$$;
+
+
+--
+-- Name: delete_my_account(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+-- App Store guideline 5.1.1(v): an account created in-app must be deletable
+-- in-app. This clears the player's app data and anonymises the profile row.
+-- Removing the Auth user (and its stored email / linked Google identity)
+-- needs the service role, so the client calls the delete-my-account Edge
+-- Function, which invokes this first.
+CREATE FUNCTION public.delete_my_account() RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+declare me uuid:=auth.uid();
+begin
+  if me is null then
+    raise exception 'You must be signed in.' using errcode='42501';
+  end if;
+  if exists(select 1 from public.profiles where id=me and is_admin=true) then
+    raise exception 'An administrator account cannot be deleted from the app.'
+      using errcode='42501';
+  end if;
+
+  perform public.strip_player_from_circles(me);
+
+  delete from public.direct_messages where sender_id=me or recipient_id=me;
+  delete from public.player_blocks where blocker_id=me or blocked_id=me;
+  delete from public.content_reports where reporter_id=me;
+
+  update public.profiles set
+    name='Deleted player',
+    icon='🙂',
+    mood=null,
+    timezone=null,
+    account_deleted_at=now(),
+    account_deleted_by=me,
+    is_approved=false,
+    hidden_from_others=true,
+    blocked_at=null, blocked_by=null, blocked_reason=null,
+    approved_at=null, approved_by=null
+  where id=me;
 end;
 $$;
 
@@ -5045,6 +5336,18 @@ begin
   end if;
   if not public.is_available_player(target_recipient_id) then
     raise exception 'This player is no longer available for messages.' using errcode='42501';
+  end if;
+  if public.is_blocked_between(current_sender_id,target_recipient_id) then
+    raise exception 'You can no longer message this player.' using errcode='42501';
+  end if;
+  -- Messaging is scoped to people you already share a circle with, so the app
+  -- has no stranger-contact surface. Admins stay reachable either way: users
+  -- need a way to contact support about content they have reported.
+  if not public.is_admin(current_sender_id)
+     and not public.is_admin(target_recipient_id)
+     and not public.players_share_circle(current_sender_id,target_recipient_id) then
+    raise exception 'You can only message players in one of your circles.'
+      using errcode='42501';
   end if;
 
   return query
@@ -6383,6 +6686,60 @@ CREATE TABLE public.direct_messages (
 
 ALTER TABLE public.direct_messages ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
     SEQUENCE NAME public.direct_messages_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: player_blocks; Type: TABLE; Schema: public; Owner: -
+--
+
+-- Player-to-player blocking, distinct from profiles.is_blocked (an admin
+-- suspending an account) and circle_member_blocks (an organiser removing
+-- someone from one circle). App Store guideline 1.2 requires that any app
+-- with user-generated content lets a user block another user directly.
+CREATE TABLE public.player_blocks (
+    blocker_id uuid NOT NULL,
+    blocked_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT player_blocks_not_self CHECK ((blocker_id <> blocked_id))
+);
+
+
+--
+-- Name: content_reports; Type: TABLE; Schema: public; Owner: -
+--
+
+-- Guideline 1.2 also requires a reporting mechanism with a timely response.
+-- Reports are visible to app admins only; the reporter can see their own.
+CREATE TABLE public.content_reports (
+    id bigint NOT NULL,
+    reporter_id uuid NOT NULL,
+    reported_user_id uuid,
+    message_id bigint,
+    reason text NOT NULL,
+    details text,
+    status text DEFAULT 'open'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    reviewed_by uuid,
+    reviewed_at timestamp with time zone,
+    CONSTRAINT content_reports_details_length CHECK (((details IS NULL) OR (char_length(btrim(details)) <= 1000))),
+    CONSTRAINT content_reports_reason_check CHECK ((reason = ANY (ARRAY['abuse'::text, 'harassment'::text, 'spam'::text, 'sexual'::text, 'other'::text]))),
+    CONSTRAINT content_reports_status_check CHECK ((status = ANY (ARRAY['open'::text, 'actioned'::text, 'dismissed'::text]))),
+    CONSTRAINT content_reports_target_present CHECK (((reported_user_id IS NOT NULL) OR (message_id IS NOT NULL)))
+);
+
+
+--
+-- Name: content_reports_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.content_reports ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.content_reports_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -8383,7 +8740,7 @@ CREATE POLICY "available users can send a poke" ON public.pokes FOR INSERT TO au
 -- Name: direct_messages available users can send direct messages; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "available users can send direct messages" ON public.direct_messages FOR INSERT TO authenticated WITH CHECK (((auth.uid() = sender_id) AND (sender_id <> recipient_id) AND public.is_available_player(sender_id) AND public.is_available_player(recipient_id)));
+CREATE POLICY "available users can send direct messages" ON public.direct_messages FOR INSERT TO authenticated WITH CHECK (((auth.uid() = sender_id) AND (sender_id <> recipient_id) AND public.is_available_player(sender_id) AND public.is_available_player(recipient_id) AND (NOT public.is_blocked_between(sender_id, recipient_id)) AND (public.is_admin(sender_id) OR public.is_admin(recipient_id) OR public.players_share_circle(sender_id, recipient_id))));
 
 
 --
@@ -8629,7 +8986,7 @@ CREATE POLICY "participants can read direct messages" ON public.direct_messages 
    FROM public.profiles sender
   WHERE ((sender.id = direct_messages.sender_id) AND (COALESCE(sender.hidden_from_others, false) = false)))) AND (EXISTS ( SELECT 1
    FROM public.profiles recipient
-  WHERE ((recipient.id = direct_messages.recipient_id) AND (COALESCE(recipient.hidden_from_others, false) = false))))));
+  WHERE ((recipient.id = direct_messages.recipient_id) AND (COALESCE(recipient.hidden_from_others, false) = false)))) AND (NOT public.is_blocked_between(sender_id, recipient_id))));
 
 
 --
@@ -9002,6 +9359,41 @@ CREATE POLICY "visible release notes are readable" ON public.release_notes FOR S
 
 
 --
+-- Name: player_blocks / content_reports; Type: CONSTRAINT, INDEX, POLICY
+--
+
+ALTER TABLE ONLY public.player_blocks
+    ADD CONSTRAINT player_blocks_pkey PRIMARY KEY (blocker_id, blocked_id);
+ALTER TABLE ONLY public.player_blocks
+    ADD CONSTRAINT player_blocks_blocker_id_fkey FOREIGN KEY (blocker_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.player_blocks
+    ADD CONSTRAINT player_blocks_blocked_id_fkey FOREIGN KEY (blocked_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+CREATE INDEX player_blocks_blocked_idx ON public.player_blocks USING btree (blocked_id);
+
+ALTER TABLE ONLY public.content_reports
+    ADD CONSTRAINT content_reports_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.content_reports
+    ADD CONSTRAINT content_reports_reporter_id_fkey FOREIGN KEY (reporter_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.content_reports
+    ADD CONSTRAINT content_reports_reported_user_id_fkey FOREIGN KEY (reported_user_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.content_reports
+    ADD CONSTRAINT content_reports_message_id_fkey FOREIGN KEY (message_id) REFERENCES public.direct_messages(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.content_reports
+    ADD CONSTRAINT content_reports_reviewed_by_fkey FOREIGN KEY (reviewed_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+CREATE INDEX content_reports_triage_idx ON public.content_reports USING btree (status, created_at DESC);
+
+ALTER TABLE public.player_blocks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.content_reports ENABLE ROW LEVEL SECURITY;
+
+-- Reads only. Every write goes through a SECURITY DEFINER RPC, so leaving
+-- INSERT/UPDATE/DELETE without a policy denies direct table writes.
+CREATE POLICY "players read their own blocks" ON public.player_blocks FOR SELECT TO authenticated USING (((blocker_id = auth.uid()) OR public.is_admin(auth.uid())));
+CREATE POLICY "reporters and admins read reports" ON public.content_reports FOR SELECT TO authenticated USING (((reporter_id = auth.uid()) OR public.is_admin(auth.uid())));
+
+
+--
 -- Name: FUNCTION ACLs; Type: ACL; Schema: public; Owner: -
 --
 
@@ -9025,8 +9417,28 @@ REVOKE ALL ON FUNCTION public.circle_challenge_member_totals(bigint) FROM PUBLIC
 REVOKE ALL ON FUNCTION public.finalize_circle_challenge(bigint) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.get_circle_challenge_standings(bigint) FROM PUBLIC;
 
+REVOKE ALL ON FUNCTION public.get_messageable_players() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_messageable_players() TO authenticated;
+REVOKE ALL ON FUNCTION public.players_share_circle(uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.is_blocked_between(uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.strip_player_from_circles(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.block_player(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.unblock_player(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.get_my_blocked_players() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.report_content(uuid, bigint, text, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.delete_my_account() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.admin_list_content_reports() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.admin_resolve_content_report(bigint, text) FROM PUBLIC;
+
 GRANT EXECUTE ON FUNCTION public.get_circle_challenge_standings(bigint) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.set_my_timezone(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.block_player(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.unblock_player(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_my_blocked_players() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.report_content(uuid, bigint, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.delete_my_account() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_list_content_reports() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_resolve_content_report(bigint, text) TO authenticated;
 
 
 --
