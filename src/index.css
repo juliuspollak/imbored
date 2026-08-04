@@ -1,5 +1,47 @@
 @import "tailwindcss";
 
+/* =========================================================
+   NATIVE SHELL — iOS / Capacitor
+   Applies in the browser too; none of it changes desktop behaviour.
+   ========================================================= */
+
+/* The web view is full-bleed (contentInset: "never"), so the app owns the
+   notch and home-indicator areas. These are applied by the screens that fill
+   the viewport rather than as padding on <html>: several of them are sized
+   with min-height:100vh, and padding the root would push them past the
+   viewport and introduce a permanent scrollbar. */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+html {
+  height: 100%;
+  background: var(--color-page-bg, #fff);
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  /* Stops the whole page rubber-banding past its edges the way a web page
+     does. Panes that scroll are still free to scroll. */
+  overscroll-behavior: none;
+  /* iOS shows a copy/define callout on long-press, which fires constantly in
+     puzzles where holding a tile is a normal gesture. */
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Text the player is meant to read or copy stays selectable; game surfaces do
+   not, so a drag never turns into a text selection. */
+button, [role="button"], .rush-card, .hive-cell, .tango-cell, .gridly-cell {
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
 /*
  * Compact iOS/IMDb-inspired glossy controls
  *

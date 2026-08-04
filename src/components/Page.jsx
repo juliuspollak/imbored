@@ -21,6 +21,12 @@ export default function Page({
       style={{
         background: "var(--color-page-bg)",
         minHeight: "100vh",
+        // border-box keeps the safe-area padding inside the 100vh box, so the
+        // notch and home indicator are cleared without the page growing taller
+        // than the viewport.
+        boxSizing: "border-box",
+        paddingTop: "var(--safe-top)",
+        paddingBottom: "var(--safe-bottom)",
         display: "flex",
         justifyContent: "center",
         fontFamily: "var(--font-family)",
@@ -33,6 +39,9 @@ export default function Page({
           width: "100%",
           maxWidth: shellMaxWidth,
           padding: "0 var(--page-padding-x)",
+          paddingLeft: "calc(var(--page-padding-x) + var(--safe-left))",
+          paddingRight: "calc(var(--page-padding-x) + var(--safe-right))",
+          boxSizing: "border-box",
         }}
       >
         {children}

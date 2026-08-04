@@ -6,6 +6,27 @@ import InvitedApprovalNotice from "./InvitedApprovalNotice.jsx";
 import { I18nProvider } from "./lib/i18n.jsx";
 import { enableAutomaticAppUpdates } from "./lib/appUpdate.js";
 import { applyThemePreference, getCachedThemePreference } from "./lib/theme.js";
+// Fonts are bundled rather than fetched from Google's CDN. A packaged app
+// should render its own type with no network at all, and shipping them removes
+// a third-party request on every launch that would otherwise need declaring in
+// the App Store privacy questionnaire.
+// latin + latin-ext only: the app ships English and Slovak, and latin-ext
+// carries the Slovak diacritics. The unscoped imports would bundle cyrillic,
+// greek, hebrew and vietnamese too — 68 font files instead of 20.
+import "@fontsource/fredoka/latin-500.css";
+import "@fontsource/fredoka/latin-600.css";
+import "@fontsource/fredoka/latin-700.css";
+import "@fontsource/fredoka/latin-ext-500.css";
+import "@fontsource/fredoka/latin-ext-600.css";
+import "@fontsource/fredoka/latin-ext-700.css";
+import "@fontsource/inter/latin-400.css";
+import "@fontsource/inter/latin-500.css";
+import "@fontsource/inter/latin-600.css";
+import "@fontsource/inter/latin-700.css";
+import "@fontsource/inter/latin-ext-400.css";
+import "@fontsource/inter/latin-ext-500.css";
+import "@fontsource/inter/latin-ext-600.css";
+import "@fontsource/inter/latin-ext-700.css";
 import "./index.css";
 import "./theme.css";
 import "./game-solved-panel.css";

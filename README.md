@@ -40,6 +40,46 @@ Outputs static files to `dist/`.
 Both Vercel and Netlify let you attach your own domain for free under
 Project Settings → Domains — just point a CNAME/A record at them.
 
+## iOS app (Capacitor)
+
+The web app is wrapped with Capacitor. `capacitor.config.ts` bundles the built
+`dist` into the app rather than pointing a web view at imbored.au — an app that
+is only a web view onto a live site is the standard App Store guideline 4.2
+rejection, and bundling also means the games work with no connection.
+
+The trade-off: shipping a change to iOS now needs an App Store release, not just
+a Vercel deploy.
+
+**Everything below needs macOS.** Xcode and CocoaPods are Mac-only, so the
+project cannot be generated, built, signed or submitted from Windows. Also
+required: Xcode 15+, CocoaPods, and an Apple Developer Program membership.
+
+First time, on the Mac:
+
+```bash
+npm install
+npx cap add ios      # generates ios/ — commit it, it holds signing + Info.plist
+npm run ios:sync     # vite build && cap sync ios
+npm run ios:open     # opens Xcode
+```
+
+After any web change: `npm run ios:sync`.
+
+Already configured here: bundle id `au.imbored.app`, bundled web assets,
+full-bleed web view with `env(safe-area-inset-*)` padding, page-level
+rubber-banding disabled, and self-hosted fonts so launch needs no network.
+
+Still to do in Xcode (none of it possible from Windows):
+
+- App icon set and launch screen.
+- Display name `I’mBoredToday` in Info.plist (the Xcode project is ASCII
+  `ImBoredToday`, since a curly apostrophe in a target name causes trouble).
+- A `CFBundleURLTypes` entry for the OAuth callback scheme — Google refuses to
+  complete sign-in inside a plain `WKWebView`, so that flow has to move to
+  `ASWebAuthenticationSession` and return through a deep link.
+- Sign in with Apple capability (guideline 4.8, required because Google
+  sign-in is offered).
+
 ## Database schema
 
 The current application-owned database is defined by:

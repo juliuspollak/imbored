@@ -1,0 +1,10 @@
+{
+  "appId": "au.imbored.app",
+  "appName": "ImBoredToday",
+  "webDir": "dist",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#ffffff",
+    "scrollEnabled": false
+  }
+}

@@ -2,16 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover lets the page extend under the notch and home
+         indicator; the layout pays that back with env(safe-area-inset-*)
+         padding. maximum-scale stops iOS zooming the whole UI when a text
+         field takes focus, which in a full-screen game looks like a bug. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="I&rsquo;mBoredToday" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Loaded once here, globally, rather than per-component: a <style>
-         tag inside a game/screen component only exists in the DOM while
-         that component is mounted, so an @import there disappears the
-         moment you navigate away — every other screen using 'Fredoka'
-         would silently fall back to the browser default font. -->
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Fredoka and Inter are bundled via @fontsource and imported once in
+         src/main.jsx, so they are part of the build rather than a request to
+         Google on every launch. Importing them there rather than in a screen
+         component matters for the same reason the CDN link lived here: a
+         <style> inside a component only exists while that component is
+         mounted, so the font would vanish on navigation. -->
     <title>I'mBoredToday</title>
   </head>
   <body>

@@ -2,3 +2,12 @@ node_modules/
 dist/
 supabase/.temp/
 .DS_Store
+
+# iOS build output. The ios/ project itself IS committed (it holds signing and
+# Info.plist settings), but these are generated on every sync or build.
+ios/App/Pods/
+ios/App/App/public/
+ios/App/Podfile.lock
+ios/DerivedData/
+*.xcuserstate
+xcuserdata/
