@@ -1268,6 +1268,94 @@ $$;
 
 
 --
+-- Name: resolve_timezone(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+-- Falls back to the original app timezone for anything absent or unusable, so
+-- a bad IANA name from a client can never break a date calculation. A CHECK
+-- constraint cannot do this: CHECK forbids the subquery a catalog lookup needs.
+CREATE FUNCTION public.resolve_timezone(candidate text) RETURNS text
+    LANGUAGE plpgsql IMMUTABLE
+    AS $$
+begin
+  if candidate is null or btrim(candidate)='' then
+    return 'Australia/Sydney';
+  end if;
+  -- Fixed instant, not now(), so this stays genuinely IMMUTABLE. It only has
+  -- to prove the zone name resolves at all.
+  perform timezone(candidate, '2000-01-01 00:00:00+00'::timestamptz);
+  return candidate;
+exception when others then
+  return 'Australia/Sydney';
+end;
+$$;
+
+
+--
+-- Name: player_today(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.player_today(uid uuid) RETURNS date
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select (timezone(
+    public.resolve_timezone((select p.timezone from public.profiles p where p.id=uid)),
+    now()
+  ))::date
+$$;
+
+
+--
+-- Name: circle_today(bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+-- A circle challenge is one shared competition, so its rounds key off a single
+-- timezone -- the circle's -- rather than each member's. Members elsewhere all
+-- play the same round on the same shared day.
+CREATE FUNCTION public.circle_today(target_circle_id bigint) RETURNS date
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select (timezone(
+    public.resolve_timezone((select c.timezone from public.circles c where c.id=target_circle_id)),
+    now()
+  ))::date
+$$;
+
+
+--
+-- Name: circle_week_start(bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.circle_week_start(target_circle_id bigint) RETURNS date
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select (
+    public.circle_today(target_circle_id)
+    - (extract(isodow from public.circle_today(target_circle_id))::integer - 1)
+  )::date
+$$;
+
+
+--
+-- Name: set_my_timezone(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+-- Kept separate from save_my_profile so the client can refresh this silently on
+-- load without changing that function's signature.
+CREATE FUNCTION public.set_my_timezone(candidate text) RETURNS void
+    LANGUAGE sql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  update public.profiles
+  set timezone=public.resolve_timezone(candidate)
+  where id=auth.uid()
+$$;
+
+
+--
 -- Name: apply_challenge_streak_break(uuid, date); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1470,7 +1558,8 @@ declare
   points_total integer;
   old_level integer;
   new_level integer;
-  award_date date:=(now() at time zone 'Australia/Sydney')::date;
+  player_zone text;
+  award_date date;
   effective_challenge_date date;
   practice_count integer:=0;
   challenge_games_on_date integer:=0;
@@ -1481,6 +1570,13 @@ begin
   if not found or s.user_id<>auth.uid() then
     raise exception 'Game result not found';
   end if;
+
+  -- The rewarded-Practice allowance resets at the player's own midnight, not
+  -- Sydney's. Resolved once here and reused for every day comparison below.
+  player_zone:=public.resolve_timezone(
+    (select profile.timezone from public.profiles profile where profile.id=s.user_id)
+  );
+  award_date:=(timezone(player_zone,now()))::date;
 
   select * into r from public.reward_rules
   where is_active=true order by id desc limit 1;
@@ -1509,7 +1605,7 @@ begin
       and pt.reason_code='GAME_COMPLETED'
       and gs.mode='practice'
       and gs.game=s.game
-      and (pt.created_at at time zone 'Australia/Sydney')::date=award_date;
+      and (pt.created_at at time zone player_zone)::date=award_date;
     practice_limit_reached:=practice_count>=r.practice_daily_limit;
   end if;
 
@@ -1549,7 +1645,7 @@ begin
   if practice_limit_reached then game_points:=0; end if;
 
   effective_challenge_date:=coalesce(
-    s.challenge_date,(s.completed_at at time zone 'Australia/Sydney')::date
+    s.challenge_date,(s.completed_at at time zone player_zone)::date
   );
   if s.mode='challenge'
     and p.challenge_current_streak>0
@@ -1557,7 +1653,7 @@ begin
     select count(*) into challenge_games_on_date
     from public.game_stats gs
     where gs.user_id=s.user_id and gs.mode='challenge'
-      and coalesce(gs.challenge_date,(gs.completed_at at time zone 'Australia/Sydney')::date)
+      and coalesce(gs.challenge_date,(gs.completed_at at time zone player_zone)::date)
         =effective_challenge_date;
     if challenge_games_on_date=1 then streak_points:=r.streak_weekly_bonus; end if;
   end if;
@@ -1977,7 +2073,8 @@ CREATE TABLE public.circles (
     name text NOT NULL,
     created_by uuid,
     created_at timestamp with time zone DEFAULT now(),
-    emoji text DEFAULT '⭐'::text NOT NULL
+    emoji text DEFAULT '⭐'::text NOT NULL,
+    timezone text
 );
 
 
@@ -2004,8 +2101,15 @@ begin
     raise exception 'Circle name is required.' using errcode='22023';
   end if;
 
-  insert into public.circles(name,emoji,created_by)
-  values(btrim(circle_name),coalesce(nullif(btrim(circle_emoji),''),'⭐'),auth.uid())
+  -- The circle's day boundary comes from whoever created it. Members abroad
+  -- all play the same shared round on the same shared day.
+  insert into public.circles(name,emoji,created_by,timezone)
+  values(
+    btrim(circle_name),
+    coalesce(nullif(btrim(circle_emoji),''),'⭐'),
+    auth.uid(),
+    (select profile.timezone from public.profiles profile where profile.id=auth.uid())
+  )
   returning * into result;
 
   insert into public.circle_members(circle_id,user_id,can_approve_rewards)
@@ -2344,40 +2448,6 @@ $$;
 
 
 --
--- Name: finalize_all_due_team_challenges(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.finalize_all_due_team_challenges() RETURNS integer
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-declare
-  due_challenge record;
-  finalised_count integer:=0;
-begin
-  for due_challenge in
-    select challenge.id
-    from public.team_weekly_challenges challenge
-    where challenge.closed_at is null
-      and public.app_today()>(
-        challenge.week_start+
-        (
-          select max(day_number)-1
-          from unnest(challenge.active_days) day_number
-        )
-      )
-    order by challenge.id
-  loop
-    perform public.finalize_team_challenge(due_challenge.id);
-    finalised_count:=finalised_count+1;
-  end loop;
-
-  return finalised_count;
-end;
-$$;
-
-
---
 -- Name: finalize_circle_challenge(bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2445,7 +2515,7 @@ begin
 
   if required_rounds=0
      or (
-       public.app_today()<=deadline
+       public.circle_today(challenge.circle_id)<=deadline
        and (member_count=0 or finisher_count<member_count)
      ) then
     return null;
@@ -2613,7 +2683,7 @@ begin
       on challenge.circle_id=membership.circle_id
     where membership.user_id=auth.uid()
       and challenge.closed_at is null
-      and public.app_today()>(
+      and public.circle_today(challenge.circle_id)>(
         challenge.week_start+
         (select max(day_number)-1 from unnest(challenge.active_days) day_number)
       )
@@ -2637,7 +2707,10 @@ CREATE FUNCTION public.get_challenge_streak_status() RETURNS jsonb
     AS $$
 declare
   uid uuid := auth.uid();
-  today_date date := (now() at time zone 'Australia/Sydney')::date;
+  player_zone text := public.resolve_timezone(
+    (select profile.timezone from public.profiles profile where profile.id=auth.uid())
+  );
+  today_date date := public.player_today(uid);
   p public.player_progress;
   penalty integer := 0;
   played_today boolean := false;
@@ -2669,7 +2742,7 @@ begin
       and gs.mode='challenge'
       and coalesce(
         gs.challenge_date,
-        (gs.completed_at at time zone 'Australia/Sydney')::date
+        (gs.completed_at at time zone player_zone)::date
       )=today_date
   ) into played_today;
 
@@ -2733,7 +2806,7 @@ begin
     challenge.reward_points,
     challenge.reward_type,
     challenge.reward_label,
-    extract(isodow from public.app_today())::integer=any(challenge.active_days),
+    extract(isodow from public.circle_today(circle.id))::integer=any(challenge.active_days),
     (
       challenge.locked_at is not null
       or exists(
@@ -2763,7 +2836,7 @@ begin
   join public.circles circle on circle.id=membership.circle_id
   join public.circle_weekly_challenges challenge
     on challenge.circle_id=circle.id
-   and challenge.week_start=public.current_week_start()
+   and challenge.week_start=public.circle_week_start(circle.id)
   left join public.rewards stake_reward on stake_reward.id=challenge.stake_reward_id
   where membership.user_id=auth.uid()
     and public.is_approved_user(auth.uid())
@@ -2872,7 +2945,7 @@ begin
     from public.circle_members membership
     join public.circle_weekly_challenges challenge
       on challenge.circle_id=membership.circle_id
-     and challenge.week_start=public.current_week_start()
+     and challenge.week_start=public.circle_week_start(membership.circle_id)
     where membership.user_id=auth.uid()
       and public.is_approved_user(auth.uid())
   ),
@@ -3047,12 +3120,13 @@ CREATE FUNCTION public.get_my_practice_reward_usage() RETURNS jsonb
     join public.game_stats gs on gs.id=pt.game_stat_id
     where pt.player_id=auth.uid() and pt.reason_code='GAME_COMPLETED'
       and pt.points>0 and gs.mode='practice'
-      and (pt.created_at at time zone 'Australia/Sydney')::date
-        =(now() at time zone 'Australia/Sydney')::date
+      and (pt.created_at at time zone public.resolve_timezone(
+        (select profile.timezone from public.profiles profile where profile.id=auth.uid())
+      ))::date=public.player_today(auth.uid())
     group by gs.game
   )
   select jsonb_build_object(
-    'date',(now() at time zone 'Australia/Sydney')::date,
+    'date',public.player_today(auth.uid()),
     'rewarded_count',coalesce((select sum(rewarded_count) from rewarded),0),
     'daily_limit',coalesce((select practice_daily_limit from active_rule),0),
     'per_game',true,
@@ -4368,7 +4442,7 @@ CREATE FUNCTION public.protect_streak() RETURNS jsonb
 declare
   p public.player_progress;
   r public.reward_rules;
-  today_date date := (now() at time zone 'Australia/Sydney')::date;
+  today_date date := public.player_today(auth.uid());
   missed_date date := today_date - 1;
 begin
   perform public.ensure_player_progress(auth.uid());
@@ -4811,6 +4885,7 @@ CREATE TABLE public.profiles (
     default_mode text DEFAULT 'challenge'::text NOT NULL,
     show_stats_to_others boolean DEFAULT true NOT NULL,
     week_starts_on integer DEFAULT 1 NOT NULL,
+    timezone text,
     is_approved boolean DEFAULT false NOT NULL,
     approved_at timestamp with time zone,
     approved_by uuid,
@@ -5092,7 +5167,7 @@ begin
     from public.circle_weekly_challenges
     where id=target_challenge_id
       and circle_id=target_circle_id
-      and week_start=public.current_week_start()
+      and week_start=public.circle_week_start(target_circle_id)
       and closed_at is null
     for update;
 
@@ -5123,7 +5198,7 @@ begin
       select 1
       from public.circle_weekly_challenges future_challenge
       where future_challenge.series_id=series_key
-        and future_challenge.week_start>=public.current_week_start()
+        and future_challenge.week_start>=public.circle_week_start(target_circle_id)
         and (
           future_challenge.locked_at is not null
           or exists(
@@ -5144,7 +5219,7 @@ begin
 
     delete from public.circle_weekly_challenges
     where series_id=series_key
-      and week_start>=public.current_week_start();
+      and week_start>=public.circle_week_start(target_circle_id);
   else
     series_key:=null;
   end if;
@@ -5154,7 +5229,7 @@ begin
       select count(*)
       from public.circle_weekly_challenges
       where circle_id=target_circle_id
-        and week_start=public.current_week_start()+(week_offset*7)
+        and week_start=public.circle_week_start(target_circle_id)+(week_offset*7)
     )>=10 then
       raise exception 'A circle can create up to 10 challenges in any week.';
     end if;
@@ -5178,7 +5253,7 @@ begin
     )
     values(
       target_circle_id,
-      public.current_week_start()+(week_offset*7),
+      public.circle_week_start(target_circle_id)+(week_offset*7),
       clean_title,
       clean_games,
       clean_days,
@@ -5340,7 +5415,7 @@ begin
   ) then
     raise exception 'Accept this challenge''s stake before playing today''s round.' using errcode='42501';
   end if;
-  if target_challenge_date is distinct from public.app_today() then
+  if target_challenge_date is distinct from public.circle_today(challenge.circle_id) then
     raise exception 'Circle challenge rounds can only be played on their scheduled day.'
       using errcode='22023';
   end if;
@@ -5638,7 +5713,9 @@ begin
 
   played_date := coalesce(
     new.challenge_date,
-    (new.completed_at at time zone 'Australia/Sydney')::date
+    (new.completed_at at time zone public.resolve_timezone(
+      (select profile.timezone from public.profiles profile where profile.id=new.user_id)
+    ))::date
   );
 
   perform public.ensure_player_progress(new.user_id);
@@ -5875,8 +5952,8 @@ begin
     -- and the streak milestone built on them. Allow the catch-up the UI
     -- offers (any earlier day of the current week) plus a day of slack for
     -- players whose local date runs ahead of Sydney.
-    if new.challenge_date < public.app_today() - 7
-       or new.challenge_date > public.app_today() + 1 then
+    if new.challenge_date < public.player_today(new.user_id) - 7
+       or new.challenge_date > public.player_today(new.user_id) + 1 then
       raise exception 'Challenge results can only be saved for the current week.'
         using errcode='22023';
     end if;
@@ -6623,25 +6700,25 @@ CREATE TABLE public.reward_rules (
     id bigint NOT NULL,
     name text DEFAULT 'Default'::text NOT NULL,
     is_active boolean DEFAULT true NOT NULL,
-    base_points integer DEFAULT 100 NOT NULL,
-    no_hint_bonus integer DEFAULT 20 NOT NULL,
-    no_mistake_bonus integer DEFAULT 20 NOT NULL,
-    hint_penalty integer DEFAULT 10 NOT NULL,
-    mistake_penalty integer DEFAULT 5 NOT NULL,
-    fast_time_bonus integer DEFAULT 30 NOT NULL,
-    average_time_bonus integer DEFAULT 15 NOT NULL,
-    challenge_bonus integer DEFAULT 20 NOT NULL,
-    streak_daily_bonus integer DEFAULT 10 NOT NULL,
+    base_points integer DEFAULT 6 NOT NULL,
+    no_hint_bonus integer DEFAULT 0 NOT NULL,
+    no_mistake_bonus integer DEFAULT 0 NOT NULL,
+    hint_penalty integer DEFAULT 2 NOT NULL,
+    mistake_penalty integer DEFAULT 1 NOT NULL,
+    fast_time_bonus integer DEFAULT 2 NOT NULL,
+    average_time_bonus integer DEFAULT 1 NOT NULL,
+    challenge_bonus integer DEFAULT 0 NOT NULL,
+    streak_daily_bonus integer DEFAULT 0 NOT NULL,
     streak_bonus_cap integer DEFAULT 70 NOT NULL,
-    minimum_points integer DEFAULT 20 NOT NULL,
-    maximum_points integer DEFAULT 250 NOT NULL,
+    minimum_points integer DEFAULT 2 NOT NULL,
+    maximum_points integer DEFAULT 15 NOT NULL,
     practice_daily_limit integer DEFAULT 3 NOT NULL,
-    streak_protection_cost integer DEFAULT 250 NOT NULL,
+    streak_protection_cost integer DEFAULT 20 NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_by uuid,
-    streak_weekly_bonus integer DEFAULT 70 NOT NULL,
-    practice_points_percent integer DEFAULT 60 NOT NULL,
-    day_points_step integer DEFAULT 10 NOT NULL,
+    streak_weekly_bonus integer DEFAULT 20 NOT NULL,
+    practice_points_percent integer DEFAULT 50 NOT NULL,
+    day_points_step integer DEFAULT 1 NOT NULL,
     daily_points_cap integer DEFAULT 40 NOT NULL,
     CONSTRAINT reward_rules_average_time_bonus_range CHECK (((average_time_bonus >= 0) AND (average_time_bonus <= 200))),
     CONSTRAINT reward_rules_base_points_range CHECK (((base_points >= 0) AND (base_points <= 500))),
@@ -8905,6 +8982,11 @@ CREATE POLICY "visible release notes are readable" ON public.release_notes FOR S
 -- functions have no ACL recorded here even though the deployed database has
 -- them. Re-export including privileges to close that gap.
 
+REVOKE ALL ON FUNCTION public.resolve_timezone(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.player_today(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.circle_today(bigint) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.circle_week_start(bigint) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.set_my_timezone(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.challenge_benchmark_seconds(text, date) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.circle_challenge_daily_score(text, date, integer, integer, integer) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.circle_challenge_member_totals(bigint) FROM PUBLIC;
@@ -8912,6 +8994,7 @@ REVOKE ALL ON FUNCTION public.finalize_circle_challenge(bigint) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.get_circle_challenge_standings(bigint) FROM PUBLIC;
 
 GRANT EXECUTE ON FUNCTION public.get_circle_challenge_standings(bigint) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.set_my_timezone(text) TO authenticated;
 
 
 --

@@ -24,6 +24,15 @@ export function AuthProvider({ children }) {
     }
     setProfile(data || null);
     if (showLoading) setProfileLoading(false);
+    // Challenge days and the daily Practice allowance resolve against the
+    // player's own timezone, so keep it current without bothering them for it.
+    // Best-effort: a failure here must never block sign-in.
+    if (data) {
+      const browserZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (browserZone && browserZone !== data.timezone) {
+        supabase.rpc("set_my_timezone", { candidate: browserZone }).catch(() => {});
+      }
+    }
     return data || null;
   }, []);
 
