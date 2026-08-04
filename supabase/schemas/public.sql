@@ -3653,6 +3653,28 @@ $$;
 
 
 --
+-- Name: get_my_played_score_challenges(bigint[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+-- Which of these "Beat my score" invitations the caller has already played.
+-- The chat bubble used to show a live "Play now" button on every one of them
+-- and only discovered the duplicate after the tap, via an alert. One batched
+-- lookup lets the list render the finished ones as already played instead.
+CREATE FUNCTION public.get_my_played_score_challenges(source_stat_ids bigint[]) RETURNS TABLE(source_stat_id bigint)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select challenge.source_stat_id
+  from public.score_challenges challenge
+  join public.score_challenge_recipients recipient
+    on recipient.challenge_id=challenge.id
+  where recipient.recipient_id=auth.uid()
+    and recipient.completed_stat_id is not null
+    and challenge.source_stat_id=any(source_stat_ids)
+$$;
+
+
+--
 -- Name: get_score_challenge(bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -9419,6 +9441,8 @@ REVOKE ALL ON FUNCTION public.get_circle_challenge_standings(bigint) FROM PUBLIC
 
 REVOKE ALL ON FUNCTION public.get_messageable_players() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_messageable_players() TO authenticated;
+REVOKE ALL ON FUNCTION public.get_my_played_score_challenges(bigint[]) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_my_played_score_challenges(bigint[]) TO authenticated;
 REVOKE ALL ON FUNCTION public.players_share_circle(uuid, uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.is_blocked_between(uuid, uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.strip_player_from_circles(uuid) FROM PUBLIC;

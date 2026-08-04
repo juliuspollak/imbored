@@ -149,10 +149,15 @@ function PlayerRow({ player, currentUserId, winnerId, synchronised }) {
   );
 }
 
-function PlayerChip({ player, currentUserId }) {
+function PlayerChip({ player, currentUserId, roundWinnerId = null }) {
+  const wonRound = !!roundWinnerId && player.user_id === roundWinnerId;
   return (
-    <div className="rush-player-chip" data-eliminated={player.eliminated || !!player.left_at}>
-      <span className="rush-player-chip__avatar">{player.player_icon || "🙂"}</span>
+    <div
+      className="rush-player-chip"
+      data-eliminated={player.eliminated || !!player.left_at}
+      data-round-winner={wonRound || undefined}
+    >
+      <span className="rush-player-chip__avatar">{wonRound ? "🏆" : (player.player_icon || "🙂")}</span>
       <strong className="truncate text-[10px]">
         {player.user_id === currentUserId ? "You" : player.player_name}
       </strong>
@@ -860,6 +865,20 @@ export default function AnimalRush({ onExit }) {
     attempted: !!attemptFeedback && !attemptFeedback.pending && !attemptFeedback.error,
     attemptCorrect: attemptFeedback?.correct === true,
   });
+  // Players could only ever see their own result, never who actually took the
+  // card. A round can also close with nobody winning when it times out, which
+  // previously read as "You lost this round" to everyone.
+  const roundComplete = room.status === "round_result";
+  const roundWinner = roundComplete
+    ? players.find((player) => player.user_id === room.round_winner_id) || null
+    : null;
+  const roundResultText = roundComplete
+    ? (room.round_winner_id === user?.id
+      ? "You won this round 🎉"
+      : roundWinner
+        ? `${roundWinner.player_name || "Another player"} won this round`
+        : "Nobody found it in time")
+    : outcome === "win" ? "You got it!" : "You lost this round";
   const rollStartedAt = room.roll_at
     ? new Date(room.roll_at).getTime()
     : new Date(room.reveal_at).getTime() - DIE_ROLL_DURATION_MS;
@@ -902,7 +921,12 @@ export default function AnimalRush({ onExit }) {
         <section className="rush-panel rush-stage p-4">
           <div className="rush-score-grid mb-3 grid grid-cols-2 gap-2">
             {players.map((player) => (
-              <PlayerChip key={player.user_id} player={player} currentUserId={user?.id} />
+              <PlayerChip
+                key={player.user_id}
+                player={player}
+                currentUserId={user?.id}
+                roundWinnerId={roundComplete ? room.round_winner_id : null}
+              />
             ))}
           </div>
 
@@ -927,12 +951,15 @@ export default function AnimalRush({ onExit }) {
           )}
 
           <div className="rush-round-info">
-            {outcome && (
-              <div className="rush-round-result mb-3" data-kind={outcome}>
-                <strong className="block text-sm">
-                  {outcome === "win" ? "You won this round" : "You lost this round"}
-                </strong>
-                {room.status === "round_result" && (
+            {(outcome || roundComplete) && (
+              <div
+                className="rush-round-result mb-3"
+                data-kind={roundComplete && !room.round_winner_id ? "loss" : (outcome || "loss")}
+                role="status"
+                aria-live="polite"
+              >
+                <strong className="block text-sm">{roundResultText}</strong>
+                {roundComplete && (
                   <small className="mt-0.5 block opacity-70">Next animal is coming…</small>
                 )}
               </div>

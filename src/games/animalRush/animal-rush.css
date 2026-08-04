@@ -383,6 +383,15 @@
   filter: grayscale(0.8);
 }
 
+/* Marks who actually took the card, so the round has a visible winner rather
+   than each player only learning their own result. */
+.rush-player-chip[data-round-winner] {
+  border-color: var(--color-warning-gold, #e8b923);
+  background: color-mix(in srgb, var(--color-warning-gold, #e8b923) 18%, transparent);
+  opacity: 1;
+  filter: none;
+}
+
 .rush-player-chip__avatar {
   display: grid;
   width: 26px;
