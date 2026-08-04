@@ -4563,6 +4563,38 @@ declare
   community_median numeric;
   benchmark public.game_time_benchmarks;
 begin
+  select * into benchmark
+  from public.game_time_benchmarks
+  where game=target_game
+    and day_index=target_day_index
+    and mode=target_mode;
+
+  if not found then
+    return null;
+  end if;
+
+  -- A 90-day community median does not move between one puzzle and the next,
+  -- but this used to recompute -- and write -- on every single save and every
+  -- share-eligibility check, putting a 90-day scan and a row-level write lock
+  -- in the hot path of finishing a game. Recompute at most hourly per
+  -- (game, day, mode). To force one, age the row:
+  --   update public.game_time_benchmarks set updated_at=now()-interval '1 day';
+  if benchmark.updated_at>now()-interval '1 hour' then
+    return benchmark;
+  end if;
+
+  -- If another session is already refreshing this row, serve the value we
+  -- have rather than queueing behind its write. A player's save is never
+  -- blocked by someone else's benchmark maintenance.
+  if not pg_try_advisory_xact_lock(
+    hashtextextended(
+      format('benchmark:%s:%s:%s',target_game,target_day_index,target_mode),
+      0
+    )
+  ) then
+    return benchmark;
+  end if;
+
   with clean as (
     select stat.user_id,stat.seconds,
       row_number() over(partition by stat.user_id order by stat.completed_at desc,stat.id desc) as recent_rank,
