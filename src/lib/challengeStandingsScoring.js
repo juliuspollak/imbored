@@ -4,6 +4,7 @@ import { challengeScore } from "./performanceScoring.js";
 // standings a circle sees during the week match the winner the server picks
 // when it closes.
 export const MISSED_ROUND_PENALTY = -100;
+export const MAX_VISIBLE_STANDINGS = 5;
 
 function isoDayIndex(dateString) {
   return (new Date(`${dateString}T12:00:00`).getDay() || 7) - 1;
@@ -66,6 +67,17 @@ export function rankStandings(entries) {
   ];
 }
 
+// Keep the challenge card compact: show the top five participants. When the
+// signed-in player has participated but sits below fifth, include their row as
+// well so they can still see their own position.
+export function limitChallengeStandings(entries, userId, limit = MAX_VISIBLE_STANDINGS) {
+  const participants = entries.filter((entry) => Number(entry.played) > 0);
+  const topPlayers = participants.slice(0, limit);
+  const currentPlayer = participants.find((entry) => entry.userId === userId);
+  if (currentPlayer && !topPlayers.some((entry) => entry.userId === userId)) return [...topPlayers, currentPlayer];
+  return topPlayers;
+}
+
 function matchesSlot(row, slot) {
   return row.game === slot.game && (slot.date == null || row.challenge_date === slot.date);
 }
@@ -85,44 +97,19 @@ export function buildChallengeStandings({
     return grouped;
   }, {});
 
-  return rankStandings(roster.map((member) => {
-    const isPrivate = member.id !== userId && member.show_stats_to_others === false;
+  const visibleRoster = roster.filter((member) => member.id === userId || member.is_private !== true);
+  const entries = visibleRoster.map((member) => {
     const memberRows = (rowsByPlayer[member.id] || []).slice()
       .sort((a, b) => String(a.completed_at || "").localeCompare(String(b.completed_at || "")));
-    const dailyResults = slots.map((slot) => {
-      const result = memberRows.find((row) => matchesSlot(row, slot));
-      if (!result) return null;
-      return isPrivate ? { ...result, is_private: true } : result;
-    });
+    const dailyResults = slots.map((slot) => memberRows.find((row) => matchesSlot(row, slot)) || null);
     const entry = {
       userId: member.id,
       name: member.member_name || member.name,
       icon: member.member_icon || member.icon,
       isCurrentUser: member.id === userId,
-      isPrivate,
+      isPrivate: false,
       dailyResults,
     };
-
-    // Row-level privacy is enforced in the database, so a private player's
-    // results never reach us at all. An empty set therefore means "hidden",
-    // not "missed" — scoring it as missed would drop someone to last place
-    // for turning a privacy setting on. Leave them unranked instead.
-    if (isPrivate && !dailyResults.some(Boolean)) {
-      return {
-        ...entry,
-        unranked: true,
-        detailHidden: true,
-        score: null,
-        played: null,
-        total: slots.length,
-        missed: null,
-        hints: 0,
-        mistakes: 0,
-        adjusted: 0,
-        finishedAt: "",
-        dailyScores: slots.map(() => null),
-      };
-    }
 
     const summary = pooledChallengeSummary(dailyResults, benchmarkMap, missedPenalty);
     return {
@@ -133,32 +120,38 @@ export function buildChallengeStandings({
       total: slots.length,
       missed: slots.length - summary.played,
     };
-  }));
+  }).filter((entry) => entry.played > 0);
+
+  return limitChallengeStandings(rankStandings(entries), userId);
 }
 
 // Circle standings computed and ranked by the database, so the browser holds
-// no copy of the weekly scoring formula. round_scores is null when the viewer
-// may not see a player's per-round detail; the aggregate is still shown.
+// no copy of the weekly scoring formula. Private profiles are excluded rather
+// than anonymised because private accounts cannot participate in circles.
 export function fromServerStandings(serverRows = [], userId = null) {
-  return serverRows.map((row) => {
-    const rounds = Array.isArray(row.round_scores) ? row.round_scores : null;
-    return {
-      userId: row.member_id,
-      name: row.member_name,
-      icon: row.member_icon,
-      rank: Number(row.standing_rank),
-      score: Number(row.challenge_score),
-      played: Number(row.rounds_played),
-      total: Number(row.rounds_total),
-      missed: Number(row.rounds_total) - Number(row.rounds_played),
-      isCurrentUser: row.member_id === userId,
-      isPrivate: !!row.is_private,
-      unranked: false,
-      detailHidden: rounds === null,
-      dailyResults: rounds
-        ? rounds.map((round) => (round.score == null ? null : { game: round.game, challenge_date: round.challenge_date }))
-        : [],
-      dailyScores: rounds ? rounds.map((round) => round.score) : [],
-    };
-  });
+  const entries = serverRows
+    .filter((row) => (row.member_id === userId || !row.is_private) && Number(row.rounds_played) > 0)
+    .map((row) => {
+      const rounds = Array.isArray(row.round_scores) ? row.round_scores : null;
+      return {
+        userId: row.member_id,
+        name: row.member_name,
+        icon: row.member_icon,
+        rank: Number(row.standing_rank),
+        score: Number(row.challenge_score),
+        played: Number(row.rounds_played),
+        total: Number(row.rounds_total),
+        missed: Number(row.rounds_total) - Number(row.rounds_played),
+        isCurrentUser: row.member_id === userId,
+        isPrivate: false,
+        unranked: false,
+        detailHidden: rounds === null,
+        dailyResults: rounds
+          ? rounds.map((round) => (round.score == null ? null : { game: round.game, challenge_date: round.challenge_date }))
+          : [],
+        dailyScores: rounds ? rounds.map((round) => round.score) : [],
+      };
+    });
+
+  return limitChallengeStandings(entries, userId);
 }
