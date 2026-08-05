@@ -350,6 +350,7 @@ const PANEL = "var(--color-surface)";
 const CREAM = "var(--color-text-primary)";
 const GOLD = "var(--color-primary)";
 const RED = "#E5484D";
+const CONFLICT_RED = "#D85C62";
 const TEAL = "#5FA8A3";
 const SUN_COLOR = "#FF7A59";
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -648,7 +649,9 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
       {board.map((row, r) =>
         row.map((val, c) => {
           const isGiven = puzzle.givens[r][c] !== 0;
-          const isConflict = displayedConflicts.has(`${r}-${c}`);
+          // Fixed clues can explain a rule, but they cannot be the player's
+          // mistake. Keep them neutral and mark only cells the player can fix.
+          const isConflict = !isGiven && displayedConflicts.has(`${r}-${c}`);
           const isHint = hintCell && hintCell.r === r && hintCell.c === c;
           const hintClass = isHint && !isConflict ? `tg-hint-${hintCell.type}` : "";
           const hintBackground = hintCell?.type === "error"
@@ -665,6 +668,8 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
               style={{
                 background: isHint
                   ? hintBackground
+                  : isConflict
+                    ? "linear-gradient(rgba(216,92,98,.10),rgba(216,92,98,.10)),var(--color-surface)"
                   : isGiven
                     ? "var(--color-surface-elevated)"
                     : val === SUN
@@ -673,7 +678,7 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
                         ? "linear-gradient(rgba(34,162,196,.12),rgba(34,162,196,.12)),var(--color-surface)"
                         : "var(--color-surface)",
                 border: "1px solid var(--color-border-strong)",
-                boxShadow: isConflict ? `inset 0 0 0 3px ${RED}` : "none",
+                boxShadow: isConflict ? `inset 0 0 0 2px ${CONFLICT_RED}` : "none",
                 cursor: isGiven ? "default" : "pointer",
               }}
             >
