@@ -51,14 +51,15 @@ function FrostIcon({ size = 24, className = "", style, isConflict = false, ...pr
         </linearGradient>
       </defs>
       <path
-        d="M12 1.8 19.1 8.1 18 17.3 12 22.2 5.1 16.8 4.9 8.2Z"
+        d="M13 1.6 19 8.3 16.9 17.8 10.8 22.3 4.8 15.8 6 7.7Z"
         fill={`url(#${id}body)`}
         stroke="#1C7E9C"
         strokeWidth="1.25"
         strokeLinejoin="round"
       />
-      <path d="M12 1.8 19.1 8.1 12 12.4 4.9 8.2Z" fill="#FFFFFF" fillOpacity=".5" />
-      <path d="M12 12.4 19.1 8.1 18 17.3 12 22.2Z" fill="#0E6C88" fillOpacity=".28" />
+      <path d="M13 1.6 19 8.3 11.7 12.2 6 7.7Z" fill="#FFFFFF" fillOpacity=".5" />
+      <path d="M11.7 12.2 19 8.3 16.9 17.8 10.8 22.3Z" fill="#0E6C88" fillOpacity=".28" />
+      <path d="M6 7.7 11.7 12.2 10.8 22.3 4.8 15.8Z" fill="#7BE7F5" fillOpacity=".22" />
     </svg>
   );
 }
@@ -667,9 +668,9 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
                   : isGiven
                     ? "var(--color-surface-elevated)"
                     : val === SUN
-                      ? "linear-gradient(rgba(255,122,89,.06),rgba(255,122,89,.06)),var(--color-surface)"
+                      ? "linear-gradient(rgba(255,122,89,.12),rgba(255,122,89,.12)),var(--color-surface)"
                       : val === MOON
-                        ? "linear-gradient(rgba(34,162,196,.06),rgba(34,162,196,.06)),var(--color-surface)"
+                        ? "linear-gradient(rgba(34,162,196,.12),rgba(34,162,196,.12)),var(--color-surface)"
                         : "var(--color-surface)",
                 border: "1px solid var(--color-border-strong)",
                 boxShadow: isConflict ? `inset 0 0 0 3px ${RED}` : "none",
@@ -731,7 +732,7 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
               fontSize: 12,
               fontWeight: 800,
               color: "var(--color-text-primary)",
-              boxShadow: "0 1px 4px rgba(16,24,40,.10)",
+              boxShadow: "0 1px 2px rgba(16,24,40,.07)",
               pointerEvents: "none",
               zIndex: 2,
             }}
