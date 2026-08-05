@@ -23,12 +23,10 @@ SET row_security = off;
 
 INSERT INTO public.game_config VALUES ('hive', true, true, 0, 5, 1, 'solid', '{7,7,7,7,7,7,7}', '{4,6,8,10,12,14,16}', '{0,1,2,3,5,6,7}', '{0,0,0,0,0,0,0}', '{0,0,0,0,0,1,1}', true) ON CONFLICT DO NOTHING;
 INSERT INTO public.game_config VALUES ('gridly', true, true, 2, 5, 1, 'rainbow', '{7,7,7,7,7,7,7}', '{6,7,9,21,12,14,16}', '{0,1,2,3,5,6,7}', '{0,0,0,0,0,0,0}', '{0,0,0,0,0,1,1}', true) ON CONFLICT DO NOTHING;
-INSERT INTO public.game_config VALUES ('pinpoint', false, false, 4, 0, 0, 'solid', '{7,7,7,7,7,7,7}', '{4,6,8,10,12,14,16}', '{0,1,2,3,5,6,7}', '{0,0,0,0,0,0,0}', '{0,0,0,0,0,1,1}', false) ON CONFLICT DO NOTHING;
-INSERT INTO public.game_config VALUES ('crossclimb', false, false, 5, 0, 0, 'solid', '{7,7,7,7,7,7,7}', '{4,6,8,10,12,14,16}', '{0,1,2,3,5,6,7}', '{0,0,0,0,0,0,0}', '{0,0,0,0,0,1,1}', false) ON CONFLICT DO NOTHING;
 INSERT INTO public.game_config VALUES ('patches', false, false, 6, 0, 0, 'solid', '{7,7,7,7,7,7,7}', '{4,6,8,10,12,14,16}', '{0,1,2,3,5,6,7}', '{0,0,0,0,0,0,0}', '{0,0,0,0,0,1,1}', false) ON CONFLICT DO NOTHING;
 INSERT INTO public.game_config VALUES ('wend', false, false, 7, 0, 0, 'solid', '{7,7,7,7,7,7,7}', '{4,6,8,10,12,14,16}', '{0,1,2,3,5,6,7}', '{0,0,0,0,0,0,0}', '{0,0,0,0,0,1,1}', false) ON CONFLICT DO NOTHING;
 INSERT INTO public.game_config VALUES ('minisudoku', true, true, 3, 5, 1, 'solid', '{7,7,7,7,7,7,7}', '{4,6,8,10,12,14,16}', '{0,1,2,3,5,6,7}', '{0,0,0,0,0,0,0}', '{0,0,0,0,0,1,1}', true) ON CONFLICT DO NOTHING;
-INSERT INTO public.game_config VALUES ('tango', true, true, 1, 5, 1, 'solid', '{7,7,7,7,7,7,7}', '{4,6,8,10,12,14,16}', '{0,1,2,3,5,6,7}', '{0,0,0,0,0,0,0}', '{0,0,0,0,0,1,1}', true) ON CONFLICT DO NOTHING;
+INSERT INTO public.game_config VALUES ('binary', true, true, 1, 5, 1, 'solid', '{7,7,7,7,7,7,7}', '{4,6,8,10,12,14,16}', '{0,1,2,3,5,6,7}', '{0,0,0,0,0,0,0}', '{0,0,0,0,0,1,1}', true) ON CONFLICT DO NOTHING;
 INSERT INTO public.game_config VALUES ('geo', true, true, 8, 5, 1, 'solid', '{7,7,7,7,7,7,7}', '{4,6,8,10,12,14,16}', '{0,1,2,3,5,6,7}', '{0,0,0,0,0,0,0}', '{0,0,0,0,0,1,1}', true) ON CONFLICT DO NOTHING;
 INSERT INTO public.game_config VALUES ('zoom', true, true, 9, 0, 0, 'solid', '{7,7,7,7,7,7,7}', '{4,6,8,10,12,14,16}', '{0,1,2,3,5,6,7}', '{0,0,0,0,0,0,0}', '{0,0,0,0,0,1,1}', true) ON CONFLICT DO NOTHING;
 INSERT INTO public.game_config VALUES ('animalrush', true, true, 6, 0, 0, 'solid', '{7,7,7,7,7,7,7}', '{4,6,8,10,12,14,16}', '{0,1,2,3,5,6,7}', '{0,0,0,0,0,0,0}', '{0,0,0,0,0,1,1}', false) ON CONFLICT DO NOTHING;
@@ -38,15 +36,15 @@ INSERT INTO public.game_config VALUES ('animalrush', true, true, 6, 0, 0, 'solid
 -- Data for Name: game_time_benchmarks; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO public.game_time_benchmarks VALUES ('tango', 6, 'challenge', 210, NULL, 0, 210, '2026-08-02 08:59:57.446979+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.game_time_benchmarks VALUES ('binary', 6, 'challenge', 210, NULL, 0, 210, '2026-08-02 08:59:57.446979+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('gridly', 6, 'challenge', 260, NULL, 0, 260, '2026-08-02 09:00:30.539938+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('geo', 6, 'challenge', 65, NULL, 0, 65, '2026-08-02 09:04:00.044933+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('zoom', 6, 'challenge', 150, NULL, 0, 150, '2026-08-02 09:04:32.183747+00') ON CONFLICT DO NOTHING;
-INSERT INTO public.game_time_benchmarks VALUES ('tango', 6, 'practice', 210, NULL, 0, 210, '2026-08-02 09:20:40.906382+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.game_time_benchmarks VALUES ('binary', 6, 'practice', 210, NULL, 0, 210, '2026-08-02 09:20:40.906382+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('minisudoku', 1, 'practice', 75, NULL, 0, 75, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('hive', 1, 'practice', 75, NULL, 0, 75, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('hive', 0, 'challenge', 75, NULL, 0, 75, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
-INSERT INTO public.game_time_benchmarks VALUES ('tango', 1, 'practice', 90, NULL, 0, 90, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.game_time_benchmarks VALUES ('binary', 1, 'practice', 90, NULL, 0, 90, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('hive', 1, 'challenge', 75, NULL, 0, 75, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('gridly', 6, 'practice', 260, NULL, 0, 260, '2026-08-02 10:27:58.615248+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('hive', 6, 'practice', 300, NULL, 0, 300, '2026-08-02 11:22:36.42521+00') ON CONFLICT DO NOTHING;
@@ -55,11 +53,11 @@ INSERT INTO public.game_time_benchmarks VALUES ('gridly', 0, 'challenge', 75, NU
 INSERT INTO public.game_time_benchmarks VALUES ('gridly', 1, 'challenge', 90, NULL, 0, 90, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('geo', 0, 'practice', 35, NULL, 0, 35, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('hive', 0, 'practice', 75, NULL, 0, 75, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
-INSERT INTO public.game_time_benchmarks VALUES ('tango', 0, 'practice', 75, NULL, 0, 75, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.game_time_benchmarks VALUES ('binary', 0, 'practice', 75, NULL, 0, 75, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('gridly', 0, 'practice', 75, NULL, 0, 75, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('minisudoku', 0, 'practice', 60, NULL, 0, 60, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
-INSERT INTO public.game_time_benchmarks VALUES ('tango', 0, 'challenge', 75, NULL, 0, 75, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
-INSERT INTO public.game_time_benchmarks VALUES ('tango', 1, 'challenge', 90, NULL, 0, 90, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.game_time_benchmarks VALUES ('binary', 0, 'challenge', 75, NULL, 0, 75, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.game_time_benchmarks VALUES ('binary', 1, 'challenge', 90, NULL, 0, 90, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('geo', 0, 'challenge', 35, NULL, 0, 35, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('zoom', 0, 'challenge', 45, NULL, 0, 45, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('minisudoku', 0, 'challenge', 60, NULL, 0, 60, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
@@ -78,11 +76,11 @@ INSERT INTO public.game_time_benchmarks VALUES ('geo', 5, 'practice', 60, NULL, 
 INSERT INTO public.game_time_benchmarks VALUES ('geo', 2, 'challenge', 45, NULL, 0, 45, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('zoom', 4, 'practice', 110, NULL, 0, 110, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('gridly', 5, 'practice', 210, NULL, 0, 210, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
-INSERT INTO public.game_time_benchmarks VALUES ('tango', 5, 'practice', 175, NULL, 0, 175, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.game_time_benchmarks VALUES ('binary', 5, 'practice', 175, NULL, 0, 175, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('hive', 5, 'practice', 210, NULL, 0, 210, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('gridly', 5, 'challenge', 210, NULL, 0, 210, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
-INSERT INTO public.game_time_benchmarks VALUES ('tango', 4, 'practice', 145, NULL, 0, 145, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
-INSERT INTO public.game_time_benchmarks VALUES ('tango', 5, 'challenge', 175, NULL, 0, 175, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.game_time_benchmarks VALUES ('binary', 4, 'practice', 145, NULL, 0, 145, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.game_time_benchmarks VALUES ('binary', 5, 'challenge', 175, NULL, 0, 175, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('hive', 5, 'challenge', 210, NULL, 0, 210, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('hive', 2, 'practice', 100, NULL, 0, 100, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('hive', 3, 'practice', 120, NULL, 0, 120, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
@@ -102,25 +100,25 @@ INSERT INTO public.game_time_benchmarks VALUES ('zoom', 1, 'challenge', 60, NULL
 INSERT INTO public.game_time_benchmarks VALUES ('zoom', 1, 'practice', 60, NULL, 0, 60, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('geo', 5, 'challenge', 60, NULL, 0, 60, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('geo', 1, 'practice', 40, NULL, 0, 40, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
-INSERT INTO public.game_time_benchmarks VALUES ('tango', 4, 'challenge', 145, NULL, 0, 145, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.game_time_benchmarks VALUES ('binary', 4, 'challenge', 145, NULL, 0, 145, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('gridly', 4, 'challenge', 165, NULL, 0, 165, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
-INSERT INTO public.game_time_benchmarks VALUES ('tango', 3, 'challenge', 120, NULL, 0, 120, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.game_time_benchmarks VALUES ('binary', 3, 'challenge', 120, NULL, 0, 120, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('zoom', 5, 'challenge', 130, NULL, 0, 130, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('gridly', 3, 'practice', 135, NULL, 0, 135, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('geo', 2, 'practice', 45, NULL, 0, 45, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
-INSERT INTO public.game_time_benchmarks VALUES ('tango', 2, 'practice', 105, NULL, 0, 105, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.game_time_benchmarks VALUES ('binary', 2, 'practice', 105, NULL, 0, 105, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('gridly', 2, 'challenge', 110, NULL, 0, 110, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('geo', 3, 'challenge', 50, NULL, 0, 50, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('zoom', 3, 'challenge', 90, NULL, 0, 90, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('gridly', 3, 'challenge', 135, NULL, 0, 135, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('gridly', 4, 'practice', 165, NULL, 0, 165, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
-INSERT INTO public.game_time_benchmarks VALUES ('tango', 2, 'challenge', 105, NULL, 0, 105, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.game_time_benchmarks VALUES ('binary', 2, 'challenge', 105, NULL, 0, 105, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('minisudoku', 3, 'challenge', 110, NULL, 0, 110, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('zoom', 4, 'challenge', 110, NULL, 0, 110, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('minisudoku', 4, 'challenge', 140, NULL, 0, 140, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('geo', 4, 'challenge', 55, NULL, 0, 55, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('zoom', 2, 'challenge', 75, NULL, 0, 75, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
-INSERT INTO public.game_time_benchmarks VALUES ('tango', 3, 'practice', 120, NULL, 0, 120, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.game_time_benchmarks VALUES ('binary', 3, 'practice', 120, NULL, 0, 120, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.game_time_benchmarks VALUES ('minisudoku', 4, 'practice', 140, NULL, 0, 140, '2026-08-02 02:42:04.667899+00') ON CONFLICT DO NOTHING;
 
 

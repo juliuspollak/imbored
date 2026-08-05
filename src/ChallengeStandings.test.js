@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { pooledChallengeSummary } from "./lib/challengeStandingsScoring.js";
 
-const benchmarks = { "minisudoku:0": 240, "tango:1": 100 };
+const benchmarks = { "minisudoku:0": 240, "binary:1": 100 };
 
 test("scores private results from their real values and only masks their display", () => {
   const result = {
@@ -20,7 +20,7 @@ test("scores private results from their real values and only masks their display
 
 test("uses the server's missed-round penalty for circle totals", () => {
   const played = {
-    game: "tango",
+    game: "binary",
     challenge_date: "2026-07-28",
     seconds: 100,
     hints: 0,

@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
-import { LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3, Gift, MessagesSquare } from "lucide-react";
+import { LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3, Gift, MessagesSquare, Flag } from "lucide-react";
 import Home from "./Home.jsx";
 import GameHomeButton from "./GameHomeButton.jsx";
 import Login from "./Login.jsx";
@@ -19,7 +19,7 @@ import { AuthProvider, useAuth } from "./lib/AuthContext.jsx";
 // Home + Login + auth plumbing, not all five puzzle games and every admin
 // tool. Each chunk loads on demand the first time its screen is opened.
 const HiveGame = lazy(() => import("./games/Hive.jsx"));
-const TangoGame = lazy(() => import("./games/Tango.jsx"));
+const BinaryGame = lazy(() => import("./games/Binary.jsx"));
 const GridlyGame = lazy(() => import("./games/Gridly.jsx"));
 const MiniSudokuGame = lazy(() => import("./games/MiniSudoku.jsx"));
 const GeoGame = lazy(() => import("./games/Geo.jsx"));
@@ -31,6 +31,7 @@ const Feedback = lazy(() => import("./Feedback.jsx"));
 const ReleaseNotes = lazy(() => import("./ReleaseNotes.jsx"));
 const AdminPlayers = lazy(() => import("./AdminPlayers.jsx"));
 const AdminGames = lazy(() => import("./AdminGames.jsx"));
+const AdminReports = lazy(() => import("./AdminReports.jsx"));
 const Progress = lazy(() => import("./Progress.jsx"));
 const Chat = lazy(() => import("./Chat.jsx"));
 const Chats = lazy(() => import("./Chats.jsx"));
@@ -56,7 +57,7 @@ import { GRIDLY_BRAND, HIVE_BRAND } from "./lib/gameBranding.jsx";
 
 const GAME_COMPONENTS = {
   hive: { Component: HiveGame, label: HIVE_BRAND.name },
-  tango: { Component: TangoGame, label: "Tango" },
+  binary: { Component: BinaryGame, label: "Twist" },
   gridly: { Component: GridlyGame, label: GRIDLY_BRAND.name },
   minisudoku: { Component: MiniSudokuGame, label: "Sudoku" },
   geo: { Component: GeoGame, label: "Geo" },
@@ -204,7 +205,7 @@ function AppShell() {
   const players = useOnlinePlayers();
   const { config: gameConfig, refetch: refetchGameConfig } = useGameConfig();
   usePresence(
-    ["hive", "tango", "gridly", "minisudoku", "geo", "zoom", "animalrush"].includes(active) ? active : null,
+    ["hive", "binary", "gridly", "minisudoku", "geo", "zoom", "animalrush"].includes(active) ? active : null,
     active === "animalrush" ? "live" : playMode,
     incognito,
   );
@@ -334,6 +335,7 @@ function AppShell() {
       onOpenWhatsNew={() => openAccountSection("whatsnew", true)}
       onOpenAdminPlayers={() => openAccountSection("adminplayers")}
       onOpenAdminGames={() => openAccountSection("admingames")}
+      onOpenAdminReports={() => openAccountSection("adminreports")}
       onOpenAdminRewards={() => openAccountSection("adminrewards")}
       onOpenRewardRequests={() => openAccountSection("rewardrequests")}
       onOpenOrganiserRewards={isCircleOrganiser ? () => openAccountSection("organiserrewards") : undefined}
@@ -379,6 +381,7 @@ function AppShell() {
           onBack={() => setActive(null)}
           onOpenChat={(player) => { setChatReturn("chats"); setChatPlayer(player); }}
           onOpenAdminPlayers={() => setActive("adminplayers")}
+          onOpenAdminReports={() => setActive("adminreports")}
           onOpenFeedback={() => setActive("feedback")}
           onOpenCircles={() => openSection("circles")}
         />
@@ -430,6 +433,14 @@ function AppShell() {
     return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
         <ReleaseNotes onBack={() => setActive(null)} />
+      </Suspense>
+    );
+  }
+
+  if (active === "adminreports") {
+    return withAccountMenu(
+      <Suspense fallback={<FullScreenMessage text="Loading…" />}>
+        <AdminReports onBack={() => setActive(null)} />
       </Suspense>
     );
   }
@@ -727,7 +738,7 @@ function saveSeenOrganiserAttentionCount(userId, count) {
   }
 }
 
-function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenCircles, onOpenChats, onOpenStats, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminRewards, onOpenRewardRequests, onOpenOrganiserRewards, organiserAttentionCount = null, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
+function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenCircles, onOpenChats, onOpenStats, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminReports, onOpenAdminRewards, onOpenRewardRequests, onOpenOrganiserRewards, organiserAttentionCount = null, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
   const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const [seenOrganiserAttentionCount, setSeenOrganiserAttentionCount] = useState(() => readSeenOrganiserAttentionCount(userId));
@@ -785,6 +796,7 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
   if (isAdmin) {
     adminItems.push({ id:"adminplayers", icon:Shield, label:t("common.players"), onClick:onOpenAdminPlayers });
     adminItems.push({ id:"admingames", icon:Grid3x3, label:t("common.games"), onClick:onOpenAdminGames });
+    adminItems.push({ id:"adminreports", icon:Flag, label:t("common.reports"), onClick:onOpenAdminReports });
     adminItems.push({ id:"adminrewards", icon:Gift, label:t("common.rewardRules"), onClick:onOpenAdminRewards });
   }
 

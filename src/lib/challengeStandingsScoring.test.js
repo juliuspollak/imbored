@@ -15,11 +15,11 @@ const dayIndex = (date) => (new Date(`${date}T12:00:00`).getDay() || 7) - 1;
 
 const ROUNDS = [
   { game: "hive", date: MONDAY },
-  { game: "tango", date: TUESDAY },
+  { game: "binary", date: TUESDAY },
 ];
 const BENCHMARKS = {
   [`hive:${dayIndex(MONDAY)}`]: 100,
-  [`tango:${dayIndex(TUESDAY)}`]: 100,
+  [`binary:${dayIndex(TUESDAY)}`]: 100,
 };
 
 function result(game, date, overrides = {}) {
@@ -77,7 +77,7 @@ test("players with nothing visible are left out of the standings entirely", () =
 
 test("a roster member flagged private is dropped before scoring", () => {
   const standings = buildChallengeStandings({
-    rows: [result("hive", MONDAY, { user_id: "quiet" }), result("tango", TUESDAY, { user_id: "quiet" })],
+    rows: [result("hive", MONDAY, { user_id: "quiet" }), result("binary", TUESDAY, { user_id: "quiet" })],
     roster: [{ id: "quiet", name: "Quiet", is_private: true }],
     slots: ROUNDS,
     benchmarkMap: BENCHMARKS,
@@ -89,7 +89,7 @@ test("a roster member flagged private is dropped before scoring", () => {
 
 test("a participant whose rows are visible is ranked on those rows", () => {
   const standings = buildChallengeStandings({
-    rows: [result("hive", MONDAY), result("tango", TUESDAY)],
+    rows: [result("hive", MONDAY), result("binary", TUESDAY)],
     roster: [{ id: "quiet", name: "Quiet" }],
     slots: ROUNDS,
     benchmarkMap: BENCHMARKS,
@@ -127,7 +127,7 @@ function serverRow(overrides = {}) {
     is_private: false,
     round_scores: [
       { challenge_date: MONDAY, game: "hive", score: 100 },
-      { challenge_date: TUESDAY, game: "tango", score: 100 },
+      { challenge_date: TUESDAY, game: "binary", score: 100 },
       { challenge_date: "2026-08-05", game: "hive", score: null },
     ],
     ...overrides,

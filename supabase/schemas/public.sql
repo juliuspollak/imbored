@@ -2494,7 +2494,7 @@ declare
 begin
   select * into source_result from public.game_stats where id=target_stat_id;
   if not found or source_result.user_id is distinct from auth.uid() then raise exception 'Game result not found.' using errcode='42501'; end if;
-  if source_result.game not in ('hive','tango','gridly','minisudoku') or nullif(source_result.seed,'') is null then
+  if source_result.game not in ('hive','binary','gridly','minisudoku') or nullif(source_result.seed,'') is null then
     raise exception 'This result cannot be challenged.' using errcode='22023';
   end if;
   eligibility:=public.get_score_challenge_eligibility(target_stat_id);
@@ -3849,7 +3849,7 @@ begin
     raise exception 'Game result not found.' using errcode='42501';
   end if;
 
-  supported_result:=source_result.game in ('hive','tango','gridly','minisudoku')
+  supported_result:=source_result.game in ('hive','binary','gridly','minisudoku')
     and nullif(source_result.seed,'') is not null;
 
   select count(distinct other_member.user_id)::integer
@@ -4544,7 +4544,7 @@ declare player_name text; game_label text; notification_body text;
 begin
   if new.mode is distinct from 'challenge' or new.challenge_date is null or new.circle_challenge_id is null or new.circle_id is null then return new; end if;
   select coalesce(nullif(btrim(p.name),''),'A teammate') into player_name from public.profiles p where p.id=new.user_id;
-  game_label:=case lower(new.game) when 'hive' then 'Hive' when 'tango' then 'Tango' when 'gridly' then 'Gridly' when 'minisudoku' then 'Mini Sudoku' when 'geo' then 'Geo' else initcap(replace(new.game,'_',' ')) end;
+  game_label:=case lower(new.game) when 'hive' then 'Hive' when 'binary' then 'Twist' when 'gridly' then 'Gridly' when 'minisudoku' then 'Mini Sudoku' when 'geo' then 'Geo' else initcap(replace(new.game,'_',' ')) end;
   notification_body:=format('🏁 %s finished the %s circle challenge! Think you can beat them? 🎮',coalesce(player_name,'A teammate'),game_label);
   insert into public.direct_messages(sender_id,recipient_id,body,system_generated,activity_type,source_stat_id)
   select new.user_id,cm.user_id,notification_body,true,'circle_daily_challenge',new.id
@@ -5620,7 +5620,7 @@ begin
   from (
     select game,min(selected.ordinality) as first_position
     from unnest(selected_games) with ordinality selected(game,ordinality)
-    where game in ('hive','tango','gridly','minisudoku','geo','zoom')
+    where game in ('hive','binary','gridly','minisudoku','geo','zoom')
     group by game
   ) valid_games;
 
@@ -6682,7 +6682,7 @@ CREATE TABLE public.circle_challenge_rounds (
     game text NOT NULL,
     round_number integer NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT circle_challenge_rounds_game_check CHECK ((game = ANY (ARRAY['hive'::text, 'tango'::text, 'gridly'::text, 'minisudoku'::text, 'geo'::text, 'zoom'::text]))),
+    CONSTRAINT circle_challenge_rounds_game_check CHECK ((game = ANY (ARRAY['hive'::text, 'binary'::text, 'gridly'::text, 'minisudoku'::text, 'geo'::text, 'zoom'::text]))),
     CONSTRAINT team_challenge_rounds_round_number_check CHECK (((round_number >= 1) AND (round_number <= 7)))
 );
 
@@ -6778,7 +6778,7 @@ CREATE TABLE public.circle_weekly_challenges (
     id bigint NOT NULL,
     circle_id bigint NOT NULL,
     week_start date NOT NULL,
-    game_ids text[] DEFAULT ARRAY['hive'::text, 'tango'::text, 'gridly'::text, 'minisudoku'::text, 'geo'::text, 'zoom'::text] NOT NULL,
+    game_ids text[] DEFAULT ARRAY['hive'::text, 'binary'::text, 'gridly'::text, 'minisudoku'::text, 'geo'::text, 'zoom'::text] NOT NULL,
     created_by uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -7371,7 +7371,7 @@ CREATE TABLE public.score_challenges (
     mistakes integer DEFAULT 0 NOT NULL,
     typical_seconds numeric,
     scored_seconds numeric,
-    CONSTRAINT score_challenges_game_check CHECK ((game = ANY (ARRAY['hive'::text, 'tango'::text, 'gridly'::text, 'minisudoku'::text]))),
+    CONSTRAINT score_challenges_game_check CHECK ((game = ANY (ARRAY['hive'::text, 'binary'::text, 'gridly'::text, 'minisudoku'::text]))),
     CONSTRAINT score_challenges_seconds_check CHECK ((seconds >= 0))
 );
 

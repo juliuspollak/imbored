@@ -11,44 +11,64 @@ import DaySelector from "../DaySelector.jsx";
 import Button from "../components/Button.jsx";
 import { createGameAttemptSeed } from "../lib/gameAttemptSeed.js";
 
-function SunIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
-  const gradientId = React.useId().replace(/:/g, "");
+// Flame and frost replace the sun and moon this puzzle shipped with. The two
+// symbols have to be told apart by SHAPE, not colour — roughly 1 in 12 men
+// cannot separate the old warm/cool pair reliably. A rising, round-shouldered
+// teardrop against a hard angular shard reads at a glance in monochrome.
+function FlameIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
+  const id = React.useId().replace(/:/g, "");
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
       <defs>
-        <linearGradient id={gradientId} x1="6" y1="5" x2="18" y2="19" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#FFC64A" />
-          <stop offset="100%" stopColor="#F59E0B" />
+        <linearGradient id={`${id}body`} x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FFB07A" />
+          <stop offset="45%" stopColor="#FF7A59" />
+          <stop offset="100%" stopColor="#E8452F" />
         </linearGradient>
+        <radialGradient id={`${id}core`} cx="12" cy="15.5" r="5" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FFE9C7" stopOpacity="0.95" />
+          <stop offset="100%" stopColor="#FFC48A" stopOpacity="0" />
+        </radialGradient>
       </defs>
-      <circle
-        cx="12" cy="12" r="7.55"
-        fill={`url(#${gradientId})`}
-        stroke="#D97706"
-        strokeWidth="1.35"
+      {/* Chunky teardrop with a single kink, so it reads as flame rather than
+          a droplet at 30px. */}
+      <path
+        d="M12 1.9c.6 2.9 2.3 4.3 3.9 6.1 1.7 1.9 3 3.8 3 6.4a6.9 6.9 0 0 1-13.8 0c0-2 .9-3.6 2.1-5.1.3 1.1.9 1.9 1.7 2.4C9.3 8.3 10.6 5.4 12 1.9Z"
+        fill={`url(#${id}body)`}
+        stroke="#B32F1E"
+        strokeWidth="1.25"
+        strokeLinejoin="round"
       />
+      {/* Inner glow gives the slight dimensionality without extra geometry. */}
+      <ellipse cx="12" cy="15.4" rx="3.6" ry="4" fill={`url(#${id}core)`} />
     </svg>
   );
 }
 
-function ModernMoonIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
-  const gradientId = React.useId().replace(/:/g, "");
+function FrostIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
+  const id = React.useId().replace(/:/g, "");
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
       <defs>
-        <linearGradient id={gradientId} x1="6" y1="4" x2="18" y2="20" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#67A8FF" />
-          <stop offset="55%" stopColor="#3478D4" />
-          <stop offset="100%" stopColor="#1855AA" />
+        <linearGradient id={`${id}body`} x1="6" y1="3" x2="18" y2="21" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#B8F3FF" />
+          <stop offset="50%" stopColor="#5FD8F0" />
+          <stop offset="100%" stopColor="#22A2C4" />
         </linearGradient>
       </defs>
+      {/* A cut shard, not a snowflake: fine radial spokes turn to mush below
+          about 28px, which is exactly the size these render at on a phone. */}
       <path
-        d="M19.75 15.55A8.65 8.65 0 0 1 8.45 4.25a8.9 8.9 0 1 0 11.3 11.3Z"
-        fill={`url(#${gradientId})`}
-        stroke="#174A91"
-        strokeWidth="1.15"
+        d="M12 1.8 19.4 8v8L12 22.2 4.6 16V8Z"
+        fill={`url(#${id}body)`}
+        stroke="#1C7E9C"
+        strokeWidth="1.25"
         strokeLinejoin="round"
       />
+      {/* Two facets catch the light from opposite sides so the shard reads as
+          solid rather than a flat hexagon. */}
+      <path d="M12 1.8 19.4 8l-7.4 4.2Z" fill="#FFFFFF" fillOpacity="0.55" />
+      <path d="M12 12.2 19.4 8v8Z" fill="#0E6C88" fillOpacity="0.28" />
     </svg>
   );
 }
@@ -340,7 +360,7 @@ const CREAM = "var(--color-text-primary)";
 const GOLD = "var(--color-primary)";
 const RED = "#E5484D";
 const TEAL = "#5FA8A3";
-const SUN_COLOR = "#F2A43A";
+const SUN_COLOR = "#FF7A59";
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const GIVEN_TARGETS = [16, 14, 12, 10, 9, 8, 7];
 const EDGE_TARGETS = [6, 5, 5, 4, 4, 3, 3];
@@ -354,7 +374,7 @@ function fmtTime(s) {
 
 /* ---------------- component ---------------- */
 
-export default function TangoGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId, rewardResult, scoreToBeatSeconds = null, scoreChallengerName = null } = {}) {
+export default function BinaryGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId, rewardResult, scoreToBeatSeconds = null, scoreChallengerName = null } = {}) {
   const { t } = useI18n();
   const todayIdx = (() => {
     const d = new Date().getDay();
@@ -378,7 +398,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
   const [reviewing, setReviewing] = useState(false);
   const [celebratingLines, setCelebratingLines] = useState([]);
   const [displayedConflicts, setDisplayedConflicts] = useState(new Set());
-  const attemptSeedRef = useRef(seed || createGameAttemptSeed("tango"));
+  const attemptSeedRef = useRef(seed || createGameAttemptSeed("binary"));
   const completedLinesRef = useRef(new Set());
   const invalidCompletedLinesRef = useRef(new Set());
   const invalidMistakeTimerRef = useRef(null);
@@ -388,7 +408,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
 
   const newPuzzle = useCallback((dIdx) => {
     const gen = () => generatePuzzle(GIVEN_TARGETS[dIdx], EDGE_TARGETS[dIdx]);
-    const attemptSeed = isChallenge ? (seed || attemptSeedRef.current) : createGameAttemptSeed("tango");
+    const attemptSeed = isChallenge ? (seed || attemptSeedRef.current) : createGameAttemptSeed("binary");
     attemptSeedRef.current = attemptSeed;
     const p = withSeededRandom(attemptSeed, gen);
     setPuzzle(p);
@@ -432,7 +452,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
       setRunning(false);
       onSolved && onSolved({
         userId,
-        game: "tango",
+        game: "binary",
         dayIndex: dayIdx,
         seconds,
         mistakes,
@@ -627,8 +647,11 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
         display: "grid",
         gridTemplateColumns: `repeat(${SIZE}, 1fr)`,
         gridTemplateRows: `repeat(${SIZE}, 1fr)`,
-        background: "var(--color-surface)",
-        border: "4px solid var(--color-border-strong)",
+        // Inky navy drifting into deep plum. A dark board is what lets the
+        // coral flame glow and the cyan shard read as lit rather than printed;
+        // on the old light surface both symbols looked flat.
+        background: "linear-gradient(155deg,#141B3A 0%,#1B1B42 55%,#2A1740 100%)",
+        border: "4px solid #0D1230",
         boxShadow: "var(--shadow-card)",
         containerType: "inline-size",
         width: "auto",
@@ -659,10 +682,10 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
               }}
             >
               {val === SUN && (
-                <span className="tg-symbol tg-symbol-disc tg-symbol-disc--sun"><SunIcon key={`sun-${r}-${c}`} size={Math.max(28, 50 - SIZE)} isConflict={isConflict} /></span>
+                <span className="tg-symbol tg-symbol-disc tg-symbol-disc--flame"><FlameIcon key={`flame-${r}-${c}`} size={Math.max(28, 50 - SIZE)} isConflict={isConflict} /></span>
               )}
               {val === MOON && (
-                <span className="tg-symbol tg-symbol-disc tg-symbol-disc--moon"><ModernMoonIcon key={`moon-${r}-${c}`} size={Math.max(28, 50 - SIZE)} isConflict={isConflict} /></span>
+                <span className="tg-symbol tg-symbol-disc tg-symbol-disc--frost"><FrostIcon key={`frost-${r}-${c}`} size={Math.max(28, 50 - SIZE)} isConflict={isConflict} /></span>
               )}
               {/* Hints never place or replace a symbol. The striped cell
                   identifies where to look and this corner badge shows the
@@ -670,7 +693,7 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
               {isHint && hintCell.symbol && !solved && (
                 <span
                   className="tg-hint-ghost-badge"
-                  aria-label={hintCell.symbol === SUN ? "This cell should be a sun" : "This cell should be a moon"}
+                  aria-label={hintCell.symbol === SUN ? "This cell should be a flame" : "This cell should be frost"}
                   style={{
                     position: "absolute", top: 3, right: 3, width: 16, height: 16, borderRadius: "50%",
                     background: "var(--color-surface-raised)", display: "flex", alignItems: "center", justifyContent: "center",
@@ -678,9 +701,9 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
                   }}
                 >
                   {hintCell.symbol === SUN ? (
-                    <SunIcon size={11} style={{ color: SUN_COLOR }} />
+                    <FlameIcon size={11} style={{ color: SUN_COLOR }} />
                   ) : (
-                    <ModernMoonIcon size={10} style={{ color: "var(--color-icon-primary)" }} />
+                    <FrostIcon size={10} />
                   )}
                 </span>
               )}
@@ -788,8 +811,8 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           pointer-events: none;
           animation: tangoGlow 7s ease-in-out infinite;
         }
-        .tg-board-shell::before { width: 42%; height: 42%; left: -12%; top: -15%; background: rgba(246,196,83,.16); }
-        .tg-board-shell::after { width: 46%; height: 46%; right: -15%; bottom: -18%; background: rgba(74,111,165,.13); animation-delay: -3.5s; }
+        .tg-board-shell::before { width: 42%; height: 42%; left: -12%; top: -15%; background: rgba(255,122,89,.18); }
+        .tg-board-shell::after { width: 46%; height: 46%; right: -15%; bottom: -18%; background: rgba(95,216,240,.14); animation-delay: -3.5s; }
         .tg-cell::after {
           content: "";
           position: absolute;
@@ -811,8 +834,33 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
           position: relative;
           z-index: 1;
         }
-        .tg-symbol-disc--sun { background: transparent; filter: drop-shadow(0 2px 2px rgba(180,104,5,.14)); }
-        .tg-symbol-disc--moon { background: transparent; filter: drop-shadow(0 2px 2px rgba(23,74,145,.14)); }
+        /* The glow is the dimensionality: a warm halo under the flame, a cold
+           rim under the shard, both cast onto the dark board. */
+        .tg-symbol-disc--flame {
+          background: transparent;
+          filter: drop-shadow(0 0 9px rgba(255,122,89,.55)) drop-shadow(0 2px 3px rgba(0,0,0,.45));
+        }
+        .tg-symbol-disc--frost {
+          background: transparent;
+          filter: drop-shadow(0 0 8px rgba(95,216,240,.42)) drop-shadow(0 2px 3px rgba(0,0,0,.45));
+        }
+        /* Placement feedback. Keyed on the cell so React remounts the symbol
+           and the animation restarts on every placement, not just the first. */
+        .tg-symbol-disc--flame > svg { animation: flameFlicker .5s ease-out 1; transform-origin: 50% 80%; }
+        .tg-symbol-disc--frost > svg { animation: frostShimmer .55s ease-out 1; transform-origin: 50% 50%; }
+        @keyframes flameFlicker {
+          0%   { transform: scale(.82) translateY(2px); opacity: .5; }
+          35%  { transform: scale(1.08) translateY(-1px); opacity: 1; }
+          55%  { transform: scale(.97) skewX(-2.5deg); }
+          72%  { transform: scale(1.03) skewX(1.5deg); }
+          100% { transform: scale(1) skewX(0); opacity: 1; }
+        }
+        @keyframes frostShimmer {
+          0%   { transform: scale(.84) rotate(-6deg); opacity: .45; filter: brightness(1.6); }
+          45%  { transform: scale(1.06) rotate(2deg); opacity: 1; filter: brightness(1.85); }
+          70%  { filter: brightness(1.15); }
+          100% { transform: scale(1) rotate(0); opacity: 1; filter: brightness(1); }
+        }
         .tg-cell:disabled .tg-symbol-disc { opacity: .96; }
         .tg-edge-token { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
         .tg-hint-error { animation: hintPulseError 1.1s ease-in-out infinite; }
@@ -821,7 +869,8 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
         .tg-line-complete { animation: lineSweep .85s ease-out both; }
         .tg-line-spark { animation: lineSpark .85s ease-out both; }
         @media (prefers-reduced-motion: reduce) {
-          .tg-symbol, .tg-card, .tg-hint-error, .tg-hint-forced, .tg-hint-next, .tg-line-complete, .tg-line-spark, .tg-board-shell::before, .tg-board-shell::after { animation: none !important; }
+          .tg-symbol, .tg-card, .tg-hint-error, .tg-hint-forced, .tg-hint-next, .tg-line-complete, .tg-line-spark, .tg-board-shell::before, .tg-board-shell::after,
+          .tg-symbol-disc--flame > svg, .tg-symbol-disc--frost > svg { animation: none !important; }
         }
         @media (hover: hover) and (pointer: fine) {
           .tg-cell:not(:disabled):hover::after { border-color: rgba(74,111,165,.18); transform: scale(.96); }
@@ -851,18 +900,18 @@ export default function TangoGame({ userId, onSolved, mode = "practice", forcedD
             style={{ width: 66, height: 30, background: "linear-gradient(135deg, rgba(246,196,83,.16), rgba(74,111,165,.13))", border: "1px solid rgba(16,24,40,.06)" }}
             aria-hidden="true"
           >
-            <SunIcon size={14} style={{ color: SUN_COLOR }} />
+            <FlameIcon size={14} />
             <span style={{ width: 1, height: 12, background: "rgba(27,33,41,.12)" }} />
-            <ModernMoonIcon size={14} />
+            <FrostIcon size={14} />
           </div>}
           <h1
             style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }}
             className="text-4xl lg:text-5xl"
           >
-            Tango
+            Twist
           </h1>
           <p style={{ color: CREAM, opacity: 0.45 }} className="text-xs mt-1">
-            balance the sun &amp; moon in every row &amp; column
+            balance flame &amp; frost in every row &amp; column
           </p>
         </div>
 
