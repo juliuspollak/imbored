@@ -3,7 +3,32 @@ import { useSupabaseWatchedState } from "./useSupabaseWatchedState.js";
 
 const EMPTY = { total: 0, bySender: {} };
 
+function challengeResultsConversationIsOpen() {
+  if (typeof document === "undefined") return false;
+  return [...document.querySelectorAll(".chat-notice")]
+    .some((element) => element.textContent?.includes("Challenge results are posted here automatically"));
+}
+
+async function clearOpenChallengeResults(userId) {
+  if (!challengeResultsConversationIsOpen()) return;
+
+  const { error } = await supabase
+    .from("direct_messages")
+    .update({ read_at: new Date().toISOString() })
+    .eq("sender_id", userId)
+    .eq("recipient_id", userId)
+    .is("read_at", null);
+
+  if (error) console.error("Unable to mark challenge results as read:", error.message);
+}
+
 async function compute(userId) {
+  // Challenge results are a special self-conversation. Chat.jsx currently
+  // displays a limited message window, so an unread result outside that window
+  // cannot be cleared by updating only the IDs that were loaded. When that
+  // conversation is visibly open, clear the whole conversation first.
+  await clearOpenChallengeResults(userId);
+
   const { data, error } = await supabase
     .from("direct_messages")
     .select("sender_id")
