@@ -13,7 +13,7 @@
 }
 
 .home-game-tile--binary {
-  --game-tile-art: url('/assets/tango-tile-bg.webp');
+  --game-tile-art: url('/assets/twist-tile-bg.png');
   --game-tile-fallback: #07142f;
   --game-tile-title: #fff8e7;
   --game-tile-meta: #bcd7ff;
