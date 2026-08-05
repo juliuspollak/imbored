@@ -11,6 +11,7 @@ import DaySelector from "../DaySelector.jsx";
 import Button from "../components/Button.jsx";
 import { HIVE_BRAND } from "../lib/gameBranding.jsx";
 import { createGameAttemptSeed } from "../lib/gameAttemptSeed.js";
+import { findCompletionForcedStep } from "../lib/hiveHintLogic.js";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -779,14 +780,13 @@ export default function Hive({
       showHints([step]);
       return;
     }
-    // Safety fallback for any generated board that still defeats the logical
-    // solver: reveal the next required bee rather than doing nothing.
-    for (let r = 0; r < boardSize; r++) {
-      const c = puzzle.solution[r];
-      if (board[r][c] !== 2) {
-        showHints([{ r, c, type: "bee", src: "fallback" }]);
-        return;
-      }
+    // If the quick human-style rules cannot advance the board, compare every
+    // completion still compatible with the player's marks. Suggest a cell
+    // that no completion can use before suggesting any universally forced
+    // bee. This never reads or reveals puzzle.solution.
+    const completionStep = findCompletionForcedStep(board, puzzle.regionGrid);
+    if (completionStep) {
+      showHints([completionStep]);
     }
   }
 
