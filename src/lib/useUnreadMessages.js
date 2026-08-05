@@ -28,6 +28,11 @@ export function useUnreadMessages(userId) {
     compute,
     tables: [{ name: "direct_messages" }],
     channelName: `unread-messages-${userId}`,
+    seenEvent: "imbored-messages-read",
+    // Mobile Safari can suspend or miss realtime UPDATE events. While the app
+    // is visible, briefly re-check so a successfully read conversation cannot
+    // leave a stale badge behind indefinitely.
+    fallbackMs: 1500,
     emptyValue: EMPTY,
   });
 }
