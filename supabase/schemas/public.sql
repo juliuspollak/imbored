@@ -1377,32 +1377,57 @@ $$;
 -- Name: get_messageable_players(); Type: FUNCTION; Schema: public; Owner: -
 --
 
--- Who the signed-in player may start a conversation with. Mirrors the rule
--- send_direct_message enforces, so the list can never offer someone the send
--- would then refuse: people you share a circle with, plus admins so support
--- stays reachable. Blocked players in either direction are omitted.
-CREATE FUNCTION public.get_messageable_players() RETURNS TABLE(id uuid, name text, icon text, mood text, is_admin boolean)
+-- Everyone the signed-in player can see in Chats, and whether they may start a
+-- new conversation with them.
+--
+-- can_message mirrors the rule send_direct_message enforces, so the "start a
+-- chat" list can never offer someone the send would then refuse: people you
+-- share a circle with, plus admins so support stays reachable.
+--
+-- People you already have message history with are returned too, with
+-- can_message false. Scoping the list to circle-mates alone silently hid those
+-- conversations while the unread badge still counted them, so the badge lit up
+-- with nothing to open — and the history itself disappeared.
+--
+-- Blocked players in either direction are omitted from both sets.
+CREATE FUNCTION public.get_messageable_players() RETURNS TABLE(id uuid, name text, icon text, mood text, is_admin boolean, can_message boolean)
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
-  select
-    profile.id, profile.name::text, profile.icon::text, profile.mood::text, profile.is_admin
-  from public.profiles profile
-  where profile.id<>auth.uid()
-    and profile.account_deleted_at is null
-    and coalesce(profile.is_blocked,false)=false
-    and coalesce(profile.hidden_from_others,false)=false
-    and (profile.is_admin=true or coalesce(profile.is_approved,false)=true)
-    and (
-      coalesce(profile.is_private,false)=false
-      or public.is_admin(auth.uid())
-    )
-    and not public.is_blocked_between(auth.uid(),profile.id)
-    and (
-      profile.is_admin=true
-      or public.players_share_circle(auth.uid(),profile.id)
-    )
-  order by profile.name
+  with candidate as (
+    select
+      profile.id,
+      profile.name::text as name,
+      profile.icon::text as icon,
+      profile.mood::text as mood,
+      profile.is_admin,
+      (
+        profile.is_admin=true
+        or public.players_share_circle(auth.uid(),profile.id)
+      ) as can_message,
+      exists(
+        select 1
+        from public.direct_messages message
+        where (message.sender_id=auth.uid() and message.recipient_id=profile.id)
+           or (message.sender_id=profile.id and message.recipient_id=auth.uid())
+      ) as has_history
+    from public.profiles profile
+    where profile.id<>auth.uid()
+      and profile.account_deleted_at is null
+      and coalesce(profile.is_blocked,false)=false
+      and coalesce(profile.hidden_from_others,false)=false
+      and (profile.is_admin=true or coalesce(profile.is_approved,false)=true)
+      and (
+        coalesce(profile.is_private,false)=false
+        or public.is_admin(auth.uid())
+      )
+      and not public.is_blocked_between(auth.uid(),profile.id)
+  )
+  select candidate.id,candidate.name,candidate.icon,candidate.mood,
+         candidate.is_admin,candidate.can_message
+  from candidate
+  where candidate.can_message or candidate.has_history
+  order by candidate.name
 $$;
 
 

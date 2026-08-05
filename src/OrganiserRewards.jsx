@@ -69,7 +69,11 @@ export default function OrganiserRewards({ onBack, attentionCount = 0 }) {
   async function resolveCancellation(id, approve) { setWorking(id); const { error } = await supabase.rpc("resolve_cancellation", { target_redemption_id: id, approve }); setWorking(""); setMessage(error?.message || (approve ? "Cancelled" : "Kept")); refresh(); }
   async function removeReward(id, hasHistory) {
     setWorking(`remove-${id}`);
-    const { error } = await supabase.rpc("force_delete_reward", { target_reward_id: id, remove_history: hasHistory });
+    // force_delete_reward(target_reward_id, remove_history) was folded into
+    // delete_reward(target_reward_id, force) before the schema was baselined,
+    // but this call kept the old name and errored with "could not find the
+    // function". Same behaviour: force also clears redemption history.
+    const { error } = await supabase.rpc("delete_reward", { target_reward_id: id, force: hasHistory });
     setWorking(""); setRemoveTarget(null); setMessage(error?.message || "Removed"); refresh();
   }
 

@@ -82,12 +82,16 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
     !normalisedQuery
     || `${conversation.profile.name || ""} ${conversation.latest.body || ""}`.toLowerCase().includes(normalisedQuery)
   ));
+  // Existing conversations stay visible with anyone in the list, but a NEW one
+  // can only be started with someone can_message allows — the same rule
+  // send_direct_message enforces, so search never offers a chat that would be
+  // refused on send.
   const findResults = normalisedQuery.length < 2
     ? []
     : profiles
       .filter((profile) => (
         profile.id !== currentUser.id
-        && (profile.is_admin || profile.is_approved !== false)
+        && profile.can_message !== false
         && `${profile.name || ""} ${profile.mood || ""}`.toLowerCase().includes(normalisedQuery)
       ))
       .slice(0, 20);
