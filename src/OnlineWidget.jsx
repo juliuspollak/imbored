@@ -7,7 +7,7 @@ const PANEL = "var(--color-surface)";
 const TEXT = "var(--color-text-primary)";
 const GREEN = "var(--color-success-text)";
 
-export default function OnlineWidget({ players, userId, myName, onOpenChat, unreadBySender = {}, unreadTotal = 0 }) {
+export default function OnlineWidget({ players, userId, myName, onOpenChat, unreadBySender = {} }) {
   const [open, setOpen] = useState(false);
   const [poked, setPoked] = useState(null); // id of the player just poked, for a quick confirm flash
 
@@ -86,14 +86,14 @@ export default function OnlineWidget({ players, userId, myName, onOpenChat, unre
           className="online-btn-count absolute flex items-center justify-center rounded-full"
           style={{ top: -3, right: -3, minWidth: 15, height: 15, padding: "0 3px", background: GREEN, color: "var(--color-primary-text)", fontSize: 9, fontWeight: 700, border: "1.5px solid var(--color-page-bg)" }}
         >
-          {unreadTotal > 0 ? unreadTotal : players.length}
+          {others.length}
         </div>
       </button>
 
       {open && (
         <div className="absolute top-full right-0 mt-2 flex flex-col items-end gap-1.5" style={{ zIndex: 60 }}>
           <div style={{ color: "var(--color-text-secondary)", background: PANEL, borderRadius: 999, padding: "2px 10px" }} className="text-[10px] font-semibold uppercase tracking-wide balloon">
-            {players.length} online
+            {others.length} online
           </div>
           {others.map((p, i) => {
               const meta = GAME_META.find((g) => g.id === p.game);
