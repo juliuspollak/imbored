@@ -250,63 +250,6 @@ function findNextLogicalStepPure(board, regionGrid, n) {
     if (cands.length === 1) return { r: cands[0][0], c: cands[0][1], type: "bee", src: "naked" };
   }
 
-  function subsetsOfSize(arr, k) {
-    const results = [];
-    (function combo(start, chosen) {
-      if (chosen.length === k) {
-        results.push(chosen.slice());
-        return;
-      }
-      for (let i = start; i < arr.length; i++) {
-        chosen.push(arr[i]);
-        combo(i + 1, chosen);
-        chosen.pop();
-      }
-    })(0, []);
-    return results;
-  }
-
-  const openRows = [];
-  for (let r = 0; r < n; r++) if (!rowHasBee[r]) openRows.push(r);
-  const openCols = [];
-  for (let c = 0; c < n; c++) if (!colHasBee[c]) openCols.push(c);
-  // built from actual regionGrid values (not Object.keys, which returns
-  // strings — comparing those against regionGrid's numeric IDs via
-  // Set.has() would silently fail every check, since unlike plain object
-  // property access, Set/Map lookups require an exact type match)
-  const regionIdSet = new Set();
-  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) regionIdSet.add(regionGrid[r][c]);
-
-  const openRegions = [...regionIdSet].filter((reg) => !regionHasBee[reg]);
-  const unitDefs = [
-    ...openRows.map((r) => ({ type: "row", id: r, cells: Array.from({ length: n }, (_, c) => [r, c]) })),
-    ...openCols.map((c) => ({ type: "col", id: c, cells: Array.from({ length: n }, (_, r) => [r, c]) })),
-    ...openRegions.map((reg) => ({ type: "reg", id: reg, cells: regionCells[reg] || [] })),
-  ];
-
-  // hidden/naked subsets up to size 3: if k open units collectively have
-  // candidates in exactly k cells, the other candidates in those cells can
-  // be eliminated. This gives harder generated boards a proper chain.
-  for (let k = 2; k <= 3; k++) {
-    for (const units of subsetsOfSize(unitDefs, k)) {
-      const cells = new Map();
-      for (const unit of units) {
-        for (const [r, c] of unit.cells) {
-          if (isCandidate(r, c)) cells.set(`${r},${c}`, [r, c]);
-        }
-      }
-      if (cells.size !== k) continue;
-      const unitKeys = new Set(units.map((u) => `${u.type}:${u.id}`));
-      for (const [r, c] of cells.values()) {
-        // find any candidate unit membership not part of the locked subset
-        const memberships = [`row:${r}`, `col:${c}`, `reg:${regionGrid[r][c]}`];
-        if (memberships.some((key) => !unitKeys.has(key))) {
-          return { r, c, type: "cross", src: "subset" };
-        }
-      }
-    }
-  }
-
   return null;
 }
 
@@ -729,10 +672,16 @@ export default function Hive({
   function handleHint() {
     if (solved || hintCooldown.isLocked()) return;
     hintCooldown.startCooldown();
+    const isCorrectHint = ({ r, c, type }) => type === "bee"
+      ? puzzle.solution[r] === c
+      : puzzle.solution[r] !== c;
     const showHints = (cells) => {
-      setHintCells(cells);
+      const safeCells = cells.filter(isCorrectHint);
+      if (!safeCells.length) return false;
+      setHintCells(safeCells);
       setHintsUsed((h) => h + 1);
       window.setTimeout(() => setHintCells([]), 2200);
+      return true;
     };
     const wrong = [];
     for (let r = 0; r < boardSize; r++) {
@@ -745,8 +694,7 @@ export default function Hive({
       }
     }
     if (wrong.length) {
-      showHints([wrong[0]]);
-      return;
+      if (showHints([wrong[0]])) return;
     }
 
     // A correctly placed bee rules out its row, column, region and every
@@ -770,15 +718,13 @@ export default function Hive({
         }
       }
       if (eliminated.length) {
-        showHints(eliminated);
-        return;
+        if (showHints(eliminated)) return;
       }
     }
 
     const step = findNextLogicalStepPure(board, puzzle.regionGrid, boardSize);
     if (step) {
-      showHints([step]);
-      return;
+      if (showHints([step])) return;
     }
     // If the quick human-style rules cannot advance the board, compare every
     // completion still compatible with the player's marks. Suggest a cell
@@ -893,6 +839,28 @@ export default function Hive({
                   }}
                 >
                   <HIVE_BRAND.PieceIcon size={14} style={{ color: "#047857" }} />
+                </span>
+              )}
+              {isHint && cellHint.type === "cross" && val === 0 && (
+                <X
+                  className="qp-cross"
+                  aria-label="Place an X in this cell"
+                  size={Math.max(18, 27 - boardSize)}
+                  strokeWidth={2.8}
+                  style={{ color: "#1D4ED8", opacity: 0.82, pointerEvents: "none" }}
+                />
+              )}
+              {isHint && cellHint.type === "cross" && val === 2 && (
+                <span
+                  aria-label={`Replace this ${HIVE_BRAND.piece} with an X`}
+                  style={{
+                    position: "absolute", top: 3, right: 3, width: 18, height: 18,
+                    borderRadius: "50%", display: "grid", placeItems: "center",
+                    background: "#fff", color: "#1D4ED8", boxShadow: "0 1px 4px rgba(0,0,0,.24)",
+                    pointerEvents: "none",
+                  }}
+                >
+                  <X size={13} strokeWidth={3} />
                 </span>
               )}
             </button>
