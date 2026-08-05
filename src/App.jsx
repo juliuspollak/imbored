@@ -966,7 +966,7 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
 
       {!menuOpen && (
         <div style={{ position:"absolute", top:52, right:6 }}>
-          <OnlineWidget players={players} userId={userId} myName={profile.name} onOpenChat={onOpenChat} unreadBySender={unreadMessages.bySender} unreadTotal={unreadMessages.total} />
+          <OnlineWidget players={players} userId={userId} myName={profile.name} onOpenChat={onOpenChat} unreadBySender={unreadMessages.bySender} />
         </div>
       )}
     </div>
