@@ -10,7 +10,7 @@ import StatusBanner from "./components/StatusBanner.jsx";
 
 const TABS = [["ideas", "Ideas"], ["active", "In progress"], ["finished", "Finished"]];
 
-export default function OrganiserRewards({ onBack, attentionCount = 0 }) {
+export default function OrganiserRewards({ onBack }) {
   const { user } = useAuth();
   const [tab, setTab] = useState("ideas");
   const [loading, setLoading] = useState(true);
@@ -49,6 +49,10 @@ export default function OrganiserRewards({ onBack, attentionCount = 0 }) {
       ? `Could not load ${failures.map(([label]) => label).join(", ")}. ${failures[0][1].message || "Please try again."}`
       : "");
     setLoading(false);
+    // Keep the account-menu badge in lockstep with this freshly loaded page.
+    // Waiting only for Supabase realtime caused a transient stale count after
+    // remove/decline/approve actions and displayed a false filter warning.
+    window.dispatchEvent(new Event("organiser-attention-changed"));
   }, []);
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -79,15 +83,10 @@ export default function OrganiserRewards({ onBack, attentionCount = 0 }) {
 
   if (loading) return <Page><p style={{ textAlign: "center", padding: "var(--space-8) 0", color: "var(--color-text-secondary)" }}>Loading…</p></Page>;
 
-  const loadedAttentionCount = ideas.filter((reward) => reward.status === "suggested").length
-    + active.filter((request) => request.cancellation_requested_at).length;
-  const hasAttentionMismatch = !loadError && attentionCount > loadedAttentionCount;
-
   return (
     <Page>
       <PageHeader title="Organise rewards" onBack={onBack} />
       {loadError && <div style={{ marginBottom: "var(--space-3)" }}><StatusBanner variant="error">{loadError} <Button size="sm" variant="secondary" onClick={refresh} style={{ marginLeft: "var(--space-2)" }}>Try again</Button></StatusBanner></div>}
-      {hasAttentionMismatch && <div style={{ marginBottom: "var(--space-3)" }}><StatusBanner variant="warning">Your menu shows {attentionCount} item{attentionCount === 1 ? "" : "s"} needing attention, but this page received {loadedAttentionCount}. The organiser database filters are out of sync.</StatusBanner></div>}
       {message && <div style={{ marginBottom: "var(--space-3)" }}><StatusBanner variant="info" dismissible onDismiss={() => setMessage("")}>{message}</StatusBanner></div>}
 
       <div style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-4)" }}>

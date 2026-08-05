@@ -18,6 +18,10 @@ export function useOrganiserAttentionCount(userId) {
     compute,
     tables: [{ name: "rewards" }, { name: "reward_redemptions" }],
     channelName: `organiser-attention-${userId}`,
+    // Realtime is eventually consistent and can arrive after the organiser
+    // page has already refreshed following a same-tab action. The page emits
+    // this event after its write so the menu badge is recalculated at once.
+    seenEvent: "organiser-attention-changed",
     // null distinguishes "not loaded yet" from a real zero. AccountBadge uses
     // that distinction to avoid overwriting a persisted acknowledgement while
     // the first count request is still in flight after a page refresh.
