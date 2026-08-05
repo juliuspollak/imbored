@@ -11,7 +11,7 @@ import Page from "./components/Page.jsx";
 import Button from "./components/Button.jsx";
 import Card from "./components/Card.jsx";
 import AvatarGroup from "./components/AvatarGroup.jsx";
-import { GRIDLY_BRAND, HIVE_BRAND } from "./lib/gameBranding.jsx";
+import { GAME_NAMES, GRIDLY_BRAND, HIVE_BRAND } from "./lib/gameBranding.jsx";
 
 const buttonReset = {
   appearance: "none",
@@ -764,7 +764,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
                                 })}
                               </div>
                               <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-1)", marginTop: "var(--space-2)" }}>
-                                {itemRounds.map((round) => <span key={round.date} style={{ padding: "4px 7px", borderRadius: "var(--radius-full)", background: "var(--color-surface-elevated)", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>{DAY_LABELS[round.isoDay - 1]} · {round.game}</span>)}
+                                {itemRounds.map((round) => <span key={round.date} style={{ padding: "4px 7px", borderRadius: "var(--radius-full)", background: "var(--color-surface-elevated)", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>{DAY_LABELS[round.isoDay - 1]} · {GAME_NAMES[round.game] || round.game}</span>)}
                               </div>
                               <p style={{ margin: "var(--space-2) 0 0", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>
                                 {item.repeats_weekly ? `Week ${item.occurrence_number} of ${item.series_weeks}` : "One week only"}

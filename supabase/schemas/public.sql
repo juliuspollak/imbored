@@ -2520,7 +2520,7 @@ begin
   get diagnostics recipients=row_count;
 
   select coalesce(name,'A friend') into challenger_name from public.profiles where id=auth.uid();
-  game_label:=case source_result.game when 'hive' then 'Hive' when 'gridly' then 'Gridly' when 'minisudoku' then 'Sudoku' else 'Tango' end;
+  game_label:=case source_result.game when 'hive' then 'Hive' when 'binary' then 'Twist' when 'gridly' then 'Gridly' when 'minisudoku' then 'Sudoku' else initcap(replace(source_result.game,'_',' ')) end;
   insert into public.direct_messages(sender_id,recipient_id,body,system_generated,activity_type,source_stat_id)
   select recipient_id,recipient_id,format('%s set a %s score of %s. Can you beat it?',challenger_name,game_label,
     (round((eligibility->>'scored_seconds')::numeric)::integer/60)::text||':'||lpad((round((eligibility->>'scored_seconds')::numeric)::integer%60)::text,2,'0')),

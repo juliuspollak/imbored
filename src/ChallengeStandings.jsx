@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { ChevronDown, LockKeyhole, Trophy } from "lucide-react";
 import { MISSED_ROUND_PENALTY, buildChallengeStandings, fromServerStandings } from "./lib/challengeStandingsScoring.js";
 import { useI18n } from "./lib/i18n.jsx";
+import { GAME_NAMES } from "./lib/gameBranding.jsx";
 
 function toBenchmarkMap(benchmarks) {
   return Object.fromEntries(benchmarks.map((item) => [`${item.game}:${item.day_index}`, Number(item.effective_seconds) || 100]));
@@ -150,7 +151,7 @@ function StandingsList({ standings, expandedPlayerId, setExpandedPlayerId, previ
                       const score = player.dailyScores[di];
                       return (
                         <span key={di} style={{ minHeight: 36, display: "flex", alignItems: "center", justifyContent: "center", padding: "6px 8px", border: `1px solid ${score >= 50 ? "var(--color-primary-subtle-border)" : "var(--color-danger-text)"}`, borderRadius: "var(--radius-sm)", background: score >= 50 ? "var(--color-primary-subtle)" : "var(--color-danger-bg)", color: score >= 50 ? "var(--color-primary)" : "var(--color-danger-text)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>
-                          {res.game} {score}pt
+                          {GAME_NAMES[res.game] || res.game} {score}pt
                         </span>
                       );
                     })}
