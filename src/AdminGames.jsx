@@ -10,6 +10,10 @@ import Card from "./components/Card.jsx";
 import TextInput from "./components/TextInput.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
 
+// Must match the phrase admin_reset_all_stats() checks server-side, so the
+// database refuses the call even if this guard is ever bypassed.
+const RESET_ALL_PHRASE = "RESET ALL STATS";
+
 const GRIDLY_DEFAULTS = {
   zip_grid_sizes: [7, 7, 7, 7, 7, 7, 7],
   zip_checkpoint_counts: [4, 6, 8, 10, 12, 14, 16],
@@ -96,6 +100,7 @@ export default function AdminGames({ onBack }) {
   const [saving, setSaving] = useState(null); // { gameId, field } or "reorder"
   const [message, setMessage] = useState(null);
   const [confirmTarget, setConfirmTarget] = useState(null);
+  const [confirmPhrase, setConfirmPhrase] = useState("");
   const [drafts, setDrafts] = useState({});
   const [savedFields, setSavedFields] = useState({}); // temporary "Saved" indicators
   const rowsRef = useRef(rows);
@@ -153,6 +158,25 @@ export default function AdminGames({ onBack }) {
 
   function confirmResetTodayChallenge(gameId, label) { setConfirmTarget({ type: "resetToday", gameId, label }); }
   function confirmResetMyChallenge() { setConfirmTarget({ type: "resetMy" }); }
+
+  // The phrase has to be typed rather than clicked. This is unrecoverable, and
+  // it sits next to two much narrower reset buttons — a plain confirm would be
+  // one mis-tap away from wiping every player's history.
+  async function executeResetAllStats() {
+    if (confirmPhrase !== RESET_ALL_PHRASE) return;
+    setConfirmTarget(null); setResetting("everything"); setMessage(null);
+    const { data, error } = await supabase.rpc("admin_reset_all_stats", {
+      confirmation: RESET_ALL_PHRASE,
+      target_player: null,
+      reset_benchmarks: true,
+    });
+    setResetting(null); setConfirmPhrase("");
+    if (error) { setMessage({ type: "error", text: `Reset failed: ${error.message}` }); return; }
+    const results = Number(data?.results_removed) || 0;
+    const players = Number(data?.players_reset) || 0;
+    const reopened = Number(data?.challenges_reopened) || 0;
+    setMessage({ type: "success", text: `Reset complete. Removed ${results} result${results === 1 ? "" : "s"}, cleared ${players} player${players === 1 ? "" : "s"}, reopened ${reopened} challenge${reopened === 1 ? "" : "s"}.` });
+  }
 
   async function executeResetTodayChallenge() {
     if (!confirmTarget || confirmTarget.type !== "resetToday") return;
@@ -359,6 +383,18 @@ export default function AdminGames({ onBack }) {
                   {resetting === "all" ? "Resetting…" : "Reset all"}
                 </Button>
               </div>
+
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)", flexWrap: "wrap", marginTop: "var(--space-4)", paddingTop: "var(--space-4)", borderTop: "1px solid var(--color-border)" }}>
+                <div>
+                  <div style={{ fontSize: "var(--text-body-size)", fontWeight: 600, color: "var(--color-text-primary)" }}>Reset every player&rsquo;s statistics</div>
+                  <div style={{ fontSize: "var(--text-body-secondary-size)", color: "var(--color-text-secondary)", marginTop: "var(--space-1)" }}>
+                    Wipes results, points, levels and streaks for everybody, reopens closed circle challenges and clears the time benchmarks. Accounts, circles and reward items are kept. This cannot be undone.
+                  </div>
+                </div>
+                <Button variant="danger" size="sm" loading={resetting === "everything"} disabled={anythingBusy && resetting !== "everything"} before={<Eraser size={14} />} onClick={() => { setConfirmPhrase(""); setConfirmTarget({ type: "resetAll" }); }}>
+                  {resetting === "everything" ? "Resetting…" : "Reset everything"}
+                </Button>
+              </div>
             </Card>
           </>
         )}
@@ -368,16 +404,45 @@ export default function AdminGames({ onBack }) {
         <div role="dialog" aria-modal="true" aria-labelledby="ag-confirm-title" aria-describedby="ag-confirm-desc" style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: "var(--space-4)", background: "var(--color-overlay)" }}>
           <Card style={{ maxWidth: 400, width: "100%", padding: "var(--space-5)" }}>
             <div id="ag-confirm-title" style={{ fontWeight: 700, color: "var(--color-text-primary)", marginBottom: "var(--space-1)" }}>
-              {confirmTarget.type === "resetToday" ? `Reset today's ${confirmTarget.label} challenge?` : "Hard reset My Challenge?"}
+              {confirmTarget.type === "resetToday"
+                ? `Reset today's ${confirmTarget.label} challenge?`
+                : confirmTarget.type === "resetAll"
+                  ? "Reset every player's statistics?"
+                  : "Hard reset My Challenge?"}
             </div>
             <div id="ag-confirm-desc" style={{ fontSize: "var(--text-body-size)", color: "var(--color-text-secondary)", marginBottom: "var(--space-4)" }}>
               {confirmTarget.type === "resetToday"
                 ? `This removes today's saved results and ratings for every player in ${confirmTarget.label}.`
-                : "Results, ratings and points awarded for today's personal challenge will be removed so the complete flow can be tested again from scratch."}
+                : confirmTarget.type === "resetAll"
+                  ? "Every player loses their results, points, level and streaks. Closed circle challenges reopen and the time benchmarks go back to their starting values. Accounts, circles and reward items are kept. This cannot be undone."
+                  : "Results, ratings and points awarded for today's personal challenge will be removed so the complete flow can be tested again from scratch."}
             </div>
+            {confirmTarget.type === "resetAll" && (
+              <label style={{ display: "block", marginBottom: "var(--space-4)" }}>
+                <span style={{ display: "block", fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-text-primary)", marginBottom: "var(--space-1)" }}>
+                  Type <code>{RESET_ALL_PHRASE}</code> to confirm
+                </span>
+                <TextInput
+                  value={confirmPhrase}
+                  onChange={(event) => setConfirmPhrase(event.target.value)}
+                  placeholder={RESET_ALL_PHRASE}
+                  autoFocus
+                />
+              </label>
+            )}
             <div style={{ display: "flex", gap: "var(--space-2)" }}>
-              <Button variant="ghost" fullWidth onClick={() => setConfirmTarget(null)}>Cancel</Button>
-              <Button variant="danger" fullWidth loading={resetting !== null} onClick={confirmTarget.type === "resetToday" ? executeResetTodayChallenge : executeResetMyChallenge}>
+              <Button variant="ghost" fullWidth onClick={() => { setConfirmTarget(null); setConfirmPhrase(""); }}>Cancel</Button>
+              <Button
+                variant="danger"
+                fullWidth
+                loading={resetting !== null}
+                disabled={confirmTarget.type === "resetAll" && confirmPhrase !== RESET_ALL_PHRASE}
+                onClick={confirmTarget.type === "resetToday"
+                  ? executeResetTodayChallenge
+                  : confirmTarget.type === "resetAll"
+                    ? executeResetAllStats
+                    : executeResetMyChallenge}
+              >
                 {resetting !== null ? "Resetting…" : "Reset"}
               </Button>
             </div>

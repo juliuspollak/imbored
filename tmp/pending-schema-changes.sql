@@ -1,12 +1,70 @@
--- Global stat reset for test rounds.
+-- Pending schema changes. Apply once in Supabase Dashboard -> SQL Editor.
 --
--- Clears results, the points ledger, progress, challenge starts and score
--- challenges. Leaves accounts, circles, reward items and configuration alone.
+-- Everything here is CREATE OR REPLACE, so re-running is harmless. Extracted
+-- verbatim from supabase/schemas/public.sql.
 --
--- Unrecoverable, so it is guarded three ways: administrators only, an exact
--- confirmation phrase, and an advisory lock so two runs cannot race.
+-- 1. get_messageable_players  — chats: conversations with people you no
+--    longer share a circle with were hidden while the unread badge still
+--    counted them, so the badge lit up with nothing to open.
+-- 2. admin_reset_all_stats    — global stat reset for test rounds, driven
+--    from Admin -> Games -> Maintenance.
+-- 3. get_my_played_score_challenges — re-applied for completeness; harmless
+--    if it is already present.
 
 begin;
+
+-- ---------- 1. chats: keep existing conversations reachable ----------
+-- Return type gains a column, so the old function must go first:
+-- CREATE OR REPLACE cannot change a function signature.
+drop function if exists public.get_messageable_players();
+
+CREATE OR REPLACE FUNCTION public.get_messageable_players() RETURNS TABLE(id uuid, name text, icon text, mood text, is_admin boolean, can_message boolean)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  with candidate as (
+    select
+      profile.id,
+      profile.name::text as name,
+      profile.icon::text as icon,
+      profile.mood::text as mood,
+      profile.is_admin,
+      (
+        profile.is_admin=true
+        or public.players_share_circle(auth.uid(),profile.id)
+      ) as can_message,
+      exists(
+        select 1
+        from public.direct_messages message
+        where (message.sender_id=auth.uid() and message.recipient_id=profile.id)
+           or (message.sender_id=profile.id and message.recipient_id=auth.uid())
+      ) as has_history
+    from public.profiles profile
+    where profile.id<>auth.uid()
+      and profile.account_deleted_at is null
+      and coalesce(profile.is_blocked,false)=false
+      and coalesce(profile.hidden_from_others,false)=false
+      and (profile.is_admin=true or coalesce(profile.is_approved,false)=true)
+      and (
+        coalesce(profile.is_private,false)=false
+        or public.is_admin(auth.uid())
+      )
+      and not public.is_blocked_between(auth.uid(),profile.id)
+  )
+  select candidate.id,candidate.name,candidate.icon,candidate.mood,
+         candidate.is_admin,candidate.can_message
+  from candidate
+  where candidate.can_message or candidate.has_history
+  order by candidate.name
+$$;
+
+revoke all on function public.get_messageable_players() from public;
+grant execute on function public.get_messageable_players() to authenticated;
+
+-- ---------- 2. global stat reset ----------
+-- Refuses anyone who is not an administrator, and refuses the call outright
+-- unless the exact confirmation phrase is passed. The UI types the phrase in;
+-- this check is what actually makes it safe.
 
 CREATE OR REPLACE FUNCTION public.admin_reset_all_stats(confirmation text, target_player uuid DEFAULT NULL::uuid, reset_benchmarks boolean DEFAULT true) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
@@ -101,7 +159,27 @@ end;
 $$;
 
 revoke all on function public.admin_reset_all_stats(text, uuid, boolean) from public;
+-- Granted to authenticated because PostgREST calls RPCs as the signed-in
+-- role; the is_admin() check inside the function is the real gate.
 grant execute on function public.admin_reset_all_stats(text, uuid, boolean) to authenticated;
+
+-- ---------- 3. score challenge played lookup ----------
+
+CREATE OR REPLACE FUNCTION public.get_my_played_score_challenges(source_stat_ids bigint[]) RETURNS TABLE(source_stat_id bigint)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select challenge.source_stat_id
+  from public.score_challenges challenge
+  join public.score_challenge_recipients recipient
+    on recipient.challenge_id=challenge.id
+  where recipient.recipient_id=auth.uid()
+    and recipient.completed_stat_id is not null
+    and challenge.source_stat_id=any(source_stat_ids)
+$$;
+
+revoke all on function public.get_my_played_score_challenges(bigint[]) from public;
+grant execute on function public.get_my_played_score_challenges(bigint[]) to authenticated;
 
 notify pgrst,'reload schema';
 
