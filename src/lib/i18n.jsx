@@ -98,7 +98,7 @@ const translations = {
     "standings.notPlayed": "Not played",
     "standings.rankingRule": "Ranked by games completed, then fastest total time.",
     "game.hive.desc": "One bee per row, column & region",
-    "game.binary.desc": "Balance flame & frost in every line",
+    "game.binary.desc": "Place equal flame and frost in every row and column",
     "game.gridly.desc": "Connect the numbers. Fill the grid.",
     "game.minisudoku.desc": "Classic sudoku, bite-sized",
     "game.patches.desc": "Fit every shape into the frame",

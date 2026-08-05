@@ -5,7 +5,7 @@ import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import BoardReviewToggle from "../BoardReviewToggle.jsx";
-import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
+import { Timer as TimerIcon, HelpCircle } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
 import DaySelector from "../DaySelector.jsx";
 import Button from "../components/Button.jsx";
@@ -25,22 +25,16 @@ function FlameIcon({ size = 24, className = "", style, isConflict = false, ...pr
           <stop offset="45%" stopColor="#FF7A59" />
           <stop offset="100%" stopColor="#E8452F" />
         </linearGradient>
-        <radialGradient id={`${id}core`} cx="12" cy="15.5" r="5" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#FFE9C7" stopOpacity="0.95" />
-          <stop offset="100%" stopColor="#FFC48A" stopOpacity="0" />
-        </radialGradient>
       </defs>
-      {/* Chunky teardrop with a single kink, so it reads as flame rather than
-          a droplet at 30px. */}
       <path
-        d="M12 1.9c.6 2.9 2.3 4.3 3.9 6.1 1.7 1.9 3 3.8 3 6.4a6.9 6.9 0 0 1-13.8 0c0-2 .9-3.6 2.1-5.1.3 1.1.9 1.9 1.7 2.4C9.3 8.3 10.6 5.4 12 1.9Z"
+        d="M12.2 1.8c.4 3.2 2.8 4.7 4.4 7 1.2 1.7 2 3.5 2 5.7 0 4-2.9 7.3-6.7 7.3s-6.7-3.2-6.7-7.2c0-2.4 1-4.4 2.7-6.3.1 1.7.8 3 2 3.8-.2-3.7.9-7 2.3-10.3Z"
         fill={`url(#${id}body)`}
         stroke="#B32F1E"
         strokeWidth="1.25"
         strokeLinejoin="round"
       />
-      {/* Inner glow gives the slight dimensionality without extra geometry. */}
-      <ellipse cx="12" cy="15.4" rx="3.6" ry="4" fill={`url(#${id}core)`} />
+      <path d="M12.2 1.8c.4 3.2 2.8 4.7 4.4 7L12 13.1 9.9 12c-.2-3.6.9-6.9 2.3-10.2Z" fill="#FFD0A6" fillOpacity=".48" />
+      <path d="M12 13.1l4.6-4.3c1.2 1.7 2 3.5 2 5.7 0 4-2.9 7.3-6.7 7.3Z" fill="#C92F26" fillOpacity=".24" />
     </svg>
   );
 }
@@ -56,19 +50,15 @@ function FrostIcon({ size = 24, className = "", style, isConflict = false, ...pr
           <stop offset="100%" stopColor="#22A2C4" />
         </linearGradient>
       </defs>
-      {/* A cut shard, not a snowflake: fine radial spokes turn to mush below
-          about 28px, which is exactly the size these render at on a phone. */}
       <path
-        d="M12 1.8 19.4 8v8L12 22.2 4.6 16V8Z"
+        d="M12 1.8 19.1 8.1 18 17.3 12 22.2 5.1 16.8 4.9 8.2Z"
         fill={`url(#${id}body)`}
         stroke="#1C7E9C"
         strokeWidth="1.25"
         strokeLinejoin="round"
       />
-      {/* Two facets catch the light from opposite sides so the shard reads as
-          solid rather than a flat hexagon. */}
-      <path d="M12 1.8 19.4 8l-7.4 4.2Z" fill="#FFFFFF" fillOpacity="0.55" />
-      <path d="M12 12.2 19.4 8v8Z" fill="#0E6C88" fillOpacity="0.28" />
+      <path d="M12 1.8 19.1 8.1 12 12.4 4.9 8.2Z" fill="#FFFFFF" fillOpacity=".5" />
+      <path d="M12 12.4 19.1 8.1 18 17.3 12 22.2Z" fill="#0E6C88" fillOpacity=".28" />
     </svg>
   );
 }
@@ -647,12 +637,9 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
         display: "grid",
         gridTemplateColumns: `repeat(${SIZE}, 1fr)`,
         gridTemplateRows: `repeat(${SIZE}, 1fr)`,
-        // Inky navy drifting into deep plum. A dark board is what lets the
-        // coral flame glow and the cyan shard read as lit rather than printed;
-        // on the old light surface both symbols looked flat.
-        background: "linear-gradient(155deg,#141B3A 0%,#1B1B42 55%,#2A1740 100%)",
-        border: "4px solid #0D1230",
-        boxShadow: "var(--shadow-card)",
+        background: "var(--color-border-strong)",
+        border: "2px solid #263354",
+        boxShadow: "0 6px 18px rgba(16,24,40,.10)",
         containerType: "inline-size",
         width: "auto",
       }}
@@ -675,7 +662,15 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
               disabled={isGiven}
               className={`tg-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`}
               style={{
-                background: isHint ? hintBackground : isGiven ? "var(--color-surface-elevated)" : "var(--color-surface)",
+                background: isHint
+                  ? hintBackground
+                  : isGiven
+                    ? "var(--color-surface-elevated)"
+                    : val === SUN
+                      ? "linear-gradient(rgba(255,122,89,.06),rgba(255,122,89,.06)),var(--color-surface)"
+                      : val === MOON
+                        ? "linear-gradient(rgba(34,162,196,.06),rgba(34,162,196,.06)),var(--color-surface)"
+                        : "var(--color-surface)",
                 border: "1px solid var(--color-border-strong)",
                 boxShadow: isConflict ? `inset 0 0 0 3px ${RED}` : "none",
                 cursor: isGiven ? "default" : "pointer",
@@ -725,23 +720,23 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
               left: `${cx}%`,
               top: `${cy}%`,
               transform: "translate(-50%, -50%)",
-              width: 26,
-              height: 26,
+              width: 22,
+              height: 22,
               borderRadius: "50%",
               background: "var(--color-surface-raised)",
               border: "1px solid var(--color-border-strong)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 13,
-              fontWeight: 700,
+              fontSize: 12,
+              fontWeight: 800,
               color: "var(--color-text-primary)",
-              boxShadow: "var(--shadow-control)",
+              boxShadow: "0 1px 4px rgba(16,24,40,.10)",
               pointerEvents: "none",
               zIndex: 2,
             }}
           >
-            {e.type === "eq" ? "=" : "×"}
+            {e.type === "eq" ? "=" : "≠"}
           </span>
         );
       })}
@@ -800,7 +795,7 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
         @keyframes hintPulseNext { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(217,174,88,1); } 50% { box-shadow: inset 0 0 0 3px rgba(217,174,88,0.25); } }
         @keyframes lineSweep { 0% { opacity: 0; transform: scale(.92); } 28% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.025); } }
         @keyframes lineSpark { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.4) rotate(-20deg); } 35% { opacity: 1; transform: translate(-50%,-50%) scale(1.15) rotate(8deg); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(.85) rotate(18deg); } }
-        @keyframes tangoGlow { 0%, 100% { transform: translate3d(0,0,0); opacity: .55; } 50% { transform: translate3d(8px,-6px,0); opacity: .8; } }
+        @keyframes twistGlow { 0%, 100% { transform: translate3d(0,0,0); opacity: .42; } 50% { transform: translate3d(6px,-4px,0); opacity: .6; } }
         .tg-symbol { animation: popIn 0.22s ease-out; }
         .tg-card { animation: fadeUp 0.4s ease-out; }
         .tg-board-shell::before, .tg-board-shell::after {
@@ -809,7 +804,7 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
           border-radius: 999px;
           filter: blur(1px);
           pointer-events: none;
-          animation: tangoGlow 7s ease-in-out infinite;
+          animation: twistGlow 7s ease-in-out infinite;
         }
         .tg-board-shell::before { width: 42%; height: 42%; left: -12%; top: -15%; background: rgba(255,122,89,.18); }
         .tg-board-shell::after { width: 46%; height: 46%; right: -15%; bottom: -18%; background: rgba(95,216,240,.14); animation-delay: -3.5s; }
@@ -838,11 +833,11 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
            rim under the shard, both cast onto the dark board. */
         .tg-symbol-disc--flame {
           background: transparent;
-          filter: drop-shadow(0 0 9px rgba(255,122,89,.55)) drop-shadow(0 2px 3px rgba(0,0,0,.45));
+          filter: drop-shadow(0 0 6px rgba(255,122,89,.36)) drop-shadow(0 2px 2px rgba(0,0,0,.26));
         }
         .tg-symbol-disc--frost {
           background: transparent;
-          filter: drop-shadow(0 0 8px rgba(95,216,240,.42)) drop-shadow(0 2px 3px rgba(0,0,0,.45));
+          filter: drop-shadow(0 0 6px rgba(95,216,240,.34)) drop-shadow(0 2px 2px rgba(0,0,0,.26));
         }
         /* Placement feedback. Keyed on the cell so React remounts the symbol
            and the animation restarts on every placement, not just the first. */
@@ -862,7 +857,7 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
           100% { transform: scale(1) rotate(0); opacity: 1; filter: brightness(1); }
         }
         .tg-cell:disabled .tg-symbol-disc { opacity: .96; }
-        .tg-edge-token { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        .tg-edge-token { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
         .tg-hint-error { animation: hintPulseError 1.1s ease-in-out infinite; }
         .tg-hint-forced { animation: hintPulseForced 1.1s ease-in-out infinite; }
         .tg-hint-next { animation: hintPulseNext 1.1s ease-in-out infinite; }
@@ -894,24 +889,15 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
         </button>
 
         {/* header */}
-        <div className="text-center mb-4">
-          {!solved && <div
-            className="mx-auto mb-2 flex items-center justify-center gap-1.5 rounded-full"
-            style={{ width: 66, height: 30, background: "linear-gradient(135deg, rgba(246,196,83,.16), rgba(74,111,165,.13))", border: "1px solid rgba(16,24,40,.06)" }}
-            aria-hidden="true"
-          >
-            <FlameIcon size={14} />
-            <span style={{ width: 1, height: 12, background: "rgba(27,33,41,.12)" }} />
-            <FrostIcon size={14} />
-          </div>}
+        <div className="text-center mb-3">
           <h1
             style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }}
-            className="text-4xl lg:text-5xl"
+            className="text-3xl lg:text-4xl"
           >
             Twist
           </h1>
-          <p style={{ color: CREAM, opacity: 0.45 }} className="text-xs mt-1">
-            balance flame &amp; frost in every row &amp; column
+          <p style={{ color: CREAM, opacity: 0.58 }} className="text-[13px] mt-0.5">
+            Place equal flame and frost in every row and column.
           </p>
         </div>
 
@@ -992,9 +978,9 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
             className="text-xs rounded-lg p-2.5 mb-3"
             style={{ background: "rgba(16,24,40,0.05)", color: CREAM, opacity: 0.75, lineHeight: 1.4 }}
           >
-            Tap a blank cell to cycle sun → moon → blank. Every row and column needs three suns and
-            three moons, and no more than two of the same symbol can sit in a row. An "=" between
-            two cells means they match; a "×" means they differ. Hint flags one wrong symbol, or one
+            Tap a blank cell to cycle flame → frost → blank. Every row and column needs three flames and
+            three frost symbols, and no more than two matching symbols can sit together. An "=" between
+            two cells means they match; a "≠" means they differ. Hint flags one wrong symbol, or one
             cell that's already logically forced, or — as a last resort — just points at a blank one.
           </div>
         )}
