@@ -9182,6 +9182,12 @@ CREATE POLICY "players view relevant team challenge starts" ON public.circle_cha
 ALTER TABLE public.points_transactions ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: points_economy_versions; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.points_economy_versions ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: pokes; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
