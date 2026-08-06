@@ -36,27 +36,54 @@ async function compute(userId) {
     .is("read_at", null);
 
   if (error) {
-    // The migration may not have been run yet. Keep the app usable and
-    // avoid repeatedly surfacing a schema error in the main UI.
     return EMPTY;
   }
 
+  const unreadRows = data || [];
+  const otherSenderIds = [...new Set(
+    unreadRows
+      .map((row) => row.sender_id)
+      .filter((senderId) => senderId && senderId !== userId)
+  )];
+
+  // The chats screen can only display conversations whose sender profile is
+  // still readable. Previously an unread row from a deleted, blocked or hidden
+  // account was counted here but filtered out of Chats.jsx, creating a badge
+  // that the player had no conversation available to open and clear.
+  let reachableSenders = new Set([userId]);
+  if (otherSenderIds.length > 0) {
+    const { data: visibleProfiles, error: profileError } = await supabase
+      .from("profiles")
+      .select("id")
+      .in("id", otherSenderIds);
+
+    if (profileError) {
+      // Do not hide legitimate notifications if profile lookup temporarily
+      // fails. The next watched refresh will try again.
+      reachableSenders = new Set([userId, ...otherSenderIds]);
+    } else {
+      reachableSenders = new Set([userId, ...(visibleProfiles || []).map((profile) => profile.id)]);
+    }
+  }
+
   const bySender = {};
-  for (const row of data || []) {
+  for (const row of unreadRows) {
+    if (!reachableSenders.has(row.sender_id)) continue;
     bySender[row.sender_id] = (bySender[row.sender_id] || 0) + 1;
   }
-  return { total: data?.length || 0, bySender };
+
+  return {
+    total: Object.values(bySender).reduce((sum, count) => sum + count, 0),
+    bySender,
+  };
 }
 
 export function useUnreadMessages(userId) {
   return useSupabaseWatchedState(userId, {
     compute,
-    tables: [{ name: "direct_messages" }],
+    tables: [{ name: "direct_messages" }, { name: "profiles" }],
     channelName: `unread-messages-${userId}`,
     seenEvent: "imbored-messages-read",
-    // Mobile Safari can suspend or miss realtime UPDATE events. While the app
-    // is visible, briefly re-check so a successfully read conversation cannot
-    // leave a stale badge behind indefinitely.
     fallbackMs: 1500,
     emptyValue: EMPTY,
   });
