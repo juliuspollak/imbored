@@ -1,0 +1,7 @@
+/* Twist should teach rules, not reveal whether a completed line matches the
+   hidden solution. Keep objective conflict feedback, but suppress the green
+   row/column success sweep until the whole puzzle is solved. */
+.tg-line-complete,
+.tg-line-spark {
+  display: none !important;
+}
