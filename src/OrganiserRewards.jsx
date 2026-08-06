@@ -60,16 +60,23 @@ export default function OrganiserRewards({ onBack }) {
   async function submitPrice() {
     if (!priceTarget || !priceValue || working) return;
     setWorking("price");
-    const { error } = await supabase.rpc("price_reward", {
-      target_reward_id: priceTarget.reward.id,
-      points_cost: Number(priceValue),
-      mode: priceTarget.mode,
-      stock_quantity: priceTarget.mode === "available" && priceTarget.reward.reward_type === "limited" ? Number(stockValue) || null : null,
-    });
+    // price_reward has never existed, so both buttons errored with "could not
+    // find the function". Pricing is two separate organiser actions: publish
+    // the reward outright, or price it and open it to a vote.
+    const { error } = priceTarget.mode === "available"
+      ? await supabase.rpc("organiser_make_reward_available", {
+          target_reward_id: priceTarget.reward.id,
+          price_points_cost: Number(priceValue),
+          stock_quantity_in: priceTarget.reward.reward_type === "limited" ? Number(stockValue) || null : null,
+        })
+      : await supabase.rpc("organiser_start_vote", {
+          target_reward_id: priceTarget.reward.id,
+          price_points_cost: Number(priceValue),
+        });
     setWorking(""); setMessage(error?.message || "Updated"); if (!error) { setPriceTarget(null); refresh(); }
   }
-  async function declineIdea(id) { setWorking(id); const { error } = await supabase.rpc("reject_reward", { target_reward_id: id }); setWorking(""); setMessage(error?.message || "Declined"); refresh(); }
-  async function markGiven(id) { setWorking(id); const { error } = await supabase.rpc("fulfill_reward", { target_redemption_id: id }); setWorking(""); setMessage(error?.message || "Marked given"); refresh(); }
+  async function declineIdea(id) { setWorking(id); const { error } = await supabase.rpc("organiser_decline_idea", { target_reward_id: id }); setWorking(""); setMessage(error?.message || "Declined"); refresh(); }
+  async function markGiven(id) { setWorking(id); const { error } = await supabase.rpc("review_redemption", { target_id: id, new_status: "fulfilled" }); setWorking(""); setMessage(error?.message || "Marked given"); refresh(); }
   async function resolveCancellation(id, approve) { setWorking(id); const { error } = await supabase.rpc("resolve_cancellation", { target_redemption_id: id, approve }); setWorking(""); setMessage(error?.message || (approve ? "Cancelled" : "Kept")); refresh(); }
   async function removeReward(id, hasHistory) {
     setWorking(`remove-${id}`);

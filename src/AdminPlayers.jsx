@@ -50,25 +50,47 @@ export default function AdminPlayers({ onBack }) {
     setLoading(true);
     const [{ data: playersData }, { data: presenceData }] = await Promise.all([
       supabase.from("profiles").select("*").order("name"),
-      supabase.rpc("get_last_seen_times"),
+      // get_last_seen_times has never existed, so this always returned null and
+      // every row read "Never seen". Presence is a plain table; its select
+      // policy already limits it to players this admin may view.
+      supabase.from("presence").select("user_id,last_seen"),
     ]);
     setPlayers(playersData || []);
-    setLastSeen(Object.fromEntries((presenceData || []).map((item) => [item.user_id, item.last_seen_at])));
+    setLastSeen(Object.fromEntries((presenceData || []).map((item) => [item.user_id, item.last_seen])));
     setLoading(false);
   }, [isAdmin]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  // Approving goes through the admin-user-action Edge Function, the same path
+  // block/unblock/delete already use: it calls set_user_approval and then
+  // sends the approval email, which SQL alone cannot do. Withdrawing approval
+  // has no email to send, so it calls set_user_approval directly.
+  //
+  // This used to call an RPC named decide_player_approval, which has never
+  // existed in the schema — approving always failed with "Could not find the
+  // function" until an admin noticed.
   async function handleApproval(playerId, approve) {
     setApprovingId(playerId);
-    const { data, error } = await supabase.rpc("decide_player_approval", { target_user_id: playerId, approve });
-    setApprovingId(null);
-    if (error) { setNotice(approve ? (error.message || "Approval failed.") : (error.message || "Could not require approval.")); return; }
+    setNotice("");
+
     if (!approve) {
+      const { error } = await supabase.rpc("set_user_approval", { target_user_id: playerId, approved: false });
+      setApprovingId(null);
+      if (error) { setNotice(error.message || "Could not require approval."); return; }
       setNotice("This player now needs approval again before they can play.");
-    } else {
-      setNotice(data?.emailSent ? "Player approved. The approval notification was emailed." : `Player approved, but the email was not sent${data?.emailError ? `: ${data.emailError}` : "."}`);
+      refresh();
+      return;
     }
+
+    const { data, error } = await adminAccountAction("approve", playerId);
+    setApprovingId(null);
+    if (error) { setNotice(error.message || "Approval failed."); return; }
+    setNotice(
+      data?.alreadyApproved ? "That player was already approved."
+        : data?.emailSent ? "Player approved. The approval notification was emailed."
+        : `Player approved, but the email was not sent${data?.emailError ? `: ${data.emailError}` : "."}`
+    );
     refresh();
   }
   async function handleToggleHidden(player) { await setUserHidden(player.id, !player.hidden_from_others); setExpandedId(null); refresh(); }
