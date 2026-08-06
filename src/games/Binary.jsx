@@ -742,7 +742,7 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
               zIndex: 2,
             }}
           >
-            {e.type === "eq" ? "=" : "≠"}
+            {e.type === "eq" ? "=" : "×"}
           </span>
         );
       })}
@@ -986,7 +986,7 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
           >
             Tap a blank cell to cycle flame → frost → blank. Every row and column needs three flames and
             three frost symbols, and no more than two matching symbols can sit together. An "=" between
-            two cells means they match; a "≠" means they differ. Hint flags one wrong symbol, or one
+            two cells means they match; a "×" means they differ. Hint flags one wrong symbol, or one
             cell that's already logically forced, or — as a last resort — just points at a blank one.
           </div>
         )}
