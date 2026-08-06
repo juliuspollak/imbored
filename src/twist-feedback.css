@@ -1,7 +1,55 @@
 /* Twist should teach rules, not reveal whether a completed line matches the
-   hidden solution. Keep objective conflict feedback, but suppress the green
-   row/column success sweep until the whole puzzle is solved. */
+   hidden solution. Keep correct completed lines neutral and suppress the old
+   green solution-confirmation sweep until the whole puzzle is solved. */
 .tg-line-complete,
 .tg-line-spark {
   display: none !important;
+}
+
+/* After the existing two-second grace period, show the scope of an objective
+   rule failure. The whole completed row or column receives a restrained red
+   wash and one continuous perimeter, while the existing cell-level marker can
+   still identify the editable placement involved. */
+.tg-invalid-row::before,
+.tg-invalid-col::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: rgba(216, 92, 98, 0.075);
+}
+
+.tg-invalid-row::before {
+  border-top: 2px solid rgba(216, 92, 98, 0.78);
+  border-bottom: 2px solid rgba(216, 92, 98, 0.78);
+}
+
+.tg-invalid-row-start::before {
+  border-left: 2px solid rgba(216, 92, 98, 0.78);
+  border-radius: 8px 0 0 8px;
+}
+
+.tg-invalid-row-end::before {
+  border-right: 2px solid rgba(216, 92, 98, 0.78);
+  border-radius: 0 8px 8px 0;
+}
+
+.tg-invalid-col::before {
+  border-left: 2px solid rgba(216, 92, 98, 0.78);
+  border-right: 2px solid rgba(216, 92, 98, 0.78);
+}
+
+.tg-invalid-col-start::before {
+  border-top: 2px solid rgba(216, 92, 98, 0.78);
+  border-radius: 8px 8px 0 0;
+}
+
+.tg-invalid-col-end::before {
+  border-bottom: 2px solid rgba(216, 92, 98, 0.78);
+  border-radius: 0 0 8px 8px;
+}
+
+.tg-invalid-row.tg-invalid-col::before {
+  background: rgba(216, 92, 98, 0.12);
 }
