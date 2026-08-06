@@ -1510,9 +1510,21 @@ CREATE FUNCTION public.get_messageable_players() RETURNS TABLE(id uuid, name tex
       profile.icon::text as icon,
       profile.mood::text as mood,
       profile.is_admin,
+      -- Discovery: who Find people may offer, and who send_direct_message will
+      -- accept. is_private, is_blocked and is_approved belong here, not in the
+      -- where clause — filtering them there also removed conversations the
+      -- player already had, stranding unread badges with nothing to open.
       (
-        profile.is_admin=true
-        or public.players_share_circle(auth.uid(),profile.id)
+        (
+          profile.is_admin=true
+          or public.players_share_circle(auth.uid(),profile.id)
+        )
+        and coalesce(profile.is_blocked,false)=false
+        and (profile.is_admin=true or coalesce(profile.is_approved,false)=true)
+        and (
+          coalesce(profile.is_private,false)=false
+          or public.is_admin(auth.uid())
+        )
       ) as can_message,
       exists(
         select 1
@@ -1522,21 +1534,34 @@ CREATE FUNCTION public.get_messageable_players() RETURNS TABLE(id uuid, name tex
       ) as has_history
     from public.profiles profile
     where profile.id<>auth.uid()
-      and profile.account_deleted_at is null
-      and coalesce(profile.is_blocked,false)=false
-      and coalesce(profile.hidden_from_others,false)=false
-      and (profile.is_admin=true or coalesce(profile.is_approved,false)=true)
-      and (
-        coalesce(profile.is_private,false)=false
-        or public.is_admin(auth.uid())
-      )
-      and not public.is_blocked_between(auth.uid(),profile.id)
+      -- Continuity: the same rule the unread badge counts by.
+      and public.can_continue_conversation(auth.uid(),profile.id)
   )
   select candidate.id,candidate.name,candidate.icon,candidate.mood,
          candidate.is_admin,candidate.can_message
   from candidate
   where candidate.can_message or candidate.has_history
   order by candidate.name
+$$;
+
+
+--
+-- Name: get_unread_message_counts(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+-- Backs the chat badge. Deliberately SECURITY INVOKER so the direct_messages
+-- select policy still applies — the readable set is exactly what the client
+-- could query itself, narrowed to conversations Chats can actually open.
+CREATE FUNCTION public.get_unread_message_counts() RETURNS TABLE(peer_id uuid, unread_count integer)
+    LANGUAGE sql STABLE
+    SET search_path TO 'public'
+    AS $$
+  select message.sender_id, count(*)::integer
+  from public.direct_messages message
+  where message.recipient_id=auth.uid()
+    and message.read_at is null
+    and public.can_continue_conversation(auth.uid(),message.sender_id)
+  group by message.sender_id
 $$;
 
 
@@ -2107,6 +2132,45 @@ CREATE FUNCTION public.can_send_direct_message(target_recipient_id uuid) RETURNS
               and coalesce(recipient.hidden_from_others, false) = false
               and coalesce(recipient.is_private, false) = false
         );
+$$;
+
+
+--
+-- Name: can_continue_conversation(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+-- The single definition of "this conversation is still reachable", shared by
+-- get_messageable_players (which conversations Chats can list) and
+-- get_unread_message_counts (which unread rows the badge may count). Keeping
+-- one rule is what guarantees the badge can never outnumber the conversations
+-- available to clear it.
+--
+-- Deliberately narrower than discovery: is_private, is_blocked and is_approved
+-- decide who you may *start* a chat with, not whose existing conversation you
+-- may reopen. profileVisibility.js draws the same line on the client — a
+-- private profile stays community-visible, it just cannot be found.
+CREATE FUNCTION public.can_continue_conversation(viewer_id uuid, peer_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select viewer_id is not null
+    and peer_id is not null
+    and (
+      -- Challenge results are a self-conversation and always reachable.
+      peer_id=viewer_id
+      or (
+        exists(
+          select 1
+          from public.profiles peer
+          where peer.id=peer_id
+            and peer.account_deleted_at is null
+            and coalesce(peer.hidden_from_others,false)=false
+        )
+        -- Mirrors the direct_messages select policy: rows either side of a
+        -- player block are unreadable, so they must not be counted either.
+        and not public.is_blocked_between(viewer_id,peer_id)
+      )
+    );
 $$;
 
 
@@ -5224,15 +5288,23 @@ end; $$;
 
 
 --
--- Name: retire_deleted_player_messages(); Type: FUNCTION; Schema: public; Owner: -
+-- Name: retire_unavailable_player_messages(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.retire_deleted_player_messages() RETURNS trigger
+-- Deleting an account and banning a player are both permanent, so neither may
+-- leave unread notifications sitting in someone's badge forever. A player
+-- blocking another player is deliberately NOT handled here: that is reversible
+-- and the direct_messages select policy already hides those rows both ways.
+--
+-- Marked read rather than deleted — content_reports references these rows, so
+-- removing them would destroy the evidence behind a moderation report.
+CREATE FUNCTION public.retire_unavailable_player_messages() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
 begin
-  if old.account_deleted_at is null and new.account_deleted_at is not null then
+  if (old.account_deleted_at is null and new.account_deleted_at is not null)
+     or (coalesce(old.is_blocked,false)=false and coalesce(new.is_blocked,false)=true) then
     update public.direct_messages
     set read_at=coalesce(read_at,now())
     where sender_id=new.id and read_at is null;
@@ -8052,10 +8124,10 @@ CREATE TRIGGER game_stats_update_challenge_streak AFTER INSERT ON public.game_st
 
 
 --
--- Name: profiles profiles_retire_deleted_player_messages; Type: TRIGGER; Schema: public; Owner: -
+-- Name: profiles profiles_retire_unavailable_player_messages; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER profiles_retire_deleted_player_messages AFTER UPDATE OF account_deleted_at ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.retire_deleted_player_messages();
+CREATE TRIGGER profiles_retire_unavailable_player_messages AFTER UPDATE OF account_deleted_at, is_blocked ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.retire_unavailable_player_messages();
 
 
 --
@@ -9527,6 +9599,10 @@ REVOKE ALL ON FUNCTION public.admin_reset_all_stats(text, uuid, boolean) FROM PU
 GRANT EXECUTE ON FUNCTION public.admin_reset_all_stats(text, uuid, boolean) TO authenticated;
 REVOKE ALL ON FUNCTION public.get_messageable_players() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_messageable_players() TO authenticated;
+REVOKE ALL ON FUNCTION public.can_continue_conversation(uuid, uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.can_continue_conversation(uuid, uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.get_unread_message_counts() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_unread_message_counts() TO authenticated;
 REVOKE ALL ON FUNCTION public.get_my_played_score_challenges(bigint[]) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_my_played_score_challenges(bigint[]) TO authenticated;
 REVOKE ALL ON FUNCTION public.players_share_circle(uuid, uuid) FROM PUBLIC;

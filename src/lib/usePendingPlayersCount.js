@@ -15,6 +15,10 @@ async function compute() {
     .select("id", { count: "exact", head: true })
     .eq("is_admin", false)
     .eq("is_approved", false)
+    // Declining a player blocks them, which settles the decision. Without
+    // this the badge would keep counting players the admin already turned
+    // down, since a block leaves is_approved false.
+    .eq("is_blocked", false)
     .is("account_deleted_at", null);
 
   if (error) {

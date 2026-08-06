@@ -137,13 +137,17 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
         );
       }
 
+      // Ordered newest-first so the limit keeps the most recent window, then
+      // reversed for display. Ordering ascending kept the OLDEST 250 instead,
+      // so a long conversation showed a stale window and never displayed — or
+      // cleared — anything that arrived after its 250th message.
       let { data,error:loadError } = await supabase
         .from("direct_messages")
         .select("id,sender_id,recipient_id,body,created_at,read_at,system_generated,activity_type,source_stat_id,reactions:direct_message_reactions(user_id,reaction)")
         .or(
           `and(sender_id.eq.${currentUser.id},recipient_id.eq.${peerId}),and(sender_id.eq.${peerId},recipient_id.eq.${currentUser.id})`
         )
-        .order("created_at",{ ascending:true })
+        .order("created_at",{ ascending:false })
         .limit(250);
 
       // Keep chat usable during the short deployment window before migration
@@ -155,7 +159,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
           .or(
             `and(sender_id.eq.${currentUser.id},recipient_id.eq.${peerId}),and(sender_id.eq.${peerId},recipient_id.eq.${currentUser.id})`
           )
-          .order("created_at",{ ascending:true })
+          .order("created_at",{ ascending:false })
           .limit(250);
         data=fallback.data;
         loadError=fallback.error;
@@ -167,7 +171,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
         return;
       }
 
-      const visibleMessages = (data || []).filter(
+      const visibleMessages = (data || []).slice().reverse().filter(
         (message) => !(
           message.system_generated
           && message.sender_id === currentUser.id
@@ -206,16 +210,17 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
         });
       }
 
-      const unreadIds = visibleMessages
-        .filter((m) => m.recipient_id === currentUser.id && !m.read_at)
-        .map((m) => m.id);
-
-      if (unreadIds.length > 0) {
+      // Clear the whole conversation, not just the loaded window. Marking only
+      // the displayed ids left anything older than the 250-message window
+      // unread forever, which the badge kept counting. Self-addressed rows
+      // (the Challenge results conversation) are covered by the same filter.
+      if (visibleMessages.some((m) => m.recipient_id === currentUser.id && !m.read_at)) {
         await supabase
           .from("direct_messages")
           .update({ read_at: new Date().toISOString() })
-          .in("id", unreadIds)
-          .eq("recipient_id", currentUser.id);
+          .eq("recipient_id", currentUser.id)
+          .eq("sender_id", peerId)
+          .is("read_at", null);
       }
     } catch (err) {
       console.error("Chat load failed:", err);

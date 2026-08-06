@@ -8,6 +8,16 @@ import Button from "./components/Button.jsx";
 import Card from "./components/Card.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
 
+// How long someone has been waiting on a decision. Undecided approvals are
+// easy to leave sitting, so the wait is spelled out rather than implied.
+function fmtWaiting(iso) {
+  if (!iso) return "Waiting for approval";
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  if (days < 1) return "Waiting for approval · today";
+  if (days === 1) return "Waiting for approval · 1 day";
+  return `Waiting for approval · ${days} days`;
+}
+
 function fmtLastSeen(iso) {
   if (!iso) return "Never seen";
   const ms = Date.now() - new Date(iso).getTime();
@@ -71,8 +81,17 @@ export default function AdminPlayers({ onBack }) {
     else { setPlayers((c) => action === "delete" ? c.filter((i) => i.id !== player.id) : c); setActionTarget(null); setExpandedId(null); refresh(); }
   }
 
-  const pending = players.filter((p) => !p.account_deleted_at && !p.is_admin && p.is_approved === false);
-  const active = players.filter((p) => !p.account_deleted_at && (p.is_admin || p.is_approved !== false));
+  // A player stays highlighted here until the decision is actually made:
+  // approved, or declined by blocking them. Blocked players used to stay in
+  // this list forever — is_approved is still false after a block — so
+  // declining someone left them flagged with no way to settle it.
+  const pending = players.filter((p) => (
+    !p.account_deleted_at && !p.is_admin && !p.is_blocked && p.is_approved === false
+  ));
+  // Everyone not deleted and not awaiting a decision, so a declined player
+  // stays reachable in the list below (shown as Blocked) and can be restored.
+  const pendingIds = new Set(pending.map((p) => p.id));
+  const active = players.filter((p) => !p.account_deleted_at && !pendingIds.has(p.id));
   const history = players.filter((p) => p.account_deleted_at);
 
   function PlayerCard({ player, approval = false, compact = false, last = false }) {
@@ -99,15 +118,22 @@ export default function AdminPlayers({ onBack }) {
               {player.is_reward_steward && <Gift size={11} style={{ color: "var(--color-primary)" }} />}
               {player.is_private && <Lock size={10} style={{ opacity: .35 }} />}
             </div>
-            <div style={{ display: showStatus ? "block" : "none", fontSize: 11, color: online ? "var(--color-success-text)" : "var(--color-text-secondary)" }}>
-              {approval ? "Waiting for approval" : fmtLastSeen(seenIso)}
+            <div style={{ display: showStatus ? "block" : "none", fontSize: 11, fontWeight: approval ? 600 : undefined, color: approval ? "var(--color-warning-text)" : online ? "var(--color-success-text)" : "var(--color-text-secondary)" }}>
+              {approval ? fmtWaiting(player.created_at) : fmtLastSeen(seenIso)}
               {player.is_blocked ? " · Blocked" : ""}{player.hidden_from_others ? " · Hidden" : ""}
             </div>
           </div>
           {approval && (
-            <Button size="sm" variant="ghost" loading={approvingId === player.id} before={<CheckCircle2 size={13} />} onClick={() => handleApproval(player.id, true)} style={{ color: "var(--color-success-text)" }}>
-              {approvingId === player.id ? "Approving…" : "Approve"}
-            </Button>
+            <>
+              <Button size="sm" variant="ghost" loading={approvingId === player.id} before={<CheckCircle2 size={13} />} onClick={() => handleApproval(player.id, true)} style={{ color: "var(--color-success-text)" }}>
+                {approvingId === player.id ? "Approving…" : "Approve"}
+              </Button>
+              {/* Without this, the only way to settle an approval was Block
+                  buried in the overflow menu, so undecided players piled up. */}
+              <Button size="sm" variant="ghost" before={<ShieldBan size={13} />} onClick={() => setActionTarget({ type: "block", intent: "decline", player, reason: "" })} style={{ color: "var(--color-danger-text)" }}>
+                Decline
+              </Button>
+            </>
           )}
           {!player.is_admin && (
             <button onClick={() => setExpandedId(expanded ? null : player.id)} aria-label={`More actions for ${player.name}`} aria-expanded={expanded} style={{ width: 32, height: 32, borderRadius: "var(--radius-sm)", background: compact && !expanded ? "transparent" : "var(--color-surface-elevated)", color: "var(--color-icon-subtle)", border: "none", cursor: "pointer", display: "grid", placeItems: "center" }}>
@@ -169,10 +195,10 @@ export default function AdminPlayers({ onBack }) {
             <div style={{ fontSize: 24 }}>{actionTarget.player.icon || "🙂"}</div>
             <div style={{ flex: 1 }}>
               <h2 style={{ fontWeight: 700, color: "var(--color-text-primary)", margin: 0 }}>
-                {actionTarget.type === "block" ? `Block ${actionTarget.player.name}?` : actionTarget.player.account_deleted_at ? `Permanently delete ${actionTarget.player.name}?` : `Delete ${actionTarget.player.name}'s account?`}
+                {actionTarget.intent === "decline" ? `Decline ${actionTarget.player.name}?` : actionTarget.type === "block" ? `Block ${actionTarget.player.name}?` : actionTarget.player.account_deleted_at ? `Permanently delete ${actionTarget.player.name}?` : `Delete ${actionTarget.player.name}'s account?`}
               </h2>
               <p style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)", marginTop: "var(--space-1)" }}>
-                {actionTarget.type === "block" ? "They won't be able to use the app until restored." : "The login, linked identities, profile and associated player data will be permanently deleted."}
+                {actionTarget.intent === "decline" ? "They move out of Needs approval and into the player list as blocked. You can restore them there at any time." : actionTarget.type === "block" ? "They won't be able to use the app until restored." : "The login, linked identities, profile and associated player data will be permanently deleted."}
               </p>
             </div>
             <button onClick={() => setActionTarget(null)} style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--color-text-secondary)" }}><X size={16} /></button>
@@ -181,7 +207,7 @@ export default function AdminPlayers({ onBack }) {
           {actionError && <p style={{ fontSize: "var(--text-caption-size)", marginTop: "var(--space-3)", color: "var(--color-danger-text)" }}>{actionError}</p>}
           <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-4)" }}>
             <Button variant="ghost" fullWidth onClick={() => setActionTarget(null)}>Cancel</Button>
-            <Button variant="danger" fullWidth loading={actionBusy} onClick={() => handleAccountAction(actionTarget.type, actionTarget.player)}>{actionBusy ? "Working…" : actionTarget.type === "block" ? "Block" : "Delete permanently"}</Button>
+            <Button variant="danger" fullWidth loading={actionBusy} onClick={() => handleAccountAction(actionTarget.type, actionTarget.player)}>{actionBusy ? "Working…" : actionTarget.intent === "decline" ? "Decline" : actionTarget.type === "block" ? "Block" : "Delete permanently"}</Button>
           </div>
         </Card>
       </div>}

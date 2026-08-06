@@ -3,9 +3,10 @@
 -- Everything here is CREATE OR REPLACE, so re-running is harmless. Extracted
 -- verbatim from supabase/schemas/public.sql.
 --
--- 1. get_messageable_players  — chats: conversations with people you no
---    longer share a circle with were hidden while the unread badge still
---    counted them, so the badge lit up with nothing to open.
+-- 1. can_continue_conversation / get_messageable_players /
+--    get_unread_message_counts — one shared rule for "conversations I can
+--    still open", so the unread badge can never outnumber the conversations
+--    Chats is able to list and clear.
 -- 2. admin_reset_all_stats    — global stat reset for test rounds, driven
 --    from Admin -> Games -> Maintenance.
 -- 3. get_my_played_score_challenges — re-applied for completeness; harmless
@@ -13,10 +14,44 @@
 -- 4. user_approval_required   — "X is waiting for approval" was delivered as a
 --    chat message from the pending player, which Chats can never display, so
 --    the chat badge stuck on 1 forever. Moved to Admin -> Players.
+-- 5. retire_unavailable_player_messages — banning a player now retires their
+--    unread messages, the way deleting an account already did.
 
 begin;
 
 -- ---------- 1. chats: keep existing conversations reachable ----------
+-- One rule, used by both the Chats list and the unread badge, so the badge can
+-- never count a notification with no conversation available to clear it.
+--
+-- Discovery (who Find people may offer) and continuity (whose existing
+-- conversation you may reopen) are different questions. is_private,
+-- is_blocked and is_approved answer the first; putting them in the where
+-- clause made them answer the second too, which is what stranded the badges.
+
+CREATE OR REPLACE FUNCTION public.can_continue_conversation(viewer_id uuid, peer_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select viewer_id is not null
+    and peer_id is not null
+    and (
+      peer_id=viewer_id
+      or (
+        exists(
+          select 1
+          from public.profiles peer
+          where peer.id=peer_id
+            and peer.account_deleted_at is null
+            and coalesce(peer.hidden_from_others,false)=false
+        )
+        and not public.is_blocked_between(viewer_id,peer_id)
+      )
+    );
+$$;
+
+revoke all on function public.can_continue_conversation(uuid, uuid) from public;
+grant execute on function public.can_continue_conversation(uuid, uuid) to authenticated;
+
 -- Return type gains a column, so the old function must go first:
 -- CREATE OR REPLACE cannot change a function signature.
 drop function if exists public.get_messageable_players();
@@ -33,8 +68,16 @@ CREATE OR REPLACE FUNCTION public.get_messageable_players() RETURNS TABLE(id uui
       profile.mood::text as mood,
       profile.is_admin,
       (
-        profile.is_admin=true
-        or public.players_share_circle(auth.uid(),profile.id)
+        (
+          profile.is_admin=true
+          or public.players_share_circle(auth.uid(),profile.id)
+        )
+        and coalesce(profile.is_blocked,false)=false
+        and (profile.is_admin=true or coalesce(profile.is_approved,false)=true)
+        and (
+          coalesce(profile.is_private,false)=false
+          or public.is_admin(auth.uid())
+        )
       ) as can_message,
       exists(
         select 1
@@ -44,15 +87,7 @@ CREATE OR REPLACE FUNCTION public.get_messageable_players() RETURNS TABLE(id uui
       ) as has_history
     from public.profiles profile
     where profile.id<>auth.uid()
-      and profile.account_deleted_at is null
-      and coalesce(profile.is_blocked,false)=false
-      and coalesce(profile.hidden_from_others,false)=false
-      and (profile.is_admin=true or coalesce(profile.is_approved,false)=true)
-      and (
-        coalesce(profile.is_private,false)=false
-        or public.is_admin(auth.uid())
-      )
-      and not public.is_blocked_between(auth.uid(),profile.id)
+      and public.can_continue_conversation(auth.uid(),profile.id)
   )
   select candidate.id,candidate.name,candidate.icon,candidate.mood,
          candidate.is_admin,candidate.can_message
@@ -63,6 +98,24 @@ $$;
 
 revoke all on function public.get_messageable_players() from public;
 grant execute on function public.get_messageable_players() to authenticated;
+
+-- SECURITY INVOKER on purpose: the direct_messages select policy still applies,
+-- so this counts exactly what the client could read itself, narrowed to
+-- conversations Chats can open.
+CREATE OR REPLACE FUNCTION public.get_unread_message_counts() RETURNS TABLE(peer_id uuid, unread_count integer)
+    LANGUAGE sql STABLE
+    SET search_path TO 'public'
+    AS $$
+  select message.sender_id, count(*)::integer
+  from public.direct_messages message
+  where message.recipient_id=auth.uid()
+    and message.read_at is null
+    and public.can_continue_conversation(auth.uid(),message.sender_id)
+  group by message.sender_id
+$$;
+
+revoke all on function public.get_unread_message_counts() from public;
+grant execute on function public.get_unread_message_counts() to authenticated;
 
 -- ---------- 2. global stat reset ----------
 -- Refuses anyone who is not an administrator, and refuses the call outright
@@ -198,6 +251,47 @@ drop index if exists public.direct_messages_pending_approval_once_idx;
 
 -- Clears the notices that are already stuck in admins' badges.
 delete from public.direct_messages where activity_type='user_approval_required';
+
+-- ---------- 5. retire a banned player's unread messages ----------
+-- Deleting an account and banning a player are both permanent, so neither may
+-- leave unread notifications in someone's badge. A player blocking another
+-- player is deliberately excluded: that is reversible, and the direct_messages
+-- select policy already hides those rows both ways.
+--
+-- Marked read rather than deleted — content_reports references these rows, so
+-- removing them would destroy the evidence behind a moderation report.
+
+drop trigger if exists profiles_retire_deleted_player_messages on public.profiles;
+drop function if exists public.retire_deleted_player_messages();
+
+CREATE OR REPLACE FUNCTION public.retire_unavailable_player_messages() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+begin
+  if (old.account_deleted_at is null and new.account_deleted_at is not null)
+     or (coalesce(old.is_blocked,false)=false and coalesce(new.is_blocked,false)=true) then
+    update public.direct_messages
+    set read_at=coalesce(read_at,now())
+    where sender_id=new.id and read_at is null;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_retire_unavailable_player_messages on public.profiles;
+create trigger profiles_retire_unavailable_player_messages
+after update of account_deleted_at, is_blocked on public.profiles
+for each row execute function public.retire_unavailable_player_messages();
+
+-- Catch up anyone banned or deleted before the trigger covered it.
+update public.direct_messages
+set read_at=coalesce(read_at,now())
+where read_at is null
+  and sender_id in (
+    select id from public.profiles
+    where coalesce(is_blocked,false)=true or account_deleted_at is not null
+  );
 
 notify pgrst,'reload schema';
 
