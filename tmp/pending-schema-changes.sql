@@ -10,6 +10,9 @@
 --    from Admin -> Games -> Maintenance.
 -- 3. get_my_played_score_challenges — re-applied for completeness; harmless
 --    if it is already present.
+-- 4. user_approval_required   — "X is waiting for approval" was delivered as a
+--    chat message from the pending player, which Chats can never display, so
+--    the chat badge stuck on 1 forever. Moved to Admin -> Players.
 
 begin;
 
@@ -180,6 +183,21 @@ $$;
 
 revoke all on function public.get_my_played_score_challenges(bigint[]) from public;
 grant execute on function public.get_my_played_score_challenges(bigint[]) to authenticated;
+
+-- ---------- 4. approval notices move to Admin -> Players ----------
+-- The trigger announced a pending player to every admin as a direct message
+-- whose sender_id was that pending player. get_messageable_players excludes
+-- anyone with is_approved=false, so Chats.jsx filtered the conversation out of
+-- the list while useUnreadMessages still counted the unread row: a chat badge
+-- of 1 with nothing to open and no way to clear it. Admin -> Players already
+-- lists everyone waiting for approval, so that is where the signal belongs.
+
+drop trigger if exists profiles_notify_admins_of_pending_profile on public.profiles;
+drop function if exists public.notify_admins_of_pending_profile();
+drop index if exists public.direct_messages_pending_approval_once_idx;
+
+-- Clears the notices that are already stuck in admins' badges.
+delete from public.direct_messages where activity_type='user_approval_required';
 
 notify pgrst,'reload schema';
 

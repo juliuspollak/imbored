@@ -51,6 +51,7 @@ import { useOpenRewardRequestsCount } from "./lib/useOpenRewardRequestsCount.js"
 import { useOrganiserAttentionCount } from "./lib/useOrganiserAttentionCount.js";
 import { usePokes } from "./lib/pokes.js";
 import { useUnreadMessages } from "./lib/useUnreadMessages.js";
+import { usePendingPlayersCount } from "./lib/usePendingPlayersCount.js";
 import { useI18n } from "./lib/i18n.jsx";
 import { applyThemePreference, cacheThemePreference } from "./lib/theme.js";
 import { GRIDLY_BRAND, HIVE_BRAND } from "./lib/gameBranding.jsx";
@@ -216,6 +217,7 @@ function AppShell() {
   const isRewardManager = !!(profile?.is_admin || profile?.is_reward_steward);
   const openRewardRequestsCount = useOpenRewardRequestsCount(isRewardManager ? user?.id : undefined);
   const unreadMessages = useUnreadMessages(user?.id);
+  const pendingPlayersCount = usePendingPlayersCount(profile?.is_admin ? user?.id : undefined);
   const [sectionSignals, setSectionSignals] = useState({ whatsnew: false, circles: false });
   const [isCircleOrganiser, setIsCircleOrganiser] = useState(false);
   useEffect(() => {
@@ -348,6 +350,7 @@ function AppShell() {
       myRedemptionUpdates={myRedemptionUpdates}
       openRewardRequestsCount={openRewardRequestsCount}
       unreadMessages={unreadMessages}
+      pendingPlayersCount={pendingPlayersCount}
       sectionSignals={sectionSignals}
       incognito={incognito === true}
       incognitoReady={incognito !== null}
@@ -380,7 +383,6 @@ function AppShell() {
           currentProfile={profile}
           onBack={() => setActive(null)}
           onOpenChat={(player) => { setChatReturn("chats"); setChatPlayer(player); }}
-          onOpenAdminPlayers={() => setActive("adminplayers")}
           onOpenAdminReports={() => setActive("adminreports")}
           onOpenFeedback={() => setActive("feedback")}
           onOpenCircles={() => openSection("circles")}
@@ -738,7 +740,7 @@ function saveSeenOrganiserAttentionCount(userId, count) {
   }
 }
 
-function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenCircles, onOpenChats, onOpenStats, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminReports, onOpenAdminRewards, onOpenRewardRequests, onOpenOrganiserRewards, organiserAttentionCount = null, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
+function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, onOpenCircles, onOpenChats, onOpenStats, onOpenFeedback, onOpenWhatsNew, onOpenAdminPlayers, onOpenAdminGames, onOpenAdminReports, onOpenAdminRewards, onOpenRewardRequests, onOpenOrganiserRewards, organiserAttentionCount = null, players, userId, openFeedbackCount = 0, completedFeedbackCount = 0, newTransfersCount = 0, myRedemptionUpdates = 0, openRewardRequestsCount = 0, unreadMessages = { total: 0, bySender: {} }, pendingPlayersCount = 0, incognito = false, incognitoReady = true, onToggleIncognito, onOpenChat }) {
   const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const [seenOrganiserAttentionCount, setSeenOrganiserAttentionCount] = useState(() => readSeenOrganiserAttentionCount(userId));
@@ -747,7 +749,8 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
   const feedbackBadgeCount = isAdmin ? openFeedbackCount : completedFeedbackCount;
   const resolvedOrganiserAttentionCount = organiserAttentionCount ?? 0;
   const unseenOrganiserAttentionCount = Math.max(0, resolvedOrganiserAttentionCount - seenOrganiserAttentionCount);
-  const totalNotifications = feedbackBadgeCount + newTransfersCount + myRedemptionUpdates + openRewardRequestsCount + unseenOrganiserAttentionCount + unreadMessages.total
+  const pendingPlayersBadgeCount = isAdmin ? pendingPlayersCount : 0;
+  const totalNotifications = feedbackBadgeCount + newTransfersCount + myRedemptionUpdates + openRewardRequestsCount + unseenOrganiserAttentionCount + unreadMessages.total + pendingPlayersBadgeCount
     + (sectionSignals.whatsnew ? 1 : 0) + (sectionSignals.circles ? 1 : 0);
 
   useEffect(() => {
@@ -794,7 +797,7 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
   if (onOpenOrganiserRewards) items.push({ id:"organiserrewards", icon:Gift, label:t("account.organiserRewards"), onClick:onOpenOrganiserRewards, badge:resolvedOrganiserAttentionCount });
   const adminItems = [];
   if (isAdmin) {
-    adminItems.push({ id:"adminplayers", icon:Shield, label:t("common.players"), onClick:onOpenAdminPlayers });
+    adminItems.push({ id:"adminplayers", icon:Shield, label:t("common.players"), onClick:onOpenAdminPlayers, badge:pendingPlayersBadgeCount });
     adminItems.push({ id:"admingames", icon:Grid3x3, label:t("common.games"), onClick:onOpenAdminGames });
     adminItems.push({ id:"adminreports", icon:Flag, label:t("common.reports"), onClick:onOpenAdminReports });
     adminItems.push({ id:"adminrewards", icon:Gift, label:t("common.rewardRules"), onClick:onOpenAdminRewards });

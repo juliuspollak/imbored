@@ -4487,49 +4487,13 @@ end;
 $$;
 
 
---
--- Name: notify_admins_of_pending_profile(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.notify_admins_of_pending_profile() RETURNS trigger
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-begin
-  if new.is_admin=false
-     and new.is_approved=false
-     and coalesce(new.is_blocked,false)=false
-     and new.account_deleted_at is null
-     and nullif(btrim(new.name),'') is not null then
-    insert into public.direct_messages(
-      sender_id,
-      recipient_id,
-      body,
-      system_generated,
-      activity_type
-    )
-    select
-      new.id,
-      admin_profile.id,
-      format('🛡️ %s is waiting for approval. Tap to review their account.',new.name),
-      true,
-      'user_approval_required'
-    from public.profiles admin_profile
-    where admin_profile.is_admin=true
-      and admin_profile.account_deleted_at is null
-      and coalesce(admin_profile.is_blocked,false)=false
-      and admin_profile.id<>new.id
-    on conflict(sender_id,recipient_id,activity_type)
-      where activity_type='user_approval_required'
-    do nothing;
-  else
-    delete from public.direct_messages
-    where sender_id=new.id
-      and activity_type='user_approval_required';
-  end if;
-  return new;
-end;
-$$;
+-- notify_admins_of_pending_profile() deliberately no longer exists. A pending
+-- player was announced to admins as a direct message sent *from* that player,
+-- but a pending player is by definition excluded from get_messageable_players,
+-- so Chats could never render the conversation while the unread badge still
+-- counted it — an approval notice that lit up the chat badge permanently and
+-- could not be opened or cleared. Admin -> Players already lists everyone
+-- waiting for approval, so the notice lives there instead.
 
 
 --
@@ -7934,13 +7898,6 @@ CREATE UNIQUE INDEX direct_messages_feedback_completed_once_idx ON public.direct
 
 
 --
--- Name: direct_messages_pending_approval_once_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX direct_messages_pending_approval_once_idx ON public.direct_messages USING btree (sender_id, recipient_id, activity_type) WHERE (activity_type = 'user_approval_required'::text);
-
-
---
 -- Name: direct_messages_team_challenge_full_once_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -8092,13 +8049,6 @@ CREATE TRIGGER game_stats_notify_circle_daily_challenge AFTER INSERT ON public.g
 --
 
 CREATE TRIGGER game_stats_update_challenge_streak AFTER INSERT ON public.game_stats FOR EACH ROW WHEN ((new.mode = 'challenge'::text)) EXECUTE FUNCTION public.update_challenge_streak_from_game();
-
-
---
--- Name: profiles profiles_notify_admins_of_pending_profile; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER profiles_notify_admins_of_pending_profile AFTER INSERT OR UPDATE OF name, is_approved, is_blocked, account_deleted_at ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.notify_admins_of_pending_profile();
 
 
 --
