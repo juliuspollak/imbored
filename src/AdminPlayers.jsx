@@ -8,14 +8,15 @@ import Button from "./components/Button.jsx";
 import Card from "./components/Card.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
 
-// How long someone has been waiting on a decision. Undecided approvals are
-// easy to leave sitting, so the wait is spelled out rather than implied.
+// How long someone has been waiting on a decision. Kept short because it sits
+// on one line in a narrow row, under a heading that already says what the
+// waiting is for.
 function fmtWaiting(iso) {
-  if (!iso) return "Waiting for approval";
+  if (!iso) return "Waiting";
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-  if (days < 1) return "Waiting for approval · today";
-  if (days === 1) return "Waiting for approval · 1 day";
-  return `Waiting for approval · ${days} days`;
+  if (days < 1) return "Waiting · today";
+  if (days === 1) return "Waiting · 1 day";
+  return `Waiting · ${days} days`;
 }
 
 function fmtLastSeen(iso) {
@@ -118,22 +119,15 @@ export default function AdminPlayers({ onBack }) {
               {player.is_reward_steward && <Gift size={11} style={{ color: "var(--color-primary)" }} />}
               {player.is_private && <Lock size={10} style={{ opacity: .35 }} />}
             </div>
-            <div style={{ display: showStatus ? "block" : "none", fontSize: 11, fontWeight: approval ? 600 : undefined, color: approval ? "var(--color-warning-text)" : online ? "var(--color-success-text)" : "var(--color-text-secondary)" }}>
+            <div className="truncate" style={{ display: showStatus ? "block" : "none", fontSize: 11, fontWeight: approval ? 600 : undefined, color: approval ? "var(--color-warning-text)" : online ? "var(--color-success-text)" : "var(--color-text-secondary)" }}>
               {approval ? fmtWaiting(player.created_at) : fmtLastSeen(seenIso)}
               {player.is_blocked ? " · Blocked" : ""}{player.hidden_from_others ? " · Hidden" : ""}
             </div>
           </div>
           {approval && (
-            <>
-              <Button size="sm" variant="ghost" loading={approvingId === player.id} before={<CheckCircle2 size={13} />} onClick={() => handleApproval(player.id, true)} style={{ color: "var(--color-success-text)" }}>
-                {approvingId === player.id ? "Approving…" : "Approve"}
-              </Button>
-              {/* Without this, the only way to settle an approval was Block
-                  buried in the overflow menu, so undecided players piled up. */}
-              <Button size="sm" variant="ghost" before={<ShieldBan size={13} />} onClick={() => setActionTarget({ type: "block", intent: "decline", player, reason: "" })} style={{ color: "var(--color-danger-text)" }}>
-                Decline
-              </Button>
-            </>
+            <Button size="sm" variant="ghost" loading={approvingId === player.id} before={<CheckCircle2 size={13} />} onClick={() => handleApproval(player.id, true)} style={{ color: "var(--color-success-text)", flexShrink: 0 }}>
+              {approvingId === player.id ? "Approving…" : "Approve"}
+            </Button>
           )}
           {!player.is_admin && (
             <button onClick={() => setExpandedId(expanded ? null : player.id)} aria-label={`More actions for ${player.name}`} aria-expanded={expanded} style={{ width: 32, height: 32, borderRadius: "var(--radius-sm)", background: compact && !expanded ? "transparent" : "var(--color-surface-elevated)", color: "var(--color-icon-subtle)", border: "none", cursor: "pointer", display: "grid", placeItems: "center" }}>
@@ -144,9 +138,13 @@ export default function AdminPlayers({ onBack }) {
         {expanded && !player.is_admin && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-2)", marginTop: "var(--space-3)", paddingTop: "var(--space-3)", borderTop: "1px solid var(--color-border)" }}>
             {!approval && <Button size="sm" variant="ghost" onClick={() => handleApproval(player.id, false)}>Require approval</Button>}
-            <Button size="sm" variant="ghost" before={player.is_blocked ? <RotateCcw size={11} /> : <ShieldBan size={11} />} onClick={() => player.is_blocked ? handleAccountAction("unblock", player) : setActionTarget({ type: "block", player, reason: "" })} style={{ color: player.is_blocked ? "var(--color-success-text)" : "var(--color-danger-text)" }}>{player.is_blocked ? "Unblock" : "Block"}</Button>
-            <Button size="sm" variant="ghost" before={<EyeOff size={11} />} onClick={() => handleToggleHidden(player)}>{player.hidden_from_others ? "Show" : "Hide"}</Button>
-            <Button size="sm" variant="ghost" before={<Gift size={11} />} onClick={() => handleToggleRewardSteward(player)} style={{ color: player.is_reward_steward ? "var(--color-primary)" : undefined }}>{player.is_reward_steward ? "Remove steward" : "Make steward"}</Button>
+            {/* Declining is a block, so it settles the approval and moves them
+                out of Needs approval. Labelled for the decision being made. */}
+            <Button size="sm" variant="ghost" before={player.is_blocked ? <RotateCcw size={11} /> : <ShieldBan size={11} />} onClick={() => player.is_blocked ? handleAccountAction("unblock", player) : setActionTarget({ type: "block", intent: approval ? "decline" : undefined, player, reason: "" })} style={{ color: player.is_blocked ? "var(--color-success-text)" : "var(--color-danger-text)" }}>{player.is_blocked ? "Unblock" : approval ? "Decline" : "Block"}</Button>
+            {/* Hiding someone nobody can see yet, or handing reward powers to
+                an unapproved account, are both meaningless before a decision. */}
+            {!approval && <Button size="sm" variant="ghost" before={<EyeOff size={11} />} onClick={() => handleToggleHidden(player)}>{player.hidden_from_others ? "Show" : "Hide"}</Button>}
+            {!approval && <Button size="sm" variant="ghost" before={<Gift size={11} />} onClick={() => handleToggleRewardSteward(player)} style={{ color: player.is_reward_steward ? "var(--color-primary)" : undefined }}>{player.is_reward_steward ? "Remove steward" : "Make steward"}</Button>}
             <Button size="sm" variant="ghost" before={<UserX size={11} />} onClick={() => setActionTarget({ type: "delete", player, reason: "" })} style={{ color: "var(--color-danger-text)" }}>Delete</Button>
           </div>
         )}
