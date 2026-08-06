@@ -6,6 +6,7 @@ import InvitedApprovalNotice from "./InvitedApprovalNotice.jsx";
 import { I18nProvider } from "./lib/i18n.jsx";
 import { enableAutomaticAppUpdates } from "./lib/appUpdate.js";
 import { applyThemePreference, getCachedThemePreference } from "./lib/theme.js";
+import "./lib/twistInvalidLineFeedback.js";
 // Fonts are bundled rather than fetched from Google's CDN. A packaged app
 // should render its own type with no network at all, and shipping them removes
 // a third-party request on every launch that would otherwise need declaring in
