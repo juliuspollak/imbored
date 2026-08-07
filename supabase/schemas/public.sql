@@ -53,45 +53,6 @@ end; $$;
 
 
 --
--- Name: add_player_to_circle(uuid, bigint); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.add_player_to_circle(target_user_id uuid, target_circle_id bigint) RETURNS void
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-begin
-  if not public.is_approved_user(auth.uid()) then
-    raise exception 'Your account must be approved first.' using errcode='42501';
-  end if;
-  if not exists(
-    select 1 from public.circles
-    where id=target_circle_id
-      and (created_by=auth.uid() or public.is_admin(auth.uid()))
-  ) then
-    raise exception 'Only the circle owner or an app administrator can invite players.' using errcode='42501';
-  end if;
-  if exists(select 1 from public.circle_member_blocks where circle_id=target_circle_id and user_id=target_user_id) then
-    raise exception 'This player is blocked from the circle.';
-  end if;
-  if not exists(
-    select 1 from public.profiles
-    where id=target_user_id
-      and account_deleted_at is null
-      and coalesce(is_blocked,false)=false
-      and coalesce(is_approved,false)=true
-      and coalesce(is_private,false)=false
-      and coalesce(hidden_from_others,false)=false
-  ) then
-    raise exception 'This player is not available for circle invitations.';
-  end if;
-  insert into public.circle_members(circle_id,user_id)
-  values(target_circle_id,target_user_id)
-  on conflict do nothing;
-end;
-$$;
-
-
 --
 -- Name: admin_adjust_points(uuid, bigint, text); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -117,37 +78,6 @@ end; $$;
 
 
 --
--- Name: admin_list_players(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.admin_list_players() RETURNS TABLE(id uuid, name text, icon text, is_private boolean, is_admin boolean, is_reward_steward boolean, hidden_from_others boolean, is_approved boolean, is_blocked boolean, account_deleted_at timestamp with time zone, auth_deleted_at timestamp with time zone)
-    LANGUAGE plpgsql STABLE SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-begin
-  if not public.is_admin(auth.uid()) then
-    raise exception 'Admin only.' using errcode='42501';
-  end if;
-
-  return query
-  select
-    profile.id,
-    profile.name::text,
-    profile.icon::text,
-    profile.is_private,
-    profile.is_admin,
-    profile.is_reward_steward,
-    profile.hidden_from_others,
-    profile.is_approved,
-    profile.is_blocked,
-    profile.account_deleted_at,
-    profile.auth_deleted_at
-  from public.profiles profile
-  order by profile.name;
-end;
-$$;
-
-
 --
 -- Name: admin_reset_all_stats(text, uuid, boolean); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -711,40 +641,6 @@ $$;
 
 
 --
--- Name: animal_rush_difficulty_stats(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.animal_rush_difficulty_stats() RETURNS TABLE(difficulty text, attempts bigint, correct_attempts bigint, median_reaction_ms integer, average_reaction_ms integer, wrong_touch_rate numeric)
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-begin
-  if not public.is_admin(auth.uid()) then
-    raise exception 'Admin access required.' using errcode='42501';
-  end if;
-
-  return query
-  select
-    history.difficulty,
-    count(*) as attempts,
-    count(*) filter(where history.correct) as correct_attempts,
-    coalesce(
-      percentile_cont(0.5) within group(order by history.reaction_ms)
-        filter(where history.correct),
-      0
-    )::integer as median_reaction_ms,
-    coalesce(avg(history.reaction_ms) filter(where history.correct),0)::integer as average_reaction_ms,
-    round(
-      count(*) filter(where not history.correct)::numeric/nullif(count(*),0),
-      4
-    ) as wrong_touch_rate
-  from public.animal_rush_attempt_history history
-  group by history.difficulty
-  order by history.difficulty;
-end;
-$$;
-
-
 --
 -- Name: animal_rush_is_member(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -2104,37 +2000,6 @@ $$;
 
 
 --
--- Name: can_send_direct_message(uuid); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.can_send_direct_message(target_recipient_id uuid) RETURNS boolean
-    LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-    select
-        auth.uid() is not null
-        and target_recipient_id is not null
-        and auth.uid() <> target_recipient_id
-
-        -- Sender must exist and must not be hidden.
-        and exists (
-            select 1
-            from public.profiles sender
-            where sender.id = auth.uid()
-              and coalesce(sender.hidden_from_others, false) = false
-        )
-
-        -- Recipient must exist, be visible and not private.
-        and exists (
-            select 1
-            from public.profiles recipient
-            where recipient.id = target_recipient_id
-              and coalesce(recipient.hidden_from_others, false) = false
-              and coalesce(recipient.is_private, false) = false
-        );
-$$;
-
-
 --
 -- Name: can_continue_conversation(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -2599,16 +2464,6 @@ $$;
 
 
 --
--- Name: current_week_start(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.current_week_start() RETURNS date
-    LANGUAGE sql STABLE
-    AS $$
-  select (public.app_today() - (extract(isodow from public.app_today())::integer - 1))::date
-$$;
-
-
 --
 -- Name: decide_circle_invitation(bigint, boolean); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -3119,68 +2974,6 @@ $$;
 
 
 --
--- Name: get_challenge_streak_status(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.get_challenge_streak_status() RETURNS jsonb
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-declare
-  uid uuid := auth.uid();
-  player_zone text := public.resolve_timezone(
-    (select profile.timezone from public.profiles profile where profile.id=auth.uid())
-  );
-  today_date date := public.player_today(uid);
-  p public.player_progress;
-  penalty integer := 0;
-  played_today boolean := false;
-begin
-  if uid is null then
-    raise exception 'Not signed in' using errcode='42501';
-  end if;
-
-  perform public.ensure_player_progress(uid);
-
-  select * into p
-  from public.player_progress
-  where player_id=uid
-  for update;
-
-  if p.challenge_last_completed_date is not null
-    and p.challenge_last_completed_date<today_date-1
-    and p.challenge_current_streak>0 then
-    penalty:=public.apply_challenge_streak_break(uid,today_date-1);
-    select * into p
-    from public.player_progress
-    where player_id=uid;
-  end if;
-
-  select exists(
-    select 1
-    from public.game_stats gs
-    where gs.user_id=uid
-      and gs.mode='challenge'
-      and coalesce(
-        gs.challenge_date,
-        (gs.completed_at at time zone player_zone)::date
-      )=today_date
-  ) into played_today;
-
-  return jsonb_build_object(
-    'streak',p.challenge_current_streak,
-    'longest_streak',p.challenge_longest_streak,
-    'last_completed_date',p.challenge_last_completed_date,
-    'played_today',played_today,
-    'penalty_points',penalty,
-    'at_risk',p.challenge_current_streak>0 and not played_today,
-    'miss_penalty',10,
-    'balance',p.available_points
-  );
-end;
-$$;
-
-
 --
 -- Name: get_circle_ideas_to_vote_on(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -3524,38 +3317,6 @@ $$;
 
 
 --
--- Name: get_my_practice_reward_usage(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.get_my_practice_reward_usage() RETURNS jsonb
-    LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-  with active_rule as (
-    select practice_daily_limit from public.reward_rules
-    where is_active=true order by id desc limit 1
-  ), rewarded as (
-    select gs.game,count(*)::integer as rewarded_count,
-      min(pt.created_at) as first_awarded_at,max(pt.created_at) as last_awarded_at
-    from public.points_transactions pt
-    join public.game_stats gs on gs.id=pt.game_stat_id
-    where pt.player_id=auth.uid() and pt.reason_code='GAME_COMPLETED'
-      and pt.points>0 and gs.mode='practice'
-      and (pt.created_at at time zone public.resolve_timezone(
-        (select profile.timezone from public.profiles profile where profile.id=auth.uid())
-      ))::date=public.player_today(auth.uid())
-    group by gs.game
-  )
-  select jsonb_build_object(
-    'date',public.player_today(auth.uid()),
-    'rewarded_count',coalesce((select sum(rewarded_count) from rewarded),0),
-    'daily_limit',coalesce((select practice_daily_limit from active_rule),0),
-    'per_game',true,
-    'by_game',coalesce((select jsonb_agg(to_jsonb(rewarded) order by game) from rewarded),'[]'::jsonb)
-  )
-$$;
-
-
 --
 -- Name: get_my_reward_circles(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -3637,26 +3398,6 @@ $$;
 
 
 --
--- Name: get_organiser_finished(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.get_organiser_finished() RETURNS TABLE(id bigint, reward_id bigint, reward_name text, circle_id bigint, circle_name text, player_id uuid, player_name text, player_icon text, points_cost bigint, status text, dispute_reason text, fulfilled_at timestamp with time zone, reviewed_at timestamp with time zone)
-    LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-  select red.id, rw.id, rw.name::text, rw.circle_id, c.name::text,
-    red.player_id, player.name::text, player.icon::text, red.points_cost,
-    red.status, red.dispute_reason, red.fulfilled_at, red.reviewed_at
-  from reward_redemptions red
-  join rewards rw on rw.id=red.reward_id
-  join circles c on c.id=rw.circle_id
-  join profiles player on player.id=red.player_id
-  where red.status in ('fulfilled','declined','cancelled','disputed')
-    and public.is_circle_organiser(rw.circle_id,auth.uid())
-  order by coalesce(red.fulfilled_at,red.reviewed_at) desc;
-$$;
-
-
 --
 -- Name: get_organiser_new_ideas(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -3682,46 +3423,7 @@ $$;
 
 
 --
--- Name: get_organiser_reward_catalog(); Type: FUNCTION; Schema: public; Owner: -
 --
-
-CREATE FUNCTION public.get_organiser_reward_catalog() RETURNS TABLE(id bigint, circle_id bigint, circle_name text, name text, reward_type text, points_cost bigint, stock_quantity integer, has_history boolean, created_at timestamp with time zone)
-    LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-  select rw.id, rw.circle_id, c.name::text, rw.name::text, rw.reward_type,
-    rw.points_cost, rw.stock_quantity,
-    exists(select 1 from reward_redemptions red where red.reward_id=rw.id),
-    rw.created_at
-  from rewards rw
-  join circles c on c.id=rw.circle_id
-  where rw.status='active'
-    and public.is_circle_organiser(rw.circle_id,auth.uid())
-  order by rw.created_at desc;
-$$;
-
-
---
--- Name: get_pending_reward_proposals(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.get_pending_reward_proposals() RETURNS TABLE(id bigint, circle_id bigint, circle_name text, name text, description text, image_url text, points_cost bigint, stock_quantity integer, status text, created_by uuid, creator_name text, creator_icon text, approve_count integer, reject_count integer, required_count integer)
-    LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-  select rw.id,rw.circle_id,c.name::text,rw.name::text,rw.description::text,rw.image_url::text,rw.points_cost,rw.stock_quantity,rw.status,
-    rw.created_by,creator.name::text,creator.icon::text,
-    (select count(*)::int from reward_approvals ra where ra.reward_id=rw.id and ra.decision='approve'),
-    (select count(*)::int from reward_approvals ra where ra.reward_id=rw.id and ra.decision='reject'),
-    (floor((select count(*)::int from circle_members m where m.circle_id=rw.circle_id and m.can_approve_rewards=true)::numeric/2)+1)::int
-  from rewards rw
-  join circles c on c.id=rw.circle_id
-  join profiles creator on creator.id=rw.created_by
-  where rw.status in ('suggested','pending') and (exists(select 1 from circle_members where circle_id=rw.circle_id and user_id=auth.uid()) or is_admin(auth.uid()))
-  order by rw.created_at desc;
-$$;
-
-
 --
 -- Name: get_personal_challenge_standings(date, date); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -3962,34 +3664,6 @@ $$;
 
 
 --
--- Name: handle_new_user(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.handle_new_user() RETURNS trigger
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-begin
-    insert into public.profiles (
-        id,
-        email,
-        display_name
-    )
-    values (
-        new.id,
-        new.email,
-        coalesce(
-            new.raw_user_meta_data ->> 'display_name',
-            split_part(new.email, '@', 1)
-        )
-    )
-    on conflict (id) do nothing;
-
-    return new;
-end;
-$$;
-
-
 --
 -- Name: has_social_unlock(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -4823,27 +4497,6 @@ $_$;
 
 
 --
--- Name: price_reward_proposal(bigint, bigint); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.price_reward_proposal(target_reward_id bigint, price_points_cost bigint) RETURNS void
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-declare rw rewards;
-begin
-  select * into rw from rewards where id=target_reward_id for update;
-  if not found then raise exception 'Reward not found'; end if;
-  if not is_circle_reward_approver(rw.circle_id,auth.uid()) then
-    raise exception 'Only a reward approver of this circle can price it.' using errcode='42501';
-  end if;
-  if rw.status<>'suggested' then raise exception 'This item has already been priced.'; end if;
-  if coalesce(price_points_cost,0)<=0 then raise exception 'Enter a points cost.'; end if;
-
-  update rewards set points_cost=price_points_cost,status='pending',updated_at=now() where id=target_reward_id;
-end; $$;
-
-
 --
 -- Name: propose_reward(bigint, text, text, text, text, boolean); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -5133,40 +4786,6 @@ $$;
 
 
 --
--- Name: remove_player_from_circle(bigint, uuid); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.remove_player_from_circle(target_circle_id bigint, target_user_id uuid) RETURNS void
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-begin
-  if not public.is_approved_user(auth.uid()) then
-    raise exception 'Your account must be approved first.' using errcode='42501';
-  end if;
-  if not exists(
-    select 1
-    from public.circles
-    where id=target_circle_id
-      and created_by=auth.uid()
-  ) then
-    raise exception 'Only the circle owner can remove members.' using errcode='42501';
-  end if;
-  if target_user_id=auth.uid() then
-    raise exception 'The circle owner cannot remove themselves.';
-  end if;
-
-  delete from public.circle_members
-  where circle_id=target_circle_id
-    and user_id=target_user_id;
-
-  delete from public.circle_join_requests
-  where circle_id=target_circle_id
-    and user_id=target_user_id;
-end;
-$$;
-
-
 --
 -- Name: reopen_feedback_item(bigint); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -5353,37 +4972,6 @@ end; $$;
 
 
 --
--- Name: review_reward_proposal(bigint, text); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.review_reward_proposal(target_reward_id bigint, decision_in text) RETURNS void
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-declare rw rewards; approver_count int; required int; approve_count int; reject_count int;
-begin
-  if decision_in not in ('approve','reject') then raise exception 'Invalid decision'; end if;
-  select * into rw from rewards where id=target_reward_id for update;
-  if not found then raise exception 'Reward not found'; end if;
-  if not is_circle_reward_approver(rw.circle_id,auth.uid()) then raise exception 'Only a reward approver of this circle can review it.' using errcode='42501'; end if;
-  if rw.status<>'pending' then raise exception 'This item has already been reviewed.'; end if;
-
-  insert into reward_approvals(reward_id,approver_id,decision) values(target_reward_id,auth.uid(),decision_in)
-  on conflict(reward_id,approver_id) do update set decision=excluded.decision,created_at=now();
-
-  select count(*) into approver_count from circle_members where circle_id=rw.circle_id and can_approve_rewards=true;
-  required:=floor(approver_count::numeric/2)+1;
-  select count(*) into approve_count from reward_approvals where reward_id=target_reward_id and decision='approve';
-  select count(*) into reject_count from reward_approvals where reward_id=target_reward_id and decision='reject';
-
-  if approve_count>=required then
-    update rewards set status='active',updated_at=now() where id=target_reward_id;
-  elsif reject_count>=required then
-    update rewards set status='rejected',updated_at=now() where id=target_reward_id;
-  end if;
-end; $$;
-
-
 --
 -- Name: profiles; Type: TABLE; Schema: public; Owner: -
 --
@@ -5483,30 +5071,6 @@ $$;
 
 
 --
--- Name: search_players_to_invite(text, bigint); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.search_players_to_invite(search_query text, exclude_circle_id bigint) RETURNS TABLE(id uuid, name text, icon text)
-    LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-  select p.id,p.name::text,p.icon::text
-  from profiles p
-  where p.id<>auth.uid()
-    and p.account_deleted_at is null
-    and coalesce(p.hidden_from_others,false)=false
-    and coalesce(p.is_approved,true)=true
-    and coalesce(p.is_blocked,false)=false
-    and not exists(select 1 from circle_members where circle_id=exclude_circle_id and user_id=p.id)
-    and not exists(select 1 from circle_member_blocks where circle_id=exclude_circle_id and user_id=p.id)
-    and nullif(trim(search_query),'') is not null
-    and length(trim(search_query))>=2
-    and p.name ilike '%'||trim(search_query)||'%'
-  order by p.name
-  limit 20;
-$$;
-
-
 --
 -- Name: send_direct_message(uuid, text); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -5587,28 +5151,6 @@ end; $$;
 
 
 --
--- Name: set_circle_reward_approver(bigint, uuid, boolean); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.set_circle_reward_approver(target_circle_id bigint, target_user_id uuid, approve boolean) RETURNS void
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-declare circle_owner uuid;
-begin
-  if not public.is_approved_user(auth.uid()) then
-    raise exception 'Your account must be approved first.' using errcode='42501';
-  end if;
-  select created_by into circle_owner from public.circles where id=target_circle_id for update;
-  if not found then raise exception 'Circle not found.'; end if;
-  if auth.uid()<>circle_owner and not public.is_admin(auth.uid()) then
-    raise exception 'Only the circle owner or an app administrator can manage reward approvers.' using errcode='42501';
-  end if;
-  update public.circle_members set can_approve_rewards=approve where circle_id=target_circle_id and user_id=target_user_id;
-  if not found then raise exception 'That person is not a member of this circle.'; end if;
-end; $$;
-
-
 --
 -- Name: set_circle_weekly_challenge(bigint, text[], integer[], integer, text, text, bigint, text, boolean, integer); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -6281,30 +5823,6 @@ $$;
 
 
 --
--- Name: validate_account_deletion(uuid); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.validate_account_deletion(target_user_id uuid) RETURNS void
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-begin
-  if not public.is_admin(auth.uid()) then
-    raise exception 'Admin only.' using errcode='42501';
-  end if;
-  if target_user_id=auth.uid() then
-    raise exception 'You cannot delete your own account.' using errcode='22023';
-  end if;
-  if not exists(select 1 from public.profiles where id=target_user_id) then
-    raise exception 'Player profile not found.' using errcode='P0002';
-  end if;
-  if exists(select 1 from public.profiles where id=target_user_id and is_admin=true) then
-    raise exception 'Another admin cannot be deleted here.' using errcode='42501';
-  end if;
-end;
-$$;
-
-
 --
 -- Name: validate_circle_challenge_attempt(); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -8121,6 +7639,16 @@ CREATE TRIGGER game_stats_notify_circle_daily_challenge AFTER INSERT ON public.g
 --
 
 CREATE TRIGGER game_stats_update_challenge_streak AFTER INSERT ON public.game_stats FOR EACH ROW WHEN ((new.mode = 'challenge'::text)) EXECUTE FUNCTION public.update_challenge_streak_from_game();
+
+
+--
+-- Name: profiles profiles_clear_hidden_user_presence; Type: TRIGGER; Schema: public; Owner: -
+--
+
+-- reject_hidden_animal_rush_player_trigger keeps hidden players from joining a
+-- round, but nothing removed one who was hidden mid-game: clear_hidden_user_presence
+-- existed for exactly that and was never attached to anything.
+CREATE TRIGGER profiles_clear_hidden_user_presence AFTER UPDATE OF hidden_from_others ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.clear_hidden_user_presence();
 
 
 --

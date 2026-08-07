@@ -16,6 +16,8 @@
 --    the chat badge stuck on 1 forever. Moved to Admin -> Players.
 -- 5. retire_unavailable_player_messages — banning a player now retires their
 --    unread messages, the way deleting an account already did.
+-- 6. Drops 17 functions nothing calls, and attaches the one that was written
+--    but never wired to a trigger.
 
 begin;
 
@@ -292,6 +294,49 @@ where read_at is null
     select id from public.profiles
     where coalesce(is_blocked,false)=true or account_deleted_at is not null
   );
+
+-- ---------- 6. remove unreachable functions ----------
+-- Nothing references these: not the app, not the Edge Functions, not another
+-- function, trigger, policy or default. Verified against the database — none
+-- of them backs a trigger, so there is no hidden caller. Their definitions
+-- remain in git history if any turns out to be wanted.
+--
+-- handle_new_user is the notable one: it inserts into profiles(id, email,
+-- display_name), and profiles has no email or display_name column. It could
+-- only ever have failed. Profiles are created by save_my_profile instead.
+--
+-- can_send_direct_message is dropped rather than kept for reference because it
+-- states a *different* rule from the one direct_messages actually enforces
+-- (it refuses private recipients); leaving it invites wiring up the wrong one.
+--
+-- is_circle_reward_approver is deliberately NOT dropped: the "circle reward
+-- approvers update rewards" policy still references it.
+
+drop function if exists public.add_player_to_circle(uuid, bigint);
+drop function if exists public.admin_list_players();
+drop function if exists public.animal_rush_difficulty_stats();
+drop function if exists public.can_send_direct_message(uuid);
+drop function if exists public.current_week_start();
+drop function if exists public.get_challenge_streak_status();
+drop function if exists public.get_my_practice_reward_usage();
+drop function if exists public.get_organiser_finished();
+drop function if exists public.get_organiser_reward_catalog();
+drop function if exists public.get_pending_reward_proposals();
+drop function if exists public.handle_new_user();
+drop function if exists public.price_reward_proposal(bigint, bigint);
+drop function if exists public.remove_player_from_circle(bigint, uuid);
+drop function if exists public.review_reward_proposal(bigint, text);
+drop function if exists public.search_players_to_invite(text, bigint);
+drop function if exists public.set_circle_reward_approver(bigint, uuid, boolean);
+drop function if exists public.validate_account_deletion(uuid);
+
+-- clear_hidden_user_presence was written and never attached to anything.
+-- reject_hidden_animal_rush_player_trigger stops a hidden player joining a
+-- round; nothing removed one hidden mid-round until now.
+drop trigger if exists profiles_clear_hidden_user_presence on public.profiles;
+create trigger profiles_clear_hidden_user_presence
+after update of hidden_from_others on public.profiles
+for each row execute function public.clear_hidden_user_presence();
 
 notify pgrst,'reload schema';
 
