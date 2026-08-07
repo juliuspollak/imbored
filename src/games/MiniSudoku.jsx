@@ -384,9 +384,8 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
       if (nextValue !== 0) clearPeerNote(next, r, c, nextValue);
       return next;
     });
-    if (nextValue !== 0 && nextValue !== puzzle.solution[r][c] && nextValue !== current) {
-      setMistakes((m) => m + 1);
-    }
+    // A provisional number is part of solving, not a mistake. The board already
+    // highlights rule conflicts, and completion still requires a valid full grid.
   }
 
   function handleErase() {
@@ -440,7 +439,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   function handleHint() {
     if (solved || hintCooldown.isLocked()) return;
     // First correct one wrong entry so the hint always leaves a useful number
-    // on the board. Mistakes are counted when entered, not again here.
+    // on the board. Exploratory entries are not scored as mistakes.
     for (let r = 0; r < N; r++) {
       for (let c = 0; c < N; c++) {
         if (board[r][c] !== 0 && board[r][c] !== puzzle.solution[r][c]) {
