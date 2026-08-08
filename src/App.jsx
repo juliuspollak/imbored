@@ -95,7 +95,7 @@ function AppShell() {
   // are tied to a user) — default to it when logged in, otherwise practice
   // is the only real option.
   const [playMode, setPlayMode] = useState("challenge");
-  // null means the privacy preference has not loaded yet. Treating that
+  // Private mode. null means the preference has not loaded yet; treating that
   // state as offline prevents a presence heartbeat leaking during startup.
   const [incognito, setIncognito] = useState(null);
   const [challengeScope, setChallengeScope] = useState({ type: "personal", id: null, name: t("home.myChallenge"), gameIds: null });
@@ -107,7 +107,10 @@ function AppShell() {
     }
 
     const key = `imbored-incognito-${user.id}`;
-    const serverValue = profile.incognito_mode === true;
+    // is_private is the setting; incognito_mode is kept in step with it so the
+    // presence rules that already read it keep working. An account that was
+    // incognito before the two were merged stays hidden until it opts back in.
+    const serverValue = profile.is_private === true || profile.incognito_mode === true;
     setIncognito(serverValue);
     try {
       window.localStorage.setItem(key, String(serverValue));
@@ -124,13 +127,17 @@ function AppShell() {
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-  }, [user?.id, profile?.incognito_mode]);
+  }, [user?.id, profile?.is_private, profile?.incognito_mode]);
 
   async function toggleIncognito() {
     if (!user?.id || incognito === null) return;
     const previous = incognito;
     const next = !previous;
     const key = `imbored-incognito-${user.id}`;
+
+    // Going private is not just "appear offline" — the database also drops you
+    // from every circle you are on, and that is not undone by switching back.
+    if (next && !window.confirm("Going private hides you from other players and removes you from your circles. You can turn it off again, but you would have to rejoin those circles. Continue?")) return;
 
     setIncognito(next);
     try {
@@ -141,7 +148,7 @@ function AppShell() {
 
     const { error } = await supabase
       .from("profiles")
-      .update({ incognito_mode: next })
+      .update({ is_private: next, incognito_mode: next })
       .eq("id", user.id);
 
     if (error) {
@@ -151,7 +158,7 @@ function AppShell() {
       } catch {
         // Nothing else to restore.
       }
-      window.alert(`Couldn't change incognito mode: ${error.message}`);
+      window.alert(`Couldn't change private mode: ${error.message}`);
     }
   }
   useLayoutEffect(() => {
@@ -837,9 +844,9 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
           onClick={onToggleIncognito}
           disabled={!incognitoReady}
           className={`nav-btn incognito-button grid place-items-center rounded-full${incognito ? " is-active" : ""}`}
-          aria-label={incognito ? "Turn off incognito mode" : "Turn on incognito mode"}
+          aria-label={incognito ? "Turn off private mode" : "Turn on private mode"}
           aria-pressed={incognito}
-          title={incognito ? "Incognito on — you appear offline" : "Go incognito"}
+          title={incognito ? "Private — you are hidden from other players" : "Go private"}
           style={{
             position:"absolute",
             right:52,

@@ -24,7 +24,6 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
 
   const [name, setName] = useState(profile?.name || "");
   const [icon, setIcon] = useState(profile?.icon || "🙂");
-  const [isPrivate, setIsPrivate] = useState(profile?.is_private || false);
   const [mood, setMood] = useState(profile?.mood || "");
   const [defaultMode, setDefaultMode] = useState(profile?.default_mode || "challenge");
   const [showStatsToOthers, setShowStatsToOthers] = useState(profile?.show_stats_to_others ?? true);
@@ -120,7 +119,6 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
     if (profile) {
       setName(profile.name || "");
       setIcon(profile.icon || "🙂");
-      setIsPrivate(profile.is_private || false);
       setMood(profile.mood || "");
       setDefaultMode(profile.default_mode || "challenge");
       setShowStatsToOthers(profile.show_stats_to_others ?? true);
@@ -134,7 +132,7 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
     if (!name.trim() || saving) return;
     setSaving(true);
     setError(null);
-    const { error } = await saveProfile({ name: name.trim(), icon, is_private: isPrivate, mood: mood.trim() || null, default_mode: defaultMode, show_stats_to_others: showStatsToOthers, week_starts_on: weekStartsOn, theme_preference: themePreference });
+    const { error } = await saveProfile({ name: name.trim(), icon, mood: mood.trim() || null, default_mode: defaultMode, show_stats_to_others: showStatsToOthers, week_starts_on: weekStartsOn, theme_preference: themePreference });
     setSaving(false);
     if (error) setError(error.message);
     else if (onDone) onDone();
@@ -228,7 +226,15 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
 
         <Card style={{ marginBottom: "var(--space-3)", padding: 0, overflow: "hidden" }}>
           <ToggleRow icon={showStatsToOthers ? Unlock : Lock} label={t("profile.showStats")} description={showStatsToOthers ? t("profile.statsPublic") : t("profile.statsPrivate")} checked={showStatsToOthers} onChange={setShowStatsToOthers} />
-          <ToggleRow icon={isPrivate ? Lock : Unlock} label={t("profile.private")} description={isPrivate ? t("profile.privateOn") : t("profile.privateOff")} checked={isPrivate} onChange={setIsPrivate} divided />
+        </Card>
+
+        {/* Private mode lives on the bubble beside your avatar, not here — one
+            control, one meaning. This only explains where it went. */}
+        <Card style={{ marginBottom: "var(--space-3)", display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
+          <Lock size={18} style={{ flexShrink: 0, color: profile?.is_private ? "var(--color-primary)" : "var(--color-icon-subtle)" }} />
+          <p style={{ margin: 0, color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", lineHeight: "var(--text-body-line)" }}>
+            {profile?.is_private ? t("profile.privateBubbleOn") : t("profile.privateBubbleOff")}
+          </p>
         </Card>
 
         <Card style={{ marginBottom: "var(--space-3)" }}>

@@ -9,6 +9,16 @@ export function canDiscoverProfile(profile, { isAdmin = false } = {}) {
     && (isAdmin || profile.is_private !== true);
 }
 
+// Mirrors the is_private filter in get_public_player_progress() and
+// get_public_player_game_summary(). Community standings are a discovery
+// surface, so a private player belongs there only in their own view — and,
+// unlike canDiscoverProfile, not for admins either: the leaderboard is one
+// shared list and an admin-only row would be a different list.
+export function isStandingsVisible(profile, viewerId) {
+  return isCommunityVisibleProfile(profile)
+    && (profile.is_private !== true || profile.id === viewerId);
+}
+
 // Mirrors can_continue_conversation() in public.sql. Discovery decides who you
 // may START a chat with; continuity decides whose existing conversation you may
 // reopen. They are not the same question, and conflating them is what stranded

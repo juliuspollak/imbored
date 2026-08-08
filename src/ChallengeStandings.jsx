@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, LockKeyhole, Trophy } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, LockKeyhole, Trophy } from "lucide-react";
 import { MISSED_ROUND_PENALTY, buildChallengeStandings, fromServerStandings } from "./lib/challengeStandingsScoring.js";
 import { useI18n } from "./lib/i18n.jsx";
 import { GAME_NAMES } from "./lib/gameBranding.jsx";
@@ -14,7 +14,7 @@ function toSlots({ isCircle, rounds, games }) {
     : games.map((game) => ({ game: game.id }));
 }
 
-export default function ChallengeStandings({ rows = [], roster = [], games = [], rounds = [], benchmarks = [], serverStandings = null, previousRows = [], previousRounds = [], isCircle = false, userId, loading = false, defaultOpen = true, embedded = false, closed = false, winnerId = null }) {
+export default function ChallengeStandings({ rows = [], roster = [], games = [], rounds = [], benchmarks = [], serverStandings = null, previousRows = [], previousRounds = [], isCircle = false, userId, loading = false, defaultOpen = true, embedded = false, closed = false, winnerId = null, refreshing = false, periodLabel = null, periodIndex = 0, periodCount = 1, onPeriodChange = null }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(defaultOpen);
   const [expandedPlayerId, setExpandedPlayerId] = useState(null);
@@ -48,11 +48,26 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
     });
   }, [previousRows, previousRounds, roster, benchmarks, games, isCircle, userId]);
 
-  if (!standings.length) {
+  const hasHistory = !!onPeriodChange && periodCount > 1;
+
+  // Without the navigator there is nothing to render for an empty period. With
+  // it, the arrows must survive an empty period or you cannot step back out of
+  // a week nobody played.
+  if (!standings.length && !hasHistory) {
     return loading ? <div role="status" style={{ textAlign: "center", padding: "var(--space-4)", color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)" }}>{t("standings.loading")}</div> : null;
   }
 
   const previousRankMap = Object.fromEntries(previousStandings.filter((s) => s.rank != null).map((s) => [s.userId, s.rank]));
+
+  const navigator = hasHistory ? (
+    <PeriodNavigator label={periodLabel} index={periodIndex} count={periodCount} onChange={onPeriodChange} refreshing={refreshing} />
+  ) : null;
+
+  const body = loading
+    ? <div role="status" style={{ textAlign: "center", padding: "var(--space-4)", color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)" }}>{t("standings.loading")}</div>
+    : standings.length
+      ? <StandingsList standings={standings} expandedPlayerId={expandedPlayerId} setExpandedPlayerId={setExpandedPlayerId} previousRankMap={previousRankMap} closed={closed} winnerId={winnerId} />
+      : <p style={{ margin: 0, textAlign: "center", padding: "var(--space-4)", color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)" }}>{t("standings.emptyPeriod")}</p>;
 
   if (embedded) {
     return (
@@ -72,7 +87,8 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
         </button>
         {open && (
           <div id="challenge-standings-list" style={{ padding: "0 var(--space-3) var(--space-3)" }}>
-            <StandingsList standings={standings} expandedPlayerId={expandedPlayerId} setExpandedPlayerId={setExpandedPlayerId} previousRankMap={previousRankMap} closed={closed} winnerId={winnerId} />
+            {navigator}
+            {body}
           </div>
         )}
         <StandingsStyles />
@@ -82,9 +98,56 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
 
   return (
     <>
-      <StandingsList standings={standings} expandedPlayerId={expandedPlayerId} setExpandedPlayerId={setExpandedPlayerId} previousRankMap={previousRankMap} closed={closed} winnerId={winnerId} />
+      {navigator}
+      {body}
       <StandingsStyles />
     </>
+  );
+}
+
+// Steps through past periods of the same challenge. Index 0 is the live one and
+// higher indexes are further back, so "older" moves right and "newer" left.
+function PeriodNavigator({ label, index, count, onChange, refreshing = false }) {
+  const { t } = useI18n();
+  const atOldest = index >= count - 1;
+  const atNewest = index <= 0;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", margin: "var(--space-2) 0 var(--space-3)", padding: 3, border: "1px solid var(--color-border)", borderRadius: "var(--radius-full)", background: "var(--color-surface-elevated)" }}>
+      <NavigatorButton
+        onClick={() => onChange(index + 1)}
+        disabled={atOldest}
+        ariaLabel={t("standings.olderPeriod")}
+      >
+        <ChevronLeft size={17} />
+      </NavigatorButton>
+      <span aria-live="polite" style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "center", color: "var(--color-text-primary)", fontSize: "var(--text-body-secondary-size)", fontWeight: 600 }}>
+        {label}
+        {index > 0 && <span style={{ marginLeft: 6, color: "var(--color-text-secondary)", fontWeight: 500 }}>{t("standings.pastPeriod")}</span>}
+        {refreshing && <span style={{ marginLeft: 6, color: "var(--color-text-muted)", fontWeight: 500 }}>{t("standings.updating")}</span>}
+      </span>
+      <NavigatorButton
+        onClick={() => onChange(index - 1)}
+        disabled={atNewest}
+        ariaLabel={t("standings.newerPeriod")}
+      >
+        <ChevronRight size={17} />
+      </NavigatorButton>
+    </div>
+  );
+}
+
+function NavigatorButton({ onClick, disabled, ariaLabel, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      className="challenge-period-button"
+      style={{ width: 32, height: 32, display: "grid", placeItems: "center", flexShrink: 0, border: 0, borderRadius: "50%", background: "transparent", color: disabled ? "var(--color-text-muted)" : "var(--color-text-primary)", cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.4 : 1 }}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -170,7 +233,8 @@ function StandingsStyles() {
   return (
     <style>{`
       .challenge-standings-toggle:focus-visible,
-      .challenge-player-toggle:focus-visible {
+      .challenge-player-toggle:focus-visible,
+      .challenge-period-button:focus-visible {
         outline: 2px solid var(--color-primary);
         outline-offset: -2px;
       }
@@ -178,6 +242,9 @@ function StandingsStyles() {
         .challenge-standings-toggle:hover,
         .challenge-player-toggle:hover {
           background: var(--color-surface-elevated) !important;
+        }
+        .challenge-period-button:not(:disabled):hover {
+          background: var(--color-surface) !important;
         }
       }
       @media (min-width: 480px) {

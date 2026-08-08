@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Moon, Grid3x3, Puzzle, Waves, Check, Star, Flame, ChevronRight, ChevronDown, Globe2, Users, ZoomIn, PawPrint } from "lucide-react";
 import { useGameConfig } from "./lib/useGameConfig.js";
 import { supabase, supabaseReady } from "./lib/supabase.js";
@@ -43,16 +43,22 @@ function todayString() {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-function previousWeekDate() {
-  const date = new Date();
-  date.setDate(date.getDate()-7);
-  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
-}
-
 function daysAgoDate(days) {
   const date = new Date();
   date.setDate(date.getDate()-days);
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+}
+
+// How far back the personal challenge can be browsed. Personal challenges have
+// no occurrence records of their own, so history is simply "one period per day".
+const PERSONAL_HISTORY_DAYS = 14;
+
+function personalDayLabel(date) {
+  if (date === todayString()) return "Today";
+  if (date === daysAgoDate(1)) return "Yesterday";
+  const parsed = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return parsed.toLocaleDateString(undefined, { weekday:"short", day:"numeric", month:"short" });
 }
 
 function currentWeekRange() {
@@ -96,9 +102,9 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
   const [serverStandings, setServerStandings] = useState(null);
   const [previousChallengeRows, setPreviousChallengeRows] = useState([]);
   const [previousChallengeRounds, setPreviousChallengeRounds] = useState([]);
-  const [previousChallengeLabel, setPreviousChallengeLabel] = useState(null);
-  const [personalHistoryRows, setPersonalHistoryRows] = useState([]);
   const [personalExpanded, setPersonalExpanded] = useState(false);
+  // 0 is the live period; higher numbers step further back through history.
+  const [periodOffset, setPeriodOffset] = useState(0);
   const [challengeProfiles, setChallengeProfiles] = useState({});
   const [standingsLoading, setStandingsLoading] = useState(false);
   const [standingsRefreshing, setStandingsRefreshing] = useState(false);
@@ -224,6 +230,52 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
     return () => { cancelled = true; };
   }, [userId]);
 
+  // Every period the standings panel can show, newest first. Index 0 is always
+  // the live one, so `periodOffset` doubles as "how many steps back".
+  const standingsPeriods = useMemo(() => {
+    if (challengeScope?.type !== "circle") {
+      return Array.from({ length:PERSONAL_HISTORY_DAYS }, (unused, index) => {
+        const date = index === 0 ? todayString() : daysAgoDate(index);
+        return { key:`personal:${date}`, date, challengeId:null, label:personalDayLabel(date), closed:false, winnerId:null, gameIds:null };
+      });
+    }
+    const active = circleChallenges.find((item) => String(item.challenge_id) === String(challengeScope.id));
+    const past = challengeHistory
+      .filter((item) =>
+        Number(item.circle_id) === Number(active?.circle_id ?? challengeScope.circleId)
+        && String(item.challenge_id) !== String(challengeScope.id)
+      )
+      .sort((a, b) => String(b.week_start).localeCompare(String(a.week_start)));
+    return [
+      {
+        key:`circle:${challengeScope.id}`,
+        date:null,
+        challengeId:challengeScope.id,
+        label:active?.week_start ? challengeWeekLabel(active.week_start) : "This week",
+        closed:false,
+        winnerId:null,
+        gameIds:active?.game_ids || challengeScope.gameIds || null,
+      },
+      ...past.map((item) => ({
+        key:`circle:${item.challenge_id}`,
+        date:null,
+        challengeId:item.challenge_id,
+        label:challengeWeekLabel(item.week_start),
+        closed:!!item.closed_at,
+        winnerId:item.winner_id || null,
+        gameIds:item.game_ids || null,
+      })),
+    ];
+  }, [challengeScope?.type, challengeScope?.id, challengeScope?.circleId, challengeScope?.gameIds, circleChallenges, challengeHistory]);
+
+  // A shorter history (or a scope change) must never strand the view on a
+  // period that no longer exists.
+  const periodIndex = Math.min(periodOffset, Math.max(0, standingsPeriods.length - 1));
+  const selectedPeriod = standingsPeriods[periodIndex] || null;
+  const comparisonPeriod = standingsPeriods[periodIndex + 1] || null;
+
+  useEffect(() => { setPeriodOffset(0); }, [challengeScope?.type, challengeScope?.id]);
+
   useEffect(() => {
     if (!supabaseReady || !userId || playMode !== "challenge") return undefined;
     return attachRealtimeRefresh({
@@ -244,34 +296,17 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
         setServerStandings(null);
         setPreviousChallengeRows([]);
         setPreviousChallengeRounds([]);
-        setPreviousChallengeLabel(null);
-        setPersonalHistoryRows([]);
         setChallengeProfiles({});
         setStandingsLoading(false);
         setStandingsRefreshing(false);
         return;
       }
-      const cacheKey = challengeScope?.type === "circle" ? `circle:${challengeScope.id}` : "personal";
-      const activeChallenge = challengeScope?.type === "circle"
-        ? circleChallenges.find((item) => String(item.challenge_id) === String(challengeScope.id))
-        : null;
-      const previousChallenge = activeChallenge
-        ? challengeHistory.find((item) =>
-            Number(item.circle_id) === Number(activeChallenge.circle_id)
-            && item.challenge_title === activeChallenge.challenge_title
-          )
-        : null;
+      if (!selectedPeriod) return;
+      const cacheKey = selectedPeriod.key;
       setChallengeRounds([]);
       setChallengeBenchmarks([]);
       setPreviousChallengeRows([]);
       setPreviousChallengeRounds([]);
-      setPreviousChallengeLabel(
-        previousChallenge
-          ? challengeWeekLabel(previousChallenge.week_start)
-          : challengeScope?.type !== "circle"
-            ? "Same day last week"
-            : null
-      );
       const cached = standingsCacheRef.current[cacheKey];
       if (cached) {
         setChallengeRows(cached.rows);
@@ -284,36 +319,67 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
         setChallengeRows([]);
         setChallengeProfiles({});
       }
-      const week = currentWeekRange();
-      let query = supabase
-        .from("game_stats")
-        .select("user_id,game,challenge_date,seconds,mistakes,hints,zip_backtracked_cells,zip_required_moves,completed_at,profiles(name,icon,show_stats_to_others)")
-        .eq("mode", "challenge");
-      query = challengeScope?.type === "circle"
-        ? query.eq("circle_challenge_id", challengeScope.id).gte("challenge_date", week.start).lte("challenge_date", week.end)
-        : query.is("circle_challenge_id", null).eq("challenge_date", todayString());
-      let { data:resultRows,error } = await query;
-      if (challengeScope?.type !== "circle") {
+
+      // Results for one period, whichever kind it is. Circle periods are keyed
+      // by challenge id, personal periods by the single day they cover, so a
+      // past period reads exactly like the live one.
+      async function fetchPeriodRows(period) {
+        if (period.challengeId != null) {
+          const embedded = await supabase
+            .from("game_stats")
+            .select("user_id,game,challenge_date,seconds,mistakes,hints,zip_backtracked_cells,zip_required_moves,completed_at,profiles(name,icon,show_stats_to_others)")
+            .eq("mode","challenge")
+            .eq("circle_challenge_id",period.challengeId);
+          if (!embedded.error) {
+            const rows = embedded.data || [];
+            return { rows, profiles:rows.flatMap((row) => row.profiles ? [{ id:row.user_id, ...row.profiles }] : []) };
+          }
+          const { data } = await supabase
+            .from("game_stats")
+            .select("user_id,game,challenge_date,seconds,mistakes,hints,zip_backtracked_cells,zip_required_moves,completed_at")
+            .eq("mode","challenge")
+            .eq("circle_challenge_id",period.challengeId);
+          return withLookedUpProfiles(data || []);
+        }
         const personalResult = await supabase.rpc("get_personal_challenge_standings", {
-          start_date_in:todayString(),
-          end_date_in:todayString(),
+          start_date_in:period.date,
+          end_date_in:period.date,
         });
         if (!personalResult.error) {
-          resultRows=(personalResult.data || []).map((row) => ({
-            ...row,
-            user_id:row.result_user_id,
-          }));
-          error=null;
+          return {
+            rows:(personalResult.data || []).map((row) => ({ ...row, user_id:row.result_user_id })),
+            profiles:[],
+          };
         }
+        const { data } = await supabase
+          .from("game_stats")
+          .select("user_id,game,challenge_date,seconds,mistakes,hints,zip_backtracked_cells,zip_required_moves,completed_at")
+          .eq("mode","challenge")
+          .is("circle_challenge_id",null)
+          .eq("challenge_date",period.date);
+        return withLookedUpProfiles(data || []);
       }
-      if (cancelled) return;
-      const [{ data:roundRows }, { data:benchmarkRows }, { data:personalProfiles }, { data:historyRows }, { data:rankedRows, error:rankedError }] = await Promise.all([
-        challengeScope?.type === "circle"
+
+      async function withLookedUpProfiles(rows) {
+        const playerIds = [...new Set(rows.map((row) => row.user_id))];
+        const profileResult = playerIds.length > 0
+          ? await supabase.from("profiles").select("id,name,icon,show_stats_to_others").in("id", playerIds)
+          : { data:[] };
+        return { rows, profiles:profileResult.data || [] };
+      }
+
+      function fetchPeriodRounds(period) {
+        return period.challengeId != null
           ? supabase.from("circle_challenge_rounds")
             .select("challenge_date,game,round_number")
-            .eq("challenge_id",challengeScope.id)
+            .eq("challenge_id",period.challengeId)
             .order("round_number")
-          : Promise.resolve({ data:[] }),
+          : Promise.resolve({ data:[] });
+      }
+
+      const [current, { data:roundRows }, { data:benchmarkRows }, { data:personalProfiles }, { data:rankedRows, error:rankedError }, previous, { data:previousRoundRows }] = await Promise.all([
+        fetchPeriodRows(selectedPeriod),
+        fetchPeriodRounds(selectedPeriod),
         supabase.from("game_time_benchmarks")
           .select("game,day_index,effective_seconds")
           .eq("mode","challenge"),
@@ -323,96 +389,40 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
             .eq("is_approved",true)
             .eq("hidden_from_others",false)
           : Promise.resolve({ data:[] }),
-        challengeScope?.type !== "circle"
-          ? supabase.rpc("get_personal_challenge_standings", {
-            start_date_in:daysAgoDate(7),
-            end_date_in:daysAgoDate(1),
-          })
-          : Promise.resolve({ data:[] }),
-        challengeScope?.type === "circle"
-          ? supabase.rpc("get_circle_challenge_standings", { target_challenge_id:challengeScope.id })
+        selectedPeriod.challengeId != null
+          ? supabase.rpc("get_circle_challenge_standings", { target_challenge_id:selectedPeriod.challengeId })
           : Promise.resolve({ data:null }),
+        // The period one step further back supplies the ↑↓ rank movement.
+        comparisonPeriod ? fetchPeriodRows(comparisonPeriod) : Promise.resolve({ rows:[], profiles:[] }),
+        comparisonPeriod ? fetchPeriodRounds(comparisonPeriod) : Promise.resolve({ data:[] }),
       ]);
       if (cancelled) return;
 
-      let previousRows = [];
-      let previousRoundRows = [];
-      if (previousChallenge) {
-        const [{ data:priorResults }, { data:priorRounds }] = await Promise.all([
-          supabase.from("game_stats")
-            .select("user_id,game,challenge_date,seconds,mistakes,hints,zip_backtracked_cells,zip_required_moves,completed_at")
-            .eq("mode","challenge")
-            .eq("circle_challenge_id",previousChallenge.challenge_id),
-          supabase.from("circle_challenge_rounds")
-            .select("challenge_date,game,round_number")
-            .eq("challenge_id",previousChallenge.challenge_id)
-            .order("round_number"),
-        ]);
-        if (cancelled) return;
-        previousRows = priorResults || [];
-        previousRoundRows = priorRounds || [];
-      } else if (challengeScope?.type !== "circle") {
-        const { data:priorResults } = await supabase.from("game_stats")
-          .select("user_id,game,challenge_date,seconds,mistakes,hints,zip_backtracked_cells,zip_required_moves,completed_at")
-          .eq("user_id",userId)
-          .eq("mode","challenge")
-          .is("circle_challenge_id",null)
-          .eq("challenge_date",previousWeekDate());
-        if (cancelled) return;
-        previousRows = priorResults || [];
-      }
-
-      let rows = resultRows || [];
-      let profiles = rows.flatMap((row) => row.profiles ? [{ id:row.user_id, ...row.profiles }] : []);
-      if (error) {
-        let fallback = supabase
-          .from("game_stats")
-          .select("user_id,game,challenge_date,seconds,mistakes,hints,zip_backtracked_cells,zip_required_moves,completed_at")
-          .eq("mode", "challenge");
-        fallback = challengeScope?.type === "circle"
-          ? fallback.eq("circle_challenge_id", challengeScope.id).gte("challenge_date", week.start).lte("challenge_date", week.end)
-          : fallback.is("circle_challenge_id", null).eq("challenge_date", todayString());
-        const { data } = await fallback;
-        if (cancelled) return;
-        rows = data || [];
-        const playerIds = [...new Set(rows.map((row) => row.user_id))];
-        const profileResult = playerIds.length > 0 ? await supabase
-          .from("profiles")
-          .select("id,name,icon,show_stats_to_others")
-          .in("id", playerIds) : { data:[] };
-        profiles = profileResult.data || [];
-      }
-      if (!cancelled) {
-        const profileMap = Object.fromEntries(
-          [...(personalProfiles || []),...profiles].map((profile) => [profile.id,profile])
-        );
-        standingsCacheRef.current[cacheKey] = { rows, profiles:profileMap };
-        setChallengeRows(rows);
-        setChallengeRounds((roundRows || []).map((round) => ({
-          date:round.challenge_date,
-          game:round.game,
-          roundNumber:round.round_number,
-        })));
-        setChallengeBenchmarks(benchmarkRows || []);
-        setServerStandings(rankedError ? null : (rankedRows || null));
-        setPreviousChallengeRows(previousRows);
-        setPersonalHistoryRows((historyRows || []).map((row) => ({
-          ...row,
-          user_id:row.user_id || row.result_user_id,
-        })));
-        setPreviousChallengeRounds(previousRoundRows.map((round) => ({
-          date:round.challenge_date,
-          game:round.game,
-          roundNumber:round.round_number,
-        })));
-        setChallengeProfiles(profileMap);
-        setStandingsLoading(false);
-        setStandingsRefreshing(false);
-      }
+      const profileMap = Object.fromEntries(
+        [...(personalProfiles || []),...current.profiles].map((profile) => [profile.id,profile])
+      );
+      standingsCacheRef.current[cacheKey] = { rows:current.rows, profiles:profileMap };
+      setChallengeRows(current.rows);
+      setChallengeRounds((roundRows || []).map((round) => ({
+        date:round.challenge_date,
+        game:round.game,
+        roundNumber:round.round_number,
+      })));
+      setChallengeBenchmarks(benchmarkRows || []);
+      setServerStandings(rankedError ? null : (rankedRows || null));
+      setPreviousChallengeRows(previous.rows);
+      setPreviousChallengeRounds((previousRoundRows || []).map((round) => ({
+        date:round.challenge_date,
+        game:round.game,
+        roundNumber:round.round_number,
+      })));
+      setChallengeProfiles(profileMap);
+      setStandingsLoading(false);
+      setStandingsRefreshing(false);
     }
     loadChallengeStandings();
     return () => { cancelled = true; };
-  }, [userId, playMode, challengeScope?.type, challengeScope?.id, challengeHistory, circleChallenges, standingsRefreshKey]);
+  }, [userId, playMode, challengeScope?.type, selectedPeriod?.key, comparisonPeriod?.key, standingsRefreshKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -517,7 +527,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
     : personalCompleted;
   const selectedRoster = selectedCircle ? circleRosters[selectedCircle.circle_id] || [] : [];
   const selectedChallengeGameIds = challengeScope?.type === "circle"
-    ? selectedCircle?.game_ids || challengeScope.gameIds || []
+    ? (periodIndex > 0 ? selectedPeriod?.gameIds : null) || selectedCircle?.game_ids || challengeScope.gameIds || []
     : personalGameIds;
   const selectedChallengeGames = selectedChallengeGameIds
     .map((id) => configuredGames.find((game) => game.id === id) || GAME_META.find((game) => game.id === id))
@@ -701,7 +711,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
             </button>
 
             {challengeScope?.type !== "circle" && personalExpanded && (
-              <ChallengeStandings rows={challengeRows} roster={standingsRoster} games={selectedChallengeGames} benchmarks={challengeBenchmarks} previousRows={previousChallengeRows} historyRows={personalHistoryRows} previousWeekLabel={previousChallengeLabel} userId={userId} loading={standingsLoading} refreshing={standingsRefreshing} defaultOpen embedded />
+              <ChallengeStandings rows={challengeRows} roster={standingsRoster} games={selectedChallengeGames} benchmarks={challengeBenchmarks} previousRows={previousChallengeRows} userId={userId} loading={standingsLoading} defaultOpen embedded refreshing={standingsRefreshing} periodLabel={selectedPeriod?.label} periodIndex={periodIndex} periodCount={standingsPeriods.length} onPeriodChange={setPeriodOffset} />
             )}
 
             {circleChallenges.length > 0 && (
@@ -777,7 +787,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
                                 {onOpenCircles && <Button variant="secondary" size="sm" before={<Users size={14} />} onClick={() => onOpenCircles({ circleId: item.circle_id, challengeId: item.challenge_id })}>{t("home.circleDetails")}</Button>}
                               </div>
                             </div>
-                            {selected && <ChallengeStandings rows={challengeRows} roster={standingsRoster} games={selectedChallengeGames} rounds={challengeRounds.length ? challengeRounds : selectedRounds} benchmarks={challengeBenchmarks} serverStandings={serverStandings} previousRows={previousChallengeRows} previousRounds={previousChallengeRounds} previousWeekLabel={previousChallengeLabel} isCircle userId={userId} loading={standingsLoading || !selectedCircle} refreshing={standingsRefreshing} defaultOpen embedded rewardPoints={challengeScope?.rewardPoints || 0} closed={!!challengeLifecycle[String(challengeScope.id)]?.closed_at} winnerId={challengeLifecycle[String(challengeScope.id)]?.winner_id} stakeRewardName={challengeScope?.stakeRewardName || null} stakeSplitMethod={challengeScope?.stakeSplitMethod || null} />}
+                            {selected && <ChallengeStandings rows={challengeRows} roster={standingsRoster} games={selectedChallengeGames} rounds={challengeRounds.length ? challengeRounds : selectedRounds} benchmarks={challengeBenchmarks} serverStandings={serverStandings} previousRows={previousChallengeRows} previousRounds={previousChallengeRounds} isCircle userId={userId} loading={standingsLoading || !selectedCircle} defaultOpen embedded closed={periodIndex > 0 ? selectedPeriod.closed : !!challengeLifecycle[String(challengeScope.id)]?.closed_at} winnerId={periodIndex > 0 ? selectedPeriod.winnerId : challengeLifecycle[String(challengeScope.id)]?.winner_id} refreshing={standingsRefreshing} periodLabel={selectedPeriod?.label} periodIndex={periodIndex} periodCount={standingsPeriods.length} onPeriodChange={setPeriodOffset} />}
                           </div>
                         )}
                       </div>

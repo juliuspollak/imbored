@@ -3,7 +3,7 @@ import { Award, Crown, Flame, Gamepad2, Medal, Sparkles, Trophy, Users } from "l
 import BackButton from "./BackButton.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
-import { isCommunityVisibleProfile } from "./lib/profileVisibility.js";
+import { isStandingsVisible } from "./lib/profileVisibility.js";
 import Page from "./components/Page.jsx";
 import PageHeader from "./components/PageHeader.jsx";
 import Card from "./components/Card.jsx";
@@ -28,13 +28,14 @@ export default function Stats({ onBack }) {
   const [progressError, setProgressError] = useState("");
   const [summaryError, setSummaryError] = useState("");
 
+  const viewerId = user?.id;
   const refresh = useCallback(async () => {
     if (!supabaseReady) { setLoading(false); return; }
     setLoading(true);
     const [statsResult, liveResult, profilesResult, progressResult] = await Promise.all([
       supabase.rpc("get_public_player_game_summary"),
       supabase.from("animal_rush_match_results").select("user_id"),
-      supabase.from("profiles").select("id, name, icon, mood, hidden_from_others, show_stats_to_others, account_deleted_at").is("account_deleted_at", null).eq("hidden_from_others", false),
+      supabase.from("profiles").select("id, name, icon, mood, is_private, hidden_from_others, show_stats_to_others, account_deleted_at").is("account_deleted_at", null).eq("hidden_from_others", false),
       supabase.rpc("get_public_player_progress"),
     ]);
     const liveCounts = (liveResult.data || []).reduce((counts, item) => { counts[item.user_id] = (counts[item.user_id] || 0) + 1; return counts; }, {});
@@ -44,12 +45,12 @@ export default function Stats({ onBack }) {
       summaries.set(playerId, { player_id: playerId, games_played: Number(current?.games_played || 0) + games, challenge_games: Number(current?.challenge_games || 0), practice_games: Number(current?.practice_games || 0), favourite_game: current?.favourite_game || "animalrush" });
     });
     setRows([...summaries.values()]);
-    setProfiles(Object.fromEntries((profilesResult.data || []).filter(isCommunityVisibleProfile).map((item) => [item.id, item])));
+    setProfiles(Object.fromEntries((profilesResult.data || []).filter((item) => isStandingsVisible(item, viewerId)).map((item) => [item.id, item])));
     setProgress(Object.fromEntries((progressResult.data || []).map((item) => [item.player_id, item])));
     setProgressError(progressResult.error?.message || "");
     setSummaryError(statsResult.error?.message || "");
     setLoading(false);
-  }, []);
+  }, [viewerId]);
 
   useEffect(() => { refresh(); }, [refresh]);
 

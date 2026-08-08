@@ -3481,6 +3481,14 @@ CREATE FUNCTION public.get_public_player_game_summary() RETURNS TABLE(player_id 
      and transaction.reason_code='GAME_COMPLETED'
     where auth.uid() is not null
       and public.can_view_user(gs.user_id)
+      -- can_view_user() covers hidden and deleted accounts only; it also backs
+      -- chat continuity, where is_private must not apply. Community standings
+      -- are discovery, so private players are excluded here — except from
+      -- their own view of the leaderboard.
+      and (
+        coalesce(profile.is_private,false)=false
+        or profile.id=auth.uid()
+      )
       and coalesce(
         profile.account_deleted_at,
         'infinity'::timestamptz
@@ -3544,6 +3552,12 @@ CREATE FUNCTION public.get_public_player_progress() RETURNS TABLE(player_id uuid
   join public.profiles profile on profile.id=progress.player_id
   where auth.uid() is not null
     and public.can_view_user(progress.player_id)
+    -- Private players are excluded from community standings; see
+    -- get_public_player_game_summary() for why can_view_user() is not enough.
+    and (
+      coalesce(profile.is_private,false)=false
+      or profile.id=auth.uid()
+    )
     and coalesce(
       profile.account_deleted_at,
       'infinity'::timestamptz

@@ -4,7 +4,21 @@ import {
   canContinueConversation,
   canDiscoverProfile,
   isCommunityVisibleProfile,
+  isStandingsVisible,
 } from "./profileVisibility.js";
+
+// Player Stats used to list private players to everyone, because it filtered
+// on hidden_from_others alone.
+test("private players are in the community leaderboard only for themselves", () => {
+  const privateProfile = { id: "quiet", hidden_from_others: false, is_private: true, account_deleted_at: null };
+  const hidden = { id: "gone", hidden_from_others: true, is_private: false, account_deleted_at: null };
+  const open = { id: "loud", hidden_from_others: false, is_private: false, account_deleted_at: null };
+
+  assert.equal(isStandingsVisible(privateProfile, "someone-else"), false);
+  assert.equal(isStandingsVisible(privateProfile, "quiet"), true);
+  assert.equal(isStandingsVisible(hidden, "someone-else"), false);
+  assert.equal(isStandingsVisible(open, "someone-else"), true);
+});
 
 test("hidden profiles stay out of community surfaces for every role", () => {
   const hidden = { hidden_from_others: true, is_private: false, account_deleted_at: null };
