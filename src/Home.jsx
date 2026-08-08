@@ -53,9 +53,9 @@ function daysAgoDate(days) {
 // no occurrence records of their own, so history is simply "one period per day".
 const PERSONAL_HISTORY_DAYS = 14;
 
-function personalDayLabel(date) {
-  if (date === todayString()) return "Today";
-  if (date === daysAgoDate(1)) return "Yesterday";
+function personalDayLabel(date, t) {
+  if (date === todayString()) return t("standings.today");
+  if (date === daysAgoDate(1)) return t("standings.yesterday");
   const parsed = new Date(`${date}T00:00:00`);
   if (Number.isNaN(parsed.getTime())) return date;
   return parsed.toLocaleDateString(undefined, { weekday:"short", day:"numeric", month:"short" });
@@ -236,13 +236,19 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
     if (challengeScope?.type !== "circle") {
       return Array.from({ length:PERSONAL_HISTORY_DAYS }, (unused, index) => {
         const date = index === 0 ? todayString() : daysAgoDate(index);
-        return { key:`personal:${date}`, date, challengeId:null, label:personalDayLabel(date), closed:false, winnerId:null, gameIds:null };
+        return { key:`personal:${date}`, date, challengeId:null, label:personalDayLabel(date, t), closed:false, winnerId:null, gameIds:null };
       });
     }
     const active = circleChallenges.find((item) => String(item.challenge_id) === String(challengeScope.id));
+    // Earlier occurrences of *this* challenge, not every challenge the circle
+    // has ever run. A circle can run several unrelated series, and stepping
+    // from "Word week" into "Speed week" would silently swap out the games.
+    // Title is how the rest of the app identifies a repeating series.
+    const seriesTitle = active?.challenge_title ?? challengeScope.challengeTitle;
     const past = challengeHistory
       .filter((item) =>
         Number(item.circle_id) === Number(active?.circle_id ?? challengeScope.circleId)
+        && item.challenge_title === seriesTitle
         && String(item.challenge_id) !== String(challengeScope.id)
       )
       .sort((a, b) => String(b.week_start).localeCompare(String(a.week_start)));
@@ -251,7 +257,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
         key:`circle:${challengeScope.id}`,
         date:null,
         challengeId:challengeScope.id,
-        label:active?.week_start ? challengeWeekLabel(active.week_start) : "This week",
+        label:active?.week_start ? challengeWeekLabel(active.week_start) : t("standings.thisWeek"),
         closed:false,
         winnerId:null,
         gameIds:active?.game_ids || challengeScope.gameIds || null,
@@ -266,7 +272,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
         gameIds:item.game_ids || null,
       })),
     ];
-  }, [challengeScope?.type, challengeScope?.id, challengeScope?.circleId, challengeScope?.gameIds, circleChallenges, challengeHistory]);
+  }, [challengeScope?.type, challengeScope?.id, challengeScope?.circleId, challengeScope?.challengeTitle, challengeScope?.gameIds, circleChallenges, challengeHistory, t]);
 
   // A shorter history (or a scope change) must never strand the view on a
   // period that no longer exists.
@@ -303,8 +309,10 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
       }
       if (!selectedPeriod) return;
       const cacheKey = selectedPeriod.key;
+      // Benchmarks are global to challenge mode, not to a period. Clearing them
+      // on every arrow press made scores fall back to the 100-second default
+      // and then visibly jump when the same rows were rescored.
       setChallengeRounds([]);
-      setChallengeBenchmarks([]);
       setPreviousChallengeRows([]);
       setPreviousChallengeRounds([]);
       const cached = standingsCacheRef.current[cacheKey];
@@ -787,7 +795,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
                                 {onOpenCircles && <Button variant="secondary" size="sm" before={<Users size={14} />} onClick={() => onOpenCircles({ circleId: item.circle_id, challengeId: item.challenge_id })}>{t("home.circleDetails")}</Button>}
                               </div>
                             </div>
-                            {selected && <ChallengeStandings rows={challengeRows} roster={standingsRoster} games={selectedChallengeGames} rounds={challengeRounds.length ? challengeRounds : selectedRounds} benchmarks={challengeBenchmarks} serverStandings={serverStandings} previousRows={previousChallengeRows} previousRounds={previousChallengeRounds} isCircle userId={userId} loading={standingsLoading || !selectedCircle} defaultOpen embedded closed={periodIndex > 0 ? selectedPeriod.closed : !!challengeLifecycle[String(challengeScope.id)]?.closed_at} winnerId={periodIndex > 0 ? selectedPeriod.winnerId : challengeLifecycle[String(challengeScope.id)]?.winner_id} refreshing={standingsRefreshing} periodLabel={selectedPeriod?.label} periodIndex={periodIndex} periodCount={standingsPeriods.length} onPeriodChange={setPeriodOffset} />}
+                            {selected && <ChallengeStandings rows={challengeRows} roster={standingsRoster} games={selectedChallengeGames} rounds={challengeRounds.length ? challengeRounds : periodIndex > 0 ? [] : selectedRounds} benchmarks={challengeBenchmarks} serverStandings={serverStandings} previousRows={previousChallengeRows} previousRounds={previousChallengeRounds} isCircle userId={userId} loading={standingsLoading || !selectedCircle} defaultOpen embedded closed={periodIndex > 0 ? selectedPeriod.closed : !!challengeLifecycle[String(challengeScope.id)]?.closed_at} winnerId={periodIndex > 0 ? selectedPeriod.winnerId : challengeLifecycle[String(challengeScope.id)]?.winner_id} refreshing={standingsRefreshing} periodLabel={selectedPeriod?.label} periodIndex={periodIndex} periodCount={standingsPeriods.length} onPeriodChange={setPeriodOffset} />}
                           </div>
                         )}
                       </div>
