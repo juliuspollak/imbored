@@ -7,6 +7,9 @@ import Page from "./components/Page.jsx";
 import Button from "./components/Button.jsx";
 import Card from "./components/Card.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
+import RewardPricingGuide from "./components/RewardPricingGuide.jsx";
+import { useGameConfig } from "./lib/useGameConfig.js";
+import { countChallengeGames } from "./lib/rewardPricing.js";
 
 const TABS=[["rules","Rules",Settings],["adjust","Adjust",Plus]];
 const FIELDS=[
@@ -16,11 +19,12 @@ const FIELDS=[
   ["minimum_points","Minimum game points","Lowest possible award for a completed game."],
   ["maximum_points","Maximum game points","Highest possible award before a separate winner's prize."],
   ["practice_daily_limit","Rewarded Practice rounds","Number of Practice rounds per game that award points each Sydney day."],
-  ["streak_protection_cost","Streak protection cost","Points charged to protect a missed streak day."],
+  ["streak_protection_cost","Rest day cost","Leave at 0. Rest days are earned by a week of play, not bought — missing a day no longer costs points."],
 ];
 
 export default function AdminRewards({onBack}){
   const {profile}=useAuth();
+  const {config:gameConfig}=useGameConfig();
   const [tab,setTab]=useState("rules");
   const [rules,setRules]=useState(null),[players,setPlayers]=useState([]);
   const [msg,setMsg]=useState(""),[loading,setLoading]=useState(true);
@@ -66,6 +70,9 @@ export default function AdminRewards({onBack}){
         </label>)}
         <Button variant="primary" fullWidth onClick={saveRules} style={{gridColumn:"span 2"}}>Save rules</Button>
       </Card>
+      {/* Fed the in-progress edits rather than the saved row, so an admin can
+          see what a rule change does to reward prices before committing it. */}
+      <RewardPricingGuide rules={rules} challengeGames={countChallengeGames(gameConfig)} />
     </div>}
 
     {tab==="adjust"&&<form onSubmit={doAdjust}><Card style={{padding:"var(--space-4)"}}>

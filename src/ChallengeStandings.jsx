@@ -196,7 +196,7 @@ function StandingsList({ standings, expandedPlayerId, setExpandedPlayerId, previ
               </span>
               <span style={{ flexShrink: 0, textAlign: "right" }}>
                 <span style={{ display: "block", color: isLeader ? "var(--color-warning-text)" : "var(--color-text-primary)", fontSize: 19, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{player.score}</span>
-                <span style={{ display: "block", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{t("standings.points")}</span>
+                <span style={{ display: "block", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{t("standings.score")}</span>
               </span>
               <ChevronDown size={17} style={{ flexShrink: 0, color: "var(--color-icon-subtle)", transform: expanded ? "rotate(180deg)" : "none", transition: "transform var(--transition-fast)" }} />
             </button>

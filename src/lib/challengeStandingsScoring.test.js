@@ -26,7 +26,9 @@ function result(game, date, overrides = {}) {
   return { user_id: "quiet", game, challenge_date: date, seconds: 100, hints: 0, mistakes: 0, completed_at: `${date}T09:00:00Z`, ...overrides };
 }
 
-test("pooled summary scores what was played and charges the penalty for what was not", () => {
+// A missed round scores nothing rather than costing points, so turning up on
+// six days out of seven can never rank below turning up on none.
+test("pooled summary scores what was played and does not charge for what was not", () => {
   const summary = pooledChallengeSummary(
     [result("hive", MONDAY), null],
     BENCHMARKS,
@@ -35,6 +37,29 @@ test("pooled summary scores what was played and charges the penalty for what was
   assert.equal(summary.played, 1);
   assert.equal(summary.score, 100 + MISSED_ROUND_PENALTY);
   assert.deepEqual(summary.dailyScores, [100, null]);
+});
+
+// Participation has to be rewarded by the sum itself, not enforced by docking
+// absentees — otherwise removing the penalty would let a part-timer win.
+test("playing more rounds outranks playing fewer, with no penalty doing the work", () => {
+  const standings = buildChallengeStandings({
+    rows: [
+      result("hive", MONDAY, { user_id: "steady" }),
+      result("binary", TUESDAY, { user_id: "steady" }),
+      // One brilliant round beats either of Steady's individually.
+      result("hive", MONDAY, { user_id: "sprinter", seconds: 40 }),
+    ],
+    roster: [{ id: "steady", name: "Steady" }, { id: "sprinter", name: "Sprinter" }],
+    slots: [ROUNDS[0], ROUNDS[1]],
+    benchmarkMap: BENCHMARKS,
+    userId: "steady",
+    missedPenalty: MISSED_ROUND_PENALTY,
+  });
+  assert.equal(MISSED_ROUND_PENALTY, 0);
+  assert.equal(standings[0].userId, "steady");
+  assert.equal(standings[1].userId, "sprinter");
+  // Nobody's total is dragged below what they actually earned.
+  assert.ok(standings.every((entry) => entry.score > 0));
 });
 
 test("standings tie-break follows score, rounds played, then hints and mistakes", () => {
@@ -121,7 +146,7 @@ function serverRow(overrides = {}) {
     member_name: "Ada",
     member_icon: "🙂",
     standing_rank: 1,
-    challenge_score: 100,
+    challenge_score: 200,
     rounds_played: 2,
     rounds_total: 3,
     is_private: false,
@@ -137,7 +162,7 @@ function serverRow(overrides = {}) {
 test("server standings are rendered in the order and score the database gave", () => {
   const [player] = fromServerStandings([serverRow()], "me");
   assert.equal(player.rank, 1);
-  assert.equal(player.score, 100);
+  assert.equal(player.score, 200);
   assert.equal(player.played, 2);
   assert.equal(player.missed, 1);
   assert.equal(player.unranked, false);

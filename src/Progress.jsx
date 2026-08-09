@@ -91,11 +91,16 @@ export default function Progress({ onBack, onOpenRewards }) {
   const p2n=Math.max(0,lt-lp);
   const pct=useMemo(()=>Math.max(0,Math.min(100,((lp-ls)/Math.max(1,lt-ls))*100)),[ls,lt,lp]);
   const sd=(o=0)=>new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney"}).format(new Date(Date.now()+o*86400000));
-  const canProtect=Number(progress?.challenge_current_streak||0)>0&&progress?.challenge_last_completed_date===sd(-2)&&!(progress?.streak_protected_through&&progress.streak_protected_through>=sd(-1));
+  // Mirrors protect_streak(): a free rest day, earned by a week of play and
+  // usable once a week. The server is authoritative — this only decides
+  // whether offering the button makes sense.
+  const canProtect=Number(progress?.challenge_current_streak||0)>=7
+    &&progress?.challenge_last_completed_date===sd(-2)
+    &&!(progress?.streak_protected_through&&progress.streak_protected_through>sd(-8));
   const socialUnlocked=!!profile?.is_admin||level>=2||lp>=500;
 
   async function sendPoints(e){e.preventDefault();if(!socialUnlocked){setMessage("Point transfers unlock at Level 2.");return;}const amount=Number(transfer.amount);const{error}=await supabase.rpc("transfer_points",{target_player_id:transfer.player,amount});setMessage(error?.message||"Points sent");if(!error)setTransfer({player:"",amount:""});refresh();}
-  async function protect(){const{error}=await supabase.rpc("protect_streak");setMessage(error?.message||"Streak protected");refresh();}
+  async function protect(){const{error}=await supabase.rpc("protect_streak");setMessage(error?.message||"Rest day used — your streak carries on");refresh();}
 
   return (
     <Page>
@@ -168,7 +173,7 @@ export default function Progress({ onBack, onOpenRewards }) {
           </div>}
         </Card>
 
-        {canProtect&&<Button variant="secondary" fullWidth before={<ShieldCheck size={18}/>} onClick={protect} style={{marginBottom:"var(--space-3)",justifyContent:"space-between"}}><span>Protect your streak</span><span style={{fontSize:"var(--text-caption-size)"}}>{rules?.streak_protection_cost||250} Points</span></Button>}
+        {canProtect&&<Button variant="secondary" fullWidth before={<ShieldCheck size={18}/>} onClick={protect} style={{marginBottom:"var(--space-3)",justifyContent:"space-between"}}><span>Use a rest day</span><span style={{fontSize:"var(--text-caption-size)"}}>Free · keeps your streak</span></Button>}
         {message&&<div style={{marginBottom:"var(--space-3)"}}><StatusBanner variant="info" dismissible onDismiss={()=>setMessage("")}>{message}</StatusBanner></div>}
 
         <div style={{fontSize:"var(--text-body-size)",fontWeight:700,marginBottom:"var(--space-2)",display:"flex",alignItems:"center",gap:"var(--space-2)",color:"var(--color-text-primary)"}}><Send size={14}/> Transfer points</div>

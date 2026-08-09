@@ -1643,7 +1643,6 @@ CREATE FUNCTION public.apply_challenge_streak_break(target_player_id uuid, misse
     AS $$
 declare
   p public.player_progress;
-  penalty integer := 0;
 begin
   perform public.ensure_player_progress(target_player_id);
 
@@ -1670,30 +1669,16 @@ begin
     return 0;
   end if;
 
-  penalty:=least(10,greatest(0,p.available_points)::integer);
-
+  -- The streak resets, and that is the whole consequence. Taking back points
+  -- the player had already earned charged them twice for one absence.
   update public.player_progress
   set
-    available_points=available_points-penalty,
     challenge_current_streak=0,
     challenge_penalty_for_date=missed_date,
     updated_at=now()
   where player_id=target_player_id;
 
-  if penalty>0 then
-    insert into public.points_transactions(
-      player_id,points,reason_code,metadata,created_by
-    )
-    values(
-      target_player_id,
-      -penalty,
-      'CHALLENGE_STREAK_BROKEN',
-      jsonb_build_object('missed_date',missed_date,'penalty',penalty),
-      target_player_id
-    );
-  end if;
-
-  return penalty;
+  return 0;
 end;
 $$;
 
@@ -1936,7 +1921,10 @@ begin
     if challenge_games_on_date=1 then streak_points:=r.streak_weekly_bonus; end if;
   end if;
 
-  points_total:=greatest(0,least(100,game_points+streak_points));
+  -- Bound by what is actually reachable, not a flat 100. A flat ceiling
+  -- silently clipped the weekly streak bonus once it grew past ~88, eating the
+  -- game award on the very day the bonus was meant to celebrate.
+  points_total:=greatest(0,least(50+coalesce(r.streak_weekly_bonus,0),game_points+streak_points));
   breakdown:=jsonb_build_object(
     'base',effective_base_points,
     'configured_base',r.base_points,
@@ -2153,7 +2141,10 @@ CREATE FUNCTION public.circle_challenge_member_totals(target_challenge_id bigint
   )
   select
     member_rounds.user_id,
-    sum(coalesce(member_rounds.round_score,-100))::integer,
+    -- A missed round scores nothing. The standing is a sum, so a player who
+    -- played every round already outranks one who skipped some; -100 punished
+    -- on top of that, making a missed round worse than never entering.
+    sum(coalesce(member_rounds.round_score,0))::integer,
     count(member_rounds.stat_id)::integer,
     count(*)::integer,
     sum(greatest(coalesce(member_rounds.hints,0),0))::integer,
@@ -4583,7 +4574,6 @@ CREATE FUNCTION public.protect_streak() RETURNS jsonb
     AS $$
 declare
   p public.player_progress;
-  r public.reward_rules;
   today_date date := public.player_today(auth.uid());
   missed_date date := today_date - 1;
 begin
@@ -4594,45 +4584,38 @@ begin
   where player_id=auth.uid()
   for update;
 
-  select * into r
-  from public.reward_rules
-  where is_active=true
-  order by id desc
-  limit 1;
-
   if p.challenge_current_streak<=0
     or p.challenge_last_completed_date is distinct from missed_date-1 then
-    raise exception 'No missed streak is available to protect';
+    raise exception 'No missed day is available to cover';
   end if;
   if p.streak_protected_through is not null
     and p.streak_protected_through>=missed_date then
-    raise exception 'Streak already protected';
+    raise exception 'This day is already covered';
   end if;
-  if p.available_points<r.streak_protection_cost then
-    raise exception 'Not enough points';
+  -- A rest day is earned by a full week of play, not bought. Charging points
+  -- to avoid a penalty is the same punishment wearing a different hat.
+  if p.challenge_current_streak<7 then
+    raise exception 'Keep a 7 day streak going to earn a rest day';
+  end if;
+
+  -- One per week. streak_protected_through already records the last one, so no
+  -- extra state is needed — without this a player could alternate play day and
+  -- rest day indefinitely and still collect the weekly streak bonus.
+  if p.streak_protected_through is not null
+    and p.streak_protected_through>missed_date-7 then
+    raise exception 'You have already used a rest day this week';
   end if;
 
   update public.player_progress
   set
-    available_points=available_points-r.streak_protection_cost,
     streak_protected_through=missed_date,
     updated_at=now()
   where player_id=auth.uid();
 
-  insert into public.points_transactions(
-    player_id,points,reason_code,metadata,created_by
-  )
-  values(
-    auth.uid(),
-    -r.streak_protection_cost,
-    'STREAK_PROTECTION',
-    jsonb_build_object('protected_date',missed_date),
-    auth.uid()
-  );
-
   return jsonb_build_object(
-    'balance',p.available_points-r.streak_protection_cost,
-    'protected_date',missed_date
+    'balance',p.available_points,
+    'protected_date',missed_date,
+    'cost',0
   );
 end;
 $$;
@@ -6351,7 +6334,7 @@ CREATE TABLE public.circle_weekly_challenges (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     active_days integer[] DEFAULT ARRAY[1, 2, 3, 4, 5, 6, 7] NOT NULL,
-    reward_points integer DEFAULT 100 NOT NULL,
+    reward_points integer DEFAULT 50 NOT NULL,
     locked_at timestamp with time zone,
     reward_type text DEFAULT 'points'::text NOT NULL,
     reward_label text,
@@ -6826,10 +6809,10 @@ CREATE TABLE public.reward_rules (
     minimum_points integer DEFAULT 2 NOT NULL,
     maximum_points integer DEFAULT 15 NOT NULL,
     practice_daily_limit integer DEFAULT 3 NOT NULL,
-    streak_protection_cost integer DEFAULT 20 NOT NULL,
+    streak_protection_cost integer DEFAULT 0 NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_by uuid,
-    streak_weekly_bonus integer DEFAULT 20 NOT NULL,
+    streak_weekly_bonus integer DEFAULT 100 NOT NULL,
     practice_points_percent integer DEFAULT 50 NOT NULL,
     day_points_step integer DEFAULT 1 NOT NULL,
     daily_points_cap integer DEFAULT 40 NOT NULL,

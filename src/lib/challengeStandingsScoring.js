@@ -1,9 +1,12 @@
 import { challengeScore } from "./performanceScoring.js";
 
-// Mirrors the missed-round penalty in finalize_circle_challenge, so the
-// standings a circle sees during the week match the winner the server picks
-// when it closes.
-export const MISSED_ROUND_PENALTY = -100;
+// Mirrors circle_challenge_member_totals(), so the standings a circle sees
+// during the week match the winner the server picks when it closes.
+//
+// A missed round simply scores nothing. The standing is a sum of round scores,
+// so playing every round already outranks skipping some — the old -100 made a
+// missed round worse than never entering the challenge at all.
+export const MISSED_ROUND_PENALTY = 0;
 export const MAX_VISIBLE_STANDINGS = 5;
 
 function isoDayIndex(dateString) {

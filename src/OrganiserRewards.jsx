@@ -7,11 +7,16 @@ import PageHeader from "./components/PageHeader.jsx";
 import Button from "./components/Button.jsx";
 import Card from "./components/Card.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
+import RewardPricingGuide from "./components/RewardPricingGuide.jsx";
+import { useGameConfig } from "./lib/useGameConfig.js";
+import { countChallengeGames, priceGuide } from "./lib/rewardPricing.js";
 
 const TABS = [["ideas", "Ideas"], ["active", "In progress"], ["finished", "Finished"]];
 
 export default function OrganiserRewards({ onBack }) {
   const { user } = useAuth();
+  const { config: gameConfig } = useGameConfig();
+  const [rules, setRules] = useState(null);
   const [tab, setTab] = useState("ideas");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -29,12 +34,16 @@ export default function OrganiserRewards({ onBack }) {
   const refresh = useCallback(async () => {
     setLoading(true);
     setLoadError("");
-    const [ideasResult, activeResult, catalogResult, finishedResult] = await Promise.all([
+    const [ideasResult, activeResult, catalogResult, finishedResult, rulesResult] = await Promise.all([
       supabase.rpc("list_organiser_ideas"),
       supabase.rpc("list_organiser_active_requests"),
       supabase.rpc("list_organiser_reward_catalog"),
       supabase.rpc("list_organiser_finished_requests"),
+      // Powers the pricing guidance in the price dialog. A failure here only
+      // costs the guidance, so it stays out of the error summary below.
+      supabase.from("reward_rules").select("*").eq("is_active", true).maybeSingle(),
     ]);
+    setRules(rulesResult.data || null);
     const failures = [
       ["ideas", ideasResult.error],
       ["active rewards", activeResult.error],
@@ -182,7 +191,9 @@ export default function OrganiserRewards({ onBack }) {
         <Card style={{ maxWidth: 400, width: "100%", padding: "var(--space-5)", maxHeight: "90dvh", overflowY: "auto" }}>
           <div style={{ fontWeight: 700, marginBottom: "var(--space-1)" }}>{priceTarget.mode === "vote" ? "Send to a vote" : "Make available"}: {priceTarget.reward.name}</div>
           {priceTarget.reward.is_physical && <p style={{ fontSize: "var(--text-caption-size)", color: "var(--color-warning-text)", marginBottom: "var(--space-3)" }}>You're agreeing to provide this reward.</p>}
+          {rules && <div style={{ marginBottom: "var(--space-3)" }}><RewardPricingGuide rules={rules} challengeGames={countChallengeGames(gameConfig)} compact /></div>}
           <input type="number" inputMode="numeric" value={priceValue} onChange={(e) => setPriceValue(e.target.value)} placeholder="Points cost" style={{ width: "100%", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border-strong)", padding: "var(--space-2)", fontSize: "var(--text-body-size)", marginBottom: "var(--space-2)", background: "var(--color-surface-input)", color: "var(--color-text-primary)", boxSizing: "border-box" }} />
+          {rules && priceValue > 0 && <p style={{ margin: "0 0 var(--space-2)", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>That is about <strong style={{ color: "var(--color-text-primary)" }}>${(Number(priceValue) / Math.max(1, priceGuide(rules, countChallengeGames(gameConfig)).perDollar)).toFixed(2)}</strong> of play.</p>}
           {priceTarget.mode === "available" && priceTarget.reward.reward_type === "limited" && <input type="number" value={stockValue} onChange={(e) => setStockValue(e.target.value)} placeholder="How many available" style={{ width: "100%", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border-strong)", padding: "var(--space-2)", fontSize: "var(--text-body-size)", background: "var(--color-surface-input)", color: "var(--color-text-primary)", boxSizing: "border-box" }} />}
           <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-4)" }}>
             <Button variant="ghost" fullWidth onClick={() => setPriceTarget(null)}>Cancel</Button>
