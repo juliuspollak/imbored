@@ -156,7 +156,12 @@ begin
   get diagnostics reset_players=row_count;
 
   if global_reset then
-    delete from public.circle_challenge_reward_awards;
+    -- Every award belongs to a challenge, so this clears the lot. Both
+    -- statements in this branch carry a real predicate on purpose: Supabase
+    -- runs with safe updates on, which rejects an unqualified DELETE or UPDATE
+    -- outright, and that aborted the whole reset before it deleted anything.
+    delete from public.circle_challenge_reward_awards
+    where challenge_id in (select item.id from public.circle_weekly_challenges item);
 
     update public.circle_weekly_challenges
     set closed_at=null, updated_at=now()
@@ -165,12 +170,16 @@ begin
 
     if reset_benchmarks then
       -- Test results would otherwise stay baked into the community medians and
-      -- keep skewing every score after the reset.
+      -- keep skewing every score after the reset. Only rows that actually
+      -- drifted from provisional need touching.
       update public.game_time_benchmarks set
         observed_median_seconds=null,
         clean_sample_count=0,
         effective_seconds=provisional_seconds,
-        updated_at=now()-interval '1 day';
+        updated_at=now()-interval '1 day'
+      where observed_median_seconds is not null
+        or clean_sample_count<>0
+        or effective_seconds is distinct from provisional_seconds;
     end if;
   end if;
 
