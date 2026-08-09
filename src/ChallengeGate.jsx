@@ -58,6 +58,8 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   const [leaderboards, setLeaderboards] = useState({}); // date -> [{ user_id, seconds, profiles }]
   const [startError, setStartError] = useState("");
   const [startingIdx, setStartingIdx] = useState(null);
+  // Seconds already on the clock when this attempt was reopened.
+  const [elapsedAtStart, setElapsedAtStart] = useState(0);
   const [localStakeAccepted, setLocalStakeAccepted] = useState(false);
   const [acceptingStake, setAcceptingStake] = useState(false);
   const hasStake = challengeScope?.type === "circle" && !!challengeScope.stakeRewardId;
@@ -124,26 +126,40 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
     refresh();
   }, [refresh]);
 
+  // The clock belongs to the attempt, not to this screen. Re-entering a round
+  // returns the original start time, so pressing Home and coming back cannot
+  // rewind it — and nothing is forfeited for leaving.
+  async function beginAttempt(date) {
+    const { data, error } = await supabase.rpc("begin_challenge_attempt", {
+      target_game: gameId,
+      target_challenge_date: date,
+      target_circle_challenge_id: challengeScope?.type === "circle" ? challengeScope.id : null,
+      target_score_challenge_id: null,
+    });
+    // A missing start is not worth blocking play over — fall back to a fresh
+    // clock rather than locking someone out of their round.
+    if (error || !data) return 0;
+    return Math.max(0, Math.floor((Date.now() - new Date(data).getTime()) / 1000));
+  }
+
   async function startChallenge(index, selectedDate = null) {
     const date = selectedDate || dates[index];
     setStartError("");
-    if (challengeScope?.type !== "circle") {
-      setSavedStatId(null);
-      setPlayingIdx(index);
-      setPlayingDate(date);
-      return;
-    }
     setStartingIdx(index);
-    const { error } = await supabase.rpc("start_circle_challenge_game", {
-      target_challenge_id: challengeScope.id,
-      target_game: gameId,
-      target_challenge_date: date,
-    });
-    setStartingIdx(null);
-    if (error) {
-      setStartError(error.message || "This circle challenge cannot be started.");
-      return;
+    if (challengeScope?.type === "circle") {
+      const { error } = await supabase.rpc("start_circle_challenge_game", {
+        target_challenge_id: challengeScope.id,
+        target_game: gameId,
+        target_challenge_date: date,
+      });
+      if (error) {
+        setStartingIdx(null);
+        setStartError(error.message || "This circle challenge cannot be started.");
+        return;
+      }
     }
+    setElapsedAtStart(await beginAttempt(date));
+    setStartingIdx(null);
     setSavedStatId(null);
     setPlayingIdx(index);
     setPlayingDate(date);
@@ -207,6 +223,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           hintCooldownConfig={hintCooldownConfig}
           savedStatId={savedStatId}
           rewardResult={rewardResult}
+          initialSeconds={elapsedAtStart}
         />
         {saveError && (
           <div className="fixed left-4 right-4 bottom-5 z-[130] mx-auto max-w-sm rounded-2xl p-3 flex items-center gap-3" role="alert" style={{ background:"var(--color-surface-raised)",border:"1px solid var(--color-danger-solid)",boxShadow:"var(--shadow-menu)",color:"var(--color-danger-text)" }}>
@@ -327,7 +344,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                             ? `Tap to play — ${describeAvg(communityRatings[date].avg).toLowerCase()} so far`
                             : "Tap to play"
                           : isMissedCircleRound
-                          ? "Missed · −100 challenge score"
+                          ? "Missed · scored nothing"
                           : "Missed — tap to catch up"}
                       </div>
                     </div>

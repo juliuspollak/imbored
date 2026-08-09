@@ -145,6 +145,11 @@ begin
   where global_reset or user_id=target_player;
   get diagnostics removed_results=row_count;
 
+  -- Otherwise a player who was mid-attempt at reset time resumes with a clock
+  -- that has been running since before the wipe.
+  delete from public.challenge_attempt_starts
+  where global_reset or player_id=target_player;
+
   update public.player_progress set
     available_points=0, lifetime_points=0, current_level=1,
     current_streak=0, longest_streak=0, last_completed_date=null,
@@ -2033,6 +2038,52 @@ CREATE FUNCTION public.can_continue_conversation(viewer_id uuid, peer_id uuid) R
         and not public.is_blocked_between(viewer_id,peer_id)
       )
     );
+$$;
+
+
+--
+-- Name: begin_challenge_attempt(text, date, bigint, bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.begin_challenge_attempt(
+  target_game text,
+  target_challenge_date date default null,
+  target_circle_challenge_id bigint default null,
+  target_score_challenge_id bigint default null
+) returns timestamp with time zone
+language plpgsql
+security definer
+set search_path to 'public'
+as $$
+declare
+  key text;
+  existing timestamp with time zone;
+begin
+  if not public.is_approved_user(auth.uid()) then
+    raise exception 'Your account must be approved first.' using errcode='42501';
+  end if;
+  if coalesce(btrim(target_game),'')='' then
+    raise exception 'A game is required to start an attempt.' using errcode='22023';
+  end if;
+
+  key := case
+    when target_score_challenge_id is not null
+      then format('score:%s', target_score_challenge_id)
+    when target_circle_challenge_id is not null
+      then format('circle:%s:%s:%s', target_circle_challenge_id, target_game, target_challenge_date)
+    else format('personal:%s:%s', target_game, target_challenge_date)
+  end;
+
+  insert into public.challenge_attempt_starts(player_id, attempt_key)
+  values (auth.uid(), key)
+  on conflict (player_id, attempt_key) do nothing;
+
+  select item.started_at into existing
+  from public.challenge_attempt_starts item
+  where item.player_id=auth.uid() and item.attempt_key=key;
+
+  return existing;
+end;
 $$;
 
 
@@ -6262,6 +6313,20 @@ CREATE TABLE public.circle_challenge_stake_acceptances (
 -- Name: circle_challenge_starts; Type: TABLE; Schema: public; Owner: -
 --
 
+-- When each attempt's clock started. Re-entering a round returns the original
+-- timestamp, so leaving mid-game cannot rewind the stopwatch.
+CREATE TABLE public.challenge_attempt_starts (
+    id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+    player_id uuid NOT NULL,
+    attempt_key text NOT NULL,
+    started_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: circle_challenge_starts; Type: TABLE; Schema: public; Owner: -
+--
+
 CREATE TABLE public.circle_challenge_starts (
     id bigint NOT NULL,
     challenge_id bigint NOT NULL,
@@ -8548,6 +8613,18 @@ ALTER TABLE public.circle_challenge_stake_acceptances ENABLE ROW LEVEL SECURITY;
 -- Name: circle_challenge_starts; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
+ALTER TABLE public.challenge_attempt_starts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "players view their own attempt starts" ON public.challenge_attempt_starts FOR SELECT TO authenticated USING (((player_id = auth.uid()) OR public.is_admin(auth.uid())));
+
+CREATE UNIQUE INDEX challenge_attempt_starts_unique ON public.challenge_attempt_starts USING btree (player_id, attempt_key);
+
+ALTER TABLE ONLY public.challenge_attempt_starts
+    ADD CONSTRAINT challenge_attempt_starts_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.challenge_attempt_starts
+    ADD CONSTRAINT challenge_attempt_starts_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
 ALTER TABLE public.circle_challenge_starts ENABLE ROW LEVEL SECURITY;
 
 --
@@ -9131,6 +9208,7 @@ REVOKE ALL ON FUNCTION public.get_circle_challenge_standings(bigint) FROM PUBLIC
 
 REVOKE ALL ON FUNCTION public.admin_reset_all_stats(text, uuid, boolean) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.admin_reset_all_stats(text, uuid, boolean) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.begin_challenge_attempt(text, date, bigint, bigint) TO authenticated;
 REVOKE ALL ON FUNCTION public.get_messageable_players() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_messageable_players() TO authenticated;
 REVOKE ALL ON FUNCTION public.can_continue_conversation(uuid, uuid) FROM PUBLIC;

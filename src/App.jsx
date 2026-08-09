@@ -678,6 +678,28 @@ function ScoreChallengePlay({ Current,challenge,userId,onExit,hintCooldownConfig
   const [savedStatId,setSavedStatId] = useState(null);
   const [rewardResult,setRewardResult] = useState(null);
   const [saveError,setSaveError] = useState("");
+  // null until the server tells us when this attempt's clock started. The board
+  // stays hidden until then, otherwise re-entering would show a running zero
+  // for a moment and hand back exactly the reset this is meant to prevent.
+  const [elapsedAtStart,setElapsedAtStart] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase.rpc("begin_challenge_attempt",{
+      target_game:challenge.game,
+      target_challenge_date:null,
+      target_circle_challenge_id:null,
+      target_score_challenge_id:Number(challenge.id),
+    }).then(({ data,error }) => {
+      if (cancelled) return;
+      // A missing start should never lock someone out of a challenge they were
+      // sent — fall back to a fresh clock.
+      setElapsedAtStart(error || !data
+        ? 0
+        : Math.max(0,Math.floor((Date.now() - new Date(data).getTime())/1000)));
+    });
+    return () => { cancelled = true; };
+  },[challenge.id,challenge.game]);
 
   async function handleSolved(stats) {
     setSaveError("");
@@ -700,6 +722,15 @@ function ScoreChallengePlay({ Current,challenge,userId,onExit,hintCooldownConfig
     return saved;
   }
 
+  if (elapsedAtStart === null) {
+    return (
+      <div style={{ position:"relative" }}>
+        <GameHomeButton onClick={onExit} />
+        <p style={{ padding:"var(--space-8)",textAlign:"center",color:"var(--color-text-secondary)" }}>Starting…</p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ position:"relative" }}>
       <GameHomeButton onClick={onExit} />
@@ -712,6 +743,7 @@ function ScoreChallengePlay({ Current,challenge,userId,onExit,hintCooldownConfig
         hintCooldownConfig={hintCooldownConfig}
         savedStatId={savedStatId}
         rewardResult={rewardResult}
+        initialSeconds={elapsedAtStart}
         scoreToBeatSeconds={Number(challenge.scored_seconds ?? challenge.seconds)}
         scoreChallengerName={challenge.challenger_name}
       />

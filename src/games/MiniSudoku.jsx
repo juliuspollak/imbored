@@ -235,7 +235,7 @@ function NumBtn({ onClick, disabled, used = false, active = false, action = fals
   );
 }
 
-export default function MiniSudokuGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId, rewardResult, scoreToBeatSeconds = null, scoreChallengerName = null } = {}) {
+export default function MiniSudokuGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId, rewardResult, initialSeconds = 0, scoreToBeatSeconds = null, scoreChallengerName = null } = {}) {
   const { t } = useI18n();
   const todayIdx = (() => {
     const d = new Date().getDay();
@@ -248,7 +248,9 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   const [puzzle, setPuzzle] = useState(null);
   const [board, setBoard] = useState(null);
   const [selected, setSelected] = useState(null); // {r, c}
-  const [seconds, setSeconds] = useState(0);
+  // Seeded from the server-recorded attempt start, so leaving and re-entering
+  // resumes the same clock instead of handing out a fresh one.
+  const [seconds, setSeconds] = useState(initialSeconds);
   const [running, setRunning] = useState(false);
   const [solved, setSolved] = useState(false);
   const [mistakes, setMistakes] = useState(0);
@@ -270,7 +272,9 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
     setPuzzle(p);
     setBoard(p.givens.map((row) => row.slice()));
     setSelected(null);
-    setSeconds(0);
+    // Resume the attempt clock. In challenge mode newPuzzle only runs on
+    // mount, since the "New" control is disabled.
+    setSeconds(initialSeconds);
     setRunning(true);
     setSolved(false);
     setMistakes(0);

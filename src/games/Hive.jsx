@@ -310,6 +310,7 @@ export default function Hive({
   onSolved,
   savedStatId: completedStatId = null,
   rewardResult: completedReward = null,
+  initialSeconds = 0,
   onChallengeComplete,
   onBack,
   isIncluded = true,
@@ -328,7 +329,9 @@ export default function Hive({
   const [puzzle, setPuzzle] = useState(() => createPuzzleForSeed(n, attemptSeedRef.current));
   const [board, setBoard] = useState(() => initialBoard(n));
   const [history, setHistory] = useState([]);
-  const [seconds, setSeconds] = useState(0);
+  // Seeded from the server-recorded attempt start, so leaving and re-entering
+  // resumes the same clock instead of handing out a fresh one.
+  const [seconds, setSeconds] = useState(initialSeconds);
   const [running, setRunning] = useState(true);
   const [mistakes, setMistakes] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
@@ -445,7 +448,9 @@ export default function Hive({
     setPuzzle(createPuzzleForSeed(size, key));
     setBoard(initialBoard(size));
     setHistory([]);
-    setSeconds(0);
+    // Resume the attempt clock rather than restarting it. In challenge mode
+    // this only ever runs once, on mount; the "New" control is disabled.
+    setSeconds(initialSeconds);
     setRunning(true);
     setMistakes(0);
     setHintsUsed(0);
@@ -460,7 +465,7 @@ export default function Hive({
     hintCooldown.reset();
     savedOnceRef.current = false;
     saveInFlightRef.current = false;
-  }, [isChallenge, n, seed]);
+  }, [isChallenge, n, seed, initialSeconds]);
 
   useEffect(() => {
     if (isChallenge) return;

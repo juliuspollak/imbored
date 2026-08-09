@@ -33,7 +33,7 @@ function fmtTime(s) {
 
 /* ---------------- component ---------------- */
 
-export default function GeoGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId, rewardResult } = {}) {
+export default function GeoGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId, rewardResult, initialSeconds = 0 } = {}) {
   const { t, language } = useI18n();
   const days = t("geo.days").split(",");
   const todayIdx = (() => {
@@ -50,7 +50,9 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
   const [selected, setSelected] = useState(null);
   const [answered, setAnswered] = useState(false);
   const [eliminated, setEliminated] = useState([]); // continents faded by the map hint, this question only
-  const [seconds, setSeconds] = useState(0);
+  // Seeded from the server-recorded attempt start, so leaving and re-entering
+  // resumes the same clock instead of handing out a fresh one.
+  const [seconds, setSeconds] = useState(initialSeconds);
   const [running, setRunning] = useState(false);
   const [solved, setSolved] = useState(false);
   const [mistakes, setMistakes] = useState(0);
@@ -69,7 +71,9 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
           setSelected(saved.selected ?? null);
           setAnswered(!!saved.answered);
           setEliminated(saved.eliminated || []);
-          setSeconds(saved.seconds || 0);
+          // The server-recorded attempt clock wins over the locally cached one:
+          // clearing session storage must not rewind a challenge.
+          setSeconds(Math.max(saved.seconds || 0, initialSeconds));
           setRunning(true);
           setSolved(false);
           setMistakes(saved.mistakes || 0);
@@ -90,7 +94,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
     setSelected(null);
     setAnswered(false);
     setEliminated([]);
-    setSeconds(0);
+    setSeconds(initialSeconds);
     setRunning(true);
     setSolved(false);
     setMistakes(0);

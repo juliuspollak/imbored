@@ -366,7 +366,7 @@ function fmtTime(s) {
 
 /* ---------------- component ---------------- */
 
-export default function BinaryGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId, rewardResult, scoreToBeatSeconds = null, scoreChallengerName = null } = {}) {
+export default function BinaryGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId, rewardResult, initialSeconds = 0, scoreToBeatSeconds = null, scoreChallengerName = null } = {}) {
   const { t } = useI18n();
   const todayIdx = (() => {
     const d = new Date().getDay();
@@ -378,7 +378,9 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
   const hintCooldown = useHintCooldown(hintCooldownSeconds);
   const [puzzle, setPuzzle] = useState(null);
   const [board, setBoard] = useState(null);
-  const [seconds, setSeconds] = useState(0);
+  // Seeded from the server-recorded attempt start, so leaving and re-entering
+  // resumes the same clock instead of handing out a fresh one.
+  const [seconds, setSeconds] = useState(initialSeconds);
   const [running, setRunning] = useState(false);
   const [solved, setSolved] = useState(false);
   const [mistakes, setMistakes] = useState(0);
@@ -405,7 +407,9 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
     const p = withSeededRandom(attemptSeed, gen);
     setPuzzle(p);
     setBoard(p.givens.map((row) => row.slice()));
-    setSeconds(0);
+    // Resume the attempt clock. In challenge mode newPuzzle only runs on
+    // mount, since the "New" control is disabled.
+    setSeconds(initialSeconds);
     setRunning(true);
     setSolved(false);
     setReviewing(false);

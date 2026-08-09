@@ -36,7 +36,7 @@ function fmtTime(s) {
   return `${m}:${ss.toString().padStart(2, "0")}`;
 }
 
-export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, savedStatId, rewardResult } = {}) {
+export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, savedStatId, rewardResult, initialSeconds = 0 } = {}) {
   const { t, language } = useI18n();
   const days = t("zoom.days").split(",");
   const todayIdx = (() => {
@@ -50,7 +50,9 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
   const [qIdx, setQIdx] = useState(0);
   const [selected, setSelected] = useState(null);
   const [answered, setAnswered] = useState(false);
-  const [seconds, setSeconds] = useState(0);
+  // Seeded from the server-recorded attempt start, so leaving and re-entering
+  // resumes the same clock instead of handing out a fresh one.
+  const [seconds, setSeconds] = useState(initialSeconds);
   const [running, setRunning] = useState(false);
   const [solved, setSolved] = useState(false);
   const [mistakes, setMistakes] = useState(0);
@@ -68,7 +70,9 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
           setQIdx(saved.qIdx || 0);
           setSelected(saved.selected ?? null);
           setAnswered(!!saved.answered);
-          setSeconds(saved.seconds || 0);
+          // The server-recorded attempt clock wins over the locally cached one:
+          // clearing session storage must not rewind a challenge.
+          setSeconds(Math.max(saved.seconds || 0, initialSeconds));
           setRunning(true);
           setSolved(false);
           setMistakes(saved.mistakes || 0);
@@ -86,7 +90,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
     setQIdx(0);
     setSelected(null);
     setAnswered(false);
-    setSeconds(0);
+    setSeconds(initialSeconds);
     setRunning(true);
     setSolved(false);
     setMistakes(0);
