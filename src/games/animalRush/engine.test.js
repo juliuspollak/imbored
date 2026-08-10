@@ -7,6 +7,7 @@ import {
   animalColour,
   applyWrongTap,
   botAnimalChoice,
+  cardRotations,
   cardsConcealed,
   countdownNumber,
   inviteUrl,
@@ -195,4 +196,34 @@ test("simulates 1,000 varied matches without negative cards or unfinished games"
     assert.ok(players.every((player) => player.safety_cards >= 0 && player.won_cards >= 0));
     assert.ok(players.every((player) => !player.eliminated || player.safety_cards + player.won_cards === 0));
   }
+});
+
+test("hard mode turns every card, and only hard mode", () => {
+  assert.deepEqual(cardRotations({ difficulty: "standard", roundSeed: "room-1:3" }), {});
+  assert.deepEqual(cardRotations({ difficulty: "easy", roundSeed: "room-1:3" }), {});
+
+  const rotations = cardRotations({ difficulty: "hard", roundSeed: "room-1:3" });
+  assert.deepEqual(Object.keys(rotations).sort(), [...ANIMAL_IDS].sort());
+  // Every card a different angle, so no two silhouettes read the same way.
+  assert.equal(new Set(Object.values(rotations)).size, ANIMAL_IDS.length);
+  Object.values(rotations).forEach((angle) => {
+    assert.ok(Number.isInteger(angle) && angle >= 0 && angle < 360, `bad angle ${angle}`);
+  });
+});
+
+test("every player in a round sees the identical board", () => {
+  // A race is only fair if the rotation comes from the round, not the client.
+  assert.deepEqual(
+    cardRotations({ difficulty: "hard", roundSeed: "room-9:4" }),
+    cardRotations({ difficulty: "hard", roundSeed: "room-9:4" }),
+  );
+});
+
+test("the angles move on from round to round", () => {
+  const seen = new Set();
+  for (let round = 1; round <= 12; round += 1) {
+    seen.add(JSON.stringify(cardRotations({ difficulty: "hard", roundSeed: `room-9:${round}` })));
+  }
+  // Twelve consecutive rounds should not keep serving the same arrangement.
+  assert.ok(seen.size >= 10, `only ${seen.size} distinct layouts in 12 rounds`);
 });

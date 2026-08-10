@@ -9,6 +9,7 @@ import {
   animalById,
   applyWrongTap,
   botAnimalChoice,
+  cardRotations,
   derangedShuffle,
   matchWinner,
   pickNextTarget,
@@ -58,6 +59,9 @@ function createPlayer(userId, name, icon) {
 
 function createGame(userId, profile, difficulty, colourMode) {
   return {
+    // Seeds the hard-mode card rotations, so two bot matches do not deal out
+    // the same angles round for round.
+    id: `bot-${Date.now().toString(36)}`,
     status: "playing",
     winner: null,
     difficulty,
@@ -253,6 +257,10 @@ export default function BotMatch({
   const cardOrder = game.difficulty === "hard" && (visualPhase === "waiting" || visualPhase === "rolling")
     ? game.round.previewOrder
     : game.round.order;
+  const cardRotationsByAnimal = cardRotations({
+    difficulty: game.difficulty,
+    roundSeed: `${game.id}:${game.round.number}`,
+  });
   const canTap = game.status === "playing"
     && game.round.status === "playing"
     && revealed
@@ -410,9 +418,14 @@ export default function BotMatch({
                   }}
                   disabled={!canTap}
                   aria-label={animal.label}
+                  style={cardRotationsByAnimal[animal.id]
+                    ? { "--rush-card-rotation": `${cardRotationsByAnimal[animal.id]}deg` }
+                    : undefined}
                 >
-                  <AnimalFace animalId={animal.id} colourMode={game.colourMode} size={72} />
-                  <span className="rush-animal-label">{animal.label}</span>
+                  <span className="rush-animal-card-inner">
+                    <AnimalFace animalId={animal.id} colourMode={game.colourMode} size={72} />
+                    <span className="rush-animal-label">{animal.label}</span>
+                  </span>
                 </button>
               );
             })}

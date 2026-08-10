@@ -717,6 +717,18 @@
   transition: none;
 }
 
+/* Hard mode turns the card's contents, not the card. The button's own
+   transform is already spoken for by the shuffle animation and the press
+   effect, so rotating it there would be overwritten mid-shuffle. Keeping the
+   "?" cover on the button also leaves it upright while concealed. */
+.rush-animal-card-inner {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transform: rotate(var(--rush-card-rotation, 0deg));
+}
+
 .rush-animal-card:not(:disabled):active {
   transform: scale(0.94);
   border-color: var(--color-primary);

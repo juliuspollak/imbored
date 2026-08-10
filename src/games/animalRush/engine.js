@@ -13,7 +13,7 @@ export const SHUFFLE_DURATION_MS = 800;
 export const DIFFICULTY_MODES = [
   { id: "easy", label: "Easy", description: "Cards stay visible" },
   { id: "standard", label: "Standard", description: "Cards reveal with the animal" },
-  { id: "hard", label: "Hard", description: "Cards reshuffle before reveal" },
+  { id: "hard", label: "Hard", description: "Cards reshuffle and turn before reveal" },
 ];
 export const COLOUR_MODES = [
   { id: "individual", label: "Animal colours", description: "Each animal has its own colour" },
@@ -129,6 +129,48 @@ export function playerRoundOutcome({
   if (roundComplete) return winnerId === currentUserId ? "win" : "loss";
   if (!attempted) return null;
   return attemptCorrect ? "win" : "loss";
+}
+
+// Hard mode also turns each card, so shape recognition cannot lean on a
+// familiar upright silhouette.
+//
+// Six evenly spaced angles are dealt out one per card, so no two cards in a
+// round share an angle, and the whole set is nudged by a per-round offset so
+// the same six angles never come back in the same places. Nothing is upright
+// unless the offset happens to land there.
+export const CARD_ROTATION_STEPS = [0, 60, 120, 180, 240, 300];
+
+function rotationHash(seed) {
+  let hash = 2166136261;
+  const text = String(seed);
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+/**
+ * Degrees to turn every card this round, keyed by animal id.
+ *
+ * Derived from the round seed rather than randomised per client: Animal Rush
+ * is a race, so every player has to be looking at the identical board.
+ */
+export function cardRotations({ difficulty, roundSeed, animalIds = ANIMAL_IDS } = {}) {
+  if (difficulty !== "hard") return {};
+  const hash = rotationHash(roundSeed);
+  const offset = hash % 60;
+  // Deterministic Fisher-Yates over the angle steps, driven by the same hash.
+  const steps = [...CARD_ROTATION_STEPS];
+  let cursor = hash;
+  for (let index = steps.length - 1; index > 0; index -= 1) {
+    cursor = (Math.imul(cursor, 1664525) + 1013904223) >>> 0;
+    const swap = cursor % (index + 1);
+    [steps[index], steps[swap]] = [steps[swap], steps[index]];
+  }
+  return Object.fromEntries(
+    animalIds.map((animalId, index) => [animalId, (steps[index % steps.length] + offset) % 360]),
+  );
 }
 
 export function visibleCardOrder(room, phase) {

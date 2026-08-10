@@ -27,6 +27,7 @@ import {
   COLOUR_MODES,
   DIFFICULTY_MODES,
   animalById,
+  cardRotations,
   cardsConcealed,
   countdownNumber,
   inviteUrl,
@@ -857,6 +858,11 @@ export default function AnimalRush({ onExit }) {
   const targetAnimal = animalById(room.target_animal);
   const canTap = phase === "open" && !attemptRef.current && !me?.eliminated && !me?.left_at;
   const cardOrder = visibleCardOrder(room, phase);
+  // Keyed by room and round so every player in the race sees the same angles.
+  const cardRotationsByAnimal = cardRotations({
+    difficulty: room.difficulty,
+    roundSeed: `${room.id}:${room.round_number}`,
+  });
   const concealed = cardsConcealed(room, phase);
   const shuffling = phase === "shuffling";
   const targetRevealed = targetIsRevealed(room, phase);
@@ -1013,9 +1019,14 @@ export default function AnimalRush({ onExit }) {
                   onPointerDown={(event) => submitAnimal(event, animal.id)}
                   disabled={!canTap}
                   aria-label={animal.label}
+                  style={cardRotationsByAnimal[animal.id]
+                    ? { "--rush-card-rotation": `${cardRotationsByAnimal[animal.id]}deg` }
+                    : undefined}
                 >
-                  <AnimalFace animalId={animal.id} colourMode={room.colour_mode || "uniform"} size={72} />
-                  <span className="rush-animal-label">{animal.label}</span>
+                  <span className="rush-animal-card-inner">
+                    <AnimalFace animalId={animal.id} colourMode={room.colour_mode || "uniform"} size={72} />
+                    <span className="rush-animal-label">{animal.label}</span>
+                  </span>
                 </button>
               );
             })}
