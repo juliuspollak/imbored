@@ -2795,6 +2795,9 @@ declare
   award_created bigint;
   existing_winner uuid;
   winning_score integer;
+  loser_id uuid;
+  loser_name text;
+  prize_label text;
 begin
   select *
   into challenge
@@ -2937,6 +2940,20 @@ begin
   from public.circles circle
   where circle.id=challenge.circle_id;
 
+  -- Last place decides a forfeit, and is worth recording either way so the
+  -- circle can see how the week actually finished. A one-player challenge has
+  -- no loser.
+  loser_id := public.circle_challenge_last_place(challenge.id);
+  if loser_id = winner_id then
+    loser_id := null;
+  end if;
+  select coalesce(nullif(btrim(profile.name),''),'Someone')
+  into loser_name
+  from public.profiles profile
+  where profile.id=loser_id;
+
+  prize_label := coalesce(nullif(btrim(challenge.reward_label),''),'the prize');
+
   insert into public.direct_messages(
     sender_id,recipient_id,body,system_generated,activity_type,source_stat_id
   )
@@ -2944,6 +2961,33 @@ begin
     winner_id,
     member.user_id,
     case
+      -- A real thing the loser owes. Everyone is told who settles it with
+      -- whom, because the app cannot hand over a bathroom clean itself.
+      when challenge.reward_type='prize' and challenge.reward_goes_to='loser' and loser_id is not null then
+        case
+          when member.user_id=loser_id then
+            format(
+              '🏆 %s won %s. You finished last, so %s is on you — sort it out between you.',
+              winner_name,
+              coalesce(challenge.title,circle_name,'the circle challenge'),
+              prize_label
+            )
+          when member.user_id=winner_id then
+            format(
+              '🏆 You won %s. %s finished last and owes you %s — sort it out between you.',
+              coalesce(challenge.title,circle_name,'the circle challenge'),
+              loser_name,
+              prize_label
+            )
+          else
+            format(
+              '🏆 %s won %s. %s finished last and owes %s.',
+              winner_name,
+              coalesce(challenge.title,circle_name,'the circle challenge'),
+              loser_name,
+              prize_label
+            )
+        end
       when member.user_id=winner_id and challenge.reward_type='points' then
         format(
           '🏆 You won %s and earned the %s-point winner''s prize!',
@@ -2952,9 +2996,9 @@ begin
         )
       when member.user_id=winner_id then
         format(
-          '🏆 You won %s — your prize is %s.',
+          '🏆 You won %s — your prize is %s. The circle settles this outside the app.',
           coalesce(challenge.title,circle_name,'the circle challenge'),
-          challenge.reward_label
+          prize_label
         )
       when challenge.reward_type='points' then
         format(
@@ -2965,10 +3009,10 @@ begin
         )
       else
         format(
-          '🏆 %s won %s — prize: %s.',
+          '🏆 %s won %s — prize: %s. The circle settles this outside the app.',
           winner_name,
           coalesce(challenge.title,circle_name,'the circle challenge'),
-          challenge.reward_label
+          prize_label
         )
     end,
     true,
@@ -2979,7 +3023,7 @@ begin
   on conflict do nothing;
 
   update public.circle_weekly_challenges
-  set closed_at=now(),updated_at=now()
+  set closed_at=now(),loser_id=finalize_circle_challenge.loser_id,updated_at=now()
   where id=challenge.id;
 
   return winner_id;
@@ -3052,7 +3096,7 @@ $$;
 -- Name: get_my_active_circle_challenges(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_my_active_circle_challenges() RETURNS TABLE(challenge_id bigint, circle_id bigint, circle_name text, circle_emoji text, challenge_title text, game_ids text[], active_days integer[], reward_points integer, reward_type text, reward_label text, active_today boolean, is_locked boolean, repeats_weekly boolean, series_weeks integer, occurrence_number integer, closes_on date, stake_reward_id bigint, stake_reward_name text, stake_split_method text, stake_accepted boolean)
+CREATE FUNCTION public.get_my_active_circle_challenges() RETURNS TABLE(challenge_id bigint, circle_id bigint, circle_name text, circle_emoji text, challenge_title text, game_ids text[], active_days integer[], reward_points integer, reward_type text, reward_label text, active_today boolean, is_locked boolean, repeats_weekly boolean, series_weeks integer, occurrence_number integer, reward_goes_to text, closes_on date, stake_reward_id bigint, stake_reward_name text, stake_split_method text, stake_accepted boolean)
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -3088,6 +3132,7 @@ begin
     challenge.repeats_weekly,
     challenge.series_weeks,
     challenge.occurrence_number,
+    challenge.reward_goes_to,
     challenge.week_start+
       (select max(day_number)-1 from unnest(challenge.active_days) day_number),
     challenge.stake_reward_id,
@@ -3115,7 +3160,7 @@ $$;
 -- Name: get_my_circle_challenge_history(integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_my_circle_challenge_history(history_limit_in integer DEFAULT 30) RETURNS TABLE(challenge_id bigint, circle_id bigint, circle_name text, circle_emoji text, challenge_title text, week_start date, closed_at timestamp with time zone, game_ids text[], active_days integer[], reward_points integer, reward_type text, reward_label text, winner_id uuid, winner_name text, winner_icon text, entry_count integer, finisher_count integer, current_user_finished boolean, repeats_weekly boolean, series_weeks integer, occurrence_number integer)
+CREATE FUNCTION public.get_my_circle_challenge_history(history_limit_in integer DEFAULT 30) RETURNS TABLE(challenge_id bigint, circle_id bigint, circle_name text, circle_emoji text, challenge_title text, week_start date, closed_at timestamp with time zone, game_ids text[], active_days integer[], reward_points integer, reward_type text, reward_label text, winner_id uuid, winner_name text, winner_icon text, entry_count integer, finisher_count integer, current_user_finished boolean, repeats_weekly boolean, series_weeks integer, occurrence_number integer, reward_goes_to text, loser_id uuid, loser_name text)
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -3144,7 +3189,10 @@ begin
     coalesce(progress.current_user_finished,false),
     challenge.repeats_weekly,
     challenge.series_weeks,
-    challenge.occurrence_number
+    challenge.occurrence_number,
+    challenge.reward_goes_to,
+    challenge.loser_id,
+    loser.name::text
   from public.circle_members membership
   join public.circles circle on circle.id=membership.circle_id
   join public.circle_weekly_challenges challenge
@@ -3157,6 +3205,7 @@ begin
     limit 1
   ) award on true
   left join public.profiles winner on winner.id=award.player_id
+  left join public.profiles loser on loser.id=challenge.loser_id
   left join lateral (
     select
       count(*) filter(where totals.games_completed>0)::integer as entry_count,
@@ -5212,7 +5261,7 @@ end; $$;
 -- Name: set_circle_weekly_challenge(bigint, text[], integer[], integer, text, text, bigint, text, boolean, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.set_circle_weekly_challenge(target_circle_id bigint, selected_games text[], selected_days integer[], reward_points_in integer DEFAULT 0, reward_type_in text DEFAULT 'points'::text, reward_label_in text DEFAULT NULL::text, target_challenge_id bigint DEFAULT NULL::bigint, challenge_title_in text DEFAULT NULL::text, repeat_weekly_in boolean DEFAULT NULL::boolean, duration_weeks_in integer DEFAULT NULL::integer) RETURNS bigint
+CREATE FUNCTION public.set_circle_weekly_challenge(target_circle_id bigint, selected_games text[], selected_days integer[], reward_points_in integer DEFAULT 0, reward_type_in text DEFAULT 'points'::text, reward_label_in text DEFAULT NULL::text, target_challenge_id bigint DEFAULT NULL::bigint, challenge_title_in text DEFAULT NULL::text, repeat_weekly_in boolean DEFAULT NULL::boolean, duration_weeks_in integer DEFAULT NULL::integer, reward_goes_to_in text DEFAULT 'winner'::text) RETURNS bigint
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -5225,6 +5274,10 @@ declare
   clean_days integer[];
   clean_title text:=nullif(btrim(challenge_title_in),'');
   clean_reward_type text:=coalesce(nullif(btrim(reward_type_in),''),'points');
+  clean_goes_to text:=case
+    when coalesce(nullif(btrim(reward_type_in),''),'points')='prize'
+      and btrim(coalesce(reward_goes_to_in,''))='loser'
+    then 'loser' else 'winner' end;
   clean_duration integer;
 begin
   if not public.is_approved_user(auth.uid()) then
@@ -5369,6 +5422,7 @@ begin
       reward_points,
       reward_type,
       reward_label,
+      reward_goes_to,
       locked_at,
       created_by,
       series_id,
@@ -5392,6 +5446,7 @@ begin
         then nullif(btrim(reward_label_in),'')
         else null
       end,
+      clean_goes_to,
       null,
       auth.uid(),
       series_key,
@@ -6420,10 +6475,13 @@ CREATE TABLE public.circle_weekly_challenges (
     closed_at timestamp with time zone,
     stake_reward_id bigint,
     stake_split_method text,
+    reward_goes_to text DEFAULT 'winner'::text NOT NULL,
+    loser_id uuid,
     CONSTRAINT team_weekly_challenges_occurrence_number_check CHECK (((occurrence_number >= 1) AND (occurrence_number <= series_weeks))),
     CONSTRAINT team_weekly_challenges_reward_points_check CHECK (((reward_points >= 0) AND (reward_points <= 50))),
     CONSTRAINT team_weekly_challenges_reward_type_check CHECK ((reward_type = ANY (ARRAY['points'::text, 'prize'::text]))),
     CONSTRAINT team_weekly_challenges_series_weeks_check CHECK (((series_weeks >= 1) AND (series_weeks <= 52))),
+    CONSTRAINT circle_weekly_challenges_reward_goes_to_check CHECK ((reward_goes_to = ANY (ARRAY['winner'::text, 'loser'::text]))),
     CONSTRAINT team_weekly_challenges_stake_split_method_check CHECK (((stake_split_method IS NULL) OR (stake_split_method = ANY (ARRAY['equal'::text, 'ranked'::text]))))
 );
 
@@ -9209,6 +9267,7 @@ REVOKE ALL ON FUNCTION public.get_circle_challenge_standings(bigint) FROM PUBLIC
 REVOKE ALL ON FUNCTION public.admin_reset_all_stats(text, uuid, boolean) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.admin_reset_all_stats(text, uuid, boolean) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.begin_challenge_attempt(text, date, bigint, bigint) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.circle_challenge_last_place(bigint) TO authenticated;
 REVOKE ALL ON FUNCTION public.get_messageable_players() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_messageable_players() TO authenticated;
 REVOKE ALL ON FUNCTION public.can_continue_conversation(uuid, uuid) FROM PUBLIC;
