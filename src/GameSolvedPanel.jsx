@@ -50,14 +50,27 @@ export default function GameSolvedPanel({
   const { t } = useI18n();
   const [challengeState, setChallengeState] = useState({ status:"idle", message:"" });
   const [challengeEligible, setChallengeEligible] = useState(false);
+  // Why the dare is unavailable, so a slow round explains itself rather than
+  // the button silently not being there.
+  const [challengeBlockedReason, setChallengeBlockedReason] = useState("");
   useEffect(() => setChallengeState({ status:"idle",message:"" }), [savedStatId]);
   useEffect(() => {
     let active = true;
     setChallengeEligible(false);
+    setChallengeBlockedReason("");
     if (!allowScoreChallenge || !supabaseReady || !savedStatId) return () => { active = false; };
     supabase.rpc("get_score_challenge_eligibility", { target_stat_id:savedStatId })
       .then(({ data,error }) => {
-        if (active && !error) setChallengeEligible(data?.eligible === true);
+        if (!active || error || !data) return;
+        setChallengeEligible(data.eligible === true);
+        // Only worth explaining when the round itself was the problem. Having
+        // no circlemates, or playing an unsupported game, is not feedback on
+        // how you played.
+        const slowRound = data.eligible !== true
+          && data.supported_result === true
+          && Number(data.recipient_count) > 0
+          && data.meets_quality_bar === false;
+        setChallengeBlockedReason(slowRound ? "Beat the typical time to dare your circle to beat this one." : "");
       });
     return () => { active = false; };
   }, [allowScoreChallenge,savedStatId]);
@@ -145,6 +158,9 @@ export default function GameSolvedPanel({
             </p>
           )}
         </div>
+      )}
+      {allowScoreChallenge && savedStatId && !challengeEligible && challengeBlockedReason && (
+        <p className="game-solved-challenge-status" role="status">{challengeBlockedReason}</p>
       )}
       {showPlayAgain && (savedStatId || completionFinished) && (
         <button onClick={onPlayAgain} className="game-solved-play-again mt-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors">

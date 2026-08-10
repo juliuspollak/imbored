@@ -3713,13 +3713,16 @@ $$;
 CREATE FUNCTION public.get_score_challenge_eligibility(target_stat_id bigint) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
-    AS $$
+    AS $
 declare
   source_result public.game_stats;
   benchmark public.game_time_benchmarks;
   source_score numeric;
   recipient_count integer:=0;
   supported_result boolean:=false;
+  benchmark_ready boolean:=false;
+  beats_typical boolean:=false;
+  meets_bar boolean:=false;
 begin
   select * into source_result
   from public.game_stats
@@ -3746,8 +3749,6 @@ begin
     and coalesce(profile.hidden_from_others,false)=false
     and coalesce(profile.is_approved,true)=true;
 
-  -- Preserve the performance fields consumed by existing clients without
-  -- making them eligibility requirements.
   benchmark:=public.refresh_game_time_benchmark(
     source_result.game,
     source_result.day_index,
@@ -3760,16 +3761,21 @@ begin
     benchmark.effective_seconds
   );
 
+  -- Hints and mistakes are already priced into source_score, so a hint-heavy
+  -- win has to be that much faster on the clock to clear the bar.
+  benchmark_ready:=benchmark.clean_sample_count>=6;
+  beats_typical:=source_score<benchmark.effective_seconds;
+  meets_bar:=beats_typical or not benchmark_ready;
+
   return jsonb_build_object(
-    'eligible',supported_result and recipient_count>0,
+    'eligible',supported_result and recipient_count>0 and meets_bar,
     'supported_result',supported_result,
     'recipient_count',recipient_count,
     'typical_seconds',benchmark.effective_seconds,
     'scored_seconds',source_score,
-    'benchmark_ready',benchmark.clean_sample_count>=6,
-    'faster_than_typical',
-      benchmark.clean_sample_count>=6
-      and source_score<benchmark.effective_seconds,
+    'benchmark_ready',benchmark_ready,
+    'faster_than_typical',benchmark_ready and beats_typical,
+    'meets_quality_bar',meets_bar,
     'circle_best',false,
     'comparable_players',0
   );
