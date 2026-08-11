@@ -3722,7 +3722,6 @@ declare
   supported_result boolean:=false;
   benchmark_ready boolean:=false;
   beats_typical boolean:=false;
-  meets_bar boolean:=false;
 begin
   select * into source_result
   from public.game_stats
@@ -3765,17 +3764,16 @@ begin
   -- win has to be that much faster on the clock to clear the bar.
   benchmark_ready:=benchmark.clean_sample_count>=6;
   beats_typical:=source_score<benchmark.effective_seconds;
-  meets_bar:=beats_typical or not benchmark_ready;
 
   return jsonb_build_object(
-    'eligible',supported_result and recipient_count>0 and meets_bar,
+    'eligible',supported_result and recipient_count>0 and beats_typical,
     'supported_result',supported_result,
     'recipient_count',recipient_count,
     'typical_seconds',benchmark.effective_seconds,
     'scored_seconds',source_score,
     'benchmark_ready',benchmark_ready,
-    'faster_than_typical',benchmark_ready and beats_typical,
-    'meets_quality_bar',meets_bar,
+    'faster_than_typical',beats_typical,
+    'meets_quality_bar',beats_typical,
     'circle_best',false,
     'comparable_players',0
   );
