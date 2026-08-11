@@ -137,6 +137,10 @@ export default function AdminGames({ onBack }) {
       hint_cooldown_base: updated.hint_cooldown_base ?? 0,
       hint_cooldown_per_day: updated.hint_cooldown_per_day ?? 0,
       zip_path_style: updated.zip_path_style || "solid",
+      // This is an upsert of the whole row, so every configurable column has
+      // to be present — omitting one silently resets it to its default the
+      // next time any other setting on the same game is saved.
+      rush_spin_seconds: updated.rush_spin_seconds ?? 14,
       ...gridlyConfigPayload(updated),
     };
     if (Object.prototype.hasOwnProperty.call(updated, "challenge_enabled")) {
@@ -240,7 +244,7 @@ export default function AdminGames({ onBack }) {
 
   return (
     <Page>
-      <PageHeader title="Games" subtitle="Visibility, playability, order, maintenance settings and daily resets" onBack={onBack} />
+      <PageHeader title="Games" subtitle="Changes save as you make them — number fields save when you tap away" onBack={onBack} />
       {message && <div style={{ marginBottom: "var(--section-gap)" }}><StatusBanner variant={message.type} dismissible onDismiss={() => setMessage(null)}>{message.text}</StatusBanner></div>}
       {loadError && <div style={{ marginBottom: "var(--section-gap)" }}><StatusBanner variant="error" dismissible onDismiss={() => setLoadError(null)}>{loadError}</StatusBanner></div>}
 
@@ -289,7 +293,7 @@ export default function AdminGames({ onBack }) {
                       <SettingRow label="Show on Home" checked={r.visible} loading={isSavingField(r.game_id, "visible")} disabled={busy} onChange={() => updateRow(r.game_id, { visible: !r.visible }, "visible")} />
                       <SettingRow label="Playable" checked={r.available} loading={isSavingField(r.game_id, "available")} disabled={busy} onChange={() => updateRow(r.game_id, { available: !r.available }, "available")} />
                       {!meta.live && <SettingRow label="Available in Challenges" checked={ce} loading={isSavingField(r.game_id, "challenge_enabled")} disabled={busy || !meta.challenge || !r.available} onChange={() => updateRow(r.game_id, { challenge_enabled: !ce }, "challenge_enabled")} />}
-                      {isFieldSaved(r.game_id, "visible") && <SavedIndicator />}
+                      {["visible", "available", "challenge_enabled"].some((f) => isFieldSaved(r.game_id, f)) && <SavedIndicator />}
                     </div>
 
                     <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-3)" }}>
@@ -308,10 +312,12 @@ export default function AdminGames({ onBack }) {
                           <label>
                             <span style={{ display: "block", fontSize: "var(--text-caption-size)", fontWeight: 500, color: "var(--color-text-secondary)", marginBottom: 4 }}>Base (sec)</span>
                             <TextInput type="number" min={0} disabled={isSavingField(r.game_id, "hint_cooldown_base")} value={getDraft(r.game_id, "hint_cooldown_base", r.hint_cooldown_base || 0)} onChange={(e) => { const p = Number.parseInt(e.target.value, 10); setDraft(r.game_id, "hint_cooldown_base", Number.isFinite(p) ? p : ""); }} onBlur={() => { const v = getDraft(r.game_id, "hint_cooldown_base", r.hint_cooldown_base || 0); const resolved = v === "" || !Number.isFinite(v) ? 0 : v; if (resolved !== (r.hint_cooldown_base || 0)) updateRow(r.game_id, { hint_cooldown_base: resolved }, "hint_cooldown_base"); setDrafts((d) => { const n = { ...d }; delete n[`${r.game_id}:hint_cooldown_base`]; return n; }); }} />
+                            {isFieldSaved(r.game_id, "hint_cooldown_base") && <SavedIndicator />}
                           </label>
                           <label>
                             <span style={{ display: "block", fontSize: "var(--text-caption-size)", fontWeight: 500, color: "var(--color-text-secondary)", marginBottom: 4 }}>Per day (sec)</span>
                             <TextInput type="number" min={0} disabled={isSavingField(r.game_id, "hint_cooldown_per_day")} value={getDraft(r.game_id, "hint_cooldown_per_day", r.hint_cooldown_per_day || 0)} onChange={(e) => { const p = Number.parseInt(e.target.value, 10); setDraft(r.game_id, "hint_cooldown_per_day", Number.isFinite(p) ? p : ""); }} onBlur={() => { const v = getDraft(r.game_id, "hint_cooldown_per_day", r.hint_cooldown_per_day || 0); const resolved = v === "" || !Number.isFinite(v) ? 0 : v; if (resolved !== (r.hint_cooldown_per_day || 0)) updateRow(r.game_id, { hint_cooldown_per_day: resolved }, "hint_cooldown_per_day"); setDrafts((d) => { const n = { ...d }; delete n[`${r.game_id}:hint_cooldown_per_day`]; return n; }); }} />
+                            {isFieldSaved(r.game_id, "hint_cooldown_per_day") && <SavedIndicator />}
                           </label>
                         </div>
 
@@ -337,6 +343,7 @@ export default function AdminGames({ onBack }) {
                               <span style={{ display: "block", marginTop: 6, fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)", lineHeight: 1.4 }}>
                                 Lower spins faster — 8 is mean, 14 is steady, 20 is gentle. Set 0 to stop the spin and leave hard mode on fixed card angles.
                               </span>
+                              {isFieldSaved(r.game_id, "rush_spin_seconds") && <SavedIndicator />}
                             </label>
                           </div>
                         )}
