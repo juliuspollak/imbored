@@ -115,7 +115,7 @@ export default function AdminGames({ onBack }) {
     const missing = GAME_META.filter((g) => !known.has(g.id)).map((g, i) => ({
       game_id: g.id, visible: true, available: g.available,
       challenge_enabled: g.challenge === true, sort_order: (data?.length || 0) + i,
-      hint_cooldown_base: 0, hint_cooldown_per_day: 0, zip_path_style: "solid",
+      hint_cooldown_base: 0, hint_cooldown_per_day: 0, zip_path_style: "solid", rush_spin_seconds: 14,
       ...(g.id === "gridly" ? GRIDLY_DEFAULTS : {}),
     }));
     setRows([...(data || []), ...missing]); setLoading(false);
@@ -209,7 +209,7 @@ export default function AdminGames({ onBack }) {
     const results = await Promise.all(reordered.map((r) => supabase.from("game_config").upsert({
       game_id: r.game_id, visible: r.visible, available: r.available, challenge_enabled: r.challenge_enabled,
       sort_order: r.sort_order, hint_cooldown_base: r.hint_cooldown_base ?? 0, hint_cooldown_per_day: r.hint_cooldown_per_day ?? 0,
-      zip_path_style: r.zip_path_style || "solid", ...gridlyConfigPayload(r),
+      zip_path_style: r.zip_path_style || "solid", rush_spin_seconds: r.rush_spin_seconds ?? 14, ...gridlyConfigPayload(r),
     })));
     setSaving(null);
     const failed = results.find((r) => r.error);
@@ -314,6 +314,32 @@ export default function AdminGames({ onBack }) {
                             <TextInput type="number" min={0} disabled={isSavingField(r.game_id, "hint_cooldown_per_day")} value={getDraft(r.game_id, "hint_cooldown_per_day", r.hint_cooldown_per_day || 0)} onChange={(e) => { const p = Number.parseInt(e.target.value, 10); setDraft(r.game_id, "hint_cooldown_per_day", Number.isFinite(p) ? p : ""); }} onBlur={() => { const v = getDraft(r.game_id, "hint_cooldown_per_day", r.hint_cooldown_per_day || 0); const resolved = v === "" || !Number.isFinite(v) ? 0 : v; if (resolved !== (r.hint_cooldown_per_day || 0)) updateRow(r.game_id, { hint_cooldown_per_day: resolved }, "hint_cooldown_per_day"); setDrafts((d) => { const n = { ...d }; delete n[`${r.game_id}:hint_cooldown_per_day`]; return n; }); }} />
                           </label>
                         </div>
+
+                        {r.game_id === "animalrush" && (
+                          <div style={{ marginTop: "var(--space-4)", paddingTop: "var(--space-4)", borderTop: "1px solid var(--color-border)" }}>
+                            <div style={{ fontSize: "var(--text-body-size)", fontWeight: 600, color: "var(--color-text-primary)", marginBottom: "var(--space-3)" }}>Hard mode spin</div>
+                            <label>
+                              <span style={{ display: "block", fontSize: "var(--text-caption-size)", fontWeight: 500, color: "var(--color-text-secondary)", marginBottom: 4 }}>Seconds per full turn</span>
+                              <TextInput
+                                type="number"
+                                min={0}
+                                max={120}
+                                disabled={isSavingField(r.game_id, "rush_spin_seconds")}
+                                value={getDraft(r.game_id, "rush_spin_seconds", r.rush_spin_seconds ?? 14)}
+                                onChange={(e) => { const p = Number.parseInt(e.target.value, 10); setDraft(r.game_id, "rush_spin_seconds", Number.isFinite(p) ? p : ""); }}
+                                onBlur={() => {
+                                  const v = getDraft(r.game_id, "rush_spin_seconds", r.rush_spin_seconds ?? 14);
+                                  const resolved = v === "" || !Number.isFinite(v) ? 14 : Math.max(0, Math.min(120, v));
+                                  if (resolved !== (r.rush_spin_seconds ?? 14)) updateRow(r.game_id, { rush_spin_seconds: resolved }, "rush_spin_seconds");
+                                  setDrafts((d) => { const n = { ...d }; delete n[`${r.game_id}:rush_spin_seconds`]; return n; });
+                                }}
+                              />
+                              <span style={{ display: "block", marginTop: 6, fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)", lineHeight: 1.4 }}>
+                                Lower spins faster — 8 is mean, 14 is steady, 20 is gentle. Set 0 to stop the spin and leave hard mode on fixed card angles.
+                              </span>
+                            </label>
+                          </div>
+                        )}
 
                         {r.game_id === "gridly" && (
                           <div style={{ marginTop: "var(--space-4)", paddingTop: "var(--space-4)", borderTop: "1px solid var(--color-border)" }}>

@@ -6654,6 +6654,8 @@ CREATE TABLE public.game_config (
     zip_black_hole_counts integer[] DEFAULT ARRAY[0, 0, 0, 0, 0, 0, 0] NOT NULL,
     zip_tunnel_pair_counts integer[] DEFAULT ARRAY[0, 0, 0, 0, 0, 1, 1] NOT NULL,
     challenge_enabled boolean DEFAULT false NOT NULL,
+    rush_spin_seconds integer DEFAULT 14 NOT NULL,
+    CONSTRAINT game_config_rush_spin_seconds_check CHECK (((rush_spin_seconds >= 0) AND (rush_spin_seconds <= 120))),
     CONSTRAINT game_config_zip_black_hole_counts_check CHECK (((cardinality(zip_black_hole_counts) = 7) AND (0 <= ALL (zip_black_hole_counts)) AND (20 >= ALL (zip_black_hole_counts)))),
     CONSTRAINT game_config_zip_checkpoint_counts_check CHECK (((cardinality(zip_checkpoint_counts) = 7) AND (2 <= ALL (zip_checkpoint_counts)) AND (30 >= ALL (zip_checkpoint_counts)))),
     CONSTRAINT game_config_zip_grid_sizes_check CHECK (((cardinality(zip_grid_sizes) = 7) AND (4 <= ALL (zip_grid_sizes)) AND (9 >= ALL (zip_grid_sizes)))),

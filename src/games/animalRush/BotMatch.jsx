@@ -90,6 +90,7 @@ export default function BotMatch({
   difficulty = "standard",
   colourMode = "uniform",
   reducedMotion = false,
+  spinSeconds = 14,
   onBack,
 }) {
   const [game, setGame] = useState(() => createGame(userId, profile, difficulty, colourMode));
@@ -398,10 +399,11 @@ export default function BotMatch({
             className="rush-grid"
             data-concealed={concealed}
             data-shuffling={visualPhase === "shuffling"}
-            data-spinning={Object.keys(cardRotationsByAnimal).length > 0 && game.round.status === "playing"}
-            style={visualPhase === "shuffling"
-              ? { "--rush-shuffle-delay": `-${shuffleElapsedMs}ms` }
-              : undefined}
+            data-spinning={Object.keys(cardRotationsByAnimal).length > 0 && game.round.status === "playing" && spinSeconds > 0}
+            style={{
+              "--rush-card-spin-duration": `${spinSeconds}s`,
+              ...(visualPhase === "shuffling" ? { "--rush-shuffle-delay": `-${shuffleElapsedMs}ms` } : null),
+            }}
             aria-hidden={concealed}
             aria-label="Animal cards"
           >

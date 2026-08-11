@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext.jsx";
+import { useGameConfig } from "../lib/useGameConfig.js";
 import { useI18n } from "../lib/i18n.jsx";
 import { supabase, supabaseReady } from "../lib/supabase.js";
 import GameHomeButton from "../GameHomeButton.jsx";
@@ -191,6 +192,9 @@ export default function AnimalRush({ onExit }) {
   const { user, profile } = useAuth();
   const { t } = useI18n();
   const supported = useMemo(phoneSupported, []);
+  // Admin -> Games sets how fast hard-mode cards turn. 0 stops the spin.
+  const { config: gameConfig } = useGameConfig();
+  const spinSeconds = Number(gameConfig?.animalrush?.rush_spin_seconds ?? 14);
   const reducedMotion = useReducedMotionPreference();
   const [room, setRoom] = useState(null);
   const [players, setPlayers] = useState([]);
@@ -633,6 +637,7 @@ export default function AnimalRush({ onExit }) {
   if (botMode) {
     return (
       <BotMatch
+        spinSeconds={spinSeconds}
         userId={user?.id || "local-player"}
         profile={profile}
         difficulty={botDifficulty}
@@ -867,7 +872,8 @@ export default function AnimalRush({ onExit }) {
   // and the winning animal can actually be looked at.
   const cardsSpinning = Object.keys(cardRotationsByAnimal).length > 0
     && room.status !== "round_result"
-    && room.status !== "finished";
+    && room.status !== "finished"
+    && spinSeconds > 0;
   const concealed = cardsConcealed(room, phase);
   const shuffling = phase === "shuffling";
   const targetRevealed = targetIsRevealed(room, phase);
@@ -1011,7 +1017,10 @@ export default function AnimalRush({ onExit }) {
             data-concealed={concealed}
             data-shuffling={shuffling}
             data-spinning={cardsSpinning}
-            style={shuffling ? { "--rush-shuffle-delay": `-${shuffleElapsedMs}ms` } : undefined}
+            style={{
+              ...(cardsSpinning ? { "--rush-card-spin-duration": `${spinSeconds}s` } : null),
+              ...(shuffling ? { "--rush-shuffle-delay": `-${shuffleElapsedMs}ms` } : null),
+            }}
             aria-hidden={concealed}
             aria-label="Animal cards"
           >
