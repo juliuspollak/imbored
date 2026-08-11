@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom, shuffle } from "../lib/seededRandom.js";
+import { gradeTwistBoard } from "../lib/twistLogic.js";
 import { useGameTimer } from "../lib/useGameTimer.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
@@ -183,7 +184,7 @@ function countSolutions(givens, edgeMap, limit) {
 // Greedy invariant-preserving removal: start fully revealed (trivially unique),
 // only ever commit a removal if the puzzle stays uniquely solvable afterward.
 // This guarantees the result is always valid without needing a final re-check.
-function generatePuzzle(givenTarget, edgeTarget, maxAttempts = 5) {
+function generatePuzzle(givenTarget, edgeTarget, minLogicRounds = 0, maxAttempts = 14) {
   let best = null;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const solution = generateSolution();
@@ -232,13 +233,17 @@ function generatePuzzle(givenTarget, edgeTarget, maxAttempts = 5) {
       }
     }
 
-    // Keep the sparsest board across attempts rather than the first one
-    // produced — the old code returned attempt 1 whatever it looked like, so
-    // maxAttempts only ever guarded against a failed solution generator.
-    if (!best || revealed < best.revealed || (revealed === best.revealed && kept.length < best.edges.length)) {
-      best = { solution, givens, edges: kept, edgeMap, revealed };
-    }
-    if (revealed <= givenTarget && kept.length <= edgeTarget) break;
+    // Clue count was never the thing that made a board hard. Grade the
+    // candidate by how deep a chain of human deductions it actually needs,
+    // and keep the most demanding one we see.
+    const grade = gradeTwistBoard(givens, edgeMap);
+    // A board the basic techniques cannot finish needs trial and error, which
+    // is tedious rather than difficult. Rank those below any solvable board,
+    // but still keep one as a last resort so generation never returns null.
+    const depth = grade.solved ? grade.rounds : -1;
+    const candidate = { solution, givens, edges: kept, edgeMap, revealed, depth };
+    if (!best || depth > best.depth) best = candidate;
+    if (depth >= minLogicRounds && revealed <= givenTarget) break;
   }
   return best;
 }
@@ -376,6 +381,9 @@ const CONFLICT_RED = "#D85C62";
 const TEAL = "#5FA8A3";
 const SUN_COLOR = "#FF7A59";
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+// Minimum depth of human deduction the board must demand, Monday to Sunday.
+// This, not the clue count above, is what actually scales the difficulty.
+const MIN_LOGIC_ROUNDS = [2, 2, 3, 3, 4, 4, 5];
 const GIVEN_TARGETS = [16, 14, 12, 10, 9, 8, 7];
 const EDGE_TARGETS = [6, 5, 5, 4, 4, 3, 3];
 const TANGO_GENERATOR_VERSION = "tango-v1";
@@ -423,7 +431,7 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
   const conflictDebounceRef = useRef(null);
 
   const newPuzzle = useCallback((dIdx) => {
-    const gen = () => generatePuzzle(GIVEN_TARGETS[dIdx], EDGE_TARGETS[dIdx]);
+    const gen = () => generatePuzzle(GIVEN_TARGETS[dIdx], EDGE_TARGETS[dIdx], MIN_LOGIC_ROUNDS[dIdx]);
     const attemptSeed = isChallenge ? (seed || attemptSeedRef.current) : createGameAttemptSeed("binary");
     attemptSeedRef.current = attemptSeed;
     const p = withSeededRandom(attemptSeed, gen);
