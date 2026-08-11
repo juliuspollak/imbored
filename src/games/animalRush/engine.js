@@ -13,7 +13,7 @@ export const SHUFFLE_DURATION_MS = 800;
 export const DIFFICULTY_MODES = [
   { id: "easy", label: "Easy", description: "Cards stay visible" },
   { id: "standard", label: "Standard", description: "Cards reveal with the animal" },
-  { id: "hard", label: "Hard", description: "Cards reshuffle and turn before reveal" },
+  { id: "hard", label: "Hard", description: "Cards reshuffle and keep spinning" },
 ];
 export const COLOUR_MODES = [
   { id: "individual", label: "Animal colours", description: "Each animal has its own colour" },

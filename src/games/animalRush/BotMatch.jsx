@@ -398,6 +398,7 @@ export default function BotMatch({
             className="rush-grid"
             data-concealed={concealed}
             data-shuffling={visualPhase === "shuffling"}
+            data-spinning={Object.keys(cardRotationsByAnimal).length > 0 && game.round.status === "playing"}
             style={visualPhase === "shuffling"
               ? { "--rush-shuffle-delay": `-${shuffleElapsedMs}ms` }
               : undefined}

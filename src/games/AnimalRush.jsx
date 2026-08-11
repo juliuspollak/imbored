@@ -863,6 +863,11 @@ export default function AnimalRush({ onExit }) {
     difficulty: room.difficulty,
     roundSeed: `${room.id}:${room.round_number}`,
   });
+  // Cards stop turning once the round is decided, so the result stays readable
+  // and the winning animal can actually be looked at.
+  const cardsSpinning = Object.keys(cardRotationsByAnimal).length > 0
+    && room.status !== "round_result"
+    && room.status !== "finished";
   const concealed = cardsConcealed(room, phase);
   const shuffling = phase === "shuffling";
   const targetRevealed = targetIsRevealed(room, phase);
@@ -1005,6 +1010,7 @@ export default function AnimalRush({ onExit }) {
             className="rush-grid"
             data-concealed={concealed}
             data-shuffling={shuffling}
+            data-spinning={cardsSpinning}
             style={shuffling ? { "--rush-shuffle-delay": `-${shuffleElapsedMs}ms` } : undefined}
             aria-hidden={concealed}
             aria-label="Animal cards"

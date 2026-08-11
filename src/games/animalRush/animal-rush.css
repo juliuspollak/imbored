@@ -729,6 +729,39 @@
   transform: rotate(var(--rush-card-rotation, 0deg));
 }
 
+/* --- Hard mode spin -------------------------------------------------------
+   SPEED DIAL: one full turn per this duration. Larger is slower.
+   14s is a deliberate starting point — slow enough to track a shape while you
+   reach for it, quick enough that no card sits still long enough to memorise.
+   Try 20s for gentler, 8s for genuinely mean. */
+.rush-grid {
+  --rush-card-spin-duration: 14s;
+}
+
+@keyframes rush-card-spin {
+  from { transform: rotate(var(--rush-card-rotation, 0deg)); }
+  to { transform: rotate(calc(var(--rush-card-rotation, 0deg) + 360deg)); }
+}
+
+.rush-grid[data-spinning="true"] .rush-animal-card-inner {
+  animation: rush-card-spin var(--rush-card-spin-duration, 14s) linear infinite;
+}
+
+/* Alternate the direction so the board does not read as one rotating dial,
+   which the eye locks onto and compensates for far too easily. */
+.rush-grid[data-spinning="true"] .rush-animal-card:nth-child(2n) .rush-animal-card-inner {
+  animation-direction: reverse;
+}
+
+/* The spin is the difficulty, so it cannot simply be dropped for reduced
+   motion — the card keeps its starting angle instead, which is where hard
+   mode was before it span. */
+@media (prefers-reduced-motion: reduce) {
+  .rush-grid[data-spinning="true"] .rush-animal-card-inner {
+    animation: none;
+  }
+}
+
 .rush-animal-card:not(:disabled):active {
   transform: scale(0.94);
   border-color: var(--color-primary);
