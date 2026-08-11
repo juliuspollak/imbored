@@ -184,6 +184,7 @@ function countSolutions(givens, edgeMap, limit) {
 // only ever commit a removal if the puzzle stays uniquely solvable afterward.
 // This guarantees the result is always valid without needing a final re-check.
 function generatePuzzle(givenTarget, edgeTarget, maxAttempts = 5) {
+  let best = null;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const solution = generateSolution();
     if (!solution) continue;
@@ -193,32 +194,53 @@ function generatePuzzle(givenTarget, edgeTarget, maxAttempts = 5) {
     const givens = solution.map((row) => row.slice());
     let edgeMap = buildEdgeMap(candidateEdges);
 
+    // Removals interact: a clue that was load-bearing early often becomes
+    // removable once its neighbours are gone. A single pass therefore stalls
+    // far above the target — which is why Sunday was playing like a weekday.
+    // Keep sweeping until a whole pass achieves nothing.
     let revealed = SIZE * SIZE;
-    for (const [r, c] of shuffle(allPositions(SIZE))) {
-      if (revealed <= givenTarget) break;
-      const backup = givens[r][c];
-      givens[r][c] = 0;
-      if (countSolutions(givens, edgeMap, 2) === 1) {
-        revealed--;
-      } else {
-        givens[r][c] = backup;
+    let removedThisPass = true;
+    while (revealed > givenTarget && removedThisPass) {
+      removedThisPass = false;
+      for (const [r, c] of shuffle(allPositions(SIZE))) {
+        if (revealed <= givenTarget) break;
+        if (givens[r][c] === 0) continue;
+        const backup = givens[r][c];
+        givens[r][c] = 0;
+        if (countSolutions(givens, edgeMap, 2) === 1) {
+          revealed--;
+          removedThisPass = true;
+        } else {
+          givens[r][c] = backup;
+        }
       }
     }
 
     let kept = candidateEdges.slice();
-    for (const edge of shuffle(candidateEdges)) {
-      if (kept.length <= edgeTarget) break;
-      const trial = kept.filter((e) => e !== edge);
-      const trialMap = buildEdgeMap(trial);
-      if (countSolutions(givens, trialMap, 2) === 1) {
-        kept = trial;
-        edgeMap = trialMap;
+    let droppedThisPass = true;
+    while (kept.length > edgeTarget && droppedThisPass) {
+      droppedThisPass = false;
+      for (const edge of shuffle(kept)) {
+        if (kept.length <= edgeTarget) break;
+        const trial = kept.filter((e) => e !== edge);
+        const trialMap = buildEdgeMap(trial);
+        if (countSolutions(givens, trialMap, 2) === 1) {
+          kept = trial;
+          edgeMap = trialMap;
+          droppedThisPass = true;
+        }
       }
     }
 
-    return { solution, givens, edges: kept, edgeMap };
+    // Keep the sparsest board across attempts rather than the first one
+    // produced — the old code returned attempt 1 whatever it looked like, so
+    // maxAttempts only ever guarded against a failed solution generator.
+    if (!best || revealed < best.revealed || (revealed === best.revealed && kept.length < best.edges.length)) {
+      best = { solution, givens, edges: kept, edgeMap, revealed };
+    }
+    if (revealed <= givenTarget && kept.length <= edgeTarget) break;
   }
-  return null;
+  return best;
 }
 
 /* ---------------- board-state helpers (operate on the player's board) ---------------- */
