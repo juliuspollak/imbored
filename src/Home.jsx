@@ -305,12 +305,12 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
   const circleStatusLabel = (circleChallenge, status) => {
     const lifecycle = challengeLifecycle[String(circleChallenge.challenge_id)];
     if (lifecycle?.winner_id) return lifecycle.winner_id === userId ? "Finished · You won" : `Finished · ${lifecycle.winner_name || "A circlemate"} won`;
-    if (lifecycle?.current_user_finished || status.done) {
-      const waiting = Math.max(0, Number(lifecycle?.member_count || 0) - Number(lifecycle?.finished_count || 0));
-      return waiting > 0 ? `You finished · waiting for ${waiting}` : "You finished · finalising";
+    if (!status.done) {
+      if (status.completed === 0) return "Not started";
+      return `${status.remaining} ${status.remaining === 1 ? "round" : "rounds"} left`;
     }
-    if (status.completed === 0) return "Not started";
-    return `${status.remaining} ${status.remaining === 1 ? "round" : "rounds"} left`;
+    const waiting = Math.max(0, Number(lifecycle?.member_count || 0) - Number(lifecycle?.finished_count || 0));
+    return waiting > 0 ? `You finished · waiting for ${waiting}` : "You finished · finalising";
   };
   const challengeItems = [
     { key:"personal", type:"personal", active_today:true, status:personalStatus },
@@ -416,7 +416,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
               const roster = circleRosters[item.circle_id] || [];
               const lifecycleLabel = circleStatusLabel(item, status);
               const challengeFinished = !!lifecycle?.winner_id;
-              const playerFinished = !!lifecycle?.current_user_finished || status.done;
+              const playerFinished = status.done;
               const tone = challengeFinished ? ["var(--color-warning-bg)","var(--color-warning-text)"] : playerFinished ? ["var(--color-success-bg)","var(--color-success-text)"] : ["var(--color-info-bg)","var(--color-info-text)"];
               return (
                 <Card key={item.challenge_id} style={{ padding:0, overflow:"hidden", borderColor:selected ? "var(--color-primary-subtle-border)" : undefined }}>
