@@ -235,9 +235,7 @@
   display: none !important;
 }
 
-/* iOS Safari is more reliable when a horizontal strip is a real overflow
-   scroller with a column track rather than a flex row containing disabled
-   buttons. Keep the tiles as buttons, but make the strip own all scrolling. */
+/* Circle challenge keeps the single-game strip layout. */
 .challenge-mini-strip {
   display: grid !important;
   grid-auto-flow: column;
@@ -246,14 +244,11 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow-x: scroll !important;
+  overflow-x: auto !important;
   overflow-y: hidden !important;
   gap: 8px;
-  padding: 2px 22px 8px 1px !important;
-  -webkit-overflow-scrolling: touch;
+  padding: 2px 1px 8px !important;
   scrollbar-width: none;
-  touch-action: auto;
-  scroll-snap-type: x proximity;
 }
 .challenge-mini-strip::-webkit-scrollbar { display: none; }
 .challenge-mini-game {
@@ -261,11 +256,6 @@
   min-width: 94px !important;
   max-width: 94px !important;
   flex: none !important;
-  scroll-snap-align: start;
-}
-.challenge-mini-game:disabled {
-  pointer-events: auto !important;
-  cursor: default !important;
 }
 .challenge-mini-strip--single {
   grid-auto-columns: 108px;
@@ -274,6 +264,31 @@
   width: 108px !important;
   min-width: 108px !important;
   max-width: 108px !important;
+}
+
+/* Personal challenge: do not rely on horizontal swipe. Show all configured
+   games in a compact two-row grid so every game is always reachable on iPhone. */
+.design-card:has(> button:nth-child(3)[aria-expanded]) .challenge-mini-strip:not(.challenge-mini-strip--single) {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-auto-flow: row !important;
+  grid-auto-columns: auto !important;
+  width: 100% !important;
+  overflow: visible !important;
+  gap: 8px !important;
+  padding: 2px 0 6px !important;
+}
+.design-card:has(> button:nth-child(3)[aria-expanded]) .challenge-mini-strip:not(.challenge-mini-strip--single) .challenge-mini-game {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 104px !important;
+}
+
+@media (max-width: 360px) {
+  .design-card:has(> button:nth-child(3)[aria-expanded]) .challenge-mini-strip:not(.challenge-mini-strip--single) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
 }
 
 @media (hover: hover) and (pointer: fine) {
