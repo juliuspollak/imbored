@@ -93,30 +93,15 @@
   background-position: var(--game-tile-position, center);
 }
 
-.home-game-tile--artwork::after {
-  content: none !important;
-}
-
-.home-game-tile--artwork > * {
-  position: relative;
-  z-index: 1;
-}
-
-/* The full-card illustration replaces the small home-grid icon. */
-.home-game-tile--artwork > span[aria-hidden="true"] {
-  display: none !important;
-}
-
+.home-game-tile--artwork::after { content: none !important; }
+.home-game-tile--artwork > * { position: relative; z-index: 1; }
+.home-game-tile--artwork > span[aria-hidden="true"] { display: none !important; }
 .home-game-tile--artwork > span[title],
-.home-game-tile--artwork > span[style*="right: 12px"] {
-  z-index: 4;
-}
-
+.home-game-tile--artwork > span[style*="right: 12px"] { z-index: 4; }
 .home-game-tile--artwork > span[title] {
   background: rgba(255, 255, 255, .94) !important;
   box-shadow: 0 4px 12px var(--game-tile-shadow);
 }
-
 .home-game-tile--artwork > span:last-of-type {
   position: absolute !important;
   z-index: 2;
@@ -130,7 +115,6 @@
   text-align: right;
   pointer-events: none;
 }
-
 .home-game-tile--artwork > span:last-of-type > span:first-child {
   position: absolute;
   top: 18px;
@@ -138,7 +122,6 @@
   display: block !important;
   max-width: var(--game-tile-title-width, 44%);
 }
-
 .home-game-tile--artwork > span:last-of-type strong {
   color: var(--game-tile-title) !important;
   font-size: 18px !important;
@@ -146,11 +129,7 @@
   letter-spacing: -.015em;
   text-shadow: var(--game-tile-title-shadow, 0 2px 8px var(--game-tile-shadow));
 }
-
-.home-game-tile--artwork > span:last-of-type > span:nth-child(2) {
-  display: none !important;
-}
-
+.home-game-tile--artwork > span:last-of-type > span:nth-child(2) { display: none !important; }
 .home-game-tile--artwork > span:last-of-type > span:nth-child(3) {
   position: absolute;
   right: 13px;
@@ -172,6 +151,114 @@
   box-shadow: 0 3px 10px var(--game-tile-shadow);
 }
 
+/* Challenge page: collapsed challenge rows first, content only after expansion. */
+.design-card:has(> button:first-child[aria-expanded="false"]) > div:nth-child(2) {
+  display: none !important;
+}
+
+/* Personal challenge uses its third child button as the expansion state. Hide
+   the games while collapsed and make that control cover the header so tapping
+   the main row expands/collapses the card. */
+.design-card:has(> button:nth-child(3)[aria-expanded]) {
+  position: relative;
+}
+.design-card:has(> button:nth-child(3)[aria-expanded="false"]) > div:nth-child(2) {
+  display: none !important;
+}
+.design-card:has(> button:nth-child(3)[aria-expanded]) > button:nth-child(3) {
+  position: absolute !important;
+  inset: 0 0 auto 0;
+  height: 68px;
+  z-index: 5;
+  opacity: 0;
+  border: 0 !important;
+}
+
+/* The selected challenge already has a blue border/background. Suppress the
+   extra blue check beside its title so it cannot be mistaken for completion. */
+.design-card > button:first-child > span:nth-child(2) > span:first-child > svg {
+  display: none !important;
+}
+
+/* Compact challenge cards reuse the same artwork as Practice. */
+.challenge-mini-game--hive {
+  --challenge-art: url('/assets/hive-tile-bg-landscape.webp');
+  --challenge-art-position: 39% center;
+  --challenge-label: #251706;
+}
+.challenge-mini-game--binary {
+  --challenge-art: url('/assets/twist-tile-bg.png');
+  --challenge-label: #fff8e7;
+}
+.challenge-mini-game--gridly {
+  --challenge-art: url('/assets/gridly-tile-bg.webp');
+  --challenge-label: #f4fffd;
+}
+.challenge-mini-game--minisudoku {
+  --challenge-art: url('/assets/minisudoku-tile-bg.webp');
+  --challenge-label: #ffffff;
+}
+.challenge-mini-game--geo {
+  --challenge-art: url('/assets/geo-tile-bg.webp');
+  --challenge-label: #062f52;
+}
+.challenge-mini-game--zoom {
+  --challenge-art: url('/assets/zoom-tile-bg.webp');
+  --challenge-label: #fff5ff;
+}
+.challenge-mini-game--animalrush {
+  --challenge-art: url('/assets/animalrush-tile-bg.webp');
+  --challenge-label: #073f2b;
+}
+
+.challenge-mini-game[class*="challenge-mini-game--"] {
+  overflow: hidden;
+}
+.challenge-mini-game[style][class*="challenge-mini-game--"] {
+  background-image: var(--challenge-art) !important;
+  background-size: cover !important;
+  background-position: var(--challenge-art-position, center) !important;
+  background-repeat: no-repeat !important;
+}
+.challenge-mini-game[style][class*="challenge-mini-game--"] > span[aria-hidden="true"] {
+  visibility: hidden;
+}
+.challenge-mini-game[style][class*="challenge-mini-game--"] > strong {
+  position: absolute;
+  left: 7px;
+  right: 7px;
+  bottom: 8px;
+  z-index: 2;
+  padding: 4px 5px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.86);
+  color: #182033 !important;
+  text-align: center;
+  text-shadow: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,.10);
+}
+.challenge-mini-game[style][class*="challenge-mini-game--"] > span:last-child:not([aria-hidden]) {
+  display: none !important;
+}
+
+/* Completed tiles are disabled buttons. Let swipe gestures fall through to the
+   strip so a row with mostly completed games still scrolls normally on iOS. */
+.challenge-mini-strip {
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  padding-right: 22px !important;
+}
+.challenge-mini-game {
+  flex: 0 0 94px !important;
+  min-width: 94px !important;
+  max-width: 94px !important;
+  scroll-snap-align: start;
+}
+.challenge-mini-game:disabled {
+  pointer-events: none;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .home-game-tile--artwork:not(:disabled):hover {
     border-color: var(--game-tile-hover-border, color-mix(in srgb, var(--game-tile-meta) 55%, transparent)) !important;
@@ -184,16 +271,13 @@
     --game-tile-position: 40% center;
     --game-tile-meta-width: 60%;
   }
-
   .home-game-tile--artwork > span:last-of-type > span:first-child {
     top: 16px;
     right: 11px;
   }
-
   .home-game-tile--artwork > span:last-of-type strong {
     font-size: 17px !important;
   }
-
   .home-game-tile--artwork > span:last-of-type > span:nth-child(3) {
     right: 10px;
     bottom: 11px;
