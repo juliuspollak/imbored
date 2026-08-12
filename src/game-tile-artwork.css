@@ -156,9 +156,6 @@
   display: none !important;
 }
 
-/* Personal challenge uses its third child button as the expansion state. Hide
-   the games while collapsed and make that control cover the header so tapping
-   the main row expands/collapses the card. */
 .design-card:has(> button:nth-child(3)[aria-expanded]) {
   position: relative;
 }
@@ -174,13 +171,10 @@
   border: 0 !important;
 }
 
-/* The selected challenge already has a blue border/background. Suppress the
-   extra blue check beside its title so it cannot be mistaken for completion. */
 .design-card > button:first-child > span:nth-child(2) > span:first-child > svg {
   display: none !important;
 }
 
-/* Compact challenge cards reuse the same artwork as Practice. */
 .challenge-mini-game--hive {
   --challenge-art: url('/assets/hive-tile-bg-landscape.webp');
   --challenge-art-position: 39% center;
@@ -241,22 +235,45 @@
   display: none !important;
 }
 
-/* Completed tiles are disabled buttons. Let swipe gestures fall through to the
-   strip so a row with mostly completed games still scrolls normally on iOS. */
+/* iOS Safari is more reliable when a horizontal strip is a real overflow
+   scroller with a column track rather than a flex row containing disabled
+   buttons. Keep the tiles as buttons, but make the strip own all scrolling. */
 .challenge-mini-strip {
-  touch-action: pan-x;
-  overscroll-behavior-x: contain;
+  display: grid !important;
+  grid-auto-flow: column;
+  grid-auto-columns: 94px;
+  justify-content: start;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: scroll !important;
+  overflow-y: hidden !important;
+  gap: 8px;
+  padding: 2px 22px 8px 1px !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  touch-action: auto;
   scroll-snap-type: x proximity;
-  padding-right: 22px !important;
 }
+.challenge-mini-strip::-webkit-scrollbar { display: none; }
 .challenge-mini-game {
-  flex: 0 0 94px !important;
+  width: 94px !important;
   min-width: 94px !important;
   max-width: 94px !important;
+  flex: none !important;
   scroll-snap-align: start;
 }
 .challenge-mini-game:disabled {
-  pointer-events: none;
+  pointer-events: auto !important;
+  cursor: default !important;
+}
+.challenge-mini-strip--single {
+  grid-auto-columns: 108px;
+}
+.challenge-mini-strip--single .challenge-mini-game {
+  width: 108px !important;
+  min-width: 108px !important;
+  max-width: 108px !important;
 }
 
 @media (hover: hover) and (pointer: fine) {
