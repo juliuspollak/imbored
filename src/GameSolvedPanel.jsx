@@ -66,11 +66,19 @@ export default function GameSolvedPanel({
         // Only worth explaining when the round itself was the problem. Having
         // no circlemates, or playing an unsupported game, is not feedback on
         // how you played.
-        const slowRound = data.eligible !== true
+        const roundIsTheProblem = data.eligible !== true
           && data.supported_result === true
-          && Number(data.recipient_count) > 0
-          && data.meets_quality_bar === false;
-        setChallengeBlockedReason(slowRound ? "Beat the typical time to dare your circle to beat this one." : "");
+          && Number(data.recipient_count) > 0;
+        // Someone already dared the circle on this exact board and did better,
+        // so say who to beat rather than repeating the generic advice.
+        const beaten = roundIsTheProblem && data.beats_seed_best === false && data.seed_best_seconds != null;
+        setChallengeBlockedReason(
+          beaten
+            ? `Someone already challenged this board at ${Math.round(Number(data.seed_best_seconds))}s — beat that to post yours.`
+            : roundIsTheProblem && data.meets_quality_bar === false
+              ? "Beat the typical time to dare your circle to beat this one."
+              : "",
+        );
       });
     return () => { active = false; };
   }, [allowScoreChallenge,savedStatId]);

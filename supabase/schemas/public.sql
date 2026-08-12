@@ -3722,6 +3722,8 @@ declare
   supported_result boolean:=false;
   benchmark_ready boolean:=false;
   beats_typical boolean:=false;
+  seed_best numeric;
+  beats_seed_best boolean:=true;
 begin
   select * into source_result
   from public.game_stats
@@ -3765,8 +3767,23 @@ begin
   benchmark_ready:=benchmark.clean_sample_count>=6;
   beats_typical:=source_score<benchmark.effective_seconds;
 
+  -- The best time anyone has already dared the circle with on this exact
+  -- board. Your own earlier challenge counts too: re-posting a worse run of a
+  -- puzzle you already challenged on is the same nonsense.
+  select min(coalesce(existing.scored_seconds, existing.seconds))
+  into seed_best
+  from public.score_challenges existing
+  where existing.game=source_result.game
+    and existing.seed=source_result.seed
+    and existing.day_index=source_result.day_index
+    and existing.source_stat_id<>target_stat_id;
+
+  if seed_best is not null then
+    beats_seed_best:=source_score<seed_best;
+  end if;
+
   return jsonb_build_object(
-    'eligible',supported_result and recipient_count>0 and beats_typical,
+    'eligible',supported_result and recipient_count>0 and beats_typical and beats_seed_best,
     'supported_result',supported_result,
     'recipient_count',recipient_count,
     'typical_seconds',benchmark.effective_seconds,
@@ -3774,6 +3791,8 @@ begin
     'benchmark_ready',benchmark_ready,
     'faster_than_typical',beats_typical,
     'meets_quality_bar',beats_typical,
+    'seed_best_seconds',seed_best,
+    'beats_seed_best',beats_seed_best,
     'circle_best',false,
     'comparable_players',0
   );
