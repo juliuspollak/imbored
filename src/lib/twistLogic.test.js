@@ -16,7 +16,7 @@ test("a solved board needs no deduction at all", () => {
   ]);
   const grade = gradeTwistBoard(full, new Map());
   assert.equal(grade.solved, true);
-  assert.equal(grade.rounds, 0);
+  assert.equal(grade.steps, 0);
 });
 
 test("two in a row forces the neighbour, and a gap forces the middle", () => {
@@ -54,21 +54,34 @@ test("edge constraints carry a known cell across to its neighbour", () => {
 });
 
 // The whole point of the grader: a board can be uniquely solvable and still
-// need no real thinking. Depth is what separates Sunday from Monday.
-test("depth reports how many sweeps the chain actually took", () => {
-  const shallow = board([
+// ask nothing of the player. Bottlenecks are the moments that require hunting,
+// and they are what separates Sunday from Monday.
+test("a board offering many moves at once has no bottlenecks", () => {
+  // Only the last row missing, so every column's quota forces its final cell
+  // at the same moment.
+  const open = board([
     [S, S, M, S, M, M],
     [M, M, S, M, S, S],
     [S, S, M, M, S, M],
     [M, S, S, M, M, S],
-    [S, M, M, S, S, _],
-    [M, M, S, S, M, _],
+    [S, M, M, S, S, M],
+    [_, _, _, _, _, _],
   ]);
-  const grade = gradeTwistBoard(shallow, new Map());
+  const grade = gradeTwistBoard(open, new Map());
   assert.equal(grade.solved, true);
-  assert.ok(grade.rounds >= 1 && grade.rounds <= 2, `expected a shallow chain, got ${grade.rounds}`);
+  // Every remaining cell is forced by its column quota at the same moment:
+  // one wide step, nothing to search for.
+  assert.ok(grade.widths[0] > 2, `expected a wide first step, got ${grade.widths[0]}`);
+  assert.equal(grade.bottlenecks, 0);
 });
 
+test("a single forced cell counts as a bottleneck", () => {
+  const tight = board([[S, S, _, _, _, _], [_, _, _, _, _, _], [_, _, _, _, _, _], [_, _, _, _, _, _], [_, _, _, _, _, _], [_, _, _, _, _, _]]);
+  const grade = gradeTwistBoard(tight, new Map());
+  assert.equal(grade.widths[0], 1);
+  assert.equal(grade.tightest, 1);
+  assert.ok(grade.bottlenecks >= 1);
+});
 test("a board the basic techniques cannot finish is reported unsolved, not guessed at", () => {
   const stuck = board([
     [_, _, _, _, _, _],
@@ -80,5 +93,5 @@ test("a board the basic techniques cannot finish is reported unsolved, not guess
   ]);
   const grade = gradeTwistBoard(stuck, new Map());
   assert.equal(grade.solved, false);
-  assert.equal(grade.rounds, 0);
+  assert.equal(grade.steps, 0);
 });
