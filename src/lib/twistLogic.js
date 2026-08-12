@@ -29,6 +29,48 @@ export function edgeKey(r1, c1, r2, c2) {
 const at = (board, index, i, isRow) => (isRow ? board[index][i] : board[i][index]);
 const coord = (index, i, isRow) => (isRow ? [index, i] : [i, index]);
 
+function lineIsLegal(cells, index, isRow, edgeMap) {
+  let suns = 0;
+  for (let i = 0; i < SIZE; i += 1) {
+    if (cells[i] === SUN) suns += 1;
+    if (i >= 2 && cells[i] === cells[i - 1] && cells[i] === cells[i - 2]) return false;
+    if (i > 0) {
+      const [r1, c1] = coord(index, i - 1, isRow);
+      const [r2, c2] = coord(index, i, isRow);
+      const type = edgeMap.get(edgeKey(r1, c1, r2, c2));
+      if (type === "eq" && cells[i] !== cells[i - 1]) return false;
+      if (type === "neq" && cells[i] === cells[i - 1]) return false;
+    }
+  }
+  return suns === HALF;
+}
+
+/**
+ * Cells of a line that hold the same value in every legal completion of it.
+ *
+ * At most six unknowns, so enumerating all 2^k fillings is trivial, and it
+ * captures the counting-and-spacing reasoning players do naturally.
+ */
+export function lineForcedValues(cells, index, isRow, edgeMap) {
+  const blanks = [];
+  for (let i = 0; i < SIZE; i += 1) if (cells[i] === EMPTY) blanks.push(i);
+  if (blanks.length === 0 || blanks.length > SIZE) return [];
+
+  const seen = blanks.map(() => new Set());
+  let legalCount = 0;
+  for (let mask = 0; mask < (1 << blanks.length); mask += 1) {
+    const trial = [...cells];
+    blanks.forEach((i, bit) => { trial[i] = (mask >> bit) & 1 ? SUN : MOON; });
+    if (!lineIsLegal(trial, index, isRow, edgeMap)) continue;
+    legalCount += 1;
+    blanks.forEach((i, bit) => seen[bit].add(trial[i]));
+  }
+  // No legal completion means the board is already broken; deduce nothing
+  // rather than inventing a value.
+  if (legalCount === 0) return [];
+  return blanks.flatMap((i, bit) => (seen[bit].size === 1 ? [{ i, value: [...seen[bit]][0] }] : []));
+}
+
 // Every cell whose value is forced by a technique a player can see, without
 // placing anything. Returned as a de-duplicated list so its length is a
 // faithful measure of how many moves are on offer right now.
@@ -50,12 +92,14 @@ export function collectDeductions(board, edgeMap) {
         if (a !== EMPTY && a === c && b === EMPTY) add(...coord(index, i + 1, isRow), other(a));
       }
 
-      // A line already holding its full quota of one symbol.
-      for (const value of [SUN, MOON]) {
-        if (cells.filter((cell) => cell === value).length !== HALF) continue;
-        for (let i = 0; i < SIZE; i += 1) {
-          if (cells[i] === EMPTY) add(...coord(index, i, isRow), other(value));
-        }
+      // The technique that actually carries these puzzles: work out every way
+      // the line could legally be finished, and take the cells that come out
+      // the same in all of them. "Whatever I try here, that one must be a
+      // moon." Without this the solver is far weaker than a real player, and
+      // grading against it selects for its blind spots rather than for
+      // difficulty.
+      for (const forced of lineForcedValues(cells, index, isRow, edgeMap)) {
+        add(...coord(index, forced.i, isRow), forced.value);
       }
     }
   }

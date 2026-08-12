@@ -184,7 +184,7 @@ function countSolutions(givens, edgeMap, limit) {
 // Greedy invariant-preserving removal: start fully revealed (trivially unique),
 // only ever commit a removal if the puzzle stays uniquely solvable afterward.
 // This guarantees the result is always valid without needing a final re-check.
-function generatePuzzle(givenTarget, edgeTarget, minBottlenecks = 0, maxAttempts = 30) {
+function generatePuzzle(givenTarget, edgeTarget, minBottlenecks = 0, maxAttempts = 80) {
   let best = null;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const solution = generateSolution();
@@ -385,7 +385,7 @@ const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 // bottleneck is a moment offering one or two legal deductions in the whole
 // grid, so the player has to hunt rather than follow. This, not the clue
 // count above, is what actually scales the difficulty.
-const MIN_BOTTLENECKS = [1, 2, 3, 4, 5, 6, 7];
+const MIN_BOTTLENECKS = [0, 1, 1, 2, 2, 3, 5];
 const GIVEN_TARGETS = [16, 14, 12, 10, 9, 8, 7];
 const EDGE_TARGETS = [6, 5, 5, 4, 4, 3, 3];
 const TANGO_GENERATOR_VERSION = "tango-v1";

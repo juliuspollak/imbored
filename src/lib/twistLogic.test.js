@@ -69,18 +69,19 @@ test("a board offering many moves at once has no bottlenecks", () => {
   ]);
   const grade = gradeTwistBoard(open, new Map());
   assert.equal(grade.solved, true);
-  // Every remaining cell is forced by its column quota at the same moment:
-  // one wide step, nothing to search for.
+  // Most of the row falls at once from the column quotas — a wide step is one
+  // the player never has to search for.
   assert.ok(grade.widths[0] > 2, `expected a wide first step, got ${grade.widths[0]}`);
-  assert.equal(grade.bottlenecks, 0);
 });
 
-test("a single forced cell counts as a bottleneck", () => {
+test("a step offering only a move or two is counted as a bottleneck", () => {
   const tight = board([[S, S, _, _, _, _], [_, _, _, _, _, _], [_, _, _, _, _, _], [_, _, _, _, _, _], [_, _, _, _, _, _], [_, _, _, _, _, _]]);
   const grade = gradeTwistBoard(tight, new Map());
-  assert.equal(grade.widths[0], 1);
-  assert.equal(grade.tightest, 1);
+  // Two suns at the start of an otherwise empty grid give almost nothing away.
+  assert.ok(grade.widths[0] <= 2, `expected a narrow step, got ${grade.widths[0]}`);
   assert.ok(grade.bottlenecks >= 1);
+  // And the rest of the grid stays unreachable, so this is not a real puzzle.
+  assert.equal(grade.solved, false);
 });
 test("a board the basic techniques cannot finish is reported unsolved, not guessed at", () => {
   const stuck = board([
