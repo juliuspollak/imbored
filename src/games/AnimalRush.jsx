@@ -1044,14 +1044,14 @@ export default function AnimalRush({ onExit }) {
                   key={`${room.round_number}-${key}`}
                   onPointerDown={(event) => submitAnimal(event, animal.id, isDecoy)}
                   disabled={!canTap}
-                  aria-label={animal.label}
+                  aria-label={`${animal.label}${isDecoy ? " with closed eyes" : " with open eyes"}`}
                   data-decoy={isDecoy}
                   style={cardRotationsByAnimal[animal.id]
                     ? { "--rush-card-rotation": `${cardRotationsByAnimal[animal.id]}deg` }
                     : undefined}
                 >
                   <span className="rush-animal-card-inner">
-                    <AnimalFace animalId={animal.id} colourMode={room.colour_mode || "uniform"} size={72} />
+                    <AnimalFace animalId={animal.id} colourMode={room.colour_mode || "uniform"} size={72} decoy={isDecoy} />
                     {room.difficulty !== "hard" && <span className="rush-animal-label">{animal.label}</span>}
                   </span>
                 </button>

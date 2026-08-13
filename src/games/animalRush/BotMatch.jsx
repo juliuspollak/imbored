@@ -429,14 +429,14 @@ export default function BotMatch({
                     resolveAttempt("human", isDecoy ? decoySubmission(game.round.target) : animal.id);
                   }}
                   disabled={!canTap}
-                  aria-label={animal.label}
+                  aria-label={`${animal.label}${isDecoy ? " with closed eyes" : " with open eyes"}`}
                   data-decoy={isDecoy}
                   style={cardRotationsByAnimal[animal.id]
                     ? { "--rush-card-rotation": `${cardRotationsByAnimal[animal.id]}deg` }
                     : undefined}
                 >
                   <span className="rush-animal-card-inner">
-                    <AnimalFace animalId={animal.id} colourMode={game.colourMode} size={72} />
+                    <AnimalFace animalId={animal.id} colourMode={game.colourMode} size={72} decoy={isDecoy} />
                     {game.difficulty !== "hard" && <span className="rush-animal-label">{animal.label}</span>}
                   </span>
                 </button>

@@ -230,7 +230,7 @@ test("the angles move on from round to round", () => {
   assert.ok(seen.size >= 10, `only ${seen.size} distinct layouts in 12 rounds`);
 });
 
-test("hard mode adds one mirrored target decoy in a stable position", () => {
+test("hard mode replaces one card with an identical target decoy", () => {
   const args = {
     order: ANIMAL_IDS,
     targetAnimal: "fox",
@@ -240,9 +240,10 @@ test("hard mode adds one mirrored target decoy in a stable position", () => {
   const first = playableCards(args);
   const second = playableCards(args);
   assert.deepEqual(first, second);
-  assert.equal(first.length, 7);
+  assert.equal(first.length, 6);
   assert.equal(first.filter((card) => card.animalId === "fox").length, 2);
   assert.equal(first.filter((card) => card.isDecoy).length, 1);
+  assert.equal(new Set(first.map((card) => card.animalId)).size, 5);
   assert.notEqual(decoySubmission("fox"), "fox");
 });
 
