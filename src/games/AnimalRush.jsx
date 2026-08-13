@@ -140,7 +140,7 @@ function PlayerRow({ player, currentUserId, winnerId, synchronised }) {
             : player.eliminated
               ? "Eliminated"
               : typeof synchronised === "boolean"
-                ? synchronised ? "Synchronised" : "Synchronising phone…"
+                ? synchronised ? "Synchronised" : "Synchronising device…"
                 : `${player.rounds_won || 0} rounds won`}
         </small>
       </span>
@@ -179,10 +179,10 @@ function PhoneOnly({ onExit }) {
         <span className="rush-icon-panel rush-icon-panel--mint mx-auto grid h-16 w-16 place-items-center rounded-3xl">
           <Smartphone size={30} />
         </span>
-        <p className="rush-kicker mt-5">Phone-only live game</p>
+        <p className="rush-kicker mt-5">Touch-device live game</p>
         <h1 className="mt-2 text-3xl font-bold" style={{ fontFamily: "'Fredoka', sans-serif" }}>Animal Rush</h1>
         <p className="rush-muted mt-3 text-sm leading-relaxed">
-          Finding an animal by mouse is not the same as reaching for it. Open ImBored on a phone so every player competes with direct touch.
+          Finding an animal by mouse is not the same as reaching for it. Open ImBored on a phone or iPad so every player competes with direct touch.
         </p>
         <p className="rush-address mt-5 rounded-2xl px-4 py-3 text-sm font-semibold">imbored.au</p>
       </div>
@@ -563,7 +563,7 @@ export default function AnimalRush({ onExit }) {
   async function submitAnimal(event, animalId, isDecoy = false) {
     event.preventDefault();
     if (event.pointerType && event.pointerType !== "touch") {
-      setMessage("Animal Rush accepts direct phone touches only.");
+      setMessage("Animal Rush accepts direct touches only.");
       return;
     }
     if (phase !== "open" || attemptRef.current || me?.eliminated || me?.left_at) return;
@@ -666,7 +666,7 @@ export default function AnimalRush({ onExit }) {
           <section className="rush-panel p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="rush-kicker">Live · 2–6 phones</p>
+                <p className="rush-kicker">Live · 2–6 touch devices</p>
                 <h1 className="mt-1" style={{ marginBottom: 0, color: "var(--color-text-primary)", fontSize: "var(--text-page-title-size)", lineHeight: "var(--text-page-title-line)", fontWeight: "var(--text-page-title-weight)" }}>Animal Rush</h1>
               </div>
               <span className="rush-icon-panel rush-icon-panel--mint grid h-12 w-12 place-items-center rounded-2xl">
@@ -768,7 +768,7 @@ export default function AnimalRush({ onExit }) {
           <section className="rush-panel p-6 text-center">
             <p className="rush-kicker">Room ready</p>
             <p className="rush-code mt-2">{room.code}</p>
-            <p className="rush-muted mt-1 text-xs">Share this code with players on their phones.</p>
+            <p className="rush-muted mt-1 text-xs">Share this code with players on their phones or iPads.</p>
             <button type="button" className="rush-secondary mt-4" onClick={shareRoom}>
               {navigator.share ? <Share2 size={15} /> : <Copy size={15} />} Invite players
             </button>
@@ -809,7 +809,7 @@ export default function AnimalRush({ onExit }) {
             {isHost ? (
               <button type="button" className="rush-primary mt-4 w-full" onClick={startGame} disabled={!allPlayersReady || !!working}>
                 {working === "start" ? <Loader2 className="animate-spin" size={17} /> : <Play size={17} fill="currentColor" />}
-                {allPlayersReady ? "Start match" : "Waiting for synced phones"}
+                {allPlayersReady ? "Start match" : "Waiting for synced devices"}
               </button>
             ) : (
               <p className="rush-muted mt-4 text-center text-xs">The room creator will start the match.</p>
@@ -967,7 +967,7 @@ export default function AnimalRush({ onExit }) {
                   <>
                     <span>Synchronising players</span>
                     <Loader2 className="rush-sync-spinner" size={40} />
-                    <small>Every phone has the same start time</small>
+                    <small>Every device has the same start time</small>
                   </>
                 ) : (
                   <>
