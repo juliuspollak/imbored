@@ -23,7 +23,7 @@ import {
   visibleCardOrder,
 } from "./engine.js";
 
-test("accepts touch phones and rejects desktop or tablet-style devices", () => {
+test("accepts touch phones and iPads while rejecting desktops", () => {
   assert.equal(isPhoneDevice({
     userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)",
     maxTouchPoints: 5,
@@ -38,6 +38,18 @@ test("accepts touch phones and rejects desktop or tablet-style devices", () => {
     userAgent: "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X)",
     maxTouchPoints: 5,
     coarsePointer: true,
+  }), true);
+  assert.equal(isPhoneDevice({
+    userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) AppleWebKit/605.1.15",
+    userAgentMobile: false,
+    maxTouchPoints: 5,
+    coarsePointer: true,
+  }), true);
+  assert.equal(isPhoneDevice({
+    userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)",
+    userAgentMobile: false,
+    maxTouchPoints: 0,
+    coarsePointer: false,
   }), false);
 });
 

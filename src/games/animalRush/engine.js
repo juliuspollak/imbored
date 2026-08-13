@@ -37,8 +37,13 @@ export function isPhoneDevice({
   coarsePointer = false,
 } = {}) {
   const phoneUserAgent = /iPhone|iPod|Android.+Mobile|Windows Phone/i.test(userAgent);
+  // iPadOS can use either an explicit iPad UA or a desktop-style Macintosh UA.
+  // A real Mac does not report multiple touch points, so the latter remains a
+  // safe way to admit iPads without opening the game to desktop browsers.
+  const appleTablet = /iPad/i.test(userAgent)
+    || (/Macintosh/i.test(userAgent) && maxTouchPoints > 1);
   const reportsMobile = typeof userAgentMobile === "boolean" ? userAgentMobile : phoneUserAgent;
-  return reportsMobile && maxTouchPoints > 0 && coarsePointer;
+  return (reportsMobile || appleTablet) && maxTouchPoints > 0 && coarsePointer;
 }
 
 /**
