@@ -19,6 +19,7 @@ export default function ScoringGuide({ rules }) {
 
   const sections = [
     ["guide.finishing", t("guide.finishingDetail", { base })],
+    ["guide.accuracy", t("guide.accuracyDetail")],
     ["guide.weekday", t("guide.weekdayDetail")],
     ["guide.speed", t("guide.speedDetail")],
     ["guide.hints", t("guide.hintsDetail")],

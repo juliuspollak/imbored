@@ -37,8 +37,21 @@ export default function ScoreBreakdown({ rewardResult }) {
   const dayIndex = Number(breakdown.day_index);
   const dayName = Number.isFinite(dayIndex) && dayIndex >= 0 && dayIndex <= 6 ? t(`day.${dayIndex}`) : null;
 
+  // Quiz games pay out on the share of answers you got right, so a shrunken
+  // base needs saying out loud — otherwise it reads as an unexplained number.
+  const correctCount = Number(breakdown.correct_count);
+  const totalCount = Number(breakdown.total_count);
+  const scoredOnAnswers = Number.isFinite(correctCount) && totalCount > 0;
+  const missedAnswers = scoredOnAnswers && correctCount < totalCount;
+
   const rows = [
-    { key: "base", label: t("score.base"), value: base },
+    {
+      key: "base",
+      label: scoredOnAnswers
+        ? t("score.baseAnswers", { correct: correctCount, total: totalCount })
+        : t("score.base"),
+      value: base,
+    },
     dayBonus !== 0 && {
       key: "day",
       label: dayName ? t("score.dayHarder", { day: dayName }) : t("score.dayBonus"),
@@ -96,6 +109,7 @@ export default function ScoreBreakdown({ rewardResult }) {
               {addedTime ? ` ${addedTime} ${t("score.costTime")}` : ""}
             </p>
           )}
+          {missedAnswers && <p className="score-breakdown-note">{t("score.noSpeedBonus")}</p>}
           <p className="score-breakdown-note">{t("score.typicalNote")}</p>
         </div>
       )}

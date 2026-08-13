@@ -1818,8 +1818,8 @@ declare
   benchmark_seconds numeric;
   scored_seconds numeric;
   performance_adjustment integer:=0;
-  zoom_correct integer;
-  zoom_total integer;
+  answer_correct integer;
+  answer_total integer;
   effective_base_points integer;
   day_number integer;
   day_bonus integer:=0;
@@ -1892,15 +1892,22 @@ begin
     s.seconds,s.hints,s.mistakes,benchmark_seconds
   );
 
-  zoom_total:=greatest(coalesce(s.total_count,9),1);
-  zoom_correct:=least(zoom_total,greatest(coalesce(s.correct_count,zoom_total-s.mistakes),0));
-  effective_base_points:=case when s.game='zoom'
-    then round(r.base_points*zoom_correct::numeric/zoom_total)
-    else r.base_points end;
+  -- Any game that reports how many answers it asked for is paid on accuracy,
+  -- not just Zoom: a wrong answer costs base points, and an imperfect round
+  -- earns no speed bonus, so racing through a quiz getting it wrong cannot
+  -- out-earn working through it. Games that report no answer count (the
+  -- solve-the-board puzzles) are unaffected and keep scoring on time alone.
+  answer_total:=nullif(greatest(coalesce(s.total_count,0),0),0);
+  if answer_total is null then
+    effective_base_points:=r.base_points;
+  else
+    answer_correct:=least(answer_total,greatest(coalesce(s.correct_count,answer_total-s.mistakes),0));
+    effective_base_points:=round(r.base_points*answer_correct::numeric/answer_total);
+  end if;
 
   day_number:=greatest(0,least(coalesce(s.day_index,0),6));
   day_bonus:=(array[0,0,1,1,1,2,2])[day_number+1];
-  if not (s.game='zoom' and zoom_correct<zoom_total) then
+  if answer_total is null or answer_correct=answer_total then
     performance_adjustment:=greatest(-4,least(4,round(
       10*(1-scored_seconds/benchmark_seconds)
     )::integer));
@@ -1949,9 +1956,9 @@ begin
     'scored_seconds',scored_seconds,
     'hint_penalty_seconds',greatest(coalesce(s.hints,0),0)*benchmark_seconds*0.20,
     'mistake_penalty_seconds',greatest(coalesce(s.mistakes,0),0)*benchmark_seconds*0.10,
-    'correct_count',case when s.game='zoom' then zoom_correct else null end,
-    'total_count',case when s.game='zoom' then zoom_total else null end,
-    'rounds_nailed',case when s.game='zoom' then s.rounds_nailed else null end,
+    'correct_count',answer_correct,
+    'total_count',answer_total,
+    'rounds_nailed',s.rounds_nailed,
     'weekly_streak',streak_points,
     'mode',s.mode,
     'mode_multiplier_percent',mode_percent,
@@ -2109,7 +2116,7 @@ $$;
 
 
 --
--- Name: circle_challenge_daily_score(text, date, integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
+-- Name: circle_challenge_daily_score(text, date, integer, integer, integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.challenge_benchmark_seconds(target_game text, target_challenge_date date) RETURNS numeric
@@ -2129,22 +2136,32 @@ $$;
 
 
 --
--- Name: circle_challenge_daily_score(text, date, integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
+-- Name: circle_challenge_daily_score(text, date, integer, integer, integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.circle_challenge_daily_score(target_game text, target_challenge_date date, elapsed_seconds integer, hint_count integer, mistake_count integer) RETURNS integer
+-- Scaled by the share of answers that were correct. On speed alone, failing a
+-- quiz was the winning strategy: a wrong answer ends the round early, and the
+-- 150 cap made a fast wipeout indistinguishable from a fast perfect run.
+-- Games that record no per-answer breakdown score on time only, as before.
+CREATE FUNCTION public.circle_challenge_daily_score(target_game text, target_challenge_date date, elapsed_seconds integer, hint_count integer, mistake_count integer, correct_answers integer DEFAULT NULL::integer, total_answers integer DEFAULT NULL::integer) RETURNS integer
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
   with typical as (
     select public.challenge_benchmark_seconds(target_game,target_challenge_date) as seconds
+  ),
+  accuracy as (
+    select case
+      when coalesce(total_answers,0) <= 0 then 1::numeric
+      else least(1,greatest(0,coalesce(correct_answers,0))::numeric/total_answers)
+    end as share
   )
   select greatest(20,least(150,round(
-    100*typical.seconds/greatest(1,public.scored_game_seconds(
+    100*typical.seconds*accuracy.share/greatest(1,public.scored_game_seconds(
       elapsed_seconds,hint_count,mistake_count,typical.seconds
     ))
   )::integer))
-  from typical
+  from typical,accuracy
 $$;
 
 
@@ -2179,7 +2196,9 @@ CREATE FUNCTION public.circle_challenge_member_totals(target_challenge_id bigint
           round_item.challenge_date,
           result.seconds,
           result.hints,
-          result.mistakes
+          result.mistakes,
+          result.correct_count,
+          result.total_count
         )
       end as round_score
     from challenge
@@ -3528,7 +3547,7 @@ $$;
 -- Name: get_personal_challenge_standings(date, date); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_personal_challenge_standings(start_date_in date, end_date_in date) RETURNS TABLE(result_user_id uuid, game text, challenge_date date, seconds integer, mistakes integer, hints integer, zip_backtracked_cells integer, zip_required_moves integer, completed_at timestamp with time zone)
+CREATE FUNCTION public.get_personal_challenge_standings(start_date_in date, end_date_in date) RETURNS TABLE(result_user_id uuid, game text, challenge_date date, seconds integer, mistakes integer, hints integer, correct_count integer, total_count integer, zip_backtracked_cells integer, zip_required_moves integer, completed_at timestamp with time zone)
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -3539,6 +3558,10 @@ CREATE FUNCTION public.get_personal_challenge_standings(start_date_in date, end_
     gs.seconds,
     gs.mistakes,
     gs.hints,
+    -- The browser scores the personal challenge itself, so it needs the same
+    -- accuracy inputs circle_challenge_daily_score() gets on the server.
+    gs.correct_count,
+    gs.total_count,
     gs.zip_backtracked_cells,
     gs.zip_required_moves,
     gs.completed_at
@@ -9284,7 +9307,7 @@ REVOKE ALL ON FUNCTION public.circle_today(bigint) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.circle_week_start(bigint) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.set_my_timezone(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.challenge_benchmark_seconds(text, date) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.circle_challenge_daily_score(text, date, integer, integer, integer) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.circle_challenge_daily_score(text, date, integer, integer, integer, integer, integer) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.circle_challenge_member_totals(bigint) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.finalize_circle_challenge(bigint) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.get_circle_challenge_standings(bigint) FROM PUBLIC;

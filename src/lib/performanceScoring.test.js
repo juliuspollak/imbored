@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { challengeScore, performanceAdjustment, scoredSeconds, weekdayBonus } from "./performanceScoring.js";
+import { answerAccuracy, challengeScore, performanceAdjustment, scoredSeconds, weekdayBonus } from "./performanceScoring.js";
 
 test("penalties scale with the puzzle's typical time", () => {
   assert.equal(scoredSeconds({ seconds: 60, hints: 1, mistakes: 1, typicalSeconds: 100 }), 90);
@@ -26,14 +26,38 @@ test("performance adjustment is bounded and based on scored time", () => {
 });
 
 test("challenge score uses the same penalties", () => {
-  assert.deepEqual(challengeScore({ seconds: 70, hints: 1, mistakes: 1 }, 100), { adjusted: 100, score: 100 });
+  assert.deepEqual(challengeScore({ seconds: 70, hints: 1, mistakes: 1 }, 100), { adjusted: 100, accuracy: 1, score: 100 });
   assert.equal(challengeScore({ seconds: 1 }, 100).score, 150);
   assert.equal(challengeScore({ seconds: 1000 }, 100).score, 20);
 });
 
 test("missing benchmarks use the same 100-second fallback as PostgreSQL", () => {
   assert.equal(scoredSeconds({ seconds: 70, hints: 1, mistakes: 1 }), 100);
-  assert.deepEqual(challengeScore({ seconds: 70, hints: 1, mistakes: 1 }), { adjusted: 100, score: 100 });
+  assert.deepEqual(challengeScore({ seconds: 70, hints: 1, mistakes: 1 }), { adjusted: 100, accuracy: 1, score: 100 });
+});
+
+test("a quiz reports its accuracy under either naming", () => {
+  assert.equal(answerAccuracy({}), 1);
+  assert.equal(answerAccuracy({ correct_count: 3, total_count: 9 }), 1 / 3);
+  assert.equal(answerAccuracy({ correctCount: 9, totalCount: 9 }), 1);
+  assert.equal(answerAccuracy({ correct_count: 0, total_count: 9 }), 0);
+  assert.equal(answerAccuracy({ correct_count: 5, total_count: 0 }), 1);
+});
+
+// The bug this replaced: a wrong answer ends a Zoom round early, so quitting
+// fast scored the 150 cap while a careful correct run scored less.
+test("bailing out of a quiz can no longer beat playing it properly", () => {
+  const wipeoutInTenSeconds = challengeScore({ seconds: 10, mistakes: 3, correct_count: 0, total_count: 9 }, 100);
+  const carefulRun = challengeScore({ seconds: 120, mistakes: 0, correct_count: 9, total_count: 9 }, 100);
+  assert.equal(wipeoutInTenSeconds.score, 20);
+  assert.ok(carefulRun.score > wipeoutInTenSeconds.score);
+});
+
+test("accuracy and speed both move the score", () => {
+  const perfect = challengeScore({ seconds: 100, correct_count: 9, total_count: 9 }, 100).score;
+  const twoThirds = challengeScore({ seconds: 100, correct_count: 6, total_count: 9 }, 100).score;
+  assert.equal(perfect, 100);
+  assert.equal(twoThirds, 67);
 });
 
 test("weekday progression is modest and monotonic", () => {

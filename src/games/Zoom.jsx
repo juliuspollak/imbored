@@ -7,7 +7,7 @@ import { generateZoomQuiz, ROUNDS_PER_QUIZ, LEVELS_PER_ROUND } from "./zoom/zoom
 import { getTargetHistory, rememberTargets } from "./zoom/zoomHistory.js";
 import FlagImage from "./geo/FlagImage.jsx";
 import { useI18n } from "../lib/i18n.jsx";
-import { localizeZoomValue, localizeZoomPrompt } from "./zoom/zoomLocalization.js";
+import { localizeZoomValue, localizeZoomPrompt, localizeZoomClueName } from "./zoom/zoomLocalization.js";
 import DaySelector from "../DaySelector.jsx";
 import Page from "../components/Page.jsx";
 import Card from "../components/Card.jsx";
@@ -123,10 +123,24 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
   const isLast = qIdx === steps.length - 1;
   const totalRounds = Math.max(...steps.map((s) => s.roundIndex)) + 1;
   const roundNumber = step.roundIndex + 1;
-  const isFinalRound = step.roundIndex === totalRounds - 1;
   const shownAnswer = localizeZoomValue(step.answer, language, step);
   const shownSelected = localizeZoomValue(selected, language, step);
   const prompt = localizeZoomPrompt(step, language);
+  const shownCountry = localizeZoomValue(step.countryName, language, { ...step, levelKey: "country" });
+  // Why that answer was right, not just what it was: name the country the clue
+  // belongs to and where it sits, so a miss on the continent or region step
+  // teaches something instead of just reading "wrong".
+  const whyExplanation = step.levelKey === "continent"
+    ? t(step.clueType === "flag" ? "zoom.why.continentFlag" : "zoom.why.continent", {
+      clue: localizeZoomClueName(step, language),
+      country: shownCountry,
+      continent: localizeZoomValue(step.continent, language),
+    })
+    : t("zoom.why.subregion", {
+      country: shownCountry,
+      subregion: localizeZoomValue(step.subregion, language),
+      continent: localizeZoomValue(step.continent, language),
+    });
 
   function pick(option) {
     if (answered || solved) return;
@@ -142,8 +156,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
   }
 
   function next() {
-    const roundFailed = selected !== step.answer;
-    if (isLast || (roundFailed && isFinalRound)) {
+    if (isLast) {
       setSolved(true);
       setRunning(false);
       sessionStorage.removeItem(stateKey);
@@ -169,9 +182,11 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
       });
       return;
     }
-    // One wrong level fails the whole round. Do not continue revealing easier
-    // levels from the same clue; move to the first level of the next round.
-    setQIdx(roundFailed ? (step.roundIndex + 1) * LEVELS_PER_ROUND : qIdx + 1);
+    // Every level gets answered, right or wrong. Skipping the rest of a round
+    // after one miss cut the quiz short, which both hid the remaining
+    // questions and — because the challenge round used to be scored on
+    // elapsed time alone — made failing early score better than playing on.
+    setQIdx(qIdx + 1);
     setSelected(null);
     setAnswered(false);
   }
@@ -381,9 +396,11 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
                     ? t("zoom.correct", { answer: shownAnswer })
                     : t("zoom.incorrect", { selected: shownSelected, answer: shownAnswer })}
                 </div>
-                {step.levelKey === "country" && (
+                {(step.levelKey === "country" || selected !== step.answer) && (
                   <div className="text-xs mt-1" style={{ color: "var(--color-text-secondary)" }}>
-                    {t("zoom.roundAnswer", { country: localizeZoomValue(step.countryName, language, { ...step, levelKey: "country" }), flag: step.flagEmoji || "" })}
+                    {step.levelKey === "country"
+                      ? t("zoom.roundAnswer", { country: shownCountry, flag: step.flagEmoji || "" })
+                      : whyExplanation}
                   </div>
                 )}
               </div>
@@ -391,9 +408,9 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
 
             {answered && (
               <Button onClick={next} fullWidth>
-                {isLast || (selected !== step.answer && isFinalRound)
+                {isLast
                   ? t("common.seeResults")
-                  : selected !== step.answer || step.levelKey === "country"
+                  : step.levelKey === "country"
                     ? t("zoom.nextRound")
                     : t("common.nextQuestion")}
               </Button>

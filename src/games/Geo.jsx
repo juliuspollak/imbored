@@ -56,6 +56,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
   const [running, setRunning] = useState(false);
   const [solved, setSolved] = useState(false);
   const [mistakes, setMistakes] = useState(0);
+  const [correctLog, setCorrectLog] = useState([]); // per-question booleans, so a restart can't be mistaken for a correct answer
   const [hintsUsed, setHintsUsed] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
   const [difficultyRating, setDifficultyRating] = useState(null);
@@ -77,6 +78,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
           setRunning(true);
           setSolved(false);
           setMistakes(saved.mistakes || 0);
+          setCorrectLog(saved.correctLog || []);
           setHintsUsed(saved.hintsUsed || 0);
           setDifficultyRating(null);
           return;
@@ -98,6 +100,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
     setRunning(true);
     setSolved(false);
     setMistakes(0);
+    setCorrectLog([]);
     setHintsUsed(0);
     setDifficultyRating(null);
     hintCooldown.reset();
@@ -113,8 +116,8 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
 
   useEffect(() => {
     if (!questions || solved) return;
-    sessionStorage.setItem(stateKey, JSON.stringify({ questions, qIdx, selected, answered, eliminated, seconds, mistakes, hintsUsed, solved }));
-  }, [stateKey, questions, qIdx, selected, answered, eliminated, seconds, mistakes, hintsUsed, solved]);
+    sessionStorage.setItem(stateKey, JSON.stringify({ questions, qIdx, selected, answered, eliminated, seconds, mistakes, correctLog, hintsUsed, solved }));
+  }, [stateKey, questions, qIdx, selected, answered, eliminated, seconds, mistakes, correctLog, hintsUsed, solved]);
 
   if (!questions) {
     return (
@@ -133,7 +136,13 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
     if (answered || solved) return;
     setSelected(option);
     setAnswered(true);
-    if (option !== q.answer) setMistakes((m) => m + 1);
+    const isCorrect = option === q.answer;
+    if (!isCorrect) setMistakes((m) => m + 1);
+    setCorrectLog((log) => {
+      const next = [...log];
+      next[qIdx] = isCorrect;
+      return next;
+    });
   }
 
   function next() {
@@ -141,7 +150,22 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
       setSolved(true);
       setRunning(false);
       sessionStorage.removeItem(stateKey);
-      onSolved && onSolved({ userId, game: "geo", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed, mode, challengeDate: isChallenge ? challengeDate : undefined });
+      // correct/total ride along so the challenge score can weigh accuracy,
+      // not just the clock.
+      const finalCorrectLog = [...correctLog];
+      finalCorrectLog[qIdx] = selected === q.answer;
+      onSolved && onSolved({
+        userId,
+        game: "geo",
+        dayIndex: dayIdx,
+        seconds,
+        mistakes,
+        hints: hintsUsed,
+        correctCount: finalCorrectLog.filter(Boolean).length,
+        totalCount: questions.length,
+        mode,
+        challengeDate: isChallenge ? challengeDate : undefined,
+      });
       return;
     }
     setQIdx((i) => i + 1);
@@ -169,6 +193,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
     setSelected(null);
     setAnswered(false);
     setEliminated([]);
+    setCorrectLog([]);
     setMistakes((value) => value + 1);
     setRunning(true);
   }
@@ -425,7 +450,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
           difficultyRating={difficultyRating}
           stats={
             <>
-              {t("geo.result", { correct: questions.length - mistakes, total: questions.length })} &middot; {fmtTime(seconds)} &middot; {t(hintsUsed === 1 ? "geo.hints.one" : "geo.hints.other", { count: hintsUsed })}
+              {t("geo.result", { correct: correctLog.filter(Boolean).length, total: questions.length })} &middot; {fmtTime(seconds)} &middot; {t(hintsUsed === 1 ? "geo.hints.one" : "geo.hints.other", { count: hintsUsed })}
             </>
           }
           rewardResult={rewardResult}
