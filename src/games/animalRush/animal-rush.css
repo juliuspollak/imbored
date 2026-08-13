@@ -729,6 +729,11 @@
   transform: rotate(var(--rush-card-rotation, 0deg));
 }
 
+/* The hard-mode impostor shows the same animal as the die but reflected. */
+.rush-animal-card[data-decoy="true"] svg {
+  transform: scaleX(-1);
+}
+
 /* --- Hard mode spin -------------------------------------------------------
    SPEED DIAL: one full turn per this duration. Larger is slower.
    14s is a deliberate starting point — slow enough to track a shape while you

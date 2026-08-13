@@ -173,6 +173,34 @@ export function cardRotations({ difficulty, roundSeed, animalIds = ANIMAL_IDS } 
   );
 }
 
+/**
+ * Builds the playable card list. Hard mode adds a mirrored copy of the target
+ * in a deterministic position so every phone sees the same seven-card board.
+ * The duplicate has its own key and is marked as a decoy; callers must submit
+ * a guaranteed-wrong animal when it is touched.
+ */
+export function playableCards({ order, targetAnimal, difficulty, roundSeed } = {}) {
+  const safeOrder = Array.isArray(order) && order.length === ANIMAL_IDS.length ? order : ANIMAL_IDS;
+  const cards = safeOrder.map((animalId) => ({
+    key: animalId,
+    animalId,
+    isDecoy: false,
+  }));
+  if (difficulty !== "hard" || !ANIMAL_IDS.includes(targetAnimal)) return cards;
+
+  const insertAt = rotationHash(`${roundSeed}:decoy`) % (cards.length + 1);
+  cards.splice(insertAt, 0, {
+    key: `${targetAnimal}-decoy`,
+    animalId: targetAnimal,
+    isDecoy: true,
+  });
+  return cards;
+}
+
+export function decoySubmission(targetAnimal) {
+  return ANIMAL_IDS.find((animalId) => animalId !== targetAnimal) || ANIMAL_IDS[0];
+}
+
 export function visibleCardOrder(room, phase) {
   const finalOrder = Array.isArray(room?.card_order) && room.card_order.length === ANIMAL_IDS.length
     ? room.card_order

@@ -10,6 +10,8 @@ import {
   applyWrongTap,
   botAnimalChoice,
   cardRotations,
+  playableCards,
+  decoySubmission,
   derangedShuffle,
   matchWinner,
   pickNextTarget,
@@ -258,9 +260,16 @@ export default function BotMatch({
   const cardOrder = game.difficulty === "hard" && (visualPhase === "waiting" || visualPhase === "rolling")
     ? game.round.previewOrder
     : game.round.order;
+  const roundSeed = `${game.id}:${game.round.number}`;
   const cardRotationsByAnimal = cardRotations({
     difficulty: game.difficulty,
-    roundSeed: `${game.id}:${game.round.number}`,
+    roundSeed,
+  });
+  const playableCardEntries = playableCards({
+    order: cardOrder,
+    targetAnimal: visualPhase === "waiting" || visualPhase === "rolling" ? null : game.round.target,
+    difficulty: game.difficulty,
+    roundSeed,
   });
   const canTap = game.status === "playing"
     && game.round.status === "playing"
@@ -407,27 +416,28 @@ export default function BotMatch({
             aria-hidden={concealed}
             aria-label="Animal cards"
           >
-            {cardOrder.map((animalId) => {
+            {playableCardEntries.map(({ key, animalId, isDecoy }) => {
               const animal = animalById(animalId);
               return (
                 <button
                   type="button"
                   className="rush-animal-card"
-                  key={`${game.round.number}-${animal.id}`}
+                  key={`${game.round.number}-${key}`}
                   onPointerDown={(event) => {
                     event.preventDefault();
                     if (event.pointerType && event.pointerType !== "touch") return;
-                    resolveAttempt("human", animal.id);
+                    resolveAttempt("human", isDecoy ? decoySubmission(game.round.target) : animal.id);
                   }}
                   disabled={!canTap}
                   aria-label={animal.label}
+                  data-decoy={isDecoy}
                   style={cardRotationsByAnimal[animal.id]
                     ? { "--rush-card-rotation": `${cardRotationsByAnimal[animal.id]}deg` }
                     : undefined}
                 >
                   <span className="rush-animal-card-inner">
                     <AnimalFace animalId={animal.id} colourMode={game.colourMode} size={72} />
-                    <span className="rush-animal-label">{animal.label}</span>
+                    {game.difficulty !== "hard" && <span className="rush-animal-label">{animal.label}</span>}
                   </span>
                 </button>
               );

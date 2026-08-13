@@ -8,6 +8,8 @@ import {
   applyWrongTap,
   botAnimalChoice,
   cardRotations,
+  playableCards,
+  decoySubmission,
   cardsConcealed,
   countdownNumber,
   inviteUrl,
@@ -226,4 +228,33 @@ test("the angles move on from round to round", () => {
   }
   // Twelve consecutive rounds should not keep serving the same arrangement.
   assert.ok(seen.size >= 10, `only ${seen.size} distinct layouts in 12 rounds`);
+});
+
+test("hard mode adds one mirrored target decoy in a stable position", () => {
+  const args = {
+    order: ANIMAL_IDS,
+    targetAnimal: "fox",
+    difficulty: "hard",
+    roundSeed: "room-9:4",
+  };
+  const first = playableCards(args);
+  const second = playableCards(args);
+  assert.deepEqual(first, second);
+  assert.equal(first.length, 7);
+  assert.equal(first.filter((card) => card.animalId === "fox").length, 2);
+  assert.equal(first.filter((card) => card.isDecoy).length, 1);
+  assert.notEqual(decoySubmission("fox"), "fox");
+});
+
+test("easy and standard keep the existing six cards", () => {
+  for (const difficulty of ["easy", "standard"]) {
+    const cards = playableCards({ order: ANIMAL_IDS, targetAnimal: "fox", difficulty, roundSeed: "round" });
+    assert.equal(cards.length, 6);
+    assert.equal(cards.some((card) => card.isDecoy), false);
+  }
+});
+
+test("hard mode can keep the decoy out of the pre-reveal board", () => {
+  const cards = playableCards({ order: ANIMAL_IDS, targetAnimal: null, difficulty: "hard", roundSeed: "round" });
+  assert.equal(cards.length, 6);
 });

@@ -29,6 +29,8 @@ import {
   DIFFICULTY_MODES,
   animalById,
   cardRotations,
+  playableCards,
+  decoySubmission,
   cardsConcealed,
   countdownNumber,
   inviteUrl,
@@ -558,7 +560,7 @@ export default function AnimalRush({ onExit }) {
     await refreshRoom(room.id, true);
   }
 
-  async function submitAnimal(event, animalId) {
+  async function submitAnimal(event, animalId, isDecoy = false) {
     event.preventDefault();
     if (event.pointerType && event.pointerType !== "touch") {
       setMessage("Animal Rush accepts direct phone touches only.");
@@ -569,7 +571,7 @@ export default function AnimalRush({ onExit }) {
     setAttemptFeedback({ pending: true, animalId });
     const { data, error } = await supabase.rpc("animal_rush_submit_attempt", {
       target_room_id: room.id,
-      selected_animal: animalId,
+      selected_animal: isDecoy ? decoySubmission(room.target_animal) : animalId,
     });
     if (error) {
       setAttemptFeedback({ error: true, text: error.message, animalId });
@@ -863,6 +865,15 @@ export default function AnimalRush({ onExit }) {
   const targetAnimal = animalById(room.target_animal);
   const canTap = phase === "open" && !attemptRef.current && !me?.eliminated && !me?.left_at;
   const cardOrder = visibleCardOrder(room, phase);
+  const playableCardEntries = playableCards({
+    order: cardOrder,
+    // Do not show the duplicate during the roll: that would reveal which
+    // animal the die is about to land on. It is inserted under the shuffle
+    // cover and appears only as part of the final board.
+    targetAnimal: phase === "waiting" || phase === "rolling" ? null : room.target_animal,
+    difficulty: room.difficulty,
+    roundSeed: `${room.id}:${room.round_number}`,
+  });
   // Keyed by room and round so every player in the race sees the same angles.
   const cardRotationsByAnimal = cardRotations({
     difficulty: room.difficulty,
@@ -1024,23 +1035,24 @@ export default function AnimalRush({ onExit }) {
             aria-hidden={concealed}
             aria-label="Animal cards"
           >
-            {cardOrder.map((animalId) => {
+            {playableCardEntries.map(({ key, animalId, isDecoy }) => {
               const animal = animalById(animalId);
               return (
                 <button
                   type="button"
                   className="rush-animal-card"
-                  key={`${room.round_number}-${animal.id}`}
-                  onPointerDown={(event) => submitAnimal(event, animal.id)}
+                  key={`${room.round_number}-${key}`}
+                  onPointerDown={(event) => submitAnimal(event, animal.id, isDecoy)}
                   disabled={!canTap}
                   aria-label={animal.label}
+                  data-decoy={isDecoy}
                   style={cardRotationsByAnimal[animal.id]
                     ? { "--rush-card-rotation": `${cardRotationsByAnimal[animal.id]}deg` }
                     : undefined}
                 >
                   <span className="rush-animal-card-inner">
                     <AnimalFace animalId={animal.id} colourMode={room.colour_mode || "uniform"} size={72} />
-                    <span className="rush-animal-label">{animal.label}</span>
+                    {room.difficulty !== "hard" && <span className="rush-animal-label">{animal.label}</span>}
                   </span>
                 </button>
               );
