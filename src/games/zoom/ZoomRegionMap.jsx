@@ -39,10 +39,6 @@ function regionForFeature(feature, continent) {
 }
 
 function featureBelongsToContinent(feature, continent) {
-  // Zoom's own country data is the source of truth. Do not fall back to
-  // Natural Earth's CONTINENT value: transcontinental countries such as
-  // Russia can span almost the whole world at the antimeridian and destroy
-  // the fitted projection, making Europe look like a horizontal line.
   const iso2 = featureIso2(feature);
   const appCountry = iso2 ? COUNTRY_BY_ISO2.get(iso2) : null;
   return appCountry?.continent === continent;
@@ -69,7 +65,10 @@ function wrappedLongitude(lon, continent) {
 function mercatorY(lat) {
   const clamped = Math.max(-82, Math.min(82, lat));
   const radians = clamped * Math.PI / 180;
-  return Math.log(Math.tan(Math.PI / 4 + radians / 2));
+  // Return Mercator Y in degree-like units so it is on the same scale as
+  // longitude. The previous implementation returned raw radians/log units
+  // while X stayed in degrees, compressing every continent into a thin line.
+  return (180 / Math.PI) * Math.log(Math.tan(Math.PI / 4 + radians / 2));
 }
 
 function makeProjection(features, continent) {
