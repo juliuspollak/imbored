@@ -71,14 +71,61 @@ function mercatorY(lat) {
   return (180 / Math.PI) * Math.log(Math.tan(Math.PI / 4 + radians / 2));
 }
 
-function makeProjection(continent) {
-  const bounds = CONTINENT_BOUNDS[continent];
-  if (!bounds) return null;
+function geometryCoordinates(geometry) {
+  if (!geometry) return [];
+  if (geometry.type === "Polygon") return geometry.coordinates.flat();
+  if (geometry.type === "MultiPolygon") return geometry.coordinates.flat(2);
+  return [];
+}
 
-  const minX = wrappedLongitude(bounds.minLon, continent);
-  const maxX = wrappedLongitude(bounds.maxLon, continent);
-  const minY = mercatorY(bounds.minLat);
-  const maxY = mercatorY(bounds.maxLat);
+function boundsForOptionRegions(continent, features, optionRegions) {
+  if (!features.length || !optionRegions.length) return CONTINENT_BOUNDS[continent] || null;
+
+  const points = features
+    .filter((feature) => optionRegions.includes(regionForFeature(feature, continent)))
+    .flatMap((feature) => geometryCoordinates(feature.geometry));
+
+  if (!points.length) return CONTINENT_BOUNDS[continent] || null;
+
+  let minLon = Infinity;
+  let maxLon = -Infinity;
+  let minLat = Infinity;
+  let maxLat = -Infinity;
+
+  points.forEach(([rawLon, lat]) => {
+    const lon = wrappedLongitude(rawLon, continent);
+    if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
+    minLon = Math.min(minLon, lon);
+    maxLon = Math.max(maxLon, lon);
+    minLat = Math.min(minLat, lat);
+    maxLat = Math.max(maxLat, lat);
+  });
+
+  if (![minLon, maxLon, minLat, maxLat].every(Number.isFinite)) {
+    return CONTINENT_BOUNDS[continent] || null;
+  }
+
+  const lonSpan = Math.max(8, maxLon - minLon);
+  const latSpan = Math.max(8, maxLat - minLat);
+  const lonPad = Math.max(5, lonSpan * 0.10);
+  const latPad = Math.max(4, latSpan * 0.12);
+
+  return {
+    minLon: minLon - lonPad,
+    maxLon: maxLon + lonPad,
+    minLat: Math.max(-82, minLat - latPad),
+    maxLat: Math.min(82, maxLat + latPad),
+  };
+}
+
+function makeProjection(continent, bounds) {
+  const effectiveBounds = bounds || CONTINENT_BOUNDS[continent];
+  if (!effectiveBounds) return null;
+
+  const minX = effectiveBounds.minLon;
+  const maxX = effectiveBounds.maxLon;
+  const minY = mercatorY(effectiveBounds.minLat);
+  const maxY = mercatorY(effectiveBounds.maxLat);
   const usableWidth = WIDTH - PADDING * 2;
   const usableHeight = HEIGHT - PADDING * 2;
   const scale = Math.min(usableWidth / (maxX - minX), usableHeight / (maxY - minY));
@@ -167,7 +214,11 @@ export default function ZoomRegionMap({
     return geoJson.features.filter((feature) => featureBelongsToContinent(feature, continent));
   }, [geoJson, continent]);
 
-  const project = useMemo(() => makeProjection(continent), [continent]);
+  const focusBounds = useMemo(
+    () => boundsForOptionRegions(continent, mapFeatures, visibleOptions),
+    [continent, mapFeatures, visibleOptions.join("|")]
+  );
+  const project = useMemo(() => makeProjection(continent, focusBounds), [continent, focusBounds]);
 
   if (!allRegions.length) return null;
 
@@ -213,8 +264,8 @@ export default function ZoomRegionMap({
                   <path
                     d={geometryToPath(feature.geometry, project)}
                     fill={style.fill}
-                    stroke={style.stroke}
-                    strokeWidth={answered && (region === correctRegion || region === selectedRegion) ? 1.6 : 0.9}
+                    stroke={style.fill}
+                    strokeWidth={1.35}
                     strokeLinejoin="round"
                     fillRule="evenodd"
                     vectorEffect="non-scaling-stroke"
@@ -226,7 +277,7 @@ export default function ZoomRegionMap({
                       cy={marker[1]}
                       r={compact ? 1.8 : 2.7}
                       fill={style.fill}
-                      stroke={style.stroke}
+                      stroke={style.fill}
                       strokeWidth={1}
                       vectorEffect="non-scaling-stroke"
                     />
