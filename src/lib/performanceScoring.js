@@ -35,17 +35,30 @@ export function answerAccuracy(result = {}) {
 
 // Speed alone used to decide a challenge round, so bailing out of a quiz with
 // every answer wrong beat working through it carefully: the failure ended the
-// round in a few seconds and the 150 cap hid the difference. Scaling by
-// accuracy makes a wrong answer cost more than the time it saves.
+// round in a few seconds and the cap hid the difference.
+//
+// Accuracy is applied *after* the clamp, not inside it. Scaling the raw speed
+// figure first let a fast enough run stay above 150 even with a wrong answer,
+// so the cap swallowed the penalty and a flawed round still showed full marks.
+// Clamping the speed part first means the accuracy share always lands on the
+// visible score: 8 of 9 correct tops out at 133, never 150.
+//
+// A round answered entirely wrong scores 0, the same as a missed one — but
+// having played still counts, because rounds played is the next tiebreaker
+// after score in compareStandings().
 export function challengeScore(result, typicalSeconds) {
   const typical = benchmarkSeconds(typicalSeconds);
   const adjusted = Math.max(1, scoredSeconds({ ...result, typicalSeconds: typical }));
   const accuracy = answerAccuracy(result);
-  const score = Math.round((100 * typical * accuracy) / adjusted);
+  const speedScore = Math.max(
+    MIN_DAILY_SCORE,
+    Math.min(MAX_DAILY_SCORE, Math.round((100 * typical) / adjusted)),
+  );
   return {
     adjusted,
     accuracy,
-    score: Math.max(MIN_DAILY_SCORE, Math.min(MAX_DAILY_SCORE, score)),
+    speedScore,
+    score: Math.round(speedScore * accuracy),
   };
 }
 

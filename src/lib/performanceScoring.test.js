@@ -26,14 +26,31 @@ test("performance adjustment is bounded and based on scored time", () => {
 });
 
 test("challenge score uses the same penalties", () => {
-  assert.deepEqual(challengeScore({ seconds: 70, hints: 1, mistakes: 1 }, 100), { adjusted: 100, accuracy: 1, score: 100 });
+  assert.deepEqual(challengeScore({ seconds: 70, hints: 1, mistakes: 1 }, 100), { adjusted: 100, accuracy: 1, speedScore: 100, score: 100 });
   assert.equal(challengeScore({ seconds: 1 }, 100).score, 150);
   assert.equal(challengeScore({ seconds: 1000 }, 100).score, 20);
 });
 
 test("missing benchmarks use the same 100-second fallback as PostgreSQL", () => {
   assert.equal(scoredSeconds({ seconds: 70, hints: 1, mistakes: 1 }), 100);
-  assert.deepEqual(challengeScore({ seconds: 70, hints: 1, mistakes: 1 }), { adjusted: 100, accuracy: 1, score: 100 });
+  assert.deepEqual(challengeScore({ seconds: 70, hints: 1, mistakes: 1 }), { adjusted: 100, accuracy: 1, speedScore: 100, score: 100 });
+});
+
+// The cap used to swallow the accuracy penalty whole: scaling before the clamp
+// left a fast round above 150 even with an answer wrong, so it still read 150.
+test("a wrong answer shows up even on a run fast enough to cap", () => {
+  const flawlessAndFast = challengeScore({ seconds: 60, correct_count: 9, total_count: 9 }, 165);
+  const oneWrongAndFast = challengeScore({ seconds: 60, mistakes: 1, correct_count: 8, total_count: 9 }, 165);
+  assert.equal(flawlessAndFast.score, 150);
+  assert.equal(oneWrongAndFast.speedScore, 150, "both runs cap on speed");
+  assert.equal(oneWrongAndFast.score, 133, "but only the flawless one keeps the full 150");
+});
+
+test("only a flawless round can reach the maximum, however fast", () => {
+  for (const seconds of [1, 5, 30, 60]) {
+    assert.equal(challengeScore({ seconds, correct_count: 9, total_count: 9 }, 165).score, 150);
+    assert.ok(challengeScore({ seconds, correct_count: 8, total_count: 9 }, 165).score < 150);
+  }
 });
 
 test("a quiz reports its accuracy under either naming", () => {
@@ -49,7 +66,7 @@ test("a quiz reports its accuracy under either naming", () => {
 test("bailing out of a quiz can no longer beat playing it properly", () => {
   const wipeoutInTenSeconds = challengeScore({ seconds: 10, mistakes: 3, correct_count: 0, total_count: 9 }, 100);
   const carefulRun = challengeScore({ seconds: 120, mistakes: 0, correct_count: 9, total_count: 9 }, 100);
-  assert.equal(wipeoutInTenSeconds.score, 20);
+  assert.equal(wipeoutInTenSeconds.score, 0);
   assert.ok(carefulRun.score > wipeoutInTenSeconds.score);
 });
 
