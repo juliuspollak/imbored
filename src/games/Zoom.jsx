@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
 import { useGameTimer } from "../lib/useGameTimer.js";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
+import BoardReviewToggle from "../BoardReviewToggle.jsx";
 import { Timer as TimerIcon, HelpCircle } from "lucide-react";
 import { generateZoomQuiz, LEVELS_PER_ROUND } from "./zoom/zoomGenerator.js";
 import { getTargetHistory, rememberTargets } from "./zoom/zoomHistory.js";
@@ -61,6 +62,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
   const [answerLog, setAnswerLog] = useState([]);
   const [showHelp, setShowHelp] = useState(false);
   const [difficultyRating, setDifficultyRating] = useState(null);
+  const [reviewing, setReviewing] = useState(false);
   const stateKey = `imbored:zoom:variety-v2:${mode}:${userId || "guest"}:${challengeDate || dayIdx}:${seed || "practice"}`;
 
   const newQuiz = useCallback((dIdx, forceFresh = false) => {
@@ -75,6 +77,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
           setSeconds(Math.max(saved.seconds || 0, initialSeconds));
           setRunning(true);
           setSolved(false);
+          setReviewing(false);
           setMistakes(saved.mistakes || 0);
           setCorrectLog(saved.correctLog || []);
           setAnswerLog(saved.answerLog || []);
@@ -95,6 +98,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
     setSeconds(initialSeconds);
     setRunning(true);
     setSolved(false);
+    setReviewing(false);
     setMistakes(0);
     setCorrectLog([]);
     setAnswerLog([]);
@@ -177,6 +181,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
   function next() {
     if (isLast) {
       setSolved(true);
+      setReviewing(false);
       setRunning(false);
       sessionStorage.removeItem(stateKey);
       const finalCorrectLog = [...correctLog];
@@ -476,8 +481,26 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
           </>
         )}
 
-        {solved && (
-          <div style={{ marginBottom: "var(--space-5)" }}>
+        <GameSolvedPanel
+          solved={solved}
+          difficultyRating={difficultyRating}
+          stats={
+            <>
+              {t("zoom.result", { correct: correctLog.filter(Boolean).length, total: steps.length })} &middot; {fmtTime(seconds)} &middot; {t("zoom.roundsNailed", { count: roundsNailed, total: totalRounds })}
+            </>
+          }
+          rewardResult={rewardResult}
+          savedStatId={savedStatId}
+          onRated={setDifficultyRating}
+          showPlayAgain={!isChallenge}
+          onPlayAgain={() => newQuiz(dayIdx)}
+          playAgainLabel={t("zoom.playAgain")}
+        />
+
+        {solved && <BoardReviewToggle reviewing={reviewing} onToggle={() => setReviewing((value) => !value)} />}
+
+        {solved && reviewing && (
+          <div style={{ marginTop: "var(--space-4)", marginBottom: "var(--space-5)" }}>
             <div className="text-center" style={{ marginBottom: "var(--space-4)" }}>
               <h2 style={{ margin: 0, color: INK, fontSize: "var(--text-section-title-size)", fontWeight: 700 }}>Review your answers</h2>
               <p style={{ margin: "4px 0 0", color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)" }}>
@@ -591,22 +614,6 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
             </div>
           </div>
         )}
-
-        <GameSolvedPanel
-          solved={solved}
-          difficultyRating={difficultyRating}
-          stats={
-            <>
-              {t("zoom.result", { correct: correctLog.filter(Boolean).length, total: steps.length })} &middot; {fmtTime(seconds)} &middot; {t("zoom.roundsNailed", { count: roundsNailed, total: totalRounds })}
-            </>
-          }
-          rewardResult={rewardResult}
-          savedStatId={savedStatId}
-          onRated={setDifficultyRating}
-          showPlayAgain={!isChallenge}
-          onPlayAgain={() => newQuiz(dayIdx)}
-          playAgainLabel={t("zoom.playAgain")}
-        />
       </Card>
     </Page>
   );
