@@ -46,14 +46,19 @@ function featureIso2(feature) {
 }
 
 function continentForFeature(feature) {
+  // At continent level use Natural Earth's atlas classification first. This
+  // avoids painting all of transcontinental countries (most visibly Russia)
+  // as one continent just because the quiz-country record has one continent
+  // value. It also prevents Russia wrapping across the dateline as a stray
+  // piece of "Europe" on the far-left edge of the world map.
+  const natural = feature?.properties?.CONTINENT;
+  if (["Africa", "Asia", "Europe", "North America", "South America", "Oceania"].includes(natural)) {
+    return natural;
+  }
+
   const iso2 = featureIso2(feature);
   const appCountry = iso2 ? COUNTRY_BY_ISO2.get(iso2) : null;
-  if (appCountry?.continent) return appCountry.continent;
-
-  const natural = feature?.properties?.CONTINENT;
-  return ["Africa", "Asia", "Europe", "North America", "South America", "Oceania"].includes(natural)
-    ? natural
-    : null;
+  return appCountry?.continent || null;
 }
 
 function mercatorY(lat) {
@@ -100,10 +105,6 @@ function focusBoundsFor(options) {
   };
 }
 
-// Focused two-continent comparisons use a simple geographic/equirectangular
-// fit instead of Mercator. Mercator greatly enlarges high latitudes (notably
-// northern Asia) and was forcing the entire comparison to shrink inside the
-// card. The world overview keeps Mercator for familiar orientation.
 function makeFocusedProject(bounds) {
   if (!bounds) return worldProject;
 
