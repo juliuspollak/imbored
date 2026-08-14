@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, LockKeyhole, Trophy } from "lucide-react";
-import { MISSED_ROUND_PENALTY, buildChallengeStandings, fromServerStandings } from "./lib/challengeStandingsScoring.js";
+import { MISSED_ROUND_PENALTY, buildChallengeStandings, explainTiebreak, fromServerStandings } from "./lib/challengeStandingsScoring.js";
 import { useI18n } from "./lib/i18n.jsx";
 import { GAME_NAMES } from "./lib/gameBranding.jsx";
 
@@ -155,13 +155,16 @@ function StandingsList({ standings, expandedPlayerId, setExpandedPlayerId, previ
   const { t } = useI18n();
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-      {standings.map((player) => {
+      {standings.map((player, playerIndex) => {
         const rank = player.rank;
         const previousRank = previousRankMap[player.userId] ?? rank;
         const delta = rank == null || previousRank == null ? 0 : previousRank - rank;
         const isLeader = rank === 1 && player.score > 0;
         const expanded = expandedPlayerId === player.userId;
         const isWinner = closed && winnerId === player.userId;
+        // Why this player is above the next one when the score cannot say.
+        // Without it, a table of identical scores looks arbitrary.
+        const tiebreak = explainTiebreak(player, standings[playerIndex + 1]);
 
         return (
           <article
@@ -193,6 +196,11 @@ function StandingsList({ standings, expandedPlayerId, setExpandedPlayerId, previ
                   {player.isPrivate && t("standings.private")}
                   {delta !== 0 && ` · ${delta > 0 ? "↑" : "↓"}${Math.abs(delta)}`}
                 </span>
+                {tiebreak && (
+                  <span style={{ display: "block", marginTop: 3, color: "var(--color-warning-text)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>
+                    {t(`standings.tiebreak.${tiebreak}`)}
+                  </span>
+                )}
               </span>
               <span style={{ flexShrink: 0, textAlign: "right" }}>
                 <span style={{ display: "block", color: isLeader ? "var(--color-warning-text)" : "var(--color-text-primary)", fontSize: 19, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{player.score}</span>

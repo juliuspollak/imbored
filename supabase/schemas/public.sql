@@ -2288,7 +2288,7 @@ $$;
 -- Name: get_circle_challenge_standings(bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_circle_challenge_standings(target_challenge_id bigint) RETURNS TABLE(member_id uuid, member_name text, member_icon text, standing_rank integer, challenge_score integer, rounds_played integer, rounds_total integer, is_private boolean, round_scores jsonb)
+CREATE FUNCTION public.get_circle_challenge_standings(target_challenge_id bigint) RETURNS TABLE(member_id uuid, member_name text, member_icon text, standing_rank integer, challenge_score integer, rounds_played integer, rounds_total integer, is_private boolean, round_scores jsonb, total_hints integer, total_mistakes integer, adjusted_seconds bigint, finished_at timestamp with time zone)
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -2333,7 +2333,13 @@ CREATE FUNCTION public.get_circle_challenge_standings(target_challenge_id bigint
         and coalesce(profile.show_stats_to_others,false)=false
       then null
       else totals.round_scores
-    end
+    end,
+    -- The keys that break a tie, returned so the standings can say out loud
+    -- why one player finished above another on an identical score.
+    totals.total_hints,
+    totals.total_mistakes,
+    totals.adjusted_seconds,
+    totals.finished_at
   from visible_challenge
   cross join public.circle_challenge_member_totals(visible_challenge.id) totals
   join public.profiles profile on profile.id=totals.member_id
@@ -4937,11 +4943,17 @@ begin
   into eligible_players,qualifying_samples,community_median
   from player_medians;
 
+  -- Two players, not three. A circle of four never crossed a three-player bar
+  -- -- each needs two hint-free, mistake-free samples in 90 days -- so the
+  -- seeded provisional time stayed in force forever. Against a guess that far
+  -- from real play every round pins the 150 cap, the standings all read the
+  -- same, and the winner falls to the tiebreakers.
+
   update public.game_time_benchmarks current_benchmark
-  set observed_median_seconds=case when eligible_players>=3 then community_median else null end,
-      clean_sample_count=case when eligible_players>=3 then qualifying_samples else 0 end,
+  set observed_median_seconds=case when eligible_players>=2 then community_median else null end,
+      clean_sample_count=case when eligible_players>=2 then qualifying_samples else 0 end,
       effective_seconds=case
-        when eligible_players>=3 and community_median is not null then round(community_median)
+        when eligible_players>=2 and community_median is not null then round(community_median)
         else current_benchmark.provisional_seconds
       end,
       updated_at=now()

@@ -48,6 +48,29 @@ export function pooledChallengeSummary(results, benchmarkMap, missedPenalty = 0)
   });
 }
 
+// The order compareStandings() applies, named so the UI can say which key
+// actually decided a placing. Identical scores used to leave players staring
+// at two 450s with no idea why one of them won.
+export const TIEBREAK_KEYS = [
+  ["rounds", (entry) => -Number(entry.played || 0)],
+  ["hints", (entry) => Number(entry.hints || 0)],
+  ["mistakes", (entry) => Number(entry.mistakes || 0)],
+  ["time", (entry) => Number(entry.adjusted || 0)],
+  ["finished", (entry) => String(entry.finishedAt || "")],
+];
+
+// Why `ahead` placed above `behind`. Returns null when the score alone
+// separated them (nothing to explain), or "coinflip" when every key matched
+// and only the account id was left to break it.
+export function explainTiebreak(ahead, behind) {
+  if (!ahead || !behind) return null;
+  if (ahead.score !== behind.score) return null;
+  for (const [key, valueOf] of TIEBREAK_KEYS) {
+    if (valueOf(ahead) !== valueOf(behind)) return key;
+  }
+  return "coinflip";
+}
+
 export function compareStandings(a, b) {
   return b.score - a.score
     || b.played - a.played
@@ -147,6 +170,12 @@ export function fromServerStandings(serverRows = [], userId = null) {
         missed: Number(row.rounds_total) - Number(row.rounds_played),
         isCurrentUser: row.member_id === userId,
         isPrivate: false,
+        // Carried through so explainTiebreak() works on server-ranked circle
+        // standings, not only on the locally scored personal ones.
+        hints: Number(row.total_hints) || 0,
+        mistakes: Number(row.total_mistakes) || 0,
+        adjusted: Number(row.adjusted_seconds) || 0,
+        finishedAt: String(row.finished_at || ""),
         unranked: false,
         detailHidden: rounds === null,
         dailyResults: rounds

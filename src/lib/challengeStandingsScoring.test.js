@@ -4,6 +4,7 @@ import {
   MISSED_ROUND_PENALTY,
   buildChallengeStandings,
   compareStandings,
+  explainTiebreak,
   fromServerStandings,
   pooledChallengeSummary,
   rankStandings,
@@ -233,4 +234,24 @@ test("the card shows the top five, plus your own row when you place below them",
 test("a top-five finisher is not duplicated at the end of their own card", () => {
   const rows = ["me", "b", "c"].map((id, index) => ({ member_id: id, member_name: id, member_icon: "🙂", standing_rank: index + 1, challenge_score: 100 - index, rounds_played: 2, rounds_total: 3, is_private: false, round_scores: [] }));
   assert.deepEqual(fromServerStandings(rows, "me").map((entry) => entry.userId), ["me", "b", "c"]);
+});
+
+// The real closed challenge that prompted this: four players, three tied on a
+// capped 450, and nothing on screen said why Julius won.
+test("a table of identical scores says which key decided each placing", () => {
+  const players = [
+    { name: "Julius", score: 450, played: 3, hints: 0, mistakes: 0, adjusted: 34, finishedAt: "2026-08-13T22:07:32Z" },
+    { name: "juli", score: 450, played: 3, hints: 0, mistakes: 0, adjusted: 57, finishedAt: "2026-08-13T22:21:12Z" },
+    { name: "Kriple", score: 450, played: 3, hints: 1, mistakes: 3, adjusted: 141, finishedAt: "2026-08-14T02:28:16Z" },
+    { name: "Oliver", score: 300, played: 2, hints: 0, mistakes: 2, adjusted: 44, finishedAt: "2026-08-12T08:37:52Z" },
+  ];
+  assert.equal(explainTiebreak(players[0], players[1]), "time", "Julius is ahead on total time, not hints or mistakes");
+  assert.equal(explainTiebreak(players[1], players[2]), "hints", "juli is ahead of Kriple on the single hint");
+  assert.equal(explainTiebreak(players[2], players[3]), null, "a real score gap needs no explanation");
+});
+
+test("players level on every key are told it was arbitrary", () => {
+  const twin = { score: 450, played: 3, hints: 0, mistakes: 0, adjusted: 34, finishedAt: "2026-08-13T22:07:32Z" };
+  assert.equal(explainTiebreak(twin, { ...twin }), "coinflip");
+  assert.equal(explainTiebreak(twin, undefined), null, "the last row has nobody below it");
 });
