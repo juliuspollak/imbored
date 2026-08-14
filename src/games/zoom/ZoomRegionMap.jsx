@@ -2,17 +2,20 @@ import React, { useEffect, useMemo, useState } from "react";
 import { COUNTRIES } from "../geo/geoData.js";
 import { SUBREGIONS_BY_CONTINENT } from "../geo/geoSubregions.js";
 
-// 50m keeps the same real Natural Earth country geometry as the other Zoom
-// maps, but retains the smaller Pacific islands that largely disappear at 110m.
+// 50m keeps real Natural Earth geometry while retaining smaller islands.
 const MAP_URL = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson";
 const OPTION_STYLES = [
   { fill: "#93c5fd", stroke: "#3b82f6", text: "#1e3a8a" },
   { fill: "#fcd34d", stroke: "#f59e0b", text: "#92400e" },
 ];
+const NEUTRAL = { fill: "#e5e7eb", stroke: "#cbd5e1", text: "#94a3b8" };
 const WIDTH = 360;
 const HEIGHT = 210;
-const PADDING = 10;
+const PADDING_X = 8;
+const PADDING_Y = 7;
 
+// Region questions should always preserve the whole continent for orientation.
+// The candidate regions are highlighted inside this stable continent view.
 const CONTINENT_BOUNDS = {
   Europe: { minLon: -25, maxLon: 45, minLat: 34, maxLat: 72 },
   Africa: { minLon: -20, maxLon: 55, minLat: -36, maxLat: 38 },
@@ -51,13 +54,20 @@ function appCountryForFeature(feature) {
   return iso2 ? COUNTRY_BY_ISO2.get(iso2) : null;
 }
 
+function naturalContinentForFeature(feature) {
+  const value = feature?.properties?.CONTINENT;
+  return ["Africa", "Asia", "Europe", "North America", "South America", "Oceania"].includes(value)
+    ? value
+    : null;
+}
+
+function continentForFeature(feature) {
+  return appCountryForFeature(feature)?.continent || naturalContinentForFeature(feature);
+}
+
 function regionForFeature(feature, continent) {
   const appCountry = appCountryForFeature(feature);
   return appCountry?.continent === continent ? appCountry.subregion : null;
-}
-
-function featureBelongsToContinent(feature, continent) {
-  return appCountryForFeature(feature)?.continent === continent;
 }
 
 function wrappedLongitude(lon, continent) {
@@ -65,69 +75,18 @@ function wrappedLongitude(lon, continent) {
   return lon;
 }
 
-function mercatorY(lat) {
-  const clamped = Math.max(-82, Math.min(82, lat));
-  const radians = clamped * Math.PI / 180;
-  return (180 / Math.PI) * Math.log(Math.tan(Math.PI / 4 + radians / 2));
-}
+// A simple geographic fit gives players the familiar atlas-like continent
+// silhouette and avoids Mercator shrinking/distorting high-latitude regions.
+function makeProjection(continent) {
+  const bounds = CONTINENT_BOUNDS[continent];
+  if (!bounds) return null;
 
-function geometryCoordinates(geometry) {
-  if (!geometry) return [];
-  if (geometry.type === "Polygon") return geometry.coordinates.flat();
-  if (geometry.type === "MultiPolygon") return geometry.coordinates.flat(2);
-  return [];
-}
-
-function boundsForOptionRegions(continent, features, optionRegions) {
-  if (!features.length || !optionRegions.length) return CONTINENT_BOUNDS[continent] || null;
-
-  const points = features
-    .filter((feature) => optionRegions.includes(regionForFeature(feature, continent)))
-    .flatMap((feature) => geometryCoordinates(feature.geometry));
-
-  if (!points.length) return CONTINENT_BOUNDS[continent] || null;
-
-  let minLon = Infinity;
-  let maxLon = -Infinity;
-  let minLat = Infinity;
-  let maxLat = -Infinity;
-
-  points.forEach(([rawLon, lat]) => {
-    const lon = wrappedLongitude(rawLon, continent);
-    if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
-    minLon = Math.min(minLon, lon);
-    maxLon = Math.max(maxLon, lon);
-    minLat = Math.min(minLat, lat);
-    maxLat = Math.max(maxLat, lat);
-  });
-
-  if (![minLon, maxLon, minLat, maxLat].every(Number.isFinite)) {
-    return CONTINENT_BOUNDS[continent] || null;
-  }
-
-  const lonSpan = Math.max(8, maxLon - minLon);
-  const latSpan = Math.max(8, maxLat - minLat);
-  const lonPad = Math.max(5, lonSpan * 0.10);
-  const latPad = Math.max(4, latSpan * 0.12);
-
-  return {
-    minLon: minLon - lonPad,
-    maxLon: maxLon + lonPad,
-    minLat: Math.max(-82, minLat - latPad),
-    maxLat: Math.min(82, maxLat + latPad),
-  };
-}
-
-function makeProjection(continent, bounds) {
-  const effectiveBounds = bounds || CONTINENT_BOUNDS[continent];
-  if (!effectiveBounds) return null;
-
-  const minX = effectiveBounds.minLon;
-  const maxX = effectiveBounds.maxLon;
-  const minY = mercatorY(effectiveBounds.minLat);
-  const maxY = mercatorY(effectiveBounds.maxLat);
-  const usableWidth = WIDTH - PADDING * 2;
-  const usableHeight = HEIGHT - PADDING * 2;
+  const minX = wrappedLongitude(bounds.minLon, continent);
+  const maxX = wrappedLongitude(bounds.maxLon, continent);
+  const minY = bounds.minLat;
+  const maxY = bounds.maxLat;
+  const usableWidth = WIDTH - PADDING_X * 2;
+  const usableHeight = HEIGHT - PADDING_Y * 2;
   const scale = Math.min(usableWidth / (maxX - minX), usableHeight / (maxY - minY));
   const drawnWidth = (maxX - minX) * scale;
   const drawnHeight = (maxY - minY) * scale;
@@ -136,7 +95,7 @@ function makeProjection(continent, bounds) {
 
   return ([lon, lat]) => [
     offsetX + (wrappedLongitude(lon, continent) - minX) * scale,
-    offsetY + (maxY - mercatorY(lat)) * scale,
+    offsetY + (maxY - lat) * scale,
   ];
 }
 
@@ -159,15 +118,14 @@ function geometryToPath(geometry, project) {
 
 function regionStyle(region, optionRegions, answered, selectedRegion, correctRegion) {
   const optionIndex = optionRegions.indexOf(region);
-  const isOption = optionIndex >= 0;
   const selectedWrong = answered && selectedRegion === region && selectedRegion !== correctRegion;
   const correct = answered && correctRegion === region;
 
-  if (correct) return { fill: "#86efac", stroke: "#16a34a", text: "#166534" };
-  if (selectedWrong) return { fill: "#fca5a5", stroke: "#dc2626", text: "#991b1b" };
-  if (answered) return { fill: "#e5e7eb", stroke: "#cbd5e1", text: "#64748b" };
-  if (isOption) return OPTION_STYLES[optionIndex % OPTION_STYLES.length];
-  return { fill: "#e5e7eb", stroke: "#cbd5e1", text: "#94a3b8" };
+  if (correct) return { fill: "#86efac", stroke: "#16a34a", text: "#166534", option: true };
+  if (selectedWrong) return { fill: "#fca5a5", stroke: "#dc2626", text: "#991b1b", option: true };
+  if (answered) return { ...NEUTRAL, option: false };
+  if (optionIndex >= 0) return { ...OPTION_STYLES[optionIndex % OPTION_STYLES.length], option: true };
+  return { ...NEUTRAL, option: false };
 }
 
 function islandMarker(feature, project, continent) {
@@ -211,14 +169,12 @@ export default function ZoomRegionMap({
 
   const mapFeatures = useMemo(() => {
     if (!geoJson?.features) return [];
-    return geoJson.features.filter((feature) => featureBelongsToContinent(feature, continent));
+    // Use Natural Earth's continent membership as the fallback so countries
+    // that are not quiz targets still appear and the continent never has holes.
+    return geoJson.features.filter((feature) => continentForFeature(feature) === continent);
   }, [geoJson, continent]);
 
-  const focusBounds = useMemo(
-    () => boundsForOptionRegions(continent, mapFeatures, visibleOptions),
-    [continent, mapFeatures, visibleOptions.join("|")]
-  );
-  const project = useMemo(() => makeProjection(continent, focusBounds), [continent, focusBounds]);
+  const project = useMemo(() => makeProjection(continent), [continent]);
 
   if (!allRegions.length) return null;
 
@@ -229,12 +185,12 @@ export default function ZoomRegionMap({
         border: "1px solid var(--color-border)",
         borderRadius: "var(--radius-lg)",
         background: "linear-gradient(180deg, #f6fbff 0%, #eaf5ff 100%)",
-        padding: compact ? "5px" : "8px 8px 10px",
+        padding: compact ? "5px" : "6px 8px 9px",
         overflow: "hidden",
       }}
     >
       {!geoJson && !loadFailed && (
-        <div style={{ height: compact ? 118 : 170, display: "grid", placeItems: "center", color: "var(--color-text-muted)", fontSize: 11 }}>
+        <div style={{ height: compact ? 118 : 178, display: "grid", placeItems: "center", color: "var(--color-text-muted)", fontSize: 11 }}>
           Loading map…
         </div>
       )}
@@ -250,7 +206,7 @@ export default function ZoomRegionMap({
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           role="img"
           aria-label={`${labelFor(continent)} regions`}
-          style={{ width: "100%", height: compact ? 122 : 184, display: "block", overflow: "hidden" }}
+          style={{ width: "100%", height: compact ? 126 : 194, display: "block", overflow: "hidden" }}
         >
           <g>
             {mapFeatures.map((feature, index) => {
@@ -264,21 +220,21 @@ export default function ZoomRegionMap({
                   <path
                     d={geometryToPath(feature.geometry, project)}
                     fill={style.fill}
-                    stroke={style.fill}
-                    strokeWidth={1.35}
+                    stroke={style.option ? "rgba(255,255,255,0.62)" : "rgba(203,213,225,0.55)"}
+                    strokeWidth={style.option ? 0.48 : 0.34}
                     strokeLinejoin="round"
                     fillRule="evenodd"
                     vectorEffect="non-scaling-stroke"
-                    style={{ transition: "fill 180ms ease, stroke 180ms ease" }}
+                    style={{ transition: "fill 180ms ease" }}
                   />
                   {marker && (
                     <circle
                       cx={marker[0]}
                       cy={marker[1]}
-                      r={compact ? 1.8 : 2.7}
+                      r={compact ? 1.7 : 2.5}
                       fill={style.fill}
-                      stroke={style.fill}
-                      strokeWidth={1}
+                      stroke={style.option ? style.stroke : "#cbd5e1"}
+                      strokeWidth={0.8}
                       vectorEffect="non-scaling-stroke"
                     />
                   )}
