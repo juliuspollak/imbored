@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { withSeededRandom } from "../lib/seededRandom.js";
 import { useGameTimer } from "../lib/useGameTimer.js";
 import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import { Timer as TimerIcon, HelpCircle } from "lucide-react";
-import { generateZoomQuiz, ROUNDS_PER_QUIZ, LEVELS_PER_ROUND } from "./zoom/zoomGenerator.js";
+import { generateZoomQuiz, LEVELS_PER_ROUND } from "./zoom/zoomGenerator.js";
 import { getTargetHistory, rememberTargets } from "./zoom/zoomHistory.js";
+import ZoomRegionMap from "./zoom/ZoomRegionMap.jsx";
 import FlagImage from "./geo/FlagImage.jsx";
 import { useI18n } from "../lib/i18n.jsx";
 import { localizeZoomValue, localizeZoomPrompt, localizeZoomClueName } from "./zoom/zoomLocalization.js";
@@ -50,13 +51,12 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
   const [qIdx, setQIdx] = useState(0);
   const [selected, setSelected] = useState(null);
   const [answered, setAnswered] = useState(false);
-  // Seeded from the server-recorded attempt start, so leaving and re-entering
-  // resumes the same clock instead of handing out a fresh one.
   const [seconds, setSeconds] = useState(initialSeconds);
   const [running, setRunning] = useState(false);
   const [solved, setSolved] = useState(false);
   const [mistakes, setMistakes] = useState(0);
-  const [correctLog, setCorrectLog] = useState([]); // per-step booleans, for the "rounds nailed" stat
+  const [correctLog, setCorrectLog] = useState([]);
+  const [answerLog, setAnswerLog] = useState([]);
   const [showHelp, setShowHelp] = useState(false);
   const [difficultyRating, setDifficultyRating] = useState(null);
   const stateKey = `imbored:zoom:variety-v2:${mode}:${userId || "guest"}:${challengeDate || dayIdx}:${seed || "practice"}`;
@@ -70,18 +70,18 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
           setQIdx(saved.qIdx || 0);
           setSelected(saved.selected ?? null);
           setAnswered(!!saved.answered);
-          // The server-recorded attempt clock wins over the locally cached one:
-          // clearing session storage must not rewind a challenge.
           setSeconds(Math.max(saved.seconds || 0, initialSeconds));
           setRunning(true);
           setSolved(false);
           setMistakes(saved.mistakes || 0);
           setCorrectLog(saved.correctLog || []);
+          setAnswerLog(saved.answerLog || []);
           setDifficultyRating(null);
           return;
         }
       } catch {}
     }
+
     const recentIds = isChallenge ? [] : getTargetHistory(userId);
     const gen = () => generateZoomQuiz(dIdx, recentIds);
     const qs = isChallenge && seed ? withSeededRandom(seed, gen) : gen();
@@ -95,6 +95,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
     setSolved(false);
     setMistakes(0);
     setCorrectLog([]);
+    setAnswerLog([]);
     setDifficultyRating(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isChallenge, seed, userId, stateKey]);
@@ -108,8 +109,18 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
 
   useEffect(() => {
     if (!steps || solved) return;
-    sessionStorage.setItem(stateKey, JSON.stringify({ steps, qIdx, selected, answered, seconds, mistakes, correctLog, solved }));
-  }, [stateKey, steps, qIdx, selected, answered, seconds, mistakes, correctLog, solved]);
+    sessionStorage.setItem(stateKey, JSON.stringify({
+      steps,
+      qIdx,
+      selected,
+      answered,
+      seconds,
+      mistakes,
+      correctLog,
+      answerLog,
+      solved,
+    }));
+  }, [stateKey, steps, qIdx, selected, answered, seconds, mistakes, correctLog, answerLog, solved]);
 
   if (!steps) {
     return (
@@ -127,9 +138,8 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
   const shownSelected = localizeZoomValue(selected, language, step);
   const prompt = localizeZoomPrompt(step, language);
   const shownCountry = localizeZoomValue(step.countryName, language, { ...step, levelKey: "country" });
-  // Why that answer was right, not just what it was: name the country the clue
-  // belongs to and where it sits, so a miss on the continent or region step
-  // teaches something instead of just reading "wrong".
+  const mapLabelFor = (value) => localizeZoomValue(value, language, { ...step, levelKey: "subregion" });
+
   const whyExplanation = step.levelKey === "continent"
     ? t(step.clueType === "flag" ? "zoom.why.continentFlag" : "zoom.why.continent", {
       clue: localizeZoomClueName(step, language),
@@ -151,6 +161,11 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
     setCorrectLog((log) => {
       const next = [...log];
       next[qIdx] = isCorrect;
+      return next;
+    });
+    setAnswerLog((log) => {
+      const next = [...log];
+      next[qIdx] = option;
       return next;
     });
   }
@@ -182,10 +197,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
       });
       return;
     }
-    // Every level gets answered, right or wrong. Skipping the rest of a round
-    // after one miss cut the quiz short, which both hid the remaining
-    // questions and — because the challenge round used to be scored on
-    // elapsed time alone — made failing early score better than playing on.
+
     setQIdx(qIdx + 1);
     setSelected(null);
     setAnswered(false);
@@ -193,12 +205,11 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
 
   function handleReset() {
     if (solved) return;
-    // Restart the same set without erasing elapsed time or prior mistakes.
-    // The reset itself is an additional scoring mistake.
     setQIdx(0);
     setSelected(null);
     setAnswered(false);
     setCorrectLog([]);
+    setAnswerLog([]);
     setMistakes((value) => value + 1);
     setRunning(true);
   }
@@ -220,6 +231,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
         }
         @media (max-width: 420px) {
           .zoom-card { padding: 16px !important; }
+          .zoom-review-item { grid-template-columns: 1fr !important; }
         }
         .zoom-answer-grid {
           display: grid;
@@ -229,15 +241,26 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
           min-width: 0;
           overflow-wrap: anywhere;
         }
+        .zoom-review-item {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(130px, 0.72fr);
+          gap: 12px;
+          align-items: center;
+        }
         @media (max-width: 360px) {
-          .zoom-answer-grid {
-            grid-template-columns: minmax(0, 1fr);
-          }
+          .zoom-answer-grid { grid-template-columns: minmax(0, 1fr); }
         }
       `}</style>
 
       <Card className="zoom-card" style={{ position: "relative", marginTop: "var(--game-content-top)", marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
-        <button type="button" onClick={() => setShowHelp((h) => !h)} aria-label={showHelp ? "Hide instructions" : "Show instructions"} aria-expanded={showHelp} className="zoom-help-button" style={{ position: "absolute", top: "var(--space-3)", right: "var(--space-3)", width: 40, height: 40, display: "grid", placeItems: "center", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", color: "var(--color-icon-subtle)", cursor: "pointer" }}>
+        <button
+          type="button"
+          onClick={() => setShowHelp((h) => !h)}
+          aria-label={showHelp ? "Hide instructions" : "Show instructions"}
+          aria-expanded={showHelp}
+          className="zoom-help-button"
+          style={{ position: "absolute", top: "var(--space-3)", right: "var(--space-3)", width: 40, height: 40, display: "grid", placeItems: "center", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", color: "var(--color-icon-subtle)", cursor: "pointer" }}
+        >
           <HelpCircle size={16} />
         </button>
 
@@ -255,41 +278,29 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
             </div>
           </div>
         ) : (
-          <DaySelector
-            days={days}
-            value={dayIdx}
-            onChange={setDayIdx}
-          />
+          <DaySelector days={days} value={dayIdx} onChange={setDayIdx} />
         ))}
 
-        {!solved && <div className="flex items-center justify-center gap-4 mb-3 px-1">
-          <div className="flex items-center gap-1.5" style={{ color: "var(--color-text-secondary)" }}>
-            <TimerIcon size={14} />
-            <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
+        {!solved && (
+          <div className="flex items-center justify-center gap-4 mb-3 px-1">
+            <div className="flex items-center gap-1.5" style={{ color: "var(--color-text-secondary)" }}>
+              <TimerIcon size={14} />
+              <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
+            </div>
+            <div style={{ color: "var(--color-text-secondary)" }} className="text-xs">
+              {t("zoom.round")} <span style={{ color: ACCENT, fontWeight: 600 }}>{roundNumber}</span>/{totalRounds}
+            </div>
           </div>
-          <div style={{ color: "var(--color-text-secondary)" }} className="text-xs">
-            {t("zoom.round")} <span style={{ color: ACCENT, fontWeight: 600 }}>{roundNumber}</span>/{totalRounds}
-          </div>
-        </div>}
+        )}
 
-        {/* toolbar - text labels, spread at top */}
-        {!solved && <div className="flex items-center justify-between gap-2 mb-3 px-1">
-          {[
-            { label: t("common.restart"), onClick: handleReset, disabled: solved },
-          ].map(({ label, onClick, disabled }) => (
-            <Button
-              key={label}
-              onClick={onClick}
-              disabled={disabled}
-              aria-label={label}
-              variant="secondary"
-              size="sm"
-              fullWidth
-            >
-              {label}
+        {!solved && (
+          <div className="flex items-center justify-between gap-2 mb-3 px-1">
+            <Button onClick={handleReset} disabled={solved} aria-label={t("common.restart")} variant="secondary" size="sm" fullWidth>
+              {t("common.restart")}
             </Button>
-          ))}
-        </div>}
+          </div>
+        )}
+
         {!solved && showHelp && (
           <StatusBanner variant="info" style={{ marginBottom: "var(--space-3)" }}>
             {t("zoom.help")}
@@ -298,7 +309,6 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
 
         {!solved && (
           <>
-            {/* Round dots + level breadcrumb (continent -> region -> country) */}
             <div className="flex items-center justify-center gap-1.5 mb-3">
               {Array.from({ length: totalRounds }, (_, r) => (
                 <span
@@ -314,14 +324,9 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
                 />
               ))}
             </div>
+
             <div className="flex items-center justify-center gap-1.5 mb-4 flex-wrap">
               {[t("zoom.stepContinent"), t("zoom.stepRegion"), t("zoom.stepCountry")].map((label, i) => {
-                // Levels already passed this round reveal what the answer
-                // actually was (not necessarily what was picked) — a running
-                // recap so the country step doesn't require remembering the
-                // continent/region cold. steps are laid out contiguously per
-                // round, so the earlier levels of *this* round sit right
-                // before the current one in the flat array.
                 const revealed = i < step.levelIndex ? steps[qIdx - step.levelIndex + i] : null;
                 const shown = revealed ? localizeZoomValue(revealed.answer, language, revealed) : label;
                 return (
@@ -344,11 +349,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
             <div className="flex justify-center mb-3">
               <span
                 className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                style={{
-                  color: "var(--color-text-secondary)",
-                  background: "var(--color-surface-elevated)",
-                  border: "1px solid var(--color-border)",
-                }}
+                style={{ color: "var(--color-text-secondary)", background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)" }}
               >
                 <span aria-hidden="true">{(CLUE_BADGES[step.clueType] || CLUE_BADGES.capital)[0]}</span>
                 {t((CLUE_BADGES[step.clueType] || CLUE_BADGES.capital)[1])}
@@ -365,6 +366,18 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
               {prompt}
             </p>
 
+            {step.levelKey === "subregion" && (
+              <div className="mb-4">
+                <ZoomRegionMap
+                  continent={step.continent}
+                  answered={answered}
+                  selectedRegion={selected}
+                  correctRegion={step.answer}
+                  labelFor={mapLabelFor}
+                />
+              </div>
+            )}
+
             <div className="zoom-answer-grid gap-2.5 mb-3">
               {step.options.map((option) => {
                 const isPicked = selected === option;
@@ -373,8 +386,16 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
                 let background = "var(--color-surface-elevated)";
                 let color = INK;
                 let border = "1px solid var(--color-border)";
-                if (isCorrect) { background = "var(--color-success-bg)"; color = GREEN; border = "1px solid var(--color-success-border)"; }
-                if (isWrong) { background = "var(--color-danger-bg)"; color = RED; border = "1px solid var(--color-danger-solid)"; }
+                if (isCorrect) {
+                  background = "var(--color-success-bg)";
+                  color = GREEN;
+                  border = "1px solid var(--color-success-border)";
+                }
+                if (isWrong) {
+                  background = "var(--color-danger-bg)";
+                  color = RED;
+                  border = "1px solid var(--color-danger-solid)";
+                }
                 return (
                   <button
                     key={option}
@@ -390,7 +411,13 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
             </div>
 
             {answered && (
-              <div className="mb-3 text-center rounded-xl px-3 py-2.5" style={{ background: selected === step.answer ? "var(--color-success-bg)" : "var(--color-danger-bg)", border: `1px solid ${selected === step.answer ? "var(--color-success-border)" : "var(--color-danger-solid)"}` }}>
+              <div
+                className="mb-3 text-center rounded-xl px-3 py-2.5"
+                style={{
+                  background: selected === step.answer ? "var(--color-success-bg)" : "var(--color-danger-bg)",
+                  border: `1px solid ${selected === step.answer ? "var(--color-success-border)" : "var(--color-danger-solid)"}`,
+                }}
+              >
                 <div className="text-sm font-semibold" style={{ color: selected === step.answer ? GREEN : RED }}>
                   {selected === step.answer
                     ? t("zoom.correct", { answer: shownAnswer })
@@ -418,6 +445,95 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
           </>
         )}
 
+        {solved && (
+          <div style={{ marginBottom: "var(--space-5)" }}>
+            <div className="text-center" style={{ marginBottom: "var(--space-4)" }}>
+              <h2 style={{ margin: 0, color: INK, fontSize: "var(--text-section-title-size)", fontWeight: 700 }}>Review your answers</h2>
+              <p style={{ margin: "4px 0 0", color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)" }}>
+                Every question from this game, including what you chose and the correct answer.
+              </p>
+            </div>
+
+            <div style={{ display: "grid", gap: 10 }}>
+              {steps.map((reviewStep, index) => {
+                const playerAnswer = answerLog[index];
+                const correct = playerAnswer === reviewStep.answer;
+                const reviewPrompt = localizeZoomPrompt(reviewStep, language);
+                const reviewAnswer = localizeZoomValue(reviewStep.answer, language, reviewStep);
+                const reviewSelected = playerAnswer ? localizeZoomValue(playerAnswer, language, reviewStep) : "—";
+                const levelLabel = reviewStep.levelKey === "continent"
+                  ? t("zoom.stepContinent")
+                  : reviewStep.levelKey === "subregion"
+                    ? t("zoom.stepRegion")
+                    : t("zoom.stepCountry");
+                const reviewMapLabel = (value) => localizeZoomValue(value, language, { ...reviewStep, levelKey: "subregion" });
+
+                return (
+                  <div
+                    key={`${reviewStep.roundId}:${reviewStep.levelIndex}`}
+                    className="zoom-review-item"
+                    style={{
+                      padding: 12,
+                      borderRadius: "var(--radius-lg)",
+                      border: `1px solid ${correct ? "var(--color-success-border)" : "var(--color-danger-solid)"}`,
+                      background: "var(--color-surface-elevated)",
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <div className="flex items-center gap-2" style={{ marginBottom: 6 }}>
+                        <span
+                          style={{
+                            width: 24,
+                            height: 24,
+                            display: "inline-grid",
+                            placeItems: "center",
+                            borderRadius: 999,
+                            background: correct ? "var(--color-success-bg)" : "var(--color-danger-bg)",
+                            color: correct ? GREEN : RED,
+                            fontSize: 12,
+                            fontWeight: 800,
+                          }}
+                        >
+                          {correct ? "✓" : "×"}
+                        </span>
+                        <span style={{ color: INK, fontWeight: 700, fontSize: 13 }}>
+                          {t("zoom.round")} {reviewStep.roundIndex + 1} · {levelLabel}
+                        </span>
+                      </div>
+
+                      <div style={{ color: INK, fontSize: 13, fontWeight: 600, lineHeight: 1.4, marginBottom: 9 }}>
+                        {reviewPrompt}
+                      </div>
+
+                      <div style={{ display: "grid", gap: 4, fontSize: 12 }}>
+                        <div style={{ color: "var(--color-text-secondary)" }}>
+                          Your answer: <strong style={{ color: correct ? GREEN : RED }}>{reviewSelected}</strong>
+                        </div>
+                        {!correct && (
+                          <div style={{ color: "var(--color-text-secondary)" }}>
+                            Correct answer: <strong style={{ color: GREEN }}>{reviewAnswer}</strong>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {reviewStep.levelKey === "subregion" && (
+                      <ZoomRegionMap
+                        continent={reviewStep.continent}
+                        answered
+                        selectedRegion={playerAnswer}
+                        correctRegion={reviewStep.answer}
+                        labelFor={reviewMapLabel}
+                        compact
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <GameSolvedPanel
           solved={solved}
           difficultyRating={difficultyRating}
@@ -433,7 +549,6 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
           onPlayAgain={() => newQuiz(dayIdx)}
           playAgainLabel={t("zoom.playAgain")}
         />
-
       </Card>
     </Page>
   );
