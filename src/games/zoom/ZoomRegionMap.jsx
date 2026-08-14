@@ -1,72 +1,142 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { COUNTRIES } from "../geo/geoData.js";
+import { SUBREGIONS_BY_CONTINENT } from "../geo/geoSubregions.js";
 
-const MAPS = {
-  "North America": {
-    viewBox: "0 0 360 220",
-    regions: [
-      { name: "Northern America", path: "M58 47 C82 27 123 20 167 26 L213 39 L257 33 L289 49 L280 73 L250 84 L224 96 L183 102 L151 96 L122 83 L89 76 L65 66 Z", label: [169, 61] },
-      { name: "Central America", path: "M151 96 L183 102 L208 112 L220 126 L208 136 L192 132 L179 143 L166 136 L160 121 L146 113 Z", label: [183, 119] },
-      { name: "Caribbean", path: "M229 111 C245 105 262 107 273 114 C282 120 287 127 282 133 C273 139 263 134 254 131 C244 128 235 130 226 126 Z", label: [256, 121] },
-    ],
-  },
-  "South America": {
-    viewBox: "0 0 360 220",
-    regions: [
-      { name: "Andean South America", path: "M133 28 C124 43 119 60 121 78 C124 96 133 108 132 126 C131 145 126 164 136 187 C143 198 150 196 155 183 C159 166 160 151 163 135 C165 119 161 105 158 89 C154 72 157 57 164 44 L152 32 Z", label: [142, 107] },
-      { name: "Atlantic South America", path: "M152 32 L189 29 L222 41 L247 59 L252 79 L242 101 L231 124 L211 143 L188 158 L170 177 L155 183 C159 166 160 151 163 135 C165 119 161 105 158 89 C154 72 157 57 164 44 Z", label: [204, 101] },
-    ],
-  },
-  Europe: {
-    viewBox: "0 0 360 220",
-    regions: [
-      { name: "Northern Europe", path: "M120 45 L142 31 L163 36 L177 28 L193 36 L205 27 L221 35 L229 49 L224 65 L209 72 L197 65 L183 69 L170 61 L155 64 L143 55 L128 58 Z", label: [178, 48] },
-      { name: "Western Europe", path: "M112 69 L128 58 L143 55 L155 64 L169 63 L175 80 L171 98 L156 109 L137 109 L123 99 L108 92 L102 79 Z", label: [139, 84] },
-      { name: "Eastern Europe", path: "M169 63 L197 65 L224 65 L250 76 L258 92 L251 110 L230 118 L207 119 L184 111 L171 98 L175 80 Z", label: [217, 88] },
-      { name: "Southern Europe", path: "M137 109 L156 109 L171 98 L184 111 L207 119 L225 128 L216 140 L198 139 L187 151 L173 145 L163 154 L149 146 L143 133 L129 128 Z", label: [177, 128] },
-    ],
-  },
-  Africa: {
-    viewBox: "0 0 360 220",
-    regions: [
-      { name: "Northern Africa", path: "M105 47 C133 28 175 25 215 32 L251 47 L271 64 L260 81 L224 85 L187 82 L151 80 L121 76 L99 61 Z", label: [184, 57] },
-      { name: "Western Africa", path: "M99 61 L121 76 L138 84 L143 107 L130 133 L104 127 L83 111 L76 91 L80 73 Z", label: [107, 101] },
-      { name: "Middle Africa", path: "M138 84 L176 82 L194 91 L204 111 L192 139 L154 137 L143 107 Z", label: [171, 111] },
-      { name: "Eastern Africa", path: "M176 82 L224 85 L248 96 L261 114 L243 140 L214 143 L192 139 L204 111 L194 91 Z", label: [224, 111] },
-      { name: "Southern Africa", path: "M154 137 L192 139 L214 143 L217 158 L202 181 L180 196 L159 188 L145 169 L142 151 Z", label: [181, 161] },
-    ],
-  },
-  Asia: {
-    viewBox: "0 0 360 220",
-    regions: [
-      { name: "Western Asia", path: "M53 95 L72 75 L101 65 L126 68 L143 82 L140 102 L121 115 L94 119 L68 112 Z", label: [99, 91] },
-      { name: "Southern Asia", path: "M121 115 L140 102 L164 96 L184 104 L190 123 L180 146 L164 168 L147 153 L137 132 Z", label: [160, 128] },
-      { name: "Eastern Asia", path: "M143 82 L158 58 L190 44 L228 43 L262 55 L292 70 L305 88 L295 105 L267 113 L238 113 L210 104 L184 104 L164 96 Z", label: [230, 79] },
-      { name: "South-eastern Asia", path: "M190 123 L210 104 L238 113 L258 128 L267 146 L252 159 L234 151 L221 165 L207 154 L198 170 L181 153 L180 146 Z", label: [224, 139] },
-    ],
-  },
-  Oceania: {
-    viewBox: "0 0 360 220",
-    regions: [
-      { name: "Australia", path: "M54 105 C68 80 102 69 137 74 L163 87 L173 112 L164 139 L141 158 L105 163 L73 151 L53 131 Z", label: [113, 119] },
-      { name: "Melanesia", path: "M188 91 C201 80 216 80 228 88 L237 99 L230 112 L214 116 L201 108 Z M242 112 C248 107 257 108 262 114 C261 121 253 124 246 121 Z", label: [214, 94] },
-      { name: "Polynesia", path: "M270 70 C276 64 282 66 285 72 C283 78 277 80 272 77 Z M293 94 C300 89 306 93 307 100 C303 105 297 104 293 101 Z M278 128 C284 122 291 125 293 131 C289 136 283 136 279 133 Z", label: [291, 112] },
-    ],
-  },
-};
+const MAP_URL = "https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_110m_admin_0_countries.geojson";
+const REGION_FILLS = ["#dbeafe", "#dcfce7", "#ede9fe", "#fef3c7", "#fee2e2"];
+const WIDTH = 360;
+const HEIGHT = 210;
+const PADDING = 12;
 
-const NEUTRAL_FILLS = [
-  "#dbeafe",
-  "#e0f2fe",
-  "#ede9fe",
-  "#dcfce7",
-  "#fef3c7",
-];
+let geoJsonPromise;
 
-function wrapLabel(label) {
-  const words = label.split(" ");
-  if (words.length <= 2) return [label];
-  const pivot = Math.ceil(words.length / 2);
-  return [words.slice(0, pivot).join(" "), words.slice(pivot).join(" ")];
+function loadGeoJson() {
+  if (!geoJsonPromise) {
+    geoJsonPromise = fetch(MAP_URL)
+      .then((response) => {
+        if (!response.ok) throw new Error(`Map request failed: ${response.status}`);
+        return response.json();
+      });
+  }
+  return geoJsonPromise;
+}
+
+const COUNTRY_BY_ISO2 = new Map(
+  COUNTRIES
+    .filter((country) => country.iso2)
+    .map((country) => [country.iso2.toUpperCase(), country])
+);
+
+function featureIso2(feature) {
+  const props = feature?.properties || {};
+  const values = [props.ISO_A2_EH, props.ISO_A2, props.WB_A2, props.POSTAL];
+  return values.find((value) => typeof value === "string" && /^[A-Z]{2}$/.test(value)) || null;
+}
+
+function normaliseNaturalSubregion(value) {
+  if (value === "South-Eastern Asia") return "South-eastern Asia";
+  return value;
+}
+
+function regionForFeature(feature, continent) {
+  const iso2 = featureIso2(feature);
+  const appCountry = iso2 ? COUNTRY_BY_ISO2.get(iso2) : null;
+  if (appCountry?.continent === continent) return appCountry.subregion;
+
+  const natural = normaliseNaturalSubregion(feature?.properties?.SUBREGION);
+  const allowed = SUBREGIONS_BY_CONTINENT[continent] || [];
+  return allowed.includes(natural) ? natural : null;
+}
+
+function featureBelongsToContinent(feature, continent) {
+  const iso2 = featureIso2(feature);
+  const appCountry = iso2 ? COUNTRY_BY_ISO2.get(iso2) : null;
+  if (appCountry) return appCountry.continent === continent;
+  return feature?.properties?.CONTINENT === continent;
+}
+
+function walkCoordinates(geometry, callback) {
+  if (!geometry) return;
+  const polygons = geometry.type === "Polygon"
+    ? [geometry.coordinates]
+    : geometry.type === "MultiPolygon"
+      ? geometry.coordinates
+      : [];
+
+  polygons.forEach((polygon) => {
+    polygon.forEach((ring) => ring.forEach(callback));
+  });
+}
+
+function wrappedLongitude(lon, continent) {
+  if (continent === "Oceania" && lon < 60) return lon + 360;
+  return lon;
+}
+
+function mercatorY(lat) {
+  const clamped = Math.max(-82, Math.min(82, lat));
+  const radians = clamped * Math.PI / 180;
+  return Math.log(Math.tan(Math.PI / 4 + radians / 2));
+}
+
+function makeProjection(features, continent) {
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+
+  features.forEach((feature) => {
+    walkCoordinates(feature.geometry, ([lon, lat]) => {
+      const x = wrappedLongitude(lon, continent);
+      const y = mercatorY(lat);
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+    });
+  });
+
+  if (!Number.isFinite(minX) || minX === maxX || minY === maxY) return null;
+
+  const usableWidth = WIDTH - PADDING * 2;
+  const usableHeight = HEIGHT - PADDING * 2;
+  const scale = Math.min(usableWidth / (maxX - minX), usableHeight / (maxY - minY));
+  const drawnWidth = (maxX - minX) * scale;
+  const drawnHeight = (maxY - minY) * scale;
+  const offsetX = (WIDTH - drawnWidth) / 2;
+  const offsetY = (HEIGHT - drawnHeight) / 2;
+
+  return ([lon, lat]) => [
+    offsetX + (wrappedLongitude(lon, continent) - minX) * scale,
+    offsetY + (maxY - mercatorY(lat)) * scale,
+  ];
+}
+
+function geometryToPath(geometry, project) {
+  if (!geometry || !project) return "";
+  const polygons = geometry.type === "Polygon"
+    ? [geometry.coordinates]
+    : geometry.type === "MultiPolygon"
+      ? geometry.coordinates
+      : [];
+
+  return polygons.map((polygon) => (
+    polygon.map((ring) => {
+      if (!ring?.length) return "";
+      const points = ring.map(project);
+      return `${points.map(([x, y], index) => `${index === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ")} Z`;
+    }).join(" ")
+  )).join(" ");
+}
+
+function regionStyle(region, index, answered, selectedRegion, correctRegion) {
+  const selectedWrong = answered && selectedRegion === region && selectedRegion !== correctRegion;
+  const correct = answered && correctRegion === region;
+
+  if (correct) return { fill: "#bbf7d0", stroke: "#16a34a", text: "#166534" };
+  if (selectedWrong) return { fill: "#fecaca", stroke: "#ef4444", text: "#991b1b" };
+  if (answered) return { fill: "#e5edf5", stroke: "#cbd5e1", text: "#64748b" };
+  return { fill: REGION_FILLS[index % REGION_FILLS.length], stroke: "#ffffff", text: "#334155" };
 }
 
 export default function ZoomRegionMap({
@@ -77,9 +147,30 @@ export default function ZoomRegionMap({
   labelFor = (value) => value,
   compact = false,
 }) {
-  const map = MAPS[continent];
-  if (!map) return null;
-  const shadowId = `zoom-map-shadow-${continent.replace(/\s/g, "-")}`;
+  const [geoJson, setGeoJson] = useState(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const regions = SUBREGIONS_BY_CONTINENT[continent] || [];
+
+  useEffect(() => {
+    let cancelled = false;
+    loadGeoJson()
+      .then((data) => {
+        if (!cancelled) setGeoJson(data);
+      })
+      .catch(() => {
+        if (!cancelled) setLoadFailed(true);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const mapFeatures = useMemo(() => {
+    if (!geoJson?.features) return [];
+    return geoJson.features.filter((feature) => featureBelongsToContinent(feature, continent));
+  }, [geoJson, continent]);
+
+  const project = useMemo(() => makeProjection(mapFeatures, continent), [mapFeatures, continent]);
+
+  if (!regions.length) return null;
 
   return (
     <div
@@ -87,92 +178,97 @@ export default function ZoomRegionMap({
       style={{
         border: "1px solid var(--color-border)",
         borderRadius: "var(--radius-lg)",
-        background: "linear-gradient(180deg, #f7fbff 0%, #eef6ff 100%)",
-        padding: compact ? "4px 6px" : "6px 8px 8px",
+        background: "linear-gradient(180deg, #f6fbff 0%, #eaf5ff 100%)",
+        padding: compact ? "5px" : "8px 8px 10px",
         overflow: "hidden",
       }}
     >
-      <svg
-        viewBox={map.viewBox}
-        role="img"
-        aria-label={`${labelFor(continent)} regions`}
-        style={{ width: "100%", height: compact ? 118 : 150, display: "block" }}
-      >
-        <defs>
-          <filter id={shadowId} x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#64748b" floodOpacity="0.15" />
-          </filter>
-        </defs>
+      {!geoJson && !loadFailed && (
+        <div style={{ height: compact ? 118 : 170, display: "grid", placeItems: "center", color: "var(--color-text-muted)", fontSize: 11 }}>
+          Loading map…
+        </div>
+      )}
 
-        <ellipse cx="180" cy="203" rx="112" ry="6" fill="#cbd5e1" opacity="0.22" />
+      {loadFailed && (
+        <div style={{ height: compact ? 90 : 120, display: "grid", placeItems: "center", color: "var(--color-text-muted)", fontSize: 11 }}>
+          Map unavailable
+        </div>
+      )}
 
-        {map.regions.map((region, index) => {
-          const selectedWrong = answered && selectedRegion === region.name && selectedRegion !== correctRegion;
-          const correct = answered && correctRegion === region.name;
-          const fill = correct
-            ? "#bbf7d0"
-            : selectedWrong
-              ? "#fecaca"
-              : answered
-                ? "#e5edf5"
-                : NEUTRAL_FILLS[index % NEUTRAL_FILLS.length];
-          const stroke = correct
-            ? "#16a34a"
-            : selectedWrong
-              ? "#ef4444"
-              : "#ffffff";
-          const textColor = correct
-            ? "#166534"
-            : selectedWrong
-              ? "#991b1b"
-              : "#334155";
-          const lines = wrapLabel(labelFor(region.name));
-          const [x, y] = region.label;
+      {geoJson && project && (
+        <svg
+          viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+          role="img"
+          aria-label={`${labelFor(continent)} regions`}
+          style={{ width: "100%", height: compact ? 118 : 170, display: "block" }}
+        >
+          <defs>
+            <filter id={`zoom-real-map-shadow-${continent.replace(/\s/g, "-")}`} x="-15%" y="-15%" width="130%" height="130%">
+              <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#475569" floodOpacity="0.16" />
+            </filter>
+          </defs>
 
-          return (
-            <g key={region.name}>
-              <path
-                d={region.path}
-                fill={fill}
-                stroke={stroke}
-                strokeWidth={correct || selectedWrong ? 3 : 2.4}
-                strokeLinejoin="round"
-                filter={`url(#${shadowId})`}
-                style={{ transition: "fill 180ms ease, stroke 180ms ease" }}
-              />
-              <text
-                x={x}
-                y={y - (lines.length - 1) * 6}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill={textColor}
-                stroke="#ffffff"
-                strokeWidth="3.5"
-                paintOrder="stroke"
-                strokeLinejoin="round"
-                style={{ fontSize: compact ? 8.5 : 9.5, fontWeight: 800, pointerEvents: "none" }}
+          <g filter={`url(#zoom-real-map-shadow-${continent.replace(/\s/g, "-")})`}>
+            {mapFeatures.map((feature, index) => {
+              const iso2 = featureIso2(feature) || `feature-${index}`;
+              const region = regionForFeature(feature, continent);
+              const regionIndex = Math.max(0, regions.indexOf(region));
+              const style = region
+                ? regionStyle(region, regionIndex, answered, selectedRegion, correctRegion)
+                : { fill: answered ? "#edf2f7" : "#e2e8f0", stroke: "#ffffff" };
+
+              return (
+                <path
+                  key={`${iso2}-${index}`}
+                  d={geometryToPath(feature.geometry, project)}
+                  fill={style.fill}
+                  stroke={style.stroke}
+                  strokeWidth={region && answered && (region === correctRegion || region === selectedRegion) ? 1.6 : 0.75}
+                  strokeLinejoin="round"
+                  fillRule="evenodd"
+                  vectorEffect="non-scaling-stroke"
+                  style={{ transition: "fill 180ms ease, stroke 180ms ease" }}
+                />
+              );
+            })}
+          </g>
+        </svg>
+      )}
+
+      {!compact && (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: regions.length <= 3 ? "repeat(3, minmax(0, 1fr))" : "repeat(2, minmax(0, 1fr))",
+            gap: 6,
+            padding: "2px 2px 0",
+          }}
+        >
+          {regions.map((region, index) => {
+            const style = regionStyle(region, index, answered, selectedRegion, correctRegion);
+            return (
+              <div
+                key={region}
+                style={{
+                  minWidth: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "5px 7px",
+                  borderRadius: 999,
+                  background: "rgba(255,255,255,0.72)",
+                  border: "1px solid rgba(148,163,184,0.22)",
+                  color: style.text,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  lineHeight: 1.2,
+                }}
               >
-                {lines.map((line, lineIndex) => (
-                  <tspan key={`${region.name}-${lineIndex}`} x={x} dy={lineIndex === 0 ? 0 : 11}>{line}</tspan>
-                ))}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-
-      {!compact && answered && (
-        <div style={{ display: "flex", justifyContent: "center", gap: 14, flexWrap: "wrap", paddingBottom: 2, fontSize: 10, color: "var(--color-text-secondary)" }}>
-          {selectedRegion && selectedRegion !== correctRegion && (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-              <span style={{ width: 8, height: 8, borderRadius: 999, background: "#ef4444" }} />
-              Your choice
-            </span>
-          )}
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-            <span style={{ width: 8, height: 8, borderRadius: 999, background: "#16a34a" }} />
-            Correct region
-          </span>
+                <span style={{ width: 9, height: 9, borderRadius: 999, flex: "0 0 auto", background: style.fill, border: `1px solid ${style.stroke}` }} />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{labelFor(region)}</span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
