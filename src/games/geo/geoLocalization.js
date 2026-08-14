@@ -14,7 +14,6 @@ const REGION_LABELS_SK = {
   Equator: "rovník",
   "Prime Meridian": "nultý poludník",
 
-  // Subregions (Zoom game's continent -> subregion -> country chain)
   "Northern America": "Severná Amerika (sever)",
   "Central America": "Stredná Amerika",
   Caribbean: "Karibik",
@@ -239,8 +238,6 @@ const SPECIAL_PROMPTS_SK = {
 
 function localizeGeoQuestion(question, language) {
   const specialId = question.id?.split(":")[1] || question.id;
-  // Override previously saved sessions too, so the old ambiguous wording
-  // disappears immediately rather than waiting for a fresh quiz.
   if (language !== "sk") {
     if (specialId === "greenland-arctic") {
       return "Tap Greenland, the large island between North America and Europe.";
@@ -248,6 +245,7 @@ function localizeGeoQuestion(question, language) {
     return question.prompt;
   }
   if (SPECIAL_PROMPTS_SK[specialId]) return SPECIAL_PROMPTS_SK[specialId];
+  if (question.type === "general" && question.skPrompt) return question.skPrompt;
 
   const name = localizeGeoValue(question.name, language, question);
   const country = displayName("region", question.countryId?.toUpperCase(), language)
