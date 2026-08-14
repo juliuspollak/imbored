@@ -1,0 +1,219 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { COUNTRIES } from "../geo/geoData.js";
+
+const MAP_URL = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson";
+const OPTION_STYLES = [
+  { fill: "#93c5fd", stroke: "#3b82f6", text: "#1e3a8a" },
+  { fill: "#fcd34d", stroke: "#f59e0b", text: "#92400e" },
+];
+const NEUTRAL = { fill: "#e5e7eb", stroke: "#cbd5e1", text: "#94a3b8" };
+const WIDTH = 360;
+const HEIGHT = 190;
+const PADDING_X = 8;
+const PADDING_Y = 8;
+
+let geoJsonPromise;
+
+function loadGeoJson() {
+  if (!geoJsonPromise) {
+    geoJsonPromise = fetch(MAP_URL).then((response) => {
+      if (!response.ok) throw new Error(`Map request failed: ${response.status}`);
+      return response.json();
+    });
+  }
+  return geoJsonPromise;
+}
+
+const COUNTRY_BY_ISO2 = new Map(
+  COUNTRIES
+    .filter((country) => country.iso2)
+    .map((country) => [country.iso2.toUpperCase(), country])
+);
+
+function featureIso2(feature) {
+  const props = feature?.properties || {};
+  const values = [props.ISO_A2_EH, props.ISO_A2, props.WB_A2, props.POSTAL];
+  return values.find((value) => typeof value === "string" && /^[A-Z]{2}$/.test(value)) || null;
+}
+
+function continentForFeature(feature) {
+  const iso2 = featureIso2(feature);
+  const appCountry = iso2 ? COUNTRY_BY_ISO2.get(iso2) : null;
+  if (appCountry?.continent) return appCountry.continent;
+
+  const natural = feature?.properties?.CONTINENT;
+  return ["Africa", "Asia", "Europe", "North America", "South America", "Oceania"].includes(natural)
+    ? natural
+    : null;
+}
+
+function mercatorY(lat) {
+  const clamped = Math.max(-60, Math.min(82, lat));
+  const radians = clamped * Math.PI / 180;
+  return (180 / Math.PI) * Math.log(Math.tan(Math.PI / 4 + radians / 2));
+}
+
+const WORLD_MIN_Y = mercatorY(-60);
+const WORLD_MAX_Y = mercatorY(82);
+
+function project([lon, lat]) {
+  return [
+    PADDING_X + ((lon + 180) / 360) * (WIDTH - PADDING_X * 2),
+    PADDING_Y + ((WORLD_MAX_Y - mercatorY(lat)) / (WORLD_MAX_Y - WORLD_MIN_Y)) * (HEIGHT - PADDING_Y * 2),
+  ];
+}
+
+function ringToPath(ring) {
+  if (!ring?.length) return "";
+
+  // Natural Earth occasionally includes polygons that cross the date line.
+  // Split those jumps rather than drawing a line across the whole world map.
+  let path = "";
+  let previousLon = null;
+  ring.forEach((point) => {
+    const [lon] = point;
+    const [x, y] = project(point);
+    const startNew = previousLon !== null && Math.abs(lon - previousLon) > 180;
+    path += `${path === "" || startNew ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)} `;
+    previousLon = lon;
+  });
+  return `${path}Z`;
+}
+
+function geometryToPath(geometry) {
+  if (!geometry) return "";
+  const polygons = geometry.type === "Polygon"
+    ? [geometry.coordinates]
+    : geometry.type === "MultiPolygon"
+      ? geometry.coordinates
+      : [];
+
+  return polygons
+    .map((polygon) => polygon.map(ringToPath).join(" "))
+    .join(" ");
+}
+
+function continentStyle(continent, options, answered, selectedContinent, correctContinent) {
+  const optionIndex = options.indexOf(continent);
+  const selectedWrong = answered && selectedContinent === continent && selectedContinent !== correctContinent;
+  const correct = answered && correctContinent === continent;
+
+  if (correct) return { fill: "#86efac", stroke: "#16a34a", text: "#166534" };
+  if (selectedWrong) return { fill: "#fca5a5", stroke: "#dc2626", text: "#991b1b" };
+  if (answered) return NEUTRAL;
+  if (optionIndex >= 0) return OPTION_STYLES[optionIndex % OPTION_STYLES.length];
+  return NEUTRAL;
+}
+
+export default function ZoomContinentMap({
+  optionContinents = [],
+  answered = false,
+  selectedContinent,
+  correctContinent,
+  labelFor = (value) => value,
+  compact = false,
+}) {
+  const [geoJson, setGeoJson] = useState(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const visibleOptions = optionContinents.filter(Boolean).slice(0, 2);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadGeoJson()
+      .then((data) => {
+        if (!cancelled) setGeoJson(data);
+      })
+      .catch(() => {
+        if (!cancelled) setLoadFailed(true);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const features = useMemo(() => {
+    if (!geoJson?.features) return [];
+    return geoJson.features.filter((feature) => continentForFeature(feature));
+  }, [geoJson]);
+
+  return (
+    <div
+      className="zoom-continent-map"
+      style={{
+        border: "1px solid var(--color-border)",
+        borderRadius: "var(--radius-lg)",
+        background: "linear-gradient(180deg, #f6fbff 0%, #eaf5ff 100%)",
+        padding: compact ? "5px" : "8px 8px 10px",
+        overflow: "hidden",
+      }}
+    >
+      {!geoJson && !loadFailed && (
+        <div style={{ height: compact ? 92 : 150, display: "grid", placeItems: "center", color: "var(--color-text-muted)", fontSize: 11 }}>
+          Loading map…
+        </div>
+      )}
+
+      {loadFailed && (
+        <div style={{ height: compact ? 76 : 110, display: "grid", placeItems: "center", color: "var(--color-text-muted)", fontSize: 11 }}>
+          Map unavailable
+        </div>
+      )}
+
+      {geoJson && (
+        <svg
+          viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+          role="img"
+          aria-label="World map showing the two continent choices"
+          style={{ width: "100%", height: compact ? 105 : 160, display: "block", overflow: "hidden" }}
+        >
+          {features.map((feature, index) => {
+            const continent = continentForFeature(feature);
+            const style = continentStyle(continent, visibleOptions, answered, selectedContinent, correctContinent);
+            const iso2 = featureIso2(feature) || `feature-${index}`;
+            return (
+              <path
+                key={`${iso2}-${index}`}
+                d={geometryToPath(feature.geometry)}
+                fill={style.fill}
+                stroke={style.stroke}
+                strokeWidth={answered && (continent === correctContinent || continent === selectedContinent) ? 1.4 : 0.65}
+                strokeLinejoin="round"
+                fillRule="evenodd"
+                vectorEffect="non-scaling-stroke"
+                style={{ transition: "fill 180ms ease, stroke 180ms ease" }}
+              />
+            );
+          })}
+        </svg>
+      )}
+
+      {!compact && visibleOptions.length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${visibleOptions.length}, minmax(0, 1fr))`, gap: 6, padding: "2px 2px 0" }}>
+          {visibleOptions.map((continent) => {
+            const style = continentStyle(continent, visibleOptions, answered, selectedContinent, correctContinent);
+            return (
+              <div
+                key={continent}
+                style={{
+                  minWidth: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "5px 7px",
+                  borderRadius: 999,
+                  background: "rgba(255,255,255,0.82)",
+                  border: `1px solid ${style.stroke}`,
+                  color: style.text,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  lineHeight: 1.2,
+                }}
+              >
+                <span style={{ width: 10, height: 10, borderRadius: 999, flex: "0 0 auto", background: style.fill, border: `1px solid ${style.stroke}` }} />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{labelFor(continent)}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
