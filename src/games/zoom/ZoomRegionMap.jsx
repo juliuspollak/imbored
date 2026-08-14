@@ -12,11 +12,10 @@ let geoJsonPromise;
 
 function loadGeoJson() {
   if (!geoJsonPromise) {
-    geoJsonPromise = fetch(MAP_URL)
-      .then((response) => {
-        if (!response.ok) throw new Error(`Map request failed: ${response.status}`);
-        return response.json();
-      });
+    geoJsonPromise = fetch(MAP_URL).then((response) => {
+      if (!response.ok) throw new Error(`Map request failed: ${response.status}`);
+      return response.json();
+    });
   }
   return geoJsonPromise;
 }
@@ -33,26 +32,20 @@ function featureIso2(feature) {
   return values.find((value) => typeof value === "string" && /^[A-Z]{2}$/.test(value)) || null;
 }
 
-function normaliseNaturalSubregion(value) {
-  if (value === "South-Eastern Asia") return "South-eastern Asia";
-  return value;
-}
-
 function regionForFeature(feature, continent) {
   const iso2 = featureIso2(feature);
   const appCountry = iso2 ? COUNTRY_BY_ISO2.get(iso2) : null;
-  if (appCountry?.continent === continent) return appCountry.subregion;
-
-  const natural = normaliseNaturalSubregion(feature?.properties?.SUBREGION);
-  const allowed = SUBREGIONS_BY_CONTINENT[continent] || [];
-  return allowed.includes(natural) ? natural : null;
+  return appCountry?.continent === continent ? appCountry.subregion : null;
 }
 
 function featureBelongsToContinent(feature, continent) {
+  // Zoom's own country data is the source of truth. Do not fall back to
+  // Natural Earth's CONTINENT value: transcontinental countries such as
+  // Russia can span almost the whole world at the antimeridian and destroy
+  // the fitted projection, making Europe look like a horizontal line.
   const iso2 = featureIso2(feature);
   const appCountry = iso2 ? COUNTRY_BY_ISO2.get(iso2) : null;
-  if (appCountry) return appCountry.continent === continent;
-  return feature?.properties?.CONTINENT === continent;
+  return appCountry?.continent === continent;
 }
 
 function walkCoordinates(geometry, callback) {
@@ -202,20 +195,12 @@ export default function ZoomRegionMap({
           aria-label={`${labelFor(continent)} regions`}
           style={{ width: "100%", height: compact ? 118 : 170, display: "block" }}
         >
-          <defs>
-            <filter id={`zoom-real-map-shadow-${continent.replace(/\s/g, "-")}`} x="-15%" y="-15%" width="130%" height="130%">
-              <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#475569" floodOpacity="0.16" />
-            </filter>
-          </defs>
-
-          <g filter={`url(#zoom-real-map-shadow-${continent.replace(/\s/g, "-")})`}>
+          <g>
             {mapFeatures.map((feature, index) => {
               const iso2 = featureIso2(feature) || `feature-${index}`;
               const region = regionForFeature(feature, continent);
               const regionIndex = Math.max(0, regions.indexOf(region));
-              const style = region
-                ? regionStyle(region, regionIndex, answered, selectedRegion, correctRegion)
-                : { fill: answered ? "#edf2f7" : "#e2e8f0", stroke: "#ffffff" };
+              const style = regionStyle(region, regionIndex, answered, selectedRegion, correctRegion);
 
               return (
                 <path
@@ -223,7 +208,7 @@ export default function ZoomRegionMap({
                   d={geometryToPath(feature.geometry, project)}
                   fill={style.fill}
                   stroke={style.stroke}
-                  strokeWidth={region && answered && (region === correctRegion || region === selectedRegion) ? 1.6 : 0.75}
+                  strokeWidth={answered && (region === correctRegion || region === selectedRegion) ? 1.6 : 0.8}
                   strokeLinejoin="round"
                   fillRule="evenodd"
                   vectorEffect="non-scaling-stroke"
@@ -233,6 +218,12 @@ export default function ZoomRegionMap({
             })}
           </g>
         </svg>
+      )}
+
+      {geoJson && !project && !loadFailed && (
+        <div style={{ height: compact ? 90 : 120, display: "grid", placeItems: "center", color: "var(--color-text-muted)", fontSize: 11 }}>
+          Map unavailable
+        </div>
       )}
 
       {!compact && (
