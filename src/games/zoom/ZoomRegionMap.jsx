@@ -119,6 +119,72 @@ function regionStyle(region, optionRegions, answered, selectedRegion, correctReg
   return { fill: "#e5e7eb", stroke: "#cbd5e1", text: "#94a3b8" };
 }
 
+function OceaniaTeachingMap({ optionRegions, answered, selectedRegion, correctRegion, labelFor, compact }) {
+  const australia = regionStyle("Australia", optionRegions, answered, selectedRegion, correctRegion);
+  const melanesia = regionStyle("Melanesia", optionRegions, answered, selectedRegion, correctRegion);
+  const polynesia = regionStyle("Polynesia", optionRegions, answered, selectedRegion, correctRegion);
+
+  return (
+    <svg
+      viewBox="0 0 360 210"
+      role="img"
+      aria-label={`${labelFor("Oceania")} regions`}
+      style={{ width: "100%", height: compact ? 122 : 184, display: "block" }}
+    >
+      <defs>
+        <filter id="oceaniaGlow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="1" stdDeviation="1.4" floodOpacity="0.12" />
+        </filter>
+      </defs>
+
+      <path
+        d="M62 92 L76 68 L111 57 L145 65 L163 85 L157 119 L139 141 L105 148 L73 135 L55 111 Z"
+        fill={australia.fill}
+        stroke={australia.stroke}
+        strokeWidth="1.6"
+        filter="url(#oceaniaGlow)"
+      />
+      <path d="M119 153 L127 160 L123 173 L115 166 Z" fill={australia.fill} stroke={australia.stroke} strokeWidth="1.2" />
+
+      <g fill={melanesia.fill} stroke={melanesia.stroke} strokeWidth="1.6" filter="url(#oceaniaGlow)">
+        <path d="M173 73 L188 64 L207 68 L216 81 L207 92 L188 90 L176 82 Z" />
+        <ellipse cx="223" cy="84" rx="5" ry="3" />
+        <ellipse cx="234" cy="91" rx="4" ry="2.5" />
+        <ellipse cx="244" cy="99" rx="3.6" ry="2.2" />
+        <ellipse cx="232" cy="111" rx="4.4" ry="2.8" />
+        <ellipse cx="251" cy="119" rx="3.3" ry="2.2" />
+      </g>
+
+      <path
+        d="M205 39 L321 67 L286 169 Z"
+        fill={polynesia.fill}
+        fillOpacity={optionRegions.includes("Polynesia") || answered ? 0.24 : 0.10}
+        stroke={polynesia.stroke}
+        strokeWidth={optionRegions.includes("Polynesia") ? 2.2 : 1.2}
+        strokeDasharray="6 5"
+        strokeLinejoin="round"
+      />
+      <g fill={polynesia.fill} stroke={polynesia.stroke} strokeWidth="1.2">
+        <circle cx="205" cy="39" r="5" />
+        <circle cx="321" cy="67" r="5" />
+        <circle cx="286" cy="169" r="5" />
+        <circle cx="262" cy="78" r="3.8" />
+        <circle cx="278" cy="101" r="3.3" />
+        <circle cx="246" cy="119" r="3.2" />
+        <circle cx="296" cy="129" r="3.4" />
+      </g>
+
+      {!compact && (
+        <>
+          <text x="111" y="108" textAnchor="middle" fill={australia.text} fontSize="11" fontWeight="700">{labelFor("Australia")}</text>
+          <text x="216" y="60" textAnchor="middle" fill={melanesia.text} fontSize="10" fontWeight="700">{labelFor("Melanesia")}</text>
+          <text x="276" y="104" textAnchor="middle" fill={polynesia.text} fontSize="10" fontWeight="700">{labelFor("Polynesia")}</text>
+        </>
+      )}
+    </svg>
+  );
+}
+
 export default function ZoomRegionMap({
   continent,
   optionRegions = [],
@@ -132,8 +198,10 @@ export default function ZoomRegionMap({
   const [loadFailed, setLoadFailed] = useState(false);
   const allRegions = SUBREGIONS_BY_CONTINENT[continent] || [];
   const visibleOptions = optionRegions.filter((region) => allRegions.includes(region));
+  const useTeachingOceania = continent === "Oceania";
 
   useEffect(() => {
+    if (useTeachingOceania) return undefined;
     let cancelled = false;
     loadGeoJson()
       .then((data) => {
@@ -143,7 +211,7 @@ export default function ZoomRegionMap({
         if (!cancelled) setLoadFailed(true);
       });
     return () => { cancelled = true; };
-  }, []);
+  }, [useTeachingOceania]);
 
   const mapFeatures = useMemo(() => {
     if (!geoJson?.features) return [];
@@ -165,47 +233,60 @@ export default function ZoomRegionMap({
         overflow: "hidden",
       }}
     >
-      {!geoJson && !loadFailed && (
-        <div style={{ height: compact ? 118 : 170, display: "grid", placeItems: "center", color: "var(--color-text-muted)", fontSize: 11 }}>
-          Loading map…
-        </div>
-      )}
+      {useTeachingOceania ? (
+        <OceaniaTeachingMap
+          optionRegions={visibleOptions}
+          answered={answered}
+          selectedRegion={selectedRegion}
+          correctRegion={correctRegion}
+          labelFor={labelFor}
+          compact={compact}
+        />
+      ) : (
+        <>
+          {!geoJson && !loadFailed && (
+            <div style={{ height: compact ? 118 : 170, display: "grid", placeItems: "center", color: "var(--color-text-muted)", fontSize: 11 }}>
+              Loading map…
+            </div>
+          )}
 
-      {loadFailed && (
-        <div style={{ height: compact ? 90 : 120, display: "grid", placeItems: "center", color: "var(--color-text-muted)", fontSize: 11 }}>
-          Map unavailable
-        </div>
-      )}
+          {loadFailed && (
+            <div style={{ height: compact ? 90 : 120, display: "grid", placeItems: "center", color: "var(--color-text-muted)", fontSize: 11 }}>
+              Map unavailable
+            </div>
+          )}
 
-      {geoJson && project && (
-        <svg
-          viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-          role="img"
-          aria-label={`${labelFor(continent)} regions`}
-          style={{ width: "100%", height: compact ? 122 : 184, display: "block", overflow: "hidden" }}
-        >
-          <g>
-            {mapFeatures.map((feature, index) => {
-              const iso2 = featureIso2(feature) || `feature-${index}`;
-              const region = regionForFeature(feature, continent);
-              const style = regionStyle(region, visibleOptions, answered, selectedRegion, correctRegion);
+          {geoJson && project && (
+            <svg
+              viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+              role="img"
+              aria-label={`${labelFor(continent)} regions`}
+              style={{ width: "100%", height: compact ? 122 : 184, display: "block", overflow: "hidden" }}
+            >
+              <g>
+                {mapFeatures.map((feature, index) => {
+                  const iso2 = featureIso2(feature) || `feature-${index}`;
+                  const region = regionForFeature(feature, continent);
+                  const style = regionStyle(region, visibleOptions, answered, selectedRegion, correctRegion);
 
-              return (
-                <path
-                  key={`${iso2}-${index}`}
-                  d={geometryToPath(feature.geometry, project)}
-                  fill={style.fill}
-                  stroke={style.stroke}
-                  strokeWidth={answered && (region === correctRegion || region === selectedRegion) ? 1.6 : 0.9}
-                  strokeLinejoin="round"
-                  fillRule="evenodd"
-                  vectorEffect="non-scaling-stroke"
-                  style={{ transition: "fill 180ms ease, stroke 180ms ease" }}
-                />
-              );
-            })}
-          </g>
-        </svg>
+                  return (
+                    <path
+                      key={`${iso2}-${index}`}
+                      d={geometryToPath(feature.geometry, project)}
+                      fill={style.fill}
+                      stroke={style.stroke}
+                      strokeWidth={answered && (region === correctRegion || region === selectedRegion) ? 1.6 : 0.9}
+                      strokeLinejoin="round"
+                      fillRule="evenodd"
+                      vectorEffect="non-scaling-stroke"
+                      style={{ transition: "fill 180ms ease, stroke 180ms ease" }}
+                    />
+                  );
+                })}
+              </g>
+            </svg>
+          )}
+        </>
       )}
 
       {!compact && visibleOptions.length > 0 && (
