@@ -43,7 +43,11 @@ declare challenge public.circle_weekly_challenges;
 begin
   select * into challenge from public.circle_weekly_challenges where id=target_challenge_id;
   if not found then raise exception 'Challenge not found.'; end if;
-  if challenge.stake_reward_id is null then raise exception 'This challenge has no stake to accept.'; end if;
+  -- Prize challenges are accepted through the same record: the acceptance is
+  -- per (challenge, player) and carries no stake-specific data.
+  if challenge.stake_reward_id is null and coalesce(challenge.reward_type,'')<>'prize' then
+    raise exception 'This challenge has nothing to accept.';
+  end if;
   if not exists(select 1 from public.circle_members where circle_id=challenge.circle_id and user_id=auth.uid()) then
     raise exception 'You are not a member of this circle.' using errcode='42501';
   end if;
@@ -4932,7 +4936,16 @@ begin
       and stat.completed_at>=now()-interval '90 days'
       and stat.seconds between 5 and 3600
       and coalesce(stat.hints,0)=0
-      and coalesce(stat.mistakes,0)=0
+      and (
+        -- Quiz games report an answer count, and every question is answered
+        -- whatever the result, so a wrong answer costs a tap rather than
+        -- minutes. Demanding a flawless round excluded them permanently: Zoom
+        -- needs 9-for-9 to qualify, which is rare enough that it had no clean
+        -- samples at all and could never leave its seeded guess. A hint still
+        -- disqualifies a sample, because a hint genuinely shortens the clock.
+        coalesce(stat.total_count,0)>0
+        or coalesce(stat.mistakes,0)=0
+      )
   ), player_medians as (
     select user_id,
       count(*)::integer as sample_count,
@@ -4970,7 +4983,10 @@ begin
         and stat.completed_at>=now()-interval '90 days'
         and stat.seconds between 5 and 3600
         and coalesce(stat.hints,0)=0
-        and coalesce(stat.mistakes,0)=0
+        and (
+          coalesce(stat.total_count,0)>0
+          or coalesce(stat.mistakes,0)=0
+        )
     ), player_medians as (
       select user_id,
         count(*)::integer as sample_count,
@@ -5743,11 +5759,17 @@ begin
   ) then
     raise exception 'You are not a member of this circle.' using errcode='42501';
   end if;
-  if challenge.stake_reward_id is not null and not exists(
-    select 1 from public.circle_challenge_stake_acceptances a
-    where a.challenge_id=challenge.id and a.user_id=auth.uid()
-  ) then
-    raise exception 'Accept this challenge''s stake before playing today''s round.' using errcode='42501';
+  -- A staked challenge splits the cost of an item between the players; a prize
+  -- challenge hands a real-world obligation to the winner or the loser. Both
+  -- commit a player to something the app cannot enforce and cannot undo, so
+  -- both need that player's agreement before they play. Points challenges award
+  -- in-app points and put nobody on the hook, so they stay ungated.
+  if (challenge.stake_reward_id is not null or challenge.reward_type='prize')
+    and not exists(
+      select 1 from public.circle_challenge_stake_acceptances a
+      where a.challenge_id=challenge.id and a.user_id=auth.uid()
+    ) then
+    raise exception 'Accept what this challenge puts at stake before playing today''s round.' using errcode='42501';
   end if;
   if target_challenge_date is distinct from public.circle_today(challenge.circle_id) then
     raise exception 'Circle challenge rounds can only be played on their scheduled day.'

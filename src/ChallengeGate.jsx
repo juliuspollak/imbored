@@ -62,8 +62,15 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   const [elapsedAtStart, setElapsedAtStart] = useState(0);
   const [localStakeAccepted, setLocalStakeAccepted] = useState(false);
   const [acceptingStake, setAcceptingStake] = useState(false);
-  const hasStake = challengeScope?.type === "circle" && !!challengeScope.stakeRewardId;
+  // Anything the circle has to settle between themselves needs agreeing to
+  // first. A staked challenge splits the cost of an item; a prize challenge
+  // puts one on the winner or the loser. Points challenges owe nobody anything.
+  const isStake = challengeScope?.type === "circle" && !!challengeScope.stakeRewardId;
+  const isPrize = challengeScope?.type === "circle" && challengeScope.rewardType === "prize";
+  const hasStake = isStake || isPrize;
   const stakeAccepted = localStakeAccepted || !!challengeScope?.stakeAccepted;
+  const losersPay = isPrize && challengeScope?.rewardGoesTo === "loser";
+  const prizeName = (isStake ? challengeScope?.stakeRewardName : challengeScope?.rewardLabel) || "an item";
 
   async function acceptStake() {
     setAcceptingStake(true);
@@ -274,12 +281,26 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
 
         {!loading && hasStake && !stakeAccepted ? (
           <div className="rounded-2xl p-4 text-center" style={{ background: "var(--color-warning-bg)" }}>
-            <div className="text-sm font-semibold mb-1" style={{ color: INK }}>This challenge is staked</div>
+            <div className="text-sm font-semibold mb-1" style={{ color: INK }}>
+              {losersPay ? "Last place owes something" : "This challenge is staked"}
+            </div>
             <p className="text-xs mb-3" style={{ color: "var(--color-text-secondary)" }}>
-              The prize is <strong>{challengeScope.stakeRewardName || "an item"}</strong>. If you don't win, you agree to pay your {challengeScope.stakeSplitMethod === "ranked" ? "ranked" : "equal"} share — settled outside the app.
+              {losersPay ? (
+                <>Whoever finishes last owes <strong>{prizeName}</strong> — settled outside the app, not by the app.</>
+              ) : isPrize ? (
+                <>The winner gets <strong>{prizeName}</strong>, and the rest of the circle covers it between them — settled outside the app, not by the app.</>
+              ) : (
+                <>The prize is <strong>{prizeName}</strong>. If you don't win, you agree to pay your {challengeScope.stakeSplitMethod === "ranked" ? "ranked" : "equal"} share — settled outside the app.</>
+              )}
             </p>
             <button disabled={acceptingStake} onClick={acceptStake} style={{ width: "100%", borderRadius: "var(--radius-md)", padding: "var(--space-2)", fontSize: "var(--text-body-size)", fontWeight: 600, background: "var(--color-success-bg)", color: "var(--color-success-text)", border: "none", cursor: "pointer" }}>
-              {acceptingStake ? "Accepting…" : "Accept — I'll pay my share if I don't win"}
+              {acceptingStake
+                ? "Accepting…"
+                : losersPay
+                  ? "Accept — I'll settle it if I finish last"
+                  : isPrize
+                    ? "Accept — I'll help cover it if I don't win"
+                    : "Accept — I'll pay my share if I don't win"}
             </button>
           </div>
         ) : loading ? (

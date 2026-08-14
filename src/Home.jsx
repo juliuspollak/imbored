@@ -338,6 +338,10 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
       dailyRounds:buildCircleChallengeRounds({ activeDays:circleChallenge.active_days, gameIds:circleChallenge.game_ids }),
       stakeRewardId:circleChallenge.stake_reward_id, stakeRewardName:circleChallenge.stake_reward_name,
       stakeSplitMethod:circleChallenge.stake_split_method, stakeAccepted:circleChallenge.stake_accepted,
+      // A prize challenge commits the winner or the loser to something real, so
+      // ChallengeGate has to ask for agreement the same way a stake does.
+      rewardType:circleChallenge.reward_type, rewardGoesTo:circleChallenge.reward_goes_to,
+      rewardLabel:circleChallenge.reward_label,
     });
   }
 
