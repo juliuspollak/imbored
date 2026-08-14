@@ -28,6 +28,63 @@ const ROUND_THEMES = [
   { id: "world", clueTypes: ["flag", "currency", "language"] },
 ];
 
+// The answer row should read in the same direction as the map. These are
+// geographic west-to-east positions for broad areas, not question-specific
+// answer ordering. The actual question/distractor selection remains dynamic.
+const CONTINENT_X = {
+  "North America": -105,
+  "South America": -60,
+  Europe: 15,
+  Africa: 22,
+  Asia: 92,
+  Oceania: 145,
+};
+
+const SUBREGION_X = {
+  // Europe
+  "Western Europe": 3,
+  "Northern Europe": 15,
+  "Southern Europe": 16,
+  "Eastern Europe": 29,
+
+  // Africa
+  "Western Africa": -7,
+  "Northern Africa": 12,
+  "Middle Africa": 20,
+  "Southern Africa": 25,
+  "Eastern Africa": 36,
+
+  // Asia
+  "Western Asia": 45,
+  "Central Asia": 68,
+  "Southern Asia": 78,
+  "Eastern Asia": 112,
+  "South-eastern Asia": 115,
+
+  // North America
+  "Central America": -90,
+  Caribbean: -72,
+  "Northern America": -95,
+
+  // South America
+  "Andean South America": -72,
+  "Atlantic South America": -53,
+
+  // Oceania
+  Australia: 134,
+  Melanesia: 160,
+  Polynesia: 178,
+};
+
+function spatialOrder(options, positions) {
+  return [...options].sort((a, b) => {
+    const ax = positions[a];
+    const bx = positions[b];
+    if (!Number.isFinite(ax) || !Number.isFinite(bx)) return 0;
+    return ax - bx;
+  });
+}
+
 const LEVEL1_TEMPLATES = {
   capital: (name) => `Which continent is the city of ${name} on?`,
   animal: (name) => `Which continent is the ${name} native to?`,
@@ -125,7 +182,7 @@ function buildRound(country, roundIndex, preferredTypes) {
       levelKey: "continent",
       prompt: (LEVEL1_TEMPLATES[clue.type] || LEVEL1_TEMPLATES.capital)(clue.name),
       answer: country.continent,
-      options: shuffle([country.continent, continentDistractor]),
+      options: spatialOrder([country.continent, continentDistractor], CONTINENT_X),
     },
     {
       ...base,
@@ -133,7 +190,7 @@ function buildRound(country, roundIndex, preferredTypes) {
       levelKey: "subregion",
       prompt: (LEVEL2_TEMPLATES[clue.type] || LEVEL2_TEMPLATES.capital)(clue.name, country.continent),
       answer: subregion,
-      options: shuffle([subregion, subregionDistractor]),
+      options: spatialOrder([subregion, subregionDistractor], SUBREGION_X),
     },
     {
       ...base,
