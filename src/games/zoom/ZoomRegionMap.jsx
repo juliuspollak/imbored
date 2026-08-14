@@ -6,7 +6,20 @@ const MAP_URL = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/
 const REGION_FILLS = ["#dbeafe", "#dcfce7", "#ede9fe", "#fef3c7", "#fee2e2"];
 const WIDTH = 360;
 const HEIGHT = 210;
-const PADDING = 12;
+const PADDING = 10;
+
+// Use the visible geographic extent of each continent rather than the full
+// bounds of every MultiPolygon in a country. This prevents overseas pieces
+// (for example French Guiana on France's Natural Earth geometry) from making
+// the mainland map tiny.
+const CONTINENT_BOUNDS = {
+  Europe: { minLon: -25, maxLon: 45, minLat: 34, maxLat: 72 },
+  Africa: { minLon: -20, maxLon: 55, minLat: -36, maxLat: 38 },
+  Asia: { minLon: 25, maxLon: 150, minLat: -12, maxLat: 78 },
+  "North America": { minLon: -170, maxLon: -50, minLat: 5, maxLat: 84 },
+  "South America": { minLon: -85, maxLon: -32, minLat: -58, maxLat: 15 },
+  Oceania: { minLon: 110, maxLon: 205, minLat: -50, maxLat: 10 },
+};
 
 let geoJsonPromise;
 
@@ -44,19 +57,6 @@ function featureBelongsToContinent(feature, continent) {
   return appCountry?.continent === continent;
 }
 
-function walkCoordinates(geometry, callback) {
-  if (!geometry) return;
-  const polygons = geometry.type === "Polygon"
-    ? [geometry.coordinates]
-    : geometry.type === "MultiPolygon"
-      ? geometry.coordinates
-      : [];
-
-  polygons.forEach((polygon) => {
-    polygon.forEach((ring) => ring.forEach(callback));
-  });
-}
-
 function wrappedLongitude(lon, continent) {
   if (continent === "Oceania" && lon < 60) return lon + 360;
   return lon;
@@ -65,31 +65,17 @@ function wrappedLongitude(lon, continent) {
 function mercatorY(lat) {
   const clamped = Math.max(-82, Math.min(82, lat));
   const radians = clamped * Math.PI / 180;
-  // Return Mercator Y in degree-like units so it is on the same scale as
-  // longitude. The previous implementation returned raw radians/log units
-  // while X stayed in degrees, compressing every continent into a thin line.
   return (180 / Math.PI) * Math.log(Math.tan(Math.PI / 4 + radians / 2));
 }
 
-function makeProjection(features, continent) {
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minY = Infinity;
-  let maxY = -Infinity;
+function makeProjection(continent) {
+  const bounds = CONTINENT_BOUNDS[continent];
+  if (!bounds) return null;
 
-  features.forEach((feature) => {
-    walkCoordinates(feature.geometry, ([lon, lat]) => {
-      const x = wrappedLongitude(lon, continent);
-      const y = mercatorY(lat);
-      minX = Math.min(minX, x);
-      maxX = Math.max(maxX, x);
-      minY = Math.min(minY, y);
-      maxY = Math.max(maxY, y);
-    });
-  });
-
-  if (!Number.isFinite(minX) || minX === maxX || minY === maxY) return null;
-
+  const minX = wrappedLongitude(bounds.minLon, continent);
+  const maxX = wrappedLongitude(bounds.maxLon, continent);
+  const minY = mercatorY(bounds.minLat);
+  const maxY = mercatorY(bounds.maxLat);
   const usableWidth = WIDTH - PADDING * 2;
   const usableHeight = HEIGHT - PADDING * 2;
   const scale = Math.min(usableWidth / (maxX - minX), usableHeight / (maxY - minY));
@@ -160,7 +146,7 @@ export default function ZoomRegionMap({
     return geoJson.features.filter((feature) => featureBelongsToContinent(feature, continent));
   }, [geoJson, continent]);
 
-  const project = useMemo(() => makeProjection(mapFeatures, continent), [mapFeatures, continent]);
+  const project = useMemo(() => makeProjection(continent), [continent]);
 
   if (!regions.length) return null;
 
@@ -192,7 +178,7 @@ export default function ZoomRegionMap({
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           role="img"
           aria-label={`${labelFor(continent)} regions`}
-          style={{ width: "100%", height: compact ? 118 : 170, display: "block" }}
+          style={{ width: "100%", height: compact ? 122 : 184, display: "block", overflow: "hidden" }}
         >
           <g>
             {mapFeatures.map((feature, index) => {
@@ -217,12 +203,6 @@ export default function ZoomRegionMap({
             })}
           </g>
         </svg>
-      )}
-
-      {geoJson && !project && !loadFailed && (
-        <div style={{ height: compact ? 90 : 120, display: "grid", placeItems: "center", color: "var(--color-text-muted)", fontSize: 11 }}>
-          Map unavailable
-        </div>
       )}
 
       {!compact && (
