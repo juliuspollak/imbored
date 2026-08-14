@@ -370,6 +370,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
               <div className="mb-4">
                 <ZoomRegionMap
                   continent={step.continent}
+                  optionRegions={step.options}
                   answered={answered}
                   selectedRegion={selected}
                   correctRegion={step.answer}
@@ -520,6 +521,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
                     {reviewStep.levelKey === "subregion" && (
                       <ZoomRegionMap
                         continent={reviewStep.continent}
+                        optionRegions={reviewStep.options}
                         answered
                         selectedRegion={playerAnswer}
                         correctRegion={reviewStep.answer}
