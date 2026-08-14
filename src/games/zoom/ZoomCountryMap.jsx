@@ -8,7 +8,19 @@ const OPTION_STYLES = [
 ];
 const WIDTH = 360;
 const HEIGHT = 210;
-const PADDING = 14;
+const PADDING = 12;
+
+// Country questions should preserve the continent as geographic context. The
+// two candidate countries are highlighted inside this stable continent view
+// rather than cropping down to only their subregion.
+const CONTINENT_BOUNDS = {
+  Europe: { minLon: -25, maxLon: 45, minLat: 34, maxLat: 72 },
+  Africa: { minLon: -20, maxLon: 55, minLat: -36, maxLat: 38 },
+  Asia: { minLon: 25, maxLon: 150, minLat: -12, maxLat: 78 },
+  "North America": { minLon: -170, maxLon: -50, minLat: 5, maxLat: 84 },
+  "South America": { minLon: -85, maxLon: -32, minLat: -58, maxLat: 15 },
+  Oceania: { minLon: 110, maxLon: 205, minLat: -50, maxLat: 12 },
+};
 
 let geoJsonPromise;
 
@@ -26,12 +38,6 @@ const COUNTRY_BY_ISO2 = new Map(
   COUNTRIES
     .filter((country) => country.iso2)
     .map((country) => [country.iso2.toUpperCase(), country])
-);
-
-const COUNTRY_BY_NAME = new Map(
-  COUNTRIES
-    .filter((country) => country.name)
-    .map((country) => [country.name.toLowerCase(), country])
 );
 
 function featureIso2(feature) {
@@ -56,43 +62,14 @@ function mercatorY(lat) {
   return (180 / Math.PI) * Math.log(Math.tan(Math.PI / 4 + radians / 2));
 }
 
-function walkCoordinates(geometry, callback) {
-  if (!geometry) return;
-  const polygons = geometry.type === "Polygon"
-    ? [geometry.coordinates]
-    : geometry.type === "MultiPolygon"
-      ? geometry.coordinates
-      : [];
+function makeProjection(continent) {
+  const bounds = CONTINENT_BOUNDS[continent];
+  if (!bounds) return null;
 
-  polygons.forEach((polygon) => polygon.forEach((ring) => ring.forEach(callback)));
-}
-
-function makeProjection(features, continent) {
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minY = Infinity;
-  let maxY = -Infinity;
-
-  features.forEach((feature) => {
-    walkCoordinates(feature.geometry, ([lon, lat]) => {
-      const x = wrappedLongitude(lon, continent);
-      const y = mercatorY(lat);
-      minX = Math.min(minX, x);
-      maxX = Math.max(maxX, x);
-      minY = Math.min(minY, y);
-      maxY = Math.max(maxY, y);
-    });
-  });
-
-  if (!Number.isFinite(minX) || minX === maxX || minY === maxY) return null;
-
-  const xPad = Math.max((maxX - minX) * 0.12, 1.5);
-  const yPad = Math.max((maxY - minY) * 0.12, 1.5);
-  minX -= xPad;
-  maxX += xPad;
-  minY -= yPad;
-  maxY += yPad;
-
+  const minX = wrappedLongitude(bounds.minLon, continent);
+  const maxX = wrappedLongitude(bounds.maxLon, continent);
+  const minY = mercatorY(bounds.minLat);
+  const maxY = mercatorY(bounds.maxLat);
   const usableWidth = WIDTH - PADDING * 2;
   const usableHeight = HEIGHT - PADDING * 2;
   const scale = Math.min(usableWidth / (maxX - minX), usableHeight / (maxY - minY));
@@ -130,11 +107,11 @@ function countryStyle(countryName, optionCountries, answered, selectedCountry, c
   const selectedWrong = answered && selectedCountry === countryName && selectedCountry !== correctCountry;
   const correct = answered && correctCountry === countryName;
 
-  if (correct) return { fill: "#86efac", stroke: "#16a34a", text: "#166534" };
-  if (selectedWrong) return { fill: "#fca5a5", stroke: "#dc2626", text: "#991b1b" };
-  if (answered) return { fill: "#e5e7eb", stroke: "#cbd5e1", text: "#64748b" };
-  if (isOption) return OPTION_STYLES[optionIndex % OPTION_STYLES.length];
-  return { fill: "#e5e7eb", stroke: "#cbd5e1", text: "#94a3b8" };
+  if (correct) return { fill: "#86efac", stroke: "#16a34a", text: "#166534", option: true };
+  if (selectedWrong) return { fill: "#fca5a5", stroke: "#dc2626", text: "#991b1b", option: true };
+  if (answered) return { fill: "#e5e7eb", stroke: "#d3dbe5", text: "#64748b", option: false };
+  if (isOption) return { ...OPTION_STYLES[optionIndex % OPTION_STYLES.length], option: true };
+  return { fill: "#e5e7eb", stroke: "#d3dbe5", text: "#94a3b8", option: false };
 }
 
 export default function ZoomCountryMap({
@@ -162,28 +139,12 @@ export default function ZoomCountryMap({
     return () => { cancelled = true; };
   }, []);
 
-  const optionEntries = useMemo(() => (
-    optionCountries
-      .map((name) => COUNTRY_BY_NAME.get(String(name).toLowerCase()))
-      .filter(Boolean)
-  ), [optionCountries]);
-
   const mapFeatures = useMemo(() => {
     if (!geoJson?.features) return [];
-    return geoJson.features.filter((feature) => {
-      const country = appCountryForFeature(feature);
-      return country?.continent === continent && country?.subregion === subregion;
-    });
-  }, [geoJson, continent, subregion]);
+    return geoJson.features.filter((feature) => appCountryForFeature(feature)?.continent === continent);
+  }, [geoJson, continent]);
 
-  const focusFeatures = useMemo(() => {
-    if (!mapFeatures.length) return [];
-    const optionIso2 = new Set(optionEntries.map((country) => country.iso2?.toUpperCase()).filter(Boolean));
-    const options = mapFeatures.filter((feature) => optionIso2.has(featureIso2(feature)));
-    return options.length ? mapFeatures : options;
-  }, [mapFeatures, optionEntries]);
-
-  const project = useMemo(() => makeProjection(focusFeatures.length ? focusFeatures : mapFeatures, continent), [focusFeatures, mapFeatures, continent]);
+  const project = useMemo(() => makeProjection(continent), [continent]);
 
   if (!optionCountries.length) return null;
 
@@ -214,7 +175,7 @@ export default function ZoomCountryMap({
         <svg
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           role="img"
-          aria-label={`${labelFor(subregion)} countries`}
+          aria-label={`${labelFor(subregion)} countries shown within ${continent}`}
           style={{ width: "100%", height: compact ? 122 : 184, display: "block", overflow: "hidden" }}
         >
           <g>
@@ -230,7 +191,7 @@ export default function ZoomCountryMap({
                   d={geometryToPath(feature.geometry, project)}
                   fill={style.fill}
                   stroke={style.stroke}
-                  strokeWidth={answered && (countryName === correctCountry || countryName === selectedCountry) ? 1.8 : 0.9}
+                  strokeWidth={style.option ? (answered ? 1.8 : 1.45) : 0.45}
                   strokeLinejoin="round"
                   fillRule="evenodd"
                   vectorEffect="non-scaling-stroke"
