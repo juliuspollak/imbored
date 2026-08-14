@@ -2844,7 +2844,13 @@ declare
   award_created bigint;
   existing_winner uuid;
   winning_score integer;
-  loser_id uuid;
+  -- Named apart from the circle_weekly_challenges.loser_id column it is
+  -- written to. Sharing the name forced the UPDATE below to disambiguate with
+  -- finalize_circle_challenge.loser_id, and when that block-label reference
+  -- failed to resolve, Postgres read it as a table and raised "missing
+  -- FROM-clause entry for table finalize_circle_challenge" — taking down every
+  -- caller of finalize_due_circle_challenges() with it.
+  losing_player_id uuid;
   loser_name text;
   prize_label text;
 begin
@@ -2992,14 +2998,14 @@ begin
   -- Last place decides a forfeit, and is worth recording either way so the
   -- circle can see how the week actually finished. A one-player challenge has
   -- no loser.
-  loser_id := public.circle_challenge_last_place(challenge.id);
-  if loser_id = winner_id then
-    loser_id := null;
+  losing_player_id := public.circle_challenge_last_place(challenge.id);
+  if losing_player_id = winner_id then
+    losing_player_id := null;
   end if;
   select coalesce(nullif(btrim(profile.name),''),'Someone')
   into loser_name
   from public.profiles profile
-  where profile.id=loser_id;
+  where profile.id=losing_player_id;
 
   prize_label := coalesce(nullif(btrim(challenge.reward_label),''),'the prize');
 
@@ -3012,9 +3018,9 @@ begin
     case
       -- A real thing the loser owes. Everyone is told who settles it with
       -- whom, because the app cannot hand over a bathroom clean itself.
-      when challenge.reward_type='prize' and challenge.reward_goes_to='loser' and loser_id is not null then
+      when challenge.reward_type='prize' and challenge.reward_goes_to='loser' and losing_player_id is not null then
         case
-          when member.user_id=loser_id then
+          when member.user_id=losing_player_id then
             format(
               '🏆 %s won %s. You finished last, so %s is on you — sort it out between you.',
               winner_name,
@@ -3072,7 +3078,7 @@ begin
   on conflict do nothing;
 
   update public.circle_weekly_challenges
-  set closed_at=now(),loser_id=finalize_circle_challenge.loser_id,updated_at=now()
+  set closed_at=now(),loser_id=losing_player_id,updated_at=now()
   where id=challenge.id;
 
   return winner_id;
