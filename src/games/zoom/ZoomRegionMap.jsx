@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { COUNTRIES } from "../geo/geoData.js";
 import { SUBREGIONS_BY_CONTINENT } from "../geo/geoSubregions.js";
 
-const MAP_URL = "https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_110m_admin_0_countries.geojson";
+const MAP_URL = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson";
 const REGION_FILLS = ["#dbeafe", "#dcfce7", "#ede9fe", "#fef3c7", "#fee2e2"];
 const WIDTH = 360;
 const HEIGHT = 210;
