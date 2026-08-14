@@ -6,6 +6,7 @@ import { Timer as TimerIcon, HelpCircle } from "lucide-react";
 import { generateZoomQuiz, LEVELS_PER_ROUND } from "./zoom/zoomGenerator.js";
 import { getTargetHistory, rememberTargets } from "./zoom/zoomHistory.js";
 import ZoomRegionMap from "./zoom/ZoomRegionMap.jsx";
+import ZoomContinentMap from "./zoom/ZoomContinentMap.jsx";
 import FlagImage from "./geo/FlagImage.jsx";
 import { useI18n } from "../lib/i18n.jsx";
 import { localizeZoomValue, localizeZoomPrompt, localizeZoomClueName } from "./zoom/zoomLocalization.js";
@@ -139,6 +140,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
   const prompt = localizeZoomPrompt(step, language);
   const shownCountry = localizeZoomValue(step.countryName, language, { ...step, levelKey: "country" });
   const mapLabelFor = (value) => localizeZoomValue(value, language, { ...step, levelKey: "subregion" });
+  const continentMapLabelFor = (value) => localizeZoomValue(value, language, { ...step, levelKey: "continent" });
 
   const whyExplanation = step.levelKey === "continent"
     ? t(step.clueType === "flag" ? "zoom.why.continentFlag" : "zoom.why.continent", {
@@ -366,6 +368,18 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
               {prompt}
             </p>
 
+            {step.levelKey === "continent" && (
+              <div className="mb-4">
+                <ZoomContinentMap
+                  optionContinents={step.options}
+                  answered={answered}
+                  selectedContinent={selected}
+                  correctContinent={step.answer}
+                  labelFor={continentMapLabelFor}
+                />
+              </div>
+            )}
+
             {step.levelKey === "subregion" && (
               <div className="mb-4">
                 <ZoomRegionMap
@@ -468,6 +482,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
                     ? t("zoom.stepRegion")
                     : t("zoom.stepCountry");
                 const reviewMapLabel = (value) => localizeZoomValue(value, language, { ...reviewStep, levelKey: "subregion" });
+                const reviewContinentMapLabel = (value) => localizeZoomValue(value, language, { ...reviewStep, levelKey: "continent" });
 
                 return (
                   <div
@@ -517,6 +532,17 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
                         )}
                       </div>
                     </div>
+
+                    {reviewStep.levelKey === "continent" && (
+                      <ZoomContinentMap
+                        optionContinents={reviewStep.options}
+                        answered
+                        selectedContinent={playerAnswer}
+                        correctContinent={reviewStep.answer}
+                        labelFor={reviewContinentMapLabel}
+                        compact
+                      />
+                    )}
 
                     {reviewStep.levelKey === "subregion" && (
                       <ZoomRegionMap
