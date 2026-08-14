@@ -90,12 +90,12 @@ function focusBoundsFor(options) {
   const lonSpan = combined.maxLon - combined.minLon;
   const latSpan = combined.maxLat - combined.minLat;
 
-  // If the choices occupy a reasonably compact part of the globe, zoom in.
-  // Widely separated choices keep the full world map for orientation.
+  // Nearby choices get a dedicated two-continent comparison. Widely separated
+  // choices keep a world view because their relative position is useful.
   if (lonSpan > 190 || latSpan > 145) return null;
 
-  const lonPad = Math.max(10, lonSpan * 0.12);
-  const latPad = Math.max(7, latSpan * 0.12);
+  const lonPad = Math.max(8, lonSpan * 0.08);
+  const latPad = Math.max(6, latSpan * 0.08);
   return {
     minLon: Math.max(-180, combined.minLon - lonPad),
     maxLon: Math.min(180, combined.maxLon + lonPad),
@@ -189,14 +189,21 @@ export default function ZoomContinentMap({
     return () => { cancelled = true; };
   }, []);
 
+  const focusBounds = useMemo(() => focusBoundsFor(visibleOptions), [visibleOptions.join("|")]);
+  const isFocused = Boolean(focusBounds);
+
   const features = useMemo(() => {
     if (!geoJson?.features) return [];
-    return geoJson.features.filter((feature) => continentForFeature(feature));
-  }, [geoJson]);
+    return geoJson.features.filter((feature) => {
+      const continent = continentForFeature(feature);
+      if (!continent) return false;
+      // When the choices are close, show only those two continents. The full
+      // world added no useful information and made the comparison tiny/busy.
+      return !isFocused || visibleOptions.includes(continent);
+    });
+  }, [geoJson, isFocused, visibleOptions.join("|")]);
 
-  const focusBounds = useMemo(() => focusBoundsFor(visibleOptions), [visibleOptions.join("|")]);
   const project = useMemo(() => makeFocusedProject(focusBounds), [focusBounds]);
-  const isFocused = Boolean(focusBounds);
 
   return (
     <div
@@ -225,7 +232,7 @@ export default function ZoomContinentMap({
         <svg
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           role="img"
-          aria-label={isFocused ? "Map focused on the two continent choices" : "World map showing the two continent choices"}
+          aria-label={isFocused ? "Map showing the two continent choices" : "World map showing the two continent choices"}
           style={{ width: "100%", height: compact ? 105 : 160, display: "block", overflow: "hidden" }}
         >
           {features.map((feature, index) => {
@@ -237,12 +244,12 @@ export default function ZoomContinentMap({
                 key={`${iso2}-${index}`}
                 d={geometryToPath(feature.geometry, project)}
                 fill={style.fill}
-                stroke={style.stroke}
-                strokeWidth={answered && (continent === correctContinent || continent === selectedContinent) ? 1.4 : 0.65}
+                // Do not outline every country. At this level the player is
+                // comparing continents, so internal country borders are noise.
+                stroke="none"
                 strokeLinejoin="round"
                 fillRule="evenodd"
-                vectorEffect="non-scaling-stroke"
-                style={{ transition: "fill 180ms ease, stroke 180ms ease" }}
+                style={{ transition: "fill 180ms ease" }}
               />
             );
           })}
