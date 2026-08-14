@@ -161,7 +161,10 @@ export default function AdminGames({ onBack }) {
   }
 
   function confirmResetTodayChallenge(gameId, label) { setConfirmTarget({ type: "resetToday", gameId, label }); }
-  function confirmResetMyChallenge() { setConfirmTarget({ type: "resetMy" }); }
+  // Named admin_reset_my_challenge() server-side, but the "my" is a misnomer:
+  // it filters on challenge_date only, so it clears today's personal challenge
+  // for every player. The wording here says so rather than inheriting it.
+  function confirmResetPersonalChallengeToday() { setConfirmTarget({ type: "resetPersonalToday" }); }
 
   // The phrase has to be typed rather than clicked. This is unrecoverable, and
   // it sits next to two much narrower reset buttons — a plain confirm would be
@@ -189,16 +192,16 @@ export default function AdminGames({ onBack }) {
     const localDate = new Date().toLocaleDateString("en-CA");
     const { data, error } = await supabase.rpc("admin_reset_daily_challenge", { p_game: gameId, p_challenge_date: localDate });
     setResetting(null);
-    setMessage(error ? { type: "error", text: `Reset failed: ${error.message}` } : { type: "success", text: `${label}: removed ${data ?? 0} result${data === 1 ? "" : "s"} for today.` });
+    setMessage(error ? { type: "error", text: `Reset failed: ${error.message}` } : { type: "success", text: `${label}: removed ${data ?? 0} result${data === 1 ? "" : "s"} from today's personal challenge, across all players.` });
   }
 
-  async function executeResetMyChallenge() {
+  async function executeResetPersonalChallengeToday() {
     setConfirmTarget(null); setResetting("all"); setMessage(null);
     const { data, error } = await supabase.rpc("admin_reset_my_challenge");
     setResetting(null);
     if (error) { setMessage({ type: "error", text: `Reset failed: ${error.message}` }); return; }
     const r = Number(data?.results_removed) || 0, rw = Number(data?.rewards_reversed) || 0, rp = Number(data?.points_reversed) || 0;
-    setMessage({ type: "success", text: `Reset complete. Removed ${r} result${r === 1 ? "" : "s"}, reversed ${rw} reward${rw === 1 ? "" : "s"} (${rp} points).` });
+    setMessage({ type: "success", text: `Today's personal challenge is clear. Removed ${r} result${r === 1 ? "" : "s"} and took back ${rw} award${rw === 1 ? "" : "s"} (${rp} points), across all players.` });
   }
 
   async function move(index, direction) {
@@ -409,19 +412,21 @@ export default function AdminGames({ onBack }) {
             <Card variant="danger" style={{ borderLeft: "3px solid var(--color-danger-text)" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)", flexWrap: "wrap" }}>
                 <div>
-                  <div style={{ fontSize: "var(--text-body-size)", fontWeight: 600, color: "var(--color-text-primary)" }}>Hard reset My Challenge</div>
-                  <div style={{ fontSize: "var(--text-body-secondary-size)", color: "var(--color-text-secondary)", marginTop: "var(--space-1)" }}>Clears personal results and reverses point awards for end-to-end testing.</div>
+                  <div style={{ fontSize: "var(--text-body-size)", fontWeight: 600, color: "var(--color-text-primary)" }}>Reset today&rsquo;s personal challenge</div>
+                  <div style={{ fontSize: "var(--text-body-secondary-size)", color: "var(--color-text-secondary)", marginTop: "var(--space-1)" }}>
+                    Every game, <strong>every player</strong> &mdash; not only your own results. Removes today&rsquo;s personal-challenge results and ratings and takes back the points they earned. Circle challenges are left alone.
+                  </div>
                 </div>
-                <Button variant="danger" size="sm" loading={resetting === "all"} disabled={anythingBusy && resetting !== "all"} before={<RotateCcw size={14} />} onClick={confirmResetMyChallenge}>
-                  {resetting === "all" ? "Resetting…" : "Reset all"}
+                <Button variant="danger" size="sm" loading={resetting === "all"} disabled={anythingBusy && resetting !== "all"} before={<RotateCcw size={14} />} onClick={confirmResetPersonalChallengeToday}>
+                  {resetting === "all" ? "Resetting…" : "Reset for everyone"}
                 </Button>
               </div>
 
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)", flexWrap: "wrap", marginTop: "var(--space-4)", paddingTop: "var(--space-4)", borderTop: "1px solid var(--color-border)" }}>
                 <div>
-                  <div style={{ fontSize: "var(--text-body-size)", fontWeight: 600, color: "var(--color-text-primary)" }}>Reset every player&rsquo;s statistics</div>
+                  <div style={{ fontSize: "var(--text-body-size)", fontWeight: 600, color: "var(--color-text-primary)" }}>Reset every player&rsquo;s statistics, all time</div>
                   <div style={{ fontSize: "var(--text-body-secondary-size)", color: "var(--color-text-secondary)", marginTop: "var(--space-1)" }}>
-                    Wipes results, points, levels and streaks for everybody, reopens closed circle challenges and clears the time benchmarks. Accounts, circles and reward items are kept. This cannot be undone.
+                    Not just today: wipes all results, points, levels and streaks for everybody, reopens closed circle challenges and clears the time benchmarks. Accounts, circles and reward items are kept. This cannot be undone.
                   </div>
                 </div>
                 <Button variant="danger" size="sm" loading={resetting === "everything"} disabled={anythingBusy && resetting !== "everything"} before={<Eraser size={14} />} onClick={() => { setConfirmPhrase(""); setConfirmTarget({ type: "resetAll" }); }}>
@@ -438,17 +443,17 @@ export default function AdminGames({ onBack }) {
           <Card style={{ maxWidth: 400, width: "100%", padding: "var(--space-5)" }}>
             <div id="ag-confirm-title" style={{ fontWeight: 700, color: "var(--color-text-primary)", marginBottom: "var(--space-1)" }}>
               {confirmTarget.type === "resetToday"
-                ? `Reset today's ${confirmTarget.label} challenge?`
+                ? `Reset today's ${confirmTarget.label} for every player?`
                 : confirmTarget.type === "resetAll"
-                  ? "Reset every player's statistics?"
-                  : "Hard reset My Challenge?"}
+                  ? "Reset every player's statistics, all time?"
+                  : "Reset today's personal challenge for every player?"}
             </div>
             <div id="ag-confirm-desc" style={{ fontSize: "var(--text-body-size)", color: "var(--color-text-secondary)", marginBottom: "var(--space-4)" }}>
               {confirmTarget.type === "resetToday"
-                ? `This removes today's saved results and ratings for every player in ${confirmTarget.label}.`
+                ? `Removes today's personal-challenge results and ratings for ${confirmTarget.label} and takes back the points they earned — for every player, not only you. Other games and all circle challenges are untouched.`
                 : confirmTarget.type === "resetAll"
-                  ? "Every player loses their results, points, level and streaks. Closed circle challenges reopen and the time benchmarks go back to their starting values. Accounts, circles and reward items are kept. This cannot be undone."
-                  : "Results, ratings and points awarded for today's personal challenge will be removed so the complete flow can be tested again from scratch."}
+                  ? "Every player loses their results, points, level and streaks, for every day on record. Closed circle challenges reopen and the time benchmarks go back to their starting values. Accounts, circles and reward items are kept. This cannot be undone."
+                  : "Removes today's personal-challenge results and ratings in every game and takes back the points they earned — for every player, not only you. Circle challenges and every earlier day are untouched. Stops without changing anything if a player has already spent or sent points earned today."}
             </div>
             {confirmTarget.type === "resetAll" && (
               <label style={{ display: "block", marginBottom: "var(--space-4)" }}>
@@ -474,7 +479,7 @@ export default function AdminGames({ onBack }) {
                   ? executeResetTodayChallenge
                   : confirmTarget.type === "resetAll"
                     ? executeResetAllStats
-                    : executeResetMyChallenge}
+                    : executeResetPersonalChallengeToday}
               >
                 {resetting !== null ? "Resetting…" : "Reset"}
               </Button>
