@@ -3,7 +3,10 @@ import { COUNTRIES } from "../geo/geoData.js";
 import { SUBREGIONS_BY_CONTINENT } from "../geo/geoSubregions.js";
 
 const MAP_URL = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson";
-const OPTION_FILLS = ["#dbeafe", "#dcfce7"];
+const OPTION_STYLES = [
+  { fill: "#93c5fd", stroke: "#3b82f6", text: "#1e3a8a" },
+  { fill: "#fcd34d", stroke: "#f59e0b", text: "#92400e" },
+];
 const WIDTH = 360;
 const HEIGHT = 210;
 const PADDING = 10;
@@ -109,11 +112,11 @@ function regionStyle(region, optionRegions, answered, selectedRegion, correctReg
   const selectedWrong = answered && selectedRegion === region && selectedRegion !== correctRegion;
   const correct = answered && correctRegion === region;
 
-  if (correct) return { fill: "#bbf7d0", stroke: "#16a34a", text: "#166534" };
-  if (selectedWrong) return { fill: "#fecaca", stroke: "#ef4444", text: "#991b1b" };
-  if (answered) return { fill: "#edf2f7", stroke: "#ffffff", text: "#64748b" };
-  if (isOption) return { fill: OPTION_FILLS[optionIndex % OPTION_FILLS.length], stroke: "#ffffff", text: "#334155" };
-  return { fill: "#e9eef5", stroke: "#ffffff", text: "#94a3b8" };
+  if (correct) return { fill: "#86efac", stroke: "#16a34a", text: "#166534" };
+  if (selectedWrong) return { fill: "#fca5a5", stroke: "#dc2626", text: "#991b1b" };
+  if (answered) return { fill: "#e5e7eb", stroke: "#cbd5e1", text: "#64748b" };
+  if (isOption) return OPTION_STYLES[optionIndex % OPTION_STYLES.length];
+  return { fill: "#e5e7eb", stroke: "#cbd5e1", text: "#94a3b8" };
 }
 
 export default function ZoomRegionMap({
@@ -193,7 +196,7 @@ export default function ZoomRegionMap({
                   d={geometryToPath(feature.geometry, project)}
                   fill={style.fill}
                   stroke={style.stroke}
-                  strokeWidth={answered && (region === correctRegion || region === selectedRegion) ? 1.6 : 0.8}
+                  strokeWidth={answered && (region === correctRegion || region === selectedRegion) ? 1.6 : 0.9}
                   strokeLinejoin="round"
                   fillRule="evenodd"
                   vectorEffect="non-scaling-stroke"
@@ -226,15 +229,15 @@ export default function ZoomRegionMap({
                   gap: 6,
                   padding: "5px 7px",
                   borderRadius: 999,
-                  background: "rgba(255,255,255,0.72)",
-                  border: "1px solid rgba(148,163,184,0.22)",
+                  background: "rgba(255,255,255,0.82)",
+                  border: `1px solid ${style.stroke}`,
                   color: style.text,
                   fontSize: 10,
                   fontWeight: 700,
                   lineHeight: 1.2,
                 }}
               >
-                <span style={{ width: 9, height: 9, borderRadius: 999, flex: "0 0 auto", background: style.fill, border: `1px solid ${style.stroke}` }} />
+                <span style={{ width: 10, height: 10, borderRadius: 999, flex: "0 0 auto", background: style.fill, border: `1px solid ${style.stroke}` }} />
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{labelFor(region)}</span>
               </div>
             );
