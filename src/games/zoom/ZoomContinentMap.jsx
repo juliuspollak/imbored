@@ -12,6 +12,17 @@ const HEIGHT = 190;
 const PADDING_X = 8;
 const PADDING_Y = 8;
 
+// Stable mainland-oriented bounds. These are used only to decide/focus the
+// viewport; the actual country shapes still come from Natural Earth.
+const CONTINENT_BOUNDS = {
+  Africa: { minLon: -20, maxLon: 55, minLat: -36, maxLat: 38 },
+  Asia: { minLon: 25, maxLon: 150, minLat: -12, maxLat: 78 },
+  Europe: { minLon: -25, maxLon: 45, minLat: 34, maxLat: 72 },
+  "North America": { minLon: -170, maxLon: -50, minLat: 5, maxLat: 84 },
+  "South America": { minLon: -85, maxLon: -32, minLat: -58, maxLat: 15 },
+  Oceania: { minLon: 110, maxLon: 180, minLat: -50, maxLat: 10 },
+};
+
 let geoJsonPromise;
 
 function loadGeoJson() {
@@ -56,18 +67,67 @@ function mercatorY(lat) {
 const WORLD_MIN_Y = mercatorY(-60);
 const WORLD_MAX_Y = mercatorY(82);
 
-function project([lon, lat]) {
+function worldProject([lon, lat]) {
   return [
     PADDING_X + ((lon + 180) / 360) * (WIDTH - PADDING_X * 2),
     PADDING_Y + ((WORLD_MAX_Y - mercatorY(lat)) / (WORLD_MAX_Y - WORLD_MIN_Y)) * (HEIGHT - PADDING_Y * 2),
   ];
 }
 
-function ringToPath(ring) {
+function focusBoundsFor(options) {
+  if (options.length !== 2) return null;
+  const first = CONTINENT_BOUNDS[options[0]];
+  const second = CONTINENT_BOUNDS[options[1]];
+  if (!first || !second) return null;
+
+  const combined = {
+    minLon: Math.min(first.minLon, second.minLon),
+    maxLon: Math.max(first.maxLon, second.maxLon),
+    minLat: Math.min(first.minLat, second.minLat),
+    maxLat: Math.max(first.maxLat, second.maxLat),
+  };
+
+  const lonSpan = combined.maxLon - combined.minLon;
+  const latSpan = combined.maxLat - combined.minLat;
+
+  // If the choices occupy a reasonably compact part of the globe, zoom in.
+  // Widely separated choices keep the full world map for orientation.
+  if (lonSpan > 190 || latSpan > 145) return null;
+
+  const lonPad = Math.max(10, lonSpan * 0.12);
+  const latPad = Math.max(7, latSpan * 0.12);
+  return {
+    minLon: Math.max(-180, combined.minLon - lonPad),
+    maxLon: Math.min(180, combined.maxLon + lonPad),
+    minLat: Math.max(-60, combined.minLat - latPad),
+    maxLat: Math.min(82, combined.maxLat + latPad),
+  };
+}
+
+function makeFocusedProject(bounds) {
+  if (!bounds) return worldProject;
+
+  const minY = mercatorY(bounds.minLat);
+  const maxY = mercatorY(bounds.maxLat);
+  const usableWidth = WIDTH - PADDING_X * 2;
+  const usableHeight = HEIGHT - PADDING_Y * 2;
+  const xSpan = bounds.maxLon - bounds.minLon;
+  const ySpan = maxY - minY;
+  const scale = Math.min(usableWidth / xSpan, usableHeight / ySpan);
+  const drawnWidth = xSpan * scale;
+  const drawnHeight = ySpan * scale;
+  const offsetX = (WIDTH - drawnWidth) / 2;
+  const offsetY = (HEIGHT - drawnHeight) / 2;
+
+  return ([lon, lat]) => [
+    offsetX + (lon - bounds.minLon) * scale,
+    offsetY + (maxY - mercatorY(lat)) * scale,
+  ];
+}
+
+function ringToPath(ring, project) {
   if (!ring?.length) return "";
 
-  // Natural Earth occasionally includes polygons that cross the date line.
-  // Split those jumps rather than drawing a line across the whole world map.
   let path = "";
   let previousLon = null;
   ring.forEach((point) => {
@@ -80,7 +140,7 @@ function ringToPath(ring) {
   return `${path}Z`;
 }
 
-function geometryToPath(geometry) {
+function geometryToPath(geometry, project) {
   if (!geometry) return "";
   const polygons = geometry.type === "Polygon"
     ? [geometry.coordinates]
@@ -89,7 +149,7 @@ function geometryToPath(geometry) {
       : [];
 
   return polygons
-    .map((polygon) => polygon.map(ringToPath).join(" "))
+    .map((polygon) => polygon.map((ring) => ringToPath(ring, project)).join(" "))
     .join(" ");
 }
 
@@ -134,6 +194,10 @@ export default function ZoomContinentMap({
     return geoJson.features.filter((feature) => continentForFeature(feature));
   }, [geoJson]);
 
+  const focusBounds = useMemo(() => focusBoundsFor(visibleOptions), [visibleOptions.join("|")]);
+  const project = useMemo(() => makeFocusedProject(focusBounds), [focusBounds]);
+  const isFocused = Boolean(focusBounds);
+
   return (
     <div
       className="zoom-continent-map"
@@ -161,7 +225,7 @@ export default function ZoomContinentMap({
         <svg
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           role="img"
-          aria-label="World map showing the two continent choices"
+          aria-label={isFocused ? "Map focused on the two continent choices" : "World map showing the two continent choices"}
           style={{ width: "100%", height: compact ? 105 : 160, display: "block", overflow: "hidden" }}
         >
           {features.map((feature, index) => {
@@ -171,7 +235,7 @@ export default function ZoomContinentMap({
             return (
               <path
                 key={`${iso2}-${index}`}
-                d={geometryToPath(feature.geometry)}
+                d={geometryToPath(feature.geometry, project)}
                 fill={style.fill}
                 stroke={style.stroke}
                 strokeWidth={answered && (continent === correctContinent || continent === selectedContinent) ? 1.4 : 0.65}
