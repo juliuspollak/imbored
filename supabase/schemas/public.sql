@@ -1834,6 +1834,7 @@ declare
   performance_adjustment integer:=0;
   answer_correct integer;
   answer_total integer;
+  answer_share numeric:=1;
   effective_base_points integer;
   day_number integer;
   day_bonus integer:=0;
@@ -1916,7 +1917,8 @@ begin
     effective_base_points:=r.base_points;
   else
     answer_correct:=least(answer_total,greatest(coalesce(s.correct_count,answer_total-s.mistakes),0));
-    effective_base_points:=round(r.base_points*answer_correct::numeric/answer_total);
+    answer_share:=answer_correct::numeric/answer_total;
+    effective_base_points:=round(r.base_points*answer_share);
   end if;
 
   day_number:=greatest(0,least(coalesce(s.day_index,0),6));
@@ -1931,9 +1933,14 @@ begin
   mode_percent:=case when s.mode='practice' then r.practice_points_percent else 100 end;
   scaled_game_points:=round(unscaled_game_points*mode_percent::numeric/100);
   mode_adjustment:=scaled_game_points-unscaled_game_points;
-  mode_minimum:=case when s.mode='practice'
-    then ceil(r.minimum_points*mode_percent::numeric/100)::integer
-    else r.minimum_points end;
+  -- The guaranteed floor is earned in proportion to how much was answered
+  -- correctly. Flat, it clamped a round answered entirely wrong back up to the
+  -- same minimum a clean one gets, and — because nothing stops minimum_points
+  -- being configured up towards base_points — a raised floor would have
+  -- silently swallowed the accuracy scaling above for every quiz result.
+  mode_minimum:=round((case when s.mode='practice'
+    then ceil(r.minimum_points*mode_percent::numeric/100)
+    else r.minimum_points end)*answer_share)::integer;
   mode_maximum:=case when s.mode='practice'
     then floor(r.maximum_points*mode_percent::numeric/100)::integer
     else r.maximum_points end;
@@ -1972,6 +1979,8 @@ begin
     'mistake_penalty_seconds',greatest(coalesce(s.mistakes,0),0)*benchmark_seconds*0.10,
     'correct_count',answer_correct,
     'total_count',answer_total,
+    'answer_share',answer_share,
+    'minimum_points',mode_minimum,
     'rounds_nailed',s.rounds_nailed,
     'weekly_streak',streak_points,
     'mode',s.mode,
