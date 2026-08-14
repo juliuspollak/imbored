@@ -3,15 +3,11 @@ import { COUNTRIES } from "../geo/geoData.js";
 import { SUBREGIONS_BY_CONTINENT } from "../geo/geoSubregions.js";
 
 const MAP_URL = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson";
-const REGION_FILLS = ["#dbeafe", "#dcfce7", "#ede9fe", "#fef3c7", "#fee2e2"];
+const OPTION_FILLS = ["#dbeafe", "#dcfce7"];
 const WIDTH = 360;
 const HEIGHT = 210;
 const PADDING = 10;
 
-// Use the visible geographic extent of each continent rather than the full
-// bounds of every MultiPolygon in a country. This prevents overseas pieces
-// (for example French Guiana on France's Natural Earth geometry) from making
-// the mainland map tiny.
 const CONTINENT_BOUNDS = {
   Europe: { minLon: -25, maxLon: 45, minLat: 34, maxLat: 72 },
   Africa: { minLon: -20, maxLon: 55, minLat: -36, maxLat: 38 },
@@ -107,18 +103,22 @@ function geometryToPath(geometry, project) {
   )).join(" ");
 }
 
-function regionStyle(region, index, answered, selectedRegion, correctRegion) {
+function regionStyle(region, optionRegions, answered, selectedRegion, correctRegion) {
+  const optionIndex = optionRegions.indexOf(region);
+  const isOption = optionIndex >= 0;
   const selectedWrong = answered && selectedRegion === region && selectedRegion !== correctRegion;
   const correct = answered && correctRegion === region;
 
   if (correct) return { fill: "#bbf7d0", stroke: "#16a34a", text: "#166534" };
   if (selectedWrong) return { fill: "#fecaca", stroke: "#ef4444", text: "#991b1b" };
-  if (answered) return { fill: "#e5edf5", stroke: "#cbd5e1", text: "#64748b" };
-  return { fill: REGION_FILLS[index % REGION_FILLS.length], stroke: "#ffffff", text: "#334155" };
+  if (answered) return { fill: "#edf2f7", stroke: "#ffffff", text: "#64748b" };
+  if (isOption) return { fill: OPTION_FILLS[optionIndex % OPTION_FILLS.length], stroke: "#ffffff", text: "#334155" };
+  return { fill: "#e9eef5", stroke: "#ffffff", text: "#94a3b8" };
 }
 
 export default function ZoomRegionMap({
   continent,
+  optionRegions = [],
   answered = false,
   selectedRegion,
   correctRegion,
@@ -127,7 +127,8 @@ export default function ZoomRegionMap({
 }) {
   const [geoJson, setGeoJson] = useState(null);
   const [loadFailed, setLoadFailed] = useState(false);
-  const regions = SUBREGIONS_BY_CONTINENT[continent] || [];
+  const allRegions = SUBREGIONS_BY_CONTINENT[continent] || [];
+  const visibleOptions = optionRegions.filter((region) => allRegions.includes(region));
 
   useEffect(() => {
     let cancelled = false;
@@ -148,7 +149,7 @@ export default function ZoomRegionMap({
 
   const project = useMemo(() => makeProjection(continent), [continent]);
 
-  if (!regions.length) return null;
+  if (!allRegions.length) return null;
 
   return (
     <div
@@ -184,8 +185,7 @@ export default function ZoomRegionMap({
             {mapFeatures.map((feature, index) => {
               const iso2 = featureIso2(feature) || `feature-${index}`;
               const region = regionForFeature(feature, continent);
-              const regionIndex = Math.max(0, regions.indexOf(region));
-              const style = regionStyle(region, regionIndex, answered, selectedRegion, correctRegion);
+              const style = regionStyle(region, visibleOptions, answered, selectedRegion, correctRegion);
 
               return (
                 <path
@@ -205,17 +205,17 @@ export default function ZoomRegionMap({
         </svg>
       )}
 
-      {!compact && (
+      {!compact && visibleOptions.length > 0 && (
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: regions.length <= 3 ? "repeat(3, minmax(0, 1fr))" : "repeat(2, minmax(0, 1fr))",
+            gridTemplateColumns: `repeat(${Math.min(visibleOptions.length, 2)}, minmax(0, 1fr))`,
             gap: 6,
             padding: "2px 2px 0",
           }}
         >
-          {regions.map((region, index) => {
-            const style = regionStyle(region, index, answered, selectedRegion, correctRegion);
+          {visibleOptions.map((region) => {
+            const style = regionStyle(region, visibleOptions, answered, selectedRegion, correctRegion);
             return (
               <div
                 key={region}
