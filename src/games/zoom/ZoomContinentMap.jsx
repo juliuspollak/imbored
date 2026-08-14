@@ -8,12 +8,10 @@ const OPTION_STYLES = [
 ];
 const NEUTRAL = { fill: "#e5e7eb", stroke: "#cbd5e1", text: "#94a3b8" };
 const WIDTH = 360;
-const HEIGHT = 190;
-const PADDING_X = 8;
-const PADDING_Y = 8;
+const HEIGHT = 230;
+const PADDING_X = 10;
+const PADDING_Y = 10;
 
-// Stable mainland-oriented bounds. These are used only to decide/focus the
-// viewport; the actual country shapes still come from Natural Earth.
 const CONTINENT_BOUNDS = {
   Africa: { minLon: -20, maxLon: 55, minLat: -36, maxLat: 38 },
   Asia: { minLon: 25, maxLon: 150, minLat: -12, maxLat: 78 },
@@ -90,12 +88,10 @@ function focusBoundsFor(options) {
   const lonSpan = combined.maxLon - combined.minLon;
   const latSpan = combined.maxLat - combined.minLat;
 
-  // Nearby choices get a dedicated two-continent comparison. Widely separated
-  // choices keep a world view because their relative position is useful.
   if (lonSpan > 190 || latSpan > 145) return null;
 
-  const lonPad = Math.max(8, lonSpan * 0.08);
-  const latPad = Math.max(6, latSpan * 0.08);
+  const lonPad = Math.max(5, lonSpan * 0.045);
+  const latPad = Math.max(4, latSpan * 0.045);
   return {
     minLon: Math.max(-180, combined.minLon - lonPad),
     maxLon: Math.min(180, combined.maxLon + lonPad),
@@ -104,15 +100,17 @@ function focusBoundsFor(options) {
   };
 }
 
+// Focused two-continent comparisons use a simple geographic/equirectangular
+// fit instead of Mercator. Mercator greatly enlarges high latitudes (notably
+// northern Asia) and was forcing the entire comparison to shrink inside the
+// card. The world overview keeps Mercator for familiar orientation.
 function makeFocusedProject(bounds) {
   if (!bounds) return worldProject;
 
-  const minY = mercatorY(bounds.minLat);
-  const maxY = mercatorY(bounds.maxLat);
   const usableWidth = WIDTH - PADDING_X * 2;
   const usableHeight = HEIGHT - PADDING_Y * 2;
   const xSpan = bounds.maxLon - bounds.minLon;
-  const ySpan = maxY - minY;
+  const ySpan = bounds.maxLat - bounds.minLat;
   const scale = Math.min(usableWidth / xSpan, usableHeight / ySpan);
   const drawnWidth = xSpan * scale;
   const drawnHeight = ySpan * scale;
@@ -121,7 +119,7 @@ function makeFocusedProject(bounds) {
 
   return ([lon, lat]) => [
     offsetX + (lon - bounds.minLon) * scale,
-    offsetY + (maxY - mercatorY(lat)) * scale,
+    offsetY + (bounds.maxLat - lat) * scale,
   ];
 }
 
@@ -197,8 +195,6 @@ export default function ZoomContinentMap({
     return geoJson.features.filter((feature) => {
       const continent = continentForFeature(feature);
       if (!continent) return false;
-      // When the choices are close, show only those two continents. The full
-      // world added no useful information and made the comparison tiny/busy.
       return !isFocused || visibleOptions.includes(continent);
     });
   }, [geoJson, isFocused, visibleOptions.join("|")]);
@@ -217,13 +213,13 @@ export default function ZoomContinentMap({
       }}
     >
       {!geoJson && !loadFailed && (
-        <div style={{ height: compact ? 92 : 150, display: "grid", placeItems: "center", color: "var(--color-text-muted)", fontSize: 11 }}>
+        <div style={{ height: compact ? 104 : 188, display: "grid", placeItems: "center", color: "var(--color-text-muted)", fontSize: 11 }}>
           Loading map…
         </div>
       )}
 
       {loadFailed && (
-        <div style={{ height: compact ? 76 : 110, display: "grid", placeItems: "center", color: "var(--color-text-muted)", fontSize: 11 }}>
+        <div style={{ height: compact ? 82 : 120, display: "grid", placeItems: "center", color: "var(--color-text-muted)", fontSize: 11 }}>
           Map unavailable
         </div>
       )}
@@ -233,7 +229,7 @@ export default function ZoomContinentMap({
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           role="img"
           aria-label={isFocused ? "Map showing the two continent choices" : "World map showing the two continent choices"}
-          style={{ width: "100%", height: compact ? 105 : 160, display: "block", overflow: "hidden" }}
+          style={{ width: "100%", height: compact ? 120 : 198, display: "block", overflow: "hidden" }}
         >
           {features.map((feature, index) => {
             const continent = continentForFeature(feature);
@@ -244,8 +240,6 @@ export default function ZoomContinentMap({
                 key={`${iso2}-${index}`}
                 d={geometryToPath(feature.geometry, project)}
                 fill={style.fill}
-                // Do not outline every country. At this level the player is
-                // comparing continents, so internal country borders are noise.
                 stroke="none"
                 strokeLinejoin="round"
                 fillRule="evenodd"
