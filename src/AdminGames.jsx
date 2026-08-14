@@ -201,7 +201,8 @@ export default function AdminGames({ onBack }) {
     setResetting(null);
     if (error) { setMessage({ type: "error", text: `Reset failed: ${error.message}` }); return; }
     const r = Number(data?.results_removed) || 0, rw = Number(data?.rewards_reversed) || 0, rp = Number(data?.points_reversed) || 0;
-    setMessage({ type: "success", text: `Today's personal challenge is clear. Removed ${r} result${r === 1 ? "" : "s"} and took back ${rw} award${rw === 1 ? "" : "s"} (${rp} points), across all players.` });
+    const clocks = Number(data?.attempt_clocks_cleared) || 0;
+    setMessage({ type: "success", text: `Today's personal challenge is clear. Removed ${r} result${r === 1 ? "" : "s"} and took back ${rw} award${rw === 1 ? "" : "s"} (${rp} points), across all players. Reset ${clocks} attempt clock${clocks === 1 ? "" : "s"}, so replays start from zero.` });
   }
 
   async function move(index, direction) {

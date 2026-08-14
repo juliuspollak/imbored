@@ -245,6 +245,7 @@ declare
   removed_count integer := 0;
   reversed_reward_count integer := 0;
   reversed_points bigint := 0;
+  cleared_attempt_count integer := 0;
 begin
   if not public.is_admin(auth.uid()) then
     raise exception 'Admin access required' using errcode='42501';
@@ -365,11 +366,24 @@ begin
 
   get diagnostics removed_count=row_count;
 
+  -- The attempt clock outlives the result it belongs to, so a reset that left
+  -- it behind handed the replay a clock that had been running since the first
+  -- open — hours, in practice, which floors the round score no matter how fast
+  -- the replay actually was. admin_reset_all_stats() has always cleared these;
+  -- the narrower reset has to as well or it does not really reset the round.
+  delete from public.challenge_attempt_starts
+  where split_part(attempt_key,':',1)='personal'
+    and split_part(attempt_key,':',3)=target_challenge_date::text
+    and (target_game is null or split_part(attempt_key,':',2)=target_game);
+
+  get diagnostics cleared_attempt_count=row_count;
+
   return jsonb_build_object(
     'challenge_date',target_challenge_date,
     'results_removed',removed_count,
     'rewards_reversed',reversed_reward_count,
-    'points_reversed',reversed_points
+    'points_reversed',reversed_points,
+    'attempt_clocks_cleared',cleared_attempt_count
   );
 end;
 $$;
