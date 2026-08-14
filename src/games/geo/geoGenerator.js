@@ -10,6 +10,7 @@ import {
   REGION_FACTS,
   COUNTRIES,
 } from "./geoData.js";
+import { GENERAL_GEO_FACTS } from "./geoGeneralFacts.js";
 import { buildHistoryIndex } from "./geoHistory.js";
 import { shuffle } from "../../lib/seededRandom.js";
 
@@ -113,6 +114,7 @@ function makeQuestion(type, fact) {
     type,
     mode,
     prompt: fact.prompt || templates[templateIndex](fact),
+    skPrompt: fact.skPrompt,
     answer,
     options,
     fixedChoice: Boolean(fact.options),
@@ -126,13 +128,10 @@ function makeQuestion(type, fact) {
   };
 }
 
-
 function chooseFact(pool, usedSources, historyIndex) {
   const candidates = pool.filter((fact) => !usedSources.has(fact.sourceId));
   if (!candidates.length) return null;
 
-  // Never repeat a fact while there are unseen facts available. A different
-  // wording does not make an already-used fact "new".
   const neverSeen = candidates.filter((fact) => !historyIndex.factRank.has(fact.factId));
   if (neverSeen.length) return shuffle(neverSeen)[0];
 
@@ -203,6 +202,11 @@ function generateQuiz(dayIdx, history = []) {
     flora: NATIVE_FLORA.filter((q) => q.difficulty <= ceiling).map((q) => tag("flora", q)),
     fauna: NATIVE_FAUNA.filter((q) => q.difficulty <= ceiling).map((q) => tag("fauna", q)),
     river: MAJOR_RIVERS.filter((q) => q.difficulty <= ceiling).map((q) => tag("river", q)),
+    general: GENERAL_GEO_FACTS.filter((q) => q.difficulty <= ceiling).map((q) => ({
+      ...q,
+      sourceId: `general:${q.id}`,
+      factId: `general:${q.id}`,
+    })),
     animalLegacy: ANIMALS.filter((q) => q.difficulty <= ceiling).map((q) => tag("animalLegacy", q)),
     landmarkLegacy: LANDMARKS.filter((q) => q.difficulty <= ceiling).map((q) => tag("landmarkLegacy", q)),
     polar: POLAR_FACTS.filter((q) => q.id !== "mcmurdo" && q.difficulty <= ceiling).map((q) => ({
@@ -210,9 +214,6 @@ function generateQuiz(dayIdx, history = []) {
       sourceId: `polar:${q.id}`,
       factId: `polar:${q.id}`,
     })),
-    // These rows are alternative clues for the same mapped place, not
-    // separate geography facts. Group them by answer so wording variants
-    // cannot defeat repetition protection.
     region: REGION_FACTS.filter((q) => q.difficulty <= ceiling).map((q) => {
       const placeId = q.answer.toLowerCase().replace(/[^a-z0-9]+/g, "-");
       return {
@@ -227,16 +228,16 @@ function generateQuiz(dayIdx, history = []) {
   const questions = [];
   const usedSources = new Set();
 
-  // Keep the expanded geography content visible: every quiz gets one native
-  // plant, native animal or major river question, rotated through history.
-  const featuredType = shuffle(["flora", "fauna", "river"])[0];
+  // Keep recognisable geography visible in every quiz while still rotating
+  // through native plants, animals and rivers.
+  const featuredType = shuffle(["flora", "fauna", "river", "general"])[0];
   const featuredFact = chooseFact(pools[featuredType], usedSources, historyIndex);
   if (featuredFact) {
     usedSources.add(featuredFact.sourceId);
     questions.push(makeQuestion(featuredType, featuredFact));
   }
 
-  const categoryOrder = shuffle(["country", "capital", "flag", "city", "animal", "landmark", "food", "naturalFeature", "currency", "language", "region", "polar", "animalLegacy", "landmarkLegacy"]);
+  const categoryOrder = shuffle(["general", "country", "capital", "flag", "city", "animal", "landmark", "food", "naturalFeature", "currency", "language", "region", "polar", "animalLegacy", "landmarkLegacy"]);
   for (const type of categoryOrder) {
     if (questions.length >= 5) break;
     const fact = chooseFact(pools[type] || [], usedSources, historyIndex);
@@ -261,6 +262,5 @@ function generateQuiz(dayIdx, history = []) {
     return { ...question, mode: "choice" };
   });
 }
-
 
 export { shuffle, generateQuiz };
