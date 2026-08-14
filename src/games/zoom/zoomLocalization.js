@@ -40,9 +40,17 @@ const LEVEL2_TEMPLATES_SK = {
   flag: (name, cg) => `Tá istá vlajka — v ktorej časti kontinentu ${cg} je?`,
 };
 
-function level3PromptSk(subregionSK) {
-  return `Zostali dve možnosti — ktorá krajina v regióne ${subregionSK} to je?`;
-}
+const LEVEL3_TEMPLATES_SK = {
+  capital: (name, subregion) => `Stále mesto ${name} — v ktorej krajine regiónu ${subregion} leží?`,
+  animal: (name, subregion) => `Stále zviera ${name} — ktorú krajinu v regióne ${subregion} hľadáme?`,
+  flora: (name, subregion) => `Stále ${name} — ktorú krajinu v regióne ${subregion} hľadáme?`,
+  landmark: (name, subregion) => `Stále ${name} — v ktorej krajine regiónu ${subregion} sa nachádza?`,
+  food: (name, subregion) => `Stále jedlo ${name} — z ktorej krajiny v regióne ${subregion} pochádza?`,
+  naturalFeature: (name, subregion) => `Stále ${name} — v ktorej krajine regiónu ${subregion} sa nachádza?`,
+  currency: (name, subregion) => `Stále mena ${name} — ktorá krajina v regióne ${subregion} ju používa?`,
+  language: (name, subregion) => `Stále jazyk ${name} — ktorú krajinu v regióne ${subregion} hľadáme?`,
+  flag: (name, subregion) => `Tá istá vlajka — ktorej krajine v regióne ${subregion} patrí?`,
+};
 
 function countryDisplayName(name, language) {
   if (language !== "sk") return name;
@@ -79,7 +87,7 @@ function localizeZoomPrompt(step, language) {
   if (step.levelKey === "subregion") {
     return (LEVEL2_TEMPLATES_SK[step.clueType] || LEVEL2_TEMPLATES_SK.capital)(name, continentGenitive);
   }
-  return level3PromptSk(subregionSK);
+  return (LEVEL3_TEMPLATES_SK[step.clueType] || LEVEL3_TEMPLATES_SK.capital)(name, subregionSK);
 }
 
 export { localizeZoomValue, localizeZoomPrompt, localizeZoomClueName };
