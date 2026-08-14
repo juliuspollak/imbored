@@ -4883,6 +4883,10 @@ declare
   eligible_players integer:=0;
   qualifying_samples integer:=0;
   community_median numeric;
+  pooled_players integer:=0;
+  pooled_samples integer:=0;
+  pooled_median numeric;
+  day_weight numeric:=1;
   benchmark public.game_time_benchmarks;
 begin
   select * into benchmark
@@ -4943,17 +4947,72 @@ begin
   into eligible_players,qualifying_samples,community_median
   from player_medians;
 
-  -- Two players, not three. A circle of four never crossed a three-player bar
-  -- -- each needs two hint-free, mistake-free samples in 90 days -- so the
-  -- seeded provisional time stayed in force forever. Against a guess that far
-  -- from real play every round pins the 150 cap, the standings all read the
-  -- same, and the winner falls to the tiebreakers.
+  -- The sample set above is per weekday, and that is what actually starved
+  -- these benchmarks: a daily challenge offers each weekday once a week, so
+  -- qualifying needs two players with two clean results each on the SAME
+  -- weekday -- a fortnight of flawless play per weekday, per game. Gridly has
+  -- 15 clean results spread over 7 weekdays: about 2 per day, against the 4
+  -- required. Lowering the player bar alone would not have helped.
+  --
+  -- So when a weekday cannot qualify on its own, fall back to the same
+  -- calculation pooled across every weekday, then scale the result back onto
+  -- this weekday using the seeded Mon->Sun ramp. That uses all 15 samples
+  -- instead of 2, and keeps the intended difficulty curve rather than paying
+  -- every weekday the same time.
+  if eligible_players<2 then
+    with clean as (
+      select stat.user_id,stat.seconds,
+        row_number() over(partition by stat.user_id order by stat.completed_at desc,stat.id desc) as recent_rank,
+        count(*) over(partition by stat.user_id) as player_sample_count
+      from public.game_stats stat
+      where stat.game=target_game
+        and stat.mode=target_mode
+        and stat.completed_at>=now()-interval '90 days'
+        and stat.seconds between 5 and 3600
+        and coalesce(stat.hints,0)=0
+        and coalesce(stat.mistakes,0)=0
+    ), player_medians as (
+      select user_id,
+        count(*)::integer as sample_count,
+        percentile_cont(0.5) within group(order by seconds) as median_seconds
+      from clean
+      where player_sample_count>=2 and recent_rank<=10
+      group by user_id
+    )
+    select count(*)::integer,
+      coalesce(sum(sample_count),0)::integer,
+      percentile_cont(0.5) within group(order by median_seconds)
+    into pooled_players,pooled_samples,pooled_median
+    from player_medians;
+
+    -- This weekday's share of the game's seeded ramp. Sunday stays harder than
+    -- Monday because the provisional values say so, not because of thin data.
+    select case
+      when coalesce(avg(other.provisional_seconds),0)>0
+        then benchmark.provisional_seconds/avg(other.provisional_seconds)
+      else 1
+    end
+    into day_weight
+    from public.game_time_benchmarks other
+    where other.game=target_game
+      and other.mode=target_mode;
+
+    if pooled_players>=2 and pooled_median is not null then
+      eligible_players:=pooled_players;
+      qualifying_samples:=pooled_samples;
+      community_median:=pooled_median*coalesce(day_weight,1);
+    end if;
+  end if;
 
   update public.game_time_benchmarks current_benchmark
   set observed_median_seconds=case when eligible_players>=2 then community_median else null end,
       clean_sample_count=case when eligible_players>=2 then qualifying_samples else 0 end,
+      -- effective_seconds carries no CHECK of its own, and it is a divisor in
+      -- every score. Hold it to the same 5..3600 range provisional_seconds is
+      -- constrained to, so a thin or skewed sample cannot round it to zero.
       effective_seconds=case
-        when eligible_players>=2 and community_median is not null then round(community_median)
+        when eligible_players>=2 and community_median is not null
+          then greatest(5,least(3600,round(community_median)))
         else current_benchmark.provisional_seconds
       end,
       updated_at=now()
