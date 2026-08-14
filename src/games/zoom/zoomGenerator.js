@@ -52,9 +52,17 @@ const LEVEL2_TEMPLATES = {
   flag: (name, continent) => `Same flag — which part of ${continent} does it belong to?`,
 };
 
-function level3Prompt(subregion) {
-  return `Down to two — which country in ${subregion} is it?`;
-}
+const LEVEL3_TEMPLATES = {
+  capital: (name, subregion) => `Still thinking of ${name} — which country in ${subregion} is it in?`,
+  animal: (name, subregion) => `Still thinking of the ${name} — which country in ${subregion} are we looking for?`,
+  flora: (name, subregion) => `Still thinking of ${name} — which country in ${subregion} are we looking for?`,
+  landmark: (name, subregion) => `Still thinking of ${name} — which country in ${subregion} is it in?`,
+  food: (name, subregion) => `Still thinking of ${name} — which country in ${subregion} does it come from?`,
+  naturalFeature: (name, subregion) => `Still thinking of ${name} — which country in ${subregion} is it in?`,
+  currency: (name, subregion) => `Same currency, the ${name} — which country in ${subregion} uses it?`,
+  language: (name, subregion) => `Same language clue, ${name} — which country in ${subregion} are we looking for?`,
+  flag: (name, subregion) => `Same flag — which country in ${subregion} does it belong to?`,
+};
 
 function clueSource(type) {
   return FACT_CLUE_SOURCES.find((source) => source.type === type);
@@ -131,7 +139,7 @@ function buildRound(country, roundIndex, preferredTypes) {
       ...base,
       levelIndex: 2,
       levelKey: "country",
-      prompt: level3Prompt(subregion),
+      prompt: (LEVEL3_TEMPLATES[clue.type] || LEVEL3_TEMPLATES.capital)(clue.name, subregion),
       answer: country.name,
       options: shuffle([country.name, countryDistractorRecord?.name || "—"]),
       countryDistractorId: countryDistractorRecord?.id,
