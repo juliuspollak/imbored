@@ -51,6 +51,29 @@ function appCountryForFeature(feature) {
   return iso2 ? COUNTRY_BY_ISO2.get(iso2) : null;
 }
 
+function naturalEarthContinent(feature) {
+  const value = feature?.properties?.CONTINENT;
+  return ["Africa", "Asia", "Europe", "North America", "South America", "Oceania"].includes(value)
+    ? value
+    : null;
+}
+
+function featureBelongsToContinent(feature, continent) {
+  // The game dataset intentionally contains only countries we use for quiz
+  // targets. It is therefore not a complete world gazetteer. For map context,
+  // use Natural Earth's own continent classification so countries that are not
+  // quiz targets still appear as neutral geography instead of leaving holes.
+  const appCountry = appCountryForFeature(feature);
+  return appCountry?.continent === continent || naturalEarthContinent(feature) === continent;
+}
+
+function featureCountryName(feature) {
+  const appCountry = appCountryForFeature(feature);
+  if (appCountry?.name) return appCountry.name;
+  const props = feature?.properties || {};
+  return props.ADMIN || props.NAME || props.NAME_LONG || "";
+}
+
 function wrappedLongitude(lon, continent) {
   if (continent === "Oceania" && lon < 60) return lon + 360;
   return lon;
@@ -141,7 +164,7 @@ export default function ZoomCountryMap({
 
   const mapFeatures = useMemo(() => {
     if (!geoJson?.features) return [];
-    return geoJson.features.filter((feature) => appCountryForFeature(feature)?.continent === continent);
+    return geoJson.features.filter((feature) => featureBelongsToContinent(feature, continent));
   }, [geoJson, continent]);
 
   const project = useMemo(() => makeProjection(continent), [continent]);
@@ -181,8 +204,7 @@ export default function ZoomCountryMap({
           <g>
             {mapFeatures.map((feature, index) => {
               const iso2 = featureIso2(feature) || `feature-${index}`;
-              const country = appCountryForFeature(feature);
-              const countryName = country?.name || "";
+              const countryName = featureCountryName(feature);
               const style = countryStyle(countryName, optionCountries, answered, selectedCountry, correctCountry);
 
               return (
