@@ -17,7 +17,7 @@ function toSlots({ isCircle, rounds, games }) {
 export default function ChallengeStandings({ rows = [], roster = [], games = [], rounds = [], benchmarks = [], serverStandings = null, previousRows = [], previousRounds = [], isCircle = false, userId, loading = false, defaultOpen = true, embedded = false, closed = false, winnerId = null, refreshing = false, periodLabel = null, periodIndex = 0, periodCount = 1, onPeriodChange = null }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(defaultOpen);
-  const [expandedPlayerId, setExpandedPlayerId] = useState(null);
+  const [expandedPlayerIds, setExpandedPlayerIds] = useState(() => new Set());
 
   const standings = useMemo(() => {
     // The database ranks circle challenges so the standings agree with the
@@ -66,7 +66,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
   const body = loading
     ? <div role="status" style={{ textAlign: "center", padding: "var(--space-4)", color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)" }}>{t("standings.loading")}</div>
     : standings.length
-      ? <StandingsList standings={standings} expandedPlayerId={expandedPlayerId} setExpandedPlayerId={setExpandedPlayerId} previousRankMap={previousRankMap} closed={closed} winnerId={winnerId} />
+      ? <StandingsList standings={standings} expandedPlayerIds={expandedPlayerIds} setExpandedPlayerIds={setExpandedPlayerIds} previousRankMap={previousRankMap} closed={closed} winnerId={winnerId} />
       : <p style={{ margin: 0, textAlign: "center", padding: "var(--space-4)", color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)" }}>{t("standings.emptyPeriod")}</p>;
 
   if (embedded) {
@@ -151,7 +151,7 @@ function NavigatorButton({ onClick, disabled, ariaLabel, children }) {
   );
 }
 
-function StandingsList({ standings, expandedPlayerId, setExpandedPlayerId, previousRankMap, closed, winnerId }) {
+function StandingsList({ standings, expandedPlayerIds, setExpandedPlayerIds, previousRankMap, closed, winnerId }) {
   const { t } = useI18n();
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
@@ -160,7 +160,7 @@ function StandingsList({ standings, expandedPlayerId, setExpandedPlayerId, previ
         const previousRank = previousRankMap[player.userId] ?? rank;
         const delta = rank == null || previousRank == null ? 0 : previousRank - rank;
         const isLeader = rank === 1 && player.score > 0;
-        const expanded = expandedPlayerId === player.userId;
+        const expanded = expandedPlayerIds.has(player.userId);
         const isWinner = closed && winnerId === player.userId;
         // Why this player is above the next one when the score cannot say.
         // Without it, a table of identical scores looks arbitrary.
@@ -178,7 +178,12 @@ function StandingsList({ standings, expandedPlayerId, setExpandedPlayerId, previ
           >
             <button
               type="button"
-              onClick={() => setExpandedPlayerId(expanded ? null : player.userId)}
+              onClick={() => setExpandedPlayerIds((current) => {
+                const next = new Set(current);
+                if (next.has(player.userId)) next.delete(player.userId);
+                else next.add(player.userId);
+                return next;
+              })}
               aria-expanded={expanded}
               aria-controls={`player-results-${player.userId}`}
               className="challenge-player-toggle"
