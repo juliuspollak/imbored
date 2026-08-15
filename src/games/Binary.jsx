@@ -48,7 +48,7 @@ function FlameIcon({ size = 24, className = "", style, isConflict = false, ...pr
         />
         <path d="M15.4 1.8c-.1 5 4.2 7.5 6 11l-7.5 7-2.1-3c-.2-5.8 1.2-10.8 3.6-15Z" fill="#FFE0C1" fillOpacity=".46" />
         <path d="M13.9 15.6c2.8 3.1 4 5.3 4 7.9 0 3.4-1.8 5.8-4.4 5.8-2.7 0-4.6-2.4-4.6-5.7 0-2.4 1.1-4.4 3.1-6.4-.1 1.9.4 3.2 1.5 4.1-.1-2-.1-3.8.4-5.7Z" fill={`url(#${id}inner)`} />
-        <path d="M13.8 19.8c1.1 1.4 1.7 2.6 1.7 3.8 0 1.6-.8 2.8-2 2.8-1.2 0-2.1-1.2-2.1-2.7 0-1.1.5-2.2 1.5-3.3 0 .9.2 1.5.7 2-.1-.9 0-1.8.2-2.6Z" fill="#FFEEC0" fillOpacity=".76" />
+        <path d="M13.8 19.8c1.1 1.4 1.7 2.6 1.7 3.8 0 1.6-.8 2.8-2 2.8-1.2 0-2.1-1.2-2.1-2.7 0-1.1.5-2.2 1.5-3.3 0 .9.2 1.5.7 2-.1-.9 0-1.8.2-2.6Z" fill="#FFE3A3" fillOpacity=".62" />
       </g>
     </svg>
   );
@@ -561,8 +561,8 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
         const hintClass = isHint && !isConflict ? `tg-hint-${hintCell.type}` : "";
         const hintBackground = hintCell?.type === "error" ? "repeating-linear-gradient(135deg, var(--color-surface) 0 7px, var(--color-danger-bg) 7px 14px)" : hintCell?.type === "forced" ? "repeating-linear-gradient(135deg, var(--color-surface) 0 7px, var(--color-primary-subtle) 7px 14px)" : "repeating-linear-gradient(135deg, var(--color-surface) 0 7px, var(--color-warning-border) 7px 14px)";
         return <button key={`${r}-${c}`} onClick={() => handleCellClick(r, c)} disabled={isGiven} className={`tg-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`} style={{ background: isHint ? hintBackground : isConflict ? "linear-gradient(rgba(216,92,98,.10),rgba(216,92,98,.10)),var(--color-surface)" : isGiven ? "var(--color-surface-elevated)" : val === SUN ? "linear-gradient(rgba(255,122,89,.12),rgba(255,122,89,.12)),var(--color-surface)" : val === MOON ? "linear-gradient(rgba(34,162,196,.12),rgba(34,162,196,.12)),var(--color-surface)" : "var(--color-surface)", border: "1px solid var(--color-border-strong)", boxShadow: isConflict ? `inset 0 0 0 2px ${CONFLICT_RED}` : "none", cursor: isGiven ? "default" : "pointer" }}>
-          {val === SUN && <span className="tg-symbol tg-symbol-disc tg-symbol-disc--flame"><FlameIcon key={`flame-${r}-${c}`} size={44} isConflict={isConflict} /></span>}
-          {val === MOON && <span className="tg-symbol tg-symbol-disc tg-symbol-disc--frost"><FrostIcon key={`frost-${r}-${c}`} size={48} isConflict={isConflict} /></span>}
+          {val === SUN && <span className="tg-symbol tg-symbol-disc tg-symbol-disc--flame"><FlameIcon key={`flame-${r}-${c}`} size={39} isConflict={isConflict} /></span>}
+          {val === MOON && <span className="tg-symbol tg-symbol-disc tg-symbol-disc--frost"><FrostIcon key={`frost-${r}-${c}`} size={42} isConflict={isConflict} /></span>}
           {isHint && hintCell.symbol && !solved && <span className="tg-hint-ghost-badge" aria-label={hintCell.symbol === SUN ? "This cell should be a flame" : "This cell should be frost"} style={{ position: "absolute", top: 3, right: 3, width: 16, height: 16, borderRadius: "50%", background: "var(--color-surface-raised)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--color-border-strong)", boxShadow: "var(--shadow-control)", pointerEvents: "none" }}>{hintCell.symbol === SUN ? <FlameIcon size={11} /> : <FrostIcon size={11} />}</span>}
         </button>;
       }))}
@@ -595,7 +595,7 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
       .tg-cell::after { content: ""; position: absolute; inset: 5px; border-radius: 10px; border: 1px solid transparent; transition: border-color .18s ease, background .18s ease, transform .18s ease; pointer-events: none; }
       .tg-cell { -webkit-tap-highlight-color: transparent; }
       .tg-cell:focus { outline: none; }
-      .tg-symbol-disc { width: clamp(40px, 14cqw, 60px); height: clamp(40px, 14cqw, 60px); display: grid; place-items: center; border-radius: 999px; position: relative; z-index: 1; }
+      .tg-symbol-disc { width: clamp(34px, 12.5cqw, 52px); height: clamp(34px, 12.5cqw, 52px); display: grid; place-items: center; border-radius: 999px; position: relative; z-index: 1; }
       .tg-symbol-disc--flame { background: transparent; filter: drop-shadow(0 0 7px rgba(255,95,61,.4)) drop-shadow(0 3px 3px rgba(0,0,0,.22)); }
       .tg-symbol-disc--frost { background: transparent; filter: drop-shadow(0 0 9px rgba(35,200,255,.5)) drop-shadow(0 3px 3px rgba(0,0,0,.2)); }
       .tg-symbol-disc--flame > svg { animation: flameFlicker .5s ease-out 1; transform-origin: 50% 80%; }
