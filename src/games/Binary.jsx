@@ -18,37 +18,37 @@ import { createGameAttemptSeed } from "../lib/gameAttemptSeed.js";
 function FlameIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
   const id = React.useId().replace(/:/g, "");
   return (
-    <svg viewBox="0 0 28 32" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
+    <svg viewBox="0 0 28 34" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
       <defs>
-        <linearGradient id={`${id}outer`} x1="9" y1="2" x2="19" y2="29" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#FFE0A6" />
-          <stop offset=".28" stopColor="#FF9B55" />
-          <stop offset=".68" stopColor="#F45135" />
-          <stop offset="1" stopColor="#C92D22" />
+        <linearGradient id={`${id}outer`} x1="8" y1="2" x2="20" y2="31" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#FFD0A0" />
+          <stop offset=".28" stopColor="#FF8C56" />
+          <stop offset=".68" stopColor="#F34B36" />
+          <stop offset="1" stopColor="#C72B24" />
         </linearGradient>
-        <linearGradient id={`${id}inner`} x1="12" y1="13" x2="15" y2="28" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#FFF5B0" />
-          <stop offset=".45" stopColor="#FFC23E" />
-          <stop offset="1" stopColor="#FF6A2D" />
+        <linearGradient id={`${id}inner`} x1="11" y1="15" x2="16" y2="29" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#FFE8A0" />
+          <stop offset=".48" stopColor="#FFB43E" />
+          <stop offset="1" stopColor="#F76532" />
         </linearGradient>
-        <filter id={`${id}glow`} x="-60%" y="-45%" width="220%" height="210%">
-          <feGaussianBlur stdDeviation="1.7" result="blur" />
-          <feFlood floodColor="#FF6A3D" floodOpacity=".52" />
+        <filter id={`${id}glow`} x="-65%" y="-45%" width="230%" height="210%">
+          <feGaussianBlur stdDeviation="1.65" result="blur" />
+          <feFlood floodColor="#FF5A3D" floodOpacity=".46" />
           <feComposite in2="blur" operator="in" />
           <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
       </defs>
       <g filter={`url(#${id}glow)`}>
         <path
-          d="M15 1.8c.2 4.9 4.2 7.2 6.1 10.6 1.3 2.2 2.1 4.6 2.1 7.1 0 6.2-4.1 10.7-9.5 10.7S4 25.8 4 19.8c0-3.7 1.7-6.9 4.9-10.1-.1 3 .8 5.1 2.6 6.5-.2-5.9 1.2-10.5 3.5-14.4Z"
+          d="M15.4 1.8c-.1 5.1 4.4 7.6 6.2 11.3 1.2 2.3 1.8 4.8 1.6 7.4-.4 6-4.3 10.9-9.7 10.9C8 31.4 4 27 4 20.8c0-4.1 1.8-7.5 5.2-10.8-.2 3.1.7 5.3 2.6 6.8-.2-5.9 1.2-10.8 3.6-15Z"
           fill={`url(#${id}outer)`}
-          stroke="#B52F22"
-          strokeWidth="1.2"
+          stroke="#B42E24"
+          strokeWidth="1.15"
           strokeLinejoin="round"
         />
-        <path d="M15 1.8c.2 4.8 4.1 7.1 6 10.4l-7.3 6.5-2.2-2.5C11.3 10.4 12.7 5.7 15 1.8Z" fill="#FFE7C2" fillOpacity=".5" />
-        <path d="M13.9 14.2c3.3 3.2 4.7 5.3 4.7 8.2 0 3.4-2 5.8-4.9 5.8s-5-2.4-5-5.8c0-2.5 1.2-4.6 3.5-6.7-.1 2 .5 3.5 1.7 4.4-.1-2.3-.1-3.9 0-5.9Z" fill={`url(#${id}inner)`} />
-        <path d="M13.7 18.8c1.6 1.6 2.3 2.7 2.3 4.2 0 1.8-1 3.2-2.4 3.2-1.5 0-2.5-1.3-2.5-3 0-1.2.6-2.5 1.8-3.7 0 1 .3 1.8.8 2.3-.1-1.1-.1-2.1 0-3Z" fill="#FFF7C7" fillOpacity=".9" />
+        <path d="M15.4 1.8c-.1 5 4.2 7.5 6 11l-7.5 7-2.1-3c-.2-5.8 1.2-10.8 3.6-15Z" fill="#FFE0C1" fillOpacity=".46" />
+        <path d="M13.9 15.6c2.8 3.1 4 5.3 4 7.9 0 3.4-1.8 5.8-4.4 5.8-2.7 0-4.6-2.4-4.6-5.7 0-2.4 1.1-4.4 3.1-6.4-.1 1.9.4 3.2 1.5 4.1-.1-2-.1-3.8.4-5.7Z" fill={`url(#${id}inner)`} />
+        <path d="M13.8 19.8c1.1 1.4 1.7 2.6 1.7 3.8 0 1.6-.8 2.8-2 2.8-1.2 0-2.1-1.2-2.1-2.7 0-1.1.5-2.2 1.5-3.3 0 .9.2 1.5.7 2-.1-.9 0-1.8.2-2.6Z" fill="#FFEEC0" fillOpacity=".76" />
       </g>
     </svg>
   );
@@ -57,35 +57,40 @@ function FlameIcon({ size = 24, className = "", style, isConflict = false, ...pr
 function FrostIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
   const id = React.useId().replace(/:/g, "");
   return (
-    <svg viewBox="0 0 30 36" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
+    <svg viewBox="0 0 30 40" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
       <defs>
-        <linearGradient id={`${id}main`} x1="9" y1="4" x2="21" y2="32" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#E7FBFF" />
-          <stop offset=".24" stopColor="#8CEAFF" />
-          <stop offset=".58" stopColor="#24BDEB" />
-          <stop offset="1" stopColor="#087EBE" />
+        <linearGradient id={`${id}main`} x1="12" y1="2" x2="17" y2="37" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#F2FDFF" />
+          <stop offset=".2" stopColor="#9CEBFF" />
+          <stop offset=".55" stopColor="#24B9EF" />
+          <stop offset="1" stopColor="#0867BD" />
         </linearGradient>
-        <linearGradient id={`${id}side`} x1="13" y1="16" x2="24" y2="31" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#48D3FF" />
-          <stop offset="1" stopColor="#0763B8" />
+        <linearGradient id={`${id}left`} x1="6" y1="18" x2="14" y2="36" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#56D6FF" />
+          <stop offset="1" stopColor="#0879C8" />
         </linearGradient>
-        <filter id={`${id}glow`} x="-70%" y="-55%" width="240%" height="220%">
-          <feGaussianBlur stdDeviation="1.6" result="blur" />
-          <feFlood floodColor="#28C8FF" floodOpacity=".48" />
+        <linearGradient id={`${id}right`} x1="20" y1="14" x2="22" y2="34" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#87E8FF" />
+          <stop offset="1" stopColor="#0759B5" />
+        </linearGradient>
+        <filter id={`${id}glow`} x="-75%" y="-45%" width="250%" height="205%">
+          <feGaussianBlur stdDeviation="1.65" result="blur" />
+          <feFlood floodColor="#23C8FF" floodOpacity=".48" />
           <feComposite in2="blur" operator="in" />
           <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
       </defs>
       <g filter={`url(#${id}glow)`} strokeLinejoin="round">
-        {/* Tall central shard — matches the ice crystal silhouette on the tile. */}
-        <path d="M15.5 1.8 23 11.1 19.4 28.2 13.4 34 6.8 26.2 9.1 10.3Z" fill={`url(#${id}main)`} stroke="#087AA6" strokeWidth="1.15" />
-        {/* Angular side splinters make it read as a crystal cluster, not a gem. */}
-        <path d="M9.3 17.3 4.1 21.2 6.1 29.2 13.4 34 11 23.1Z" fill="#20B7EA" stroke="#087AA6" strokeWidth="1.05" />
-        <path d="M19.6 17.2 25.7 13.4 24.2 25.2 19.4 28.2Z" fill={`url(#${id}side)`} stroke="#087AA6" strokeWidth="1.05" />
-        <path d="M15.5 1.8 23 11.1 14.6 15.8 9.1 10.3Z" fill="#DDF9FF" fillOpacity=".92" />
-        <path d="M14.6 15.8 23 11.1 19.4 28.2 13.4 34Z" fill="#075FBA" fillOpacity=".35" />
-        <path d="M9.1 10.3 14.6 15.8 13.4 34 6.8 26.2Z" fill="#80E5FA" fillOpacity=".3" />
-        <path d="M15.5 4.1 19.5 10.2 15.1 12.8 11.6 9.6Z" fill="#FFFFFF" fillOpacity=".7" />
+        {/* Long central spear and swept side shards mirror the icy feather on the tile. */}
+        <path d="M17.2 1.4 22.1 10.3 17.8 33.3 13.4 38.2 10.1 30.5 12.4 10.1Z" fill={`url(#${id}main)`} stroke="#0876A9" strokeWidth="1" />
+        <path d="M11.6 15.2 5.6 22.1 7.1 34.1 13.4 38.2 11.8 25.9Z" fill={`url(#${id}left)`} stroke="#0876A9" strokeWidth=".95" />
+        <path d="M18.8 17.4 25.6 10.8 22.9 28.2 17.8 33.3Z" fill={`url(#${id}right)`} stroke="#0876A9" strokeWidth=".95" />
+        <path d="M13 9.6 17.2 1.4 22.1 10.3 16.2 15.5Z" fill="#E9FBFF" fillOpacity=".94" />
+        <path d="M16.2 15.5 22.1 10.3 17.8 33.3 13.4 38.2Z" fill="#075BB7" fillOpacity=".36" />
+        <path d="M12.4 10.1 16.2 15.5 13.4 38.2 10.1 30.5Z" fill="#7DE5FC" fillOpacity=".34" />
+        <path d="M7 23.1 11.7 17.8 11.8 25.9 7.5 30.6Z" fill="#B8F5FF" fillOpacity=".42" />
+        <path d="M20.1 17.8 24.2 13.8 22.7 23.8 19.1 27Z" fill="#A8F1FF" fillOpacity=".38" />
+        <path d="M16.9 3.8 19.8 9.5 16.2 12.4 13.8 9.3Z" fill="#FFFFFF" fillOpacity=".82" />
       </g>
     </svg>
   );
@@ -207,9 +212,6 @@ function countSolutions(givens, edgeMap, limit) {
   return count;
 }
 
-// Greedy invariant-preserving removal: start fully revealed (trivially unique),
-// only ever commit a removal if the puzzle stays uniquely solvable afterward.
-// This guarantees the result is always valid without needing a final re-check.
 function countEmptyLines(givens) {
   let count = 0;
   for (let i = 0; i < SIZE; i++) {
@@ -274,24 +276,18 @@ function generatePuzzle(givenTarget, edgeTarget, minDifficulty = 0, maxAttempts 
   return best;
 }
 
-/* ---------------- board-state helpers (operate on the player's board) ---------------- */
-
 function getConflicts(board, edgeMap) {
   const conflicts = new Set();
   for (let r = 0; r < SIZE; r++) {
     for (let c = 0; c <= SIZE - 3; c++) {
       const a = board[r][c], b = board[r][c + 1], d = board[r][c + 2];
-      if (a !== 0 && a === b && b === d) {
-        conflicts.add(`${r}-${c}`); conflicts.add(`${r}-${c + 1}`); conflicts.add(`${r}-${c + 2}`);
-      }
+      if (a !== 0 && a === b && b === d) { conflicts.add(`${r}-${c}`); conflicts.add(`${r}-${c + 1}`); conflicts.add(`${r}-${c + 2}`); }
     }
   }
   for (let c = 0; c < SIZE; c++) {
     for (let r = 0; r <= SIZE - 3; r++) {
       const a = board[r][c], b = board[r + 1][c], d = board[r + 2][c];
-      if (a !== 0 && a === b && b === d) {
-        conflicts.add(`${r}-${c}`); conflicts.add(`${r + 1}-${c}`); conflicts.add(`${r + 2}-${c}`);
-      }
+      if (a !== 0 && a === b && b === d) { conflicts.add(`${r}-${c}`); conflicts.add(`${r + 1}-${c}`); conflicts.add(`${r + 2}-${c}`); }
     }
   }
   for (let r = 0; r < SIZE; r++) {
@@ -302,10 +298,7 @@ function getConflicts(board, edgeMap) {
   }
   for (let c = 0; c < SIZE; c++) {
     let sunN = 0, moonN = 0;
-    for (let r = 0; r < SIZE; r++) {
-      if (board[r][c] === SUN) sunN++;
-      if (board[r][c] === MOON) moonN++;
-    }
+    for (let r = 0; r < SIZE; r++) { if (board[r][c] === SUN) sunN++; if (board[r][c] === MOON) moonN++; }
     if (sunN > HALF) for (let r = 0; r < SIZE; r++) if (board[r][c] === SUN) conflicts.add(`${r}-${c}`);
     if (moonN > HALF) for (let r = 0; r < SIZE; r++) if (board[r][c] === MOON) conflicts.add(`${r}-${c}`);
   }
@@ -348,13 +341,11 @@ function isLocallyValid(board, r, c, s, edgeMap) {
 }
 
 function findForcedCell(board, edgeMap) {
-  for (let r = 0; r < SIZE; r++) {
-    for (let c = 0; c < SIZE; c++) {
-      if (board[r][c] !== 0) continue;
-      const sunOk = isLocallyValid(board, r, c, SUN, edgeMap);
-      const moonOk = isLocallyValid(board, r, c, MOON, edgeMap);
-      if (sunOk !== moonOk) return { r, c };
-    }
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+    if (board[r][c] !== 0) continue;
+    const sunOk = isLocallyValid(board, r, c, SUN, edgeMap);
+    const moonOk = isLocallyValid(board, r, c, MOON, edgeMap);
+    if (sunOk !== moonOk) return { r, c };
   }
   return null;
 }
@@ -392,8 +383,6 @@ function getRuleValidCompletedLines(board, edgeMap) {
   return getFullLines(board).filter((line) => !lineHasConflict(line, conflicts));
 }
 
-/* ---------------- design tokens ---------------- */
-
 const BG = "var(--color-page-bg)";
 const PANEL = "var(--color-surface)";
 const CREAM = "var(--color-text-primary)";
@@ -414,14 +403,9 @@ function fmtTime(s) {
   return `${m}:${ss.toString().padStart(2, "0")}`;
 }
 
-/* ---------------- component ---------------- */
-
 export default function BinaryGame({ userId, onSolved, mode = "practice", forcedDayIdx, seed, challengeDate, hintCooldownConfig, savedStatId, rewardResult, initialSeconds = 0, scoreToBeatSeconds = null, scoreChallengerName = null } = {}) {
   const { t } = useI18n();
-  const todayIdx = (() => {
-    const d = new Date().getDay();
-    return d === 0 ? 6 : d - 1;
-  })();
+  const todayIdx = (() => { const d = new Date().getDay(); return d === 0 ? 6 : d - 1; })();
   const isChallenge = mode === "challenge";
   const [dayIdx, setDayIdx] = useState(isChallenge ? forcedDayIdx ?? todayIdx : todayIdx);
   const hintCooldownSeconds = (hintCooldownConfig?.hint_cooldown_base || 0) + (hintCooldownConfig?.hint_cooldown_per_day || 0) * dayIdx;
@@ -545,7 +529,20 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
   function performTapCycle(r, c) { pushHistory(); setBoard((prev) => { const next = prev.map((row) => row.slice()); next[r][c] = (next[r][c] + 1) % 3; return next; }); }
   function handleCellClick(r, c) { if (solved || puzzle.givens[r][c] !== 0) return; setHintCell(null); performTapCycle(r, c); }
   function handleUndo() { if (solved || history.length === 0) return; const last = history[history.length - 1]; setHistory((h) => h.slice(0, -1)); skipNextInvalidMistakeRef.current = true; setBoard(last.board); setHintCell(null); setSolved(false); setRunning(true); }
-  function handleReset() { if (solved) return; setBoard(puzzle.givens.map((row) => row.slice())); setMistakes((value) => value + 1); setDifficultyRating(null); setHintCell(null); setHistory([]); const resetCelebratedLines = dayIdx <= 1 ? getCompletedLines(puzzle.givens, puzzle.solution) : dIdx <= 3 ? getRuleValidCompletedLines(puzzle.givens, puzzle.edgeMap) : []; completedLinesRef.current = new Set(resetCelebratedLines); invalidCompletedLinesRef.current = new Set(); window.clearTimeout(invalidMistakeTimerRef.current); setSolved(false); setRunning(true); }
+  function handleReset() {
+    if (solved) return;
+    setBoard(puzzle.givens.map((row) => row.slice()));
+    setMistakes((value) => value + 1);
+    setDifficultyRating(null);
+    setHintCell(null);
+    setHistory([]);
+    const resetCelebratedLines = dayIdx <= 1 ? getCompletedLines(puzzle.givens, puzzle.solution) : dayIdx <= 3 ? getRuleValidCompletedLines(puzzle.givens, puzzle.edgeMap) : [];
+    completedLinesRef.current = new Set(resetCelebratedLines);
+    invalidCompletedLinesRef.current = new Set();
+    window.clearTimeout(invalidMistakeTimerRef.current);
+    setSolved(false);
+    setRunning(true);
+  }
 
   function handleHint() {
     if (solved || hintCooldown.isLocked()) return;
@@ -565,7 +562,7 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
         const hintBackground = hintCell?.type === "error" ? "repeating-linear-gradient(135deg, var(--color-surface) 0 7px, var(--color-danger-bg) 7px 14px)" : hintCell?.type === "forced" ? "repeating-linear-gradient(135deg, var(--color-surface) 0 7px, var(--color-primary-subtle) 7px 14px)" : "repeating-linear-gradient(135deg, var(--color-surface) 0 7px, var(--color-warning-border) 7px 14px)";
         return <button key={`${r}-${c}`} onClick={() => handleCellClick(r, c)} disabled={isGiven} className={`tg-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`} style={{ background: isHint ? hintBackground : isConflict ? "linear-gradient(rgba(216,92,98,.10),rgba(216,92,98,.10)),var(--color-surface)" : isGiven ? "var(--color-surface-elevated)" : val === SUN ? "linear-gradient(rgba(255,122,89,.12),rgba(255,122,89,.12)),var(--color-surface)" : val === MOON ? "linear-gradient(rgba(34,162,196,.12),rgba(34,162,196,.12)),var(--color-surface)" : "var(--color-surface)", border: "1px solid var(--color-border-strong)", boxShadow: isConflict ? `inset 0 0 0 2px ${CONFLICT_RED}` : "none", cursor: isGiven ? "default" : "pointer" }}>
           {val === SUN && <span className="tg-symbol tg-symbol-disc tg-symbol-disc--flame"><FlameIcon key={`flame-${r}-${c}`} size={44} isConflict={isConflict} /></span>}
-          {val === MOON && <span className="tg-symbol tg-symbol-disc tg-symbol-disc--frost"><FrostIcon key={`frost-${r}-${c}`} size={46} isConflict={isConflict} /></span>}
+          {val === MOON && <span className="tg-symbol tg-symbol-disc tg-symbol-disc--frost"><FrostIcon key={`frost-${r}-${c}`} size={48} isConflict={isConflict} /></span>}
           {isHint && hintCell.symbol && !solved && <span className="tg-hint-ghost-badge" aria-label={hintCell.symbol === SUN ? "This cell should be a flame" : "This cell should be frost"} style={{ position: "absolute", top: 3, right: 3, width: 16, height: 16, borderRadius: "50%", background: "var(--color-surface-raised)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--color-border-strong)", boxShadow: "var(--shadow-control)", pointerEvents: "none" }}>{hintCell.symbol === SUN ? <FlameIcon size={11} /> : <FrostIcon size={11} />}</span>}
         </button>;
       }))}
@@ -599,8 +596,8 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
       .tg-cell { -webkit-tap-highlight-color: transparent; }
       .tg-cell:focus { outline: none; }
       .tg-symbol-disc { width: clamp(40px, 14cqw, 60px); height: clamp(40px, 14cqw, 60px); display: grid; place-items: center; border-radius: 999px; position: relative; z-index: 1; }
-      .tg-symbol-disc--flame { background: transparent; filter: drop-shadow(0 0 8px rgba(255,105,61,.44)) drop-shadow(0 3px 3px rgba(0,0,0,.24)); }
-      .tg-symbol-disc--frost { background: transparent; filter: drop-shadow(0 0 9px rgba(40,200,255,.46)) drop-shadow(0 3px 3px rgba(0,0,0,.22)); }
+      .tg-symbol-disc--flame { background: transparent; filter: drop-shadow(0 0 7px rgba(255,95,61,.4)) drop-shadow(0 3px 3px rgba(0,0,0,.22)); }
+      .tg-symbol-disc--frost { background: transparent; filter: drop-shadow(0 0 9px rgba(35,200,255,.5)) drop-shadow(0 3px 3px rgba(0,0,0,.2)); }
       .tg-symbol-disc--flame > svg { animation: flameFlicker .5s ease-out 1; transform-origin: 50% 80%; }
       .tg-symbol-disc--frost > svg { animation: frostShimmer .55s ease-out 1; transform-origin: 50% 50%; }
       @keyframes flameFlicker { 0% { transform: scale(.82) translateY(2px); opacity: .5; } 35% { transform: scale(1.08) translateY(-1px); opacity: 1; } 55% { transform: scale(.97) skewX(-2.5deg); } 72% { transform: scale(1.03) skewX(1.5deg); } 100% { transform: scale(1); opacity: 1; } }
