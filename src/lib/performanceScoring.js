@@ -1,6 +1,6 @@
 export const HINT_PENALTY_RATIO = 0.20;
 export const MISTAKE_PENALTY_RATIO = 0.10;
-export const MIN_DAILY_SCORE = 20;
+export const MIN_DAILY_SCORE = 45;
 export const MAX_DAILY_SCORE = 150;
 
 function benchmarkSeconds(value) {
@@ -37,15 +37,12 @@ export function answerAccuracy(result = {}) {
 // every answer wrong beat working through it carefully: the failure ended the
 // round in a few seconds and the cap hid the difference.
 //
-// Accuracy is applied *after* the clamp, not inside it. Scaling the raw speed
-// figure first let a fast enough run stay above 150 even with a wrong answer,
-// so the cap swallowed the penalty and a flawed round still showed full marks.
-// Clamping the speed part first means the accuracy share always lands on the
-// visible score: 8 of 9 correct tops out at 133, never 150.
-//
-// A round answered entirely wrong scores 0, the same as a missed one — but
-// having played still counts, because rounds played is the next tiebreaker
-// after score in compareStandings().
+// A completed round now keeps a meaningful 45-point speed floor (30% of the
+// 150 maximum) so a slower player still has a reason to finish. Accuracy is
+// applied *after* that floor and the maximum clamp, so partial or failed quiz
+// results do not receive 45 points merely for ending the round. For example,
+// 50% accuracy can receive at most half of the applicable speed score, while a
+// zero-correct result still scores 0.
 export function challengeScore(result, typicalSeconds) {
   const typical = benchmarkSeconds(typicalSeconds);
   const adjusted = Math.max(1, scoredSeconds({ ...result, typicalSeconds: typical }));
