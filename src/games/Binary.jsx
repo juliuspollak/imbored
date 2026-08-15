@@ -12,30 +12,44 @@ import DaySelector from "../DaySelector.jsx";
 import Button from "../components/Button.jsx";
 import { createGameAttemptSeed } from "../lib/gameAttemptSeed.js";
 
-// Flame and frost replace the sun and moon this puzzle shipped with. The two
-// symbols have to be told apart by SHAPE, not colour — roughly 1 in 12 men
-// cannot separate the old warm/cool pair reliably. A rising, round-shouldered
-// teardrop against a hard angular shard reads at a glance in monochrome.
+// The in-game symbols deliberately echo the polished fire/ice artwork used on
+// the Twist tile. They are still strongly different by shape, so the puzzle
+// does not rely on red-vs-blue colour discrimination alone.
 function FlameIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
   const id = React.useId().replace(/:/g, "");
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
+    <svg viewBox="0 0 28 32" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
       <defs>
-        <linearGradient id={`${id}body`} x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#FFB07A" />
-          <stop offset="45%" stopColor="#FF7A59" />
-          <stop offset="100%" stopColor="#E8452F" />
+        <linearGradient id={`${id}outer`} x1="9" y1="2" x2="19" y2="29" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#FFE0A6" />
+          <stop offset=".28" stopColor="#FF9B55" />
+          <stop offset=".68" stopColor="#F45135" />
+          <stop offset="1" stopColor="#C92D22" />
         </linearGradient>
+        <linearGradient id={`${id}inner`} x1="12" y1="13" x2="15" y2="28" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#FFF5B0" />
+          <stop offset=".45" stopColor="#FFC23E" />
+          <stop offset="1" stopColor="#FF6A2D" />
+        </linearGradient>
+        <filter id={`${id}glow`} x="-60%" y="-45%" width="220%" height="210%">
+          <feGaussianBlur stdDeviation="1.7" result="blur" />
+          <feFlood floodColor="#FF6A3D" floodOpacity=".52" />
+          <feComposite in2="blur" operator="in" />
+          <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
       </defs>
-      <path
-        d="M12.2 1.8c.4 3.2 2.8 4.7 4.4 7 1.2 1.7 2 3.5 2 5.7 0 4-2.9 7.3-6.7 7.3s-6.7-3.2-6.7-7.2c0-2.4 1-4.4 2.7-6.3.1 1.7.8 3 2 3.8-.2-3.7.9-7 2.3-10.3Z"
-        fill={`url(#${id}body)`}
-        stroke="#B32F1E"
-        strokeWidth="1.25"
-        strokeLinejoin="round"
-      />
-      <path d="M12.2 1.8c.4 3.2 2.8 4.7 4.4 7L12 13.1 9.9 12c-.2-3.6.9-6.9 2.3-10.2Z" fill="#FFD0A6" fillOpacity=".48" />
-      <path d="M12 13.1l4.6-4.3c1.2 1.7 2 3.5 2 5.7 0 4-2.9 7.3-6.7 7.3Z" fill="#C92F26" fillOpacity=".24" />
+      <g filter={`url(#${id}glow)`}>
+        <path
+          d="M15 1.8c.2 4.9 4.2 7.2 6.1 10.6 1.3 2.2 2.1 4.6 2.1 7.1 0 6.2-4.1 10.7-9.5 10.7S4 25.8 4 19.8c0-3.7 1.7-6.9 4.9-10.1-.1 3 .8 5.1 2.6 6.5-.2-5.9 1.2-10.5 3.5-14.4Z"
+          fill={`url(#${id}outer)`}
+          stroke="#B52F22"
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+        />
+        <path d="M15 1.8c.2 4.8 4.1 7.1 6 10.4l-7.3 6.5-2.2-2.5C11.3 10.4 12.7 5.7 15 1.8Z" fill="#FFE7C2" fillOpacity=".5" />
+        <path d="M13.9 14.2c3.3 3.2 4.7 5.3 4.7 8.2 0 3.4-2 5.8-4.9 5.8s-5-2.4-5-5.8c0-2.5 1.2-4.6 3.5-6.7-.1 2 .5 3.5 1.7 4.4-.1-2.3-.1-3.9 0-5.9Z" fill={`url(#${id}inner)`} />
+        <path d="M13.7 18.8c1.6 1.6 2.3 2.7 2.3 4.2 0 1.8-1 3.2-2.4 3.2-1.5 0-2.5-1.3-2.5-3 0-1.2.6-2.5 1.8-3.7 0 1 .3 1.8.8 2.3-.1-1.1-.1-2.1 0-3Z" fill="#FFF7C7" fillOpacity=".9" />
+      </g>
     </svg>
   );
 }
@@ -43,24 +57,36 @@ function FlameIcon({ size = 24, className = "", style, isConflict = false, ...pr
 function FrostIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
   const id = React.useId().replace(/:/g, "");
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
+    <svg viewBox="0 0 30 36" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
       <defs>
-        <linearGradient id={`${id}body`} x1="6" y1="3" x2="18" y2="21" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#B8F3FF" />
-          <stop offset="50%" stopColor="#5FD8F0" />
-          <stop offset="100%" stopColor="#22A2C4" />
+        <linearGradient id={`${id}main`} x1="9" y1="4" x2="21" y2="32" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#E7FBFF" />
+          <stop offset=".24" stopColor="#8CEAFF" />
+          <stop offset=".58" stopColor="#24BDEB" />
+          <stop offset="1" stopColor="#087EBE" />
         </linearGradient>
+        <linearGradient id={`${id}side`} x1="13" y1="16" x2="24" y2="31" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#48D3FF" />
+          <stop offset="1" stopColor="#0763B8" />
+        </linearGradient>
+        <filter id={`${id}glow`} x="-70%" y="-55%" width="240%" height="220%">
+          <feGaussianBlur stdDeviation="1.6" result="blur" />
+          <feFlood floodColor="#28C8FF" floodOpacity=".48" />
+          <feComposite in2="blur" operator="in" />
+          <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
       </defs>
-      <path
-        d="M13 1.6 19 8.3 16.9 17.8 10.8 22.3 4.8 15.8 6 7.7Z"
-        fill={`url(#${id}body)`}
-        stroke="#1C7E9C"
-        strokeWidth="1.25"
-        strokeLinejoin="round"
-      />
-      <path d="M13 1.6 19 8.3 11.7 12.2 6 7.7Z" fill="#FFFFFF" fillOpacity=".5" />
-      <path d="M11.7 12.2 19 8.3 16.9 17.8 10.8 22.3Z" fill="#0E6C88" fillOpacity=".28" />
-      <path d="M6 7.7 11.7 12.2 10.8 22.3 4.8 15.8Z" fill="#7BE7F5" fillOpacity=".22" />
+      <g filter={`url(#${id}glow)`} strokeLinejoin="round">
+        {/* Tall central shard — matches the ice crystal silhouette on the tile. */}
+        <path d="M15.5 1.8 23 11.1 19.4 28.2 13.4 34 6.8 26.2 9.1 10.3Z" fill={`url(#${id}main)`} stroke="#087AA6" strokeWidth="1.15" />
+        {/* Angular side splinters make it read as a crystal cluster, not a gem. */}
+        <path d="M9.3 17.3 4.1 21.2 6.1 29.2 13.4 34 11 23.1Z" fill="#20B7EA" stroke="#087AA6" strokeWidth="1.05" />
+        <path d="M19.6 17.2 25.7 13.4 24.2 25.2 19.4 28.2Z" fill={`url(#${id}side)`} stroke="#087AA6" strokeWidth="1.05" />
+        <path d="M15.5 1.8 23 11.1 14.6 15.8 9.1 10.3Z" fill="#DDF9FF" fillOpacity=".92" />
+        <path d="M14.6 15.8 23 11.1 19.4 28.2 13.4 34Z" fill="#075FBA" fillOpacity=".35" />
+        <path d="M9.1 10.3 14.6 15.8 13.4 34 6.8 26.2Z" fill="#80E5FA" fillOpacity=".3" />
+        <path d="M15.5 4.1 19.5 10.2 15.1 12.8 11.6 9.6Z" fill="#FFFFFF" fillOpacity=".7" />
+      </g>
     </svg>
   );
 }
@@ -204,10 +230,6 @@ function generatePuzzle(givenTarget, edgeTarget, minDifficulty = 0, maxAttempts 
     const givens = solution.map((row) => row.slice());
     let edgeMap = buildEdgeMap(candidateEdges);
 
-    // Removals interact: a clue that was load-bearing early often becomes
-    // removable once its neighbours are gone. A single pass therefore stalls
-    // far above the target — which is why Sunday was playing like a weekday.
-    // Keep sweeping until a whole pass achieves nothing.
     let revealed = SIZE * SIZE;
     let removedThisPass = true;
     while (revealed > givenTarget && removedThisPass) {
@@ -242,16 +264,7 @@ function generatePuzzle(givenTarget, edgeTarget, minDifficulty = 0, maxAttempts 
       }
     }
 
-    // Clue count was never the thing that made a board hard. Grade the
-    // candidate by how deep a chain of human deductions it actually needs,
-    // and keep the most demanding one we see.
     const grade = gradeTwistBoard(givens, edgeMap);
-    // A board the basic techniques cannot finish needs trial and error, which
-    // is tedious rather than difficult. Rank those below any solvable board,
-    // but still keep one as a last resort so generation never returns null.
-    // Difficulty is bottlenecks plus structure: a clue-free row or column
-    // gives no foothold, so you must propagate in from elsewhere. Tango
-    // boards routinely leave three or four lines empty; ours left one.
     const emptyLines = countEmptyLines(givens);
     const depth = grade.solved ? grade.bottlenecks + emptyLines : -1;
     const candidate = { solution, givens, edges: kept, edgeMap, revealed, depth };
@@ -349,12 +362,8 @@ function findForcedCell(board, edgeMap) {
 function getCompletedLines(board, solution) {
   const lines = [];
   for (let index = 0; index < SIZE; index++) {
-    if (board[index].every((value, column) => value === solution[index][column])) {
-      lines.push(`row-${index}`);
-    }
-    if (board.every((row, rowIndex) => row[index] === solution[rowIndex][index])) {
-      lines.push(`col-${index}`);
-    }
+    if (board[index].every((value, column) => value === solution[index][column])) lines.push(`row-${index}`);
+    if (board.every((row, rowIndex) => row[index] === solution[rowIndex][index])) lines.push(`col-${index}`);
   }
   return lines;
 }
@@ -394,10 +403,6 @@ const CONFLICT_RED = "#D85C62";
 const TEAL = "#5FA8A3";
 const SUN_COLOR = "#FF7A59";
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-// Required difficulty score per weekday: bottleneck steps plus clue-free
-// rows and columns. Both are things a player feels — a bottleneck is a moment
-// offering one or two deductions in the whole grid, and an empty line gives
-// no foothold to start from. This, not the clue count, scales the week.
 const MIN_DIFFICULTY = [1, 2, 4, 5, 6, 7, 8];
 const GIVEN_TARGETS = [14, 12, 10, 9, 8, 7, 6];
 const EDGE_TARGETS = [6, 5, 5, 4, 4, 4, 3];
@@ -423,8 +428,6 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
   const hintCooldown = useHintCooldown(hintCooldownSeconds);
   const [puzzle, setPuzzle] = useState(null);
   const [board, setBoard] = useState(null);
-  // Seeded from the server-recorded attempt start, so leaving and re-entering
-  // resumes the same clock instead of handing out a fresh one.
   const [seconds, setSeconds] = useState(initialSeconds);
   const [running, setRunning] = useState(false);
   const [solved, setSolved] = useState(false);
@@ -452,8 +455,6 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
     const p = withSeededRandom(attemptSeed, gen);
     setPuzzle(p);
     setBoard(p.givens.map((row) => row.slice()));
-    // Resume the attempt clock. In challenge mode newPuzzle only runs on
-    // mount, since the "New" control is disabled.
     setSeconds(initialSeconds);
     setRunning(true);
     setSolved(false);
@@ -464,24 +465,15 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
     setHintCell(null);
     setHistory([]);
     setCelebratingLines([]);
-    const initialCelebratedLines = dIdx <= 1
-      ? getCompletedLines(p.givens, p.solution)
-      : dIdx <= 3
-        ? getRuleValidCompletedLines(p.givens, p.edgeMap)
-        : [];
+    const initialCelebratedLines = dIdx <= 1 ? getCompletedLines(p.givens, p.solution) : dIdx <= 3 ? getRuleValidCompletedLines(p.givens, p.edgeMap) : [];
     completedLinesRef.current = new Set(initialCelebratedLines);
     invalidCompletedLinesRef.current = new Set();
     window.clearTimeout(invalidMistakeTimerRef.current);
     window.clearTimeout(celebrationTimerRef.current);
     hintCooldown.reset();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isChallenge, seed]);
 
-  useEffect(() => {
-    newPuzzle(dayIdx);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dayIdx]);
-
+  useEffect(() => { newPuzzle(dayIdx); }, [dayIdx]);
   useGameTimer(running, solved, setSeconds);
 
   useEffect(() => {
@@ -491,29 +483,13 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
     if (getConflicts(board, puzzle.edgeMap).size === 0 && !solved) {
       setSolved(true);
       setRunning(false);
-      onSolved && onSolved({
-        userId,
-        game: "binary",
-        dayIndex: dayIdx,
-        seconds,
-        mistakes,
-        hints: hintsUsed,
-        seed: attemptSeedRef.current,
-        generatorVersion: TANGO_GENERATOR_VERSION,
-        generatorConfig: { size: SIZE, givenTarget: GIVEN_TARGETS[dayIdx], edgeTarget: EDGE_TARGETS[dayIdx] },
-        mode,
-        challengeDate: isChallenge ? challengeDate : undefined,
-      });
+      onSolved && onSolved({ userId, game: "binary", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed, seed: attemptSeedRef.current, generatorVersion: TANGO_GENERATOR_VERSION, generatorConfig: { size: SIZE, givenTarget: GIVEN_TARGETS[dayIdx], edgeTarget: EDGE_TARGETS[dayIdx] }, mode, challengeDate: isChallenge ? challengeDate : undefined });
     }
   }, [board, puzzle]);
 
   useEffect(() => {
     if (!board || !puzzle) return undefined;
-    const completed = dayIdx <= 1
-      ? getCompletedLines(board, puzzle.solution)
-      : dayIdx <= 3
-        ? getRuleValidCompletedLines(board, puzzle.edgeMap)
-        : [];
+    const completed = dayIdx <= 1 ? getCompletedLines(board, puzzle.solution) : dayIdx <= 3 ? getRuleValidCompletedLines(board, puzzle.edgeMap) : [];
     const newlyCompleted = completed.filter((line) => !completedLinesRef.current.has(line));
     completedLinesRef.current = new Set(completed);
     if (!newlyCompleted.length) return undefined;
@@ -534,19 +510,12 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
       window.clearTimeout(invalidMistakeTimerRef.current);
       return;
     }
-    // Once a charged line becomes valid/incomplete, a later invalid completion
-    // is a new mistake episode. Keep already-charged lines while they remain bad.
-    invalidCompletedLinesRef.current = new Set(
-      [...invalidCompletedLinesRef.current].filter((line) => invalidSet.has(line))
-    );
+    invalidCompletedLinesRef.current = new Set([...invalidCompletedLinesRef.current].filter((line) => invalidSet.has(line)));
     window.clearTimeout(invalidMistakeTimerRef.current);
     const newlyInvalid = invalidCompleted.filter((line) => !invalidCompletedLinesRef.current.has(line));
     if (newlyInvalid.length === 0) return;
-    // Players need two taps to cycle sun → moon. Use the same grace period as
-    // the visual conflict warning so the temporary sun is never a mistake.
     invalidMistakeTimerRef.current = window.setTimeout(() => {
       newlyInvalid.forEach((line) => invalidCompletedLinesRef.current.add(line));
-      // One placement can finish both a row and a column; charge the move once.
       setMistakes((value) => value + 1);
     }, 2000);
     return () => window.clearTimeout(invalidMistakeTimerRef.current);
@@ -561,513 +530,103 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
     if (!board || !puzzle) return;
     window.clearTimeout(conflictDebounceRef.current);
     const newConflicts = getConflicts(board, puzzle.edgeMap);
-    
-    // If no conflicts, clear immediately
-    if (newConflicts.size === 0) {
-      setDisplayedConflicts(new Set());
-    } else {
-      // If there ARE conflicts, show them after 2 seconds (allows cycling without mid-cycle errors)
-      conflictDebounceRef.current = window.setTimeout(() => {
-        setDisplayedConflicts(newConflicts);
-      }, 2000);
-    }
+    if (newConflicts.size === 0) setDisplayedConflicts(new Set());
+    else conflictDebounceRef.current = window.setTimeout(() => setDisplayedConflicts(newConflicts), 2000);
     return () => window.clearTimeout(conflictDebounceRef.current);
   }, [board, puzzle]);
 
   if (!board || !puzzle) {
-    return (
-      <div style={{ background: BG, minHeight: "100vh" }} className="flex items-center justify-center">
-        <span style={{ color: CREAM, opacity: 0.6 }} className="text-sm">{t("common.buildingPuzzle")}</span>
-      </div>
-    );
+    return <div style={{ background: BG, minHeight: "100vh" }} className="flex items-center justify-center"><span style={{ color: CREAM, opacity: 0.6 }} className="text-sm">{t("common.buildingPuzzle")}</span></div>;
   }
 
-  const actualConflicts = getConflicts(board, puzzle.edgeMap);
   const filledCount = board.flat().filter((v) => v !== 0).length;
 
-  function pushHistory() {
-    setHistory((h) => [...h, { board: board.map((row) => row.slice()) }].slice(-50));
-  }
-
-  function performTapCycle(r, c) {
-    pushHistory();
-    setBoard((prev) => {
-      const next = prev.map((row) => row.slice());
-      next[r][c] = (next[r][c] + 1) % 3;
-      return next;
-    });
-  }
-
-  function handleCellClick(r, c) {
-    if (solved) return;
-    if (puzzle.givens[r][c] !== 0) return; // locked clue cell
-    setHintCell(null);
-    performTapCycle(r, c);
-  }
-
-  function handleUndo() {
-    if (solved || history.length === 0) return;
-    const last = history[history.length - 1];
-    setHistory((h) => h.slice(0, -1));
-    // Restoring an earlier board is not a new placement and must not create a
-    // fresh delayed mistake if that earlier board already contained a conflict.
-    skipNextInvalidMistakeRef.current = true;
-    setBoard(last.board);
-    setHintCell(null);
-    setSolved(false);
-    setRunning(true);
-  }
-
-  function handleReset() {
-    if (solved) return;
-    setBoard(puzzle.givens.map((row) => row.slice()));
-    // Reset is still part of the same attempt. Keep the player's elapsed
-    // time and help already used, and count abandoning the board as one
-    // mistake so Reset cannot erase scoring penalties.
-    setMistakes((value) => value + 1);
-    setDifficultyRating(null);
-    setHintCell(null);
-    setHistory([]);
-    const resetCelebratedLines = dayIdx <= 1
-      ? getCompletedLines(puzzle.givens, puzzle.solution)
-      : dayIdx <= 3
-        ? getRuleValidCompletedLines(puzzle.givens, puzzle.edgeMap)
-        : [];
-    completedLinesRef.current = new Set(resetCelebratedLines);
-    invalidCompletedLinesRef.current = new Set();
-    window.clearTimeout(invalidMistakeTimerRef.current);
-    // Keep the elapsed time when resetting the current puzzle.
-    setSolved(false);
-    setRunning(true);
-  }
+  function pushHistory() { setHistory((h) => [...h, { board: board.map((row) => row.slice()) }].slice(-50)); }
+  function performTapCycle(r, c) { pushHistory(); setBoard((prev) => { const next = prev.map((row) => row.slice()); next[r][c] = (next[r][c] + 1) % 3; return next; }); }
+  function handleCellClick(r, c) { if (solved || puzzle.givens[r][c] !== 0) return; setHintCell(null); performTapCycle(r, c); }
+  function handleUndo() { if (solved || history.length === 0) return; const last = history[history.length - 1]; setHistory((h) => h.slice(0, -1)); skipNextInvalidMistakeRef.current = true; setBoard(last.board); setHintCell(null); setSolved(false); setRunning(true); }
+  function handleReset() { if (solved) return; setBoard(puzzle.givens.map((row) => row.slice())); setMistakes((value) => value + 1); setDifficultyRating(null); setHintCell(null); setHistory([]); const resetCelebratedLines = dayIdx <= 1 ? getCompletedLines(puzzle.givens, puzzle.solution) : dIdx <= 3 ? getRuleValidCompletedLines(puzzle.givens, puzzle.edgeMap) : []; completedLinesRef.current = new Set(resetCelebratedLines); invalidCompletedLinesRef.current = new Set(); window.clearTimeout(invalidMistakeTimerRef.current); setSolved(false); setRunning(true); }
 
   function handleHint() {
     if (solved || hintCooldown.isLocked()) return;
-    const applyHint = (r, c, type, countMistake = false) => {
-      // A hint is guidance only. Never write the solution into the board:
-      // keep an incorrect symbol in place, or leave an empty cell empty,
-      // and show the expected symbol in the corner annotation below.
-      setHintCell({ r, c, type, symbol: puzzle.solution[r][c] });
-      setHintsUsed((value) => value + 1);
-      if (countMistake) setMistakes((value) => value + 1);
-      hintCooldown.startCooldown();
-    };
-
-    // First flag an incorrect symbol. If all entered symbols are correct,
-    // point to a logically forced blank, then fall back to the first blank.
-    for (let r = 0; r < SIZE; r++) {
-      for (let c = 0; c < SIZE; c++) {
-        if (board[r][c] !== 0 && board[r][c] !== puzzle.solution[r][c]) {
-          applyHint(r, c, "error", true);
-          return;
-        }
-      }
-    }
-    // 2) a cell whose symbol is already logically forced but not filled yet
-    const forced = findForcedCell(board, puzzle.edgeMap);
-    if (forced) {
-      applyHint(forced.r, forced.c, "forced");
-      return;
-    }
-    // 3) nothing forced — reveal one blank cell
-    for (let r = 0; r < SIZE; r++) {
-      for (let c = 0; c < SIZE; c++) {
-        if (board[r][c] === 0) {
-          applyHint(r, c, "next");
-          return;
-        }
-      }
-    }
+    const applyHint = (r, c, type, countMistake = false) => { setHintCell({ r, c, type, symbol: puzzle.solution[r][c] }); setHintsUsed((value) => value + 1); if (countMistake) setMistakes((value) => value + 1); hintCooldown.startCooldown(); };
+    for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if (board[r][c] !== 0 && board[r][c] !== puzzle.solution[r][c]) { applyHint(r, c, "error", true); return; }
+    const forced = findForcedCell(board, puzzle.edgeMap); if (forced) { applyHint(forced.r, forced.c, "forced"); return; }
+    for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if (board[r][c] === 0) { applyHint(r, c, "next"); return; }
   }
 
   const boardGrid = (
-    <div
-      className="tg-board-shell relative rounded-2xl overflow-hidden -mx-5 lg:-mx-6"
-      style={{
-        aspectRatio: "1 / 1",
-        display: "grid",
-        gridTemplateColumns: `repeat(${SIZE}, 1fr)`,
-        gridTemplateRows: `repeat(${SIZE}, 1fr)`,
-        background: "var(--color-border-strong)",
-        border: "2px solid #263354",
-        boxShadow: "0 6px 18px rgba(16,24,40,.10)",
-        containerType: "inline-size",
-        width: "auto",
-      }}
-    >
-      {board.map((row, r) =>
-        row.map((val, c) => {
-          const isGiven = puzzle.givens[r][c] !== 0;
-          // Fixed clues can explain a rule, but they cannot be the player's
-          // mistake. Keep them neutral and mark only cells the player can fix.
-          const isConflict = !isGiven && displayedConflicts.has(`${r}-${c}`);
-          const isHint = hintCell && hintCell.r === r && hintCell.c === c;
-          const hintClass = isHint && !isConflict ? `tg-hint-${hintCell.type}` : "";
-          const hintBackground = hintCell?.type === "error"
-            ? "repeating-linear-gradient(135deg, var(--color-surface) 0 7px, var(--color-danger-bg) 7px 14px)"
-            : hintCell?.type === "forced"
-              ? "repeating-linear-gradient(135deg, var(--color-surface) 0 7px, var(--color-primary-subtle) 7px 14px)"
-              : "repeating-linear-gradient(135deg, var(--color-surface) 0 7px, var(--color-warning-border) 7px 14px)";
-          return (
-            <button
-              key={`${r}-${c}`}
-              onClick={() => handleCellClick(r, c)}
-              disabled={isGiven}
-              className={`tg-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`}
-              style={{
-                background: isHint
-                  ? hintBackground
-                  : isConflict
-                    ? "linear-gradient(rgba(216,92,98,.10),rgba(216,92,98,.10)),var(--color-surface)"
-                  : isGiven
-                    ? "var(--color-surface-elevated)"
-                    : val === SUN
-                      ? "linear-gradient(rgba(255,122,89,.12),rgba(255,122,89,.12)),var(--color-surface)"
-                      : val === MOON
-                        ? "linear-gradient(rgba(34,162,196,.12),rgba(34,162,196,.12)),var(--color-surface)"
-                        : "var(--color-surface)",
-                border: "1px solid var(--color-border-strong)",
-                boxShadow: isConflict ? `inset 0 0 0 2px ${CONFLICT_RED}` : "none",
-                cursor: isGiven ? "default" : "pointer",
-              }}
-            >
-              {val === SUN && (
-                <span className="tg-symbol tg-symbol-disc tg-symbol-disc--flame"><FlameIcon key={`flame-${r}-${c}`} size={Math.max(28, 50 - SIZE)} isConflict={isConflict} /></span>
-              )}
-              {val === MOON && (
-                <span className="tg-symbol tg-symbol-disc tg-symbol-disc--frost"><FrostIcon key={`frost-${r}-${c}`} size={Math.max(28, 50 - SIZE)} isConflict={isConflict} /></span>
-              )}
-              {/* Hints never place or replace a symbol. The striped cell
-                  identifies where to look and this corner badge shows the
-                  expected answer without making the move for the player. */}
-              {isHint && hintCell.symbol && !solved && (
-                <span
-                  className="tg-hint-ghost-badge"
-                  aria-label={hintCell.symbol === SUN ? "This cell should be a flame" : "This cell should be frost"}
-                  style={{
-                    position: "absolute", top: 3, right: 3, width: 16, height: 16, borderRadius: "50%",
-                    background: "var(--color-surface-raised)", display: "flex", alignItems: "center", justifyContent: "center",
-                    border: "1px solid var(--color-border-strong)", boxShadow: "var(--shadow-control)", pointerEvents: "none",
-                  }}
-                >
-                  {hintCell.symbol === SUN ? (
-                    <FlameIcon size={11} style={{ color: SUN_COLOR }} />
-                  ) : (
-                    <FrostIcon size={10} />
-                  )}
-                </span>
-              )}
-            </button>
-          );
-        })
-      )}
-
+    <div className="tg-board-shell relative rounded-2xl overflow-hidden -mx-5 lg:-mx-6" style={{ aspectRatio: "1 / 1", display: "grid", gridTemplateColumns: `repeat(${SIZE}, 1fr)`, gridTemplateRows: `repeat(${SIZE}, 1fr)`, background: "var(--color-border-strong)", border: "2px solid #263354", boxShadow: "0 6px 18px rgba(16,24,40,.10)", containerType: "inline-size", width: "auto" }}>
+      {board.map((row, r) => row.map((val, c) => {
+        const isGiven = puzzle.givens[r][c] !== 0;
+        const isConflict = !isGiven && displayedConflicts.has(`${r}-${c}`);
+        const isHint = hintCell && hintCell.r === r && hintCell.c === c;
+        const hintClass = isHint && !isConflict ? `tg-hint-${hintCell.type}` : "";
+        const hintBackground = hintCell?.type === "error" ? "repeating-linear-gradient(135deg, var(--color-surface) 0 7px, var(--color-danger-bg) 7px 14px)" : hintCell?.type === "forced" ? "repeating-linear-gradient(135deg, var(--color-surface) 0 7px, var(--color-primary-subtle) 7px 14px)" : "repeating-linear-gradient(135deg, var(--color-surface) 0 7px, var(--color-warning-border) 7px 14px)";
+        return <button key={`${r}-${c}`} onClick={() => handleCellClick(r, c)} disabled={isGiven} className={`tg-cell relative flex items-center justify-center transition-colors duration-200 ${hintClass}`} style={{ background: isHint ? hintBackground : isConflict ? "linear-gradient(rgba(216,92,98,.10),rgba(216,92,98,.10)),var(--color-surface)" : isGiven ? "var(--color-surface-elevated)" : val === SUN ? "linear-gradient(rgba(255,122,89,.12),rgba(255,122,89,.12)),var(--color-surface)" : val === MOON ? "linear-gradient(rgba(34,162,196,.12),rgba(34,162,196,.12)),var(--color-surface)" : "var(--color-surface)", border: "1px solid var(--color-border-strong)", boxShadow: isConflict ? `inset 0 0 0 2px ${CONFLICT_RED}` : "none", cursor: isGiven ? "default" : "pointer" }}>
+          {val === SUN && <span className="tg-symbol tg-symbol-disc tg-symbol-disc--flame"><FlameIcon key={`flame-${r}-${c}`} size={44} isConflict={isConflict} /></span>}
+          {val === MOON && <span className="tg-symbol tg-symbol-disc tg-symbol-disc--frost"><FrostIcon key={`frost-${r}-${c}`} size={46} isConflict={isConflict} /></span>}
+          {isHint && hintCell.symbol && !solved && <span className="tg-hint-ghost-badge" aria-label={hintCell.symbol === SUN ? "This cell should be a flame" : "This cell should be frost"} style={{ position: "absolute", top: 3, right: 3, width: 16, height: 16, borderRadius: "50%", background: "var(--color-surface-raised)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--color-border-strong)", boxShadow: "var(--shadow-control)", pointerEvents: "none" }}>{hintCell.symbol === SUN ? <FlameIcon size={11} /> : <FrostIcon size={11} />}</span>}
+        </button>;
+      }))}
       {puzzle.edges.map((e) => {
         const horizontal = e.r1 === e.r2;
         const cx = horizontal ? ((e.c1 + 1) / SIZE) * 100 : ((e.c1 + 0.5) / SIZE) * 100;
         const cy = horizontal ? ((e.r1 + 0.5) / SIZE) * 100 : ((e.r1 + 1) / SIZE) * 100;
-        return (
-          <span
-            key={`edge-${e.r1}-${e.c1}-${e.r2}-${e.c2}`}
-            className="tg-edge-token"
-            style={{
-              position: "absolute",
-              left: `${cx}%`,
-              top: `${cy}%`,
-              transform: "translate(-50%, -50%)",
-              width: 22,
-              height: 22,
-              borderRadius: "50%",
-              background: "var(--color-surface-raised)",
-              border: "1px solid var(--color-border-strong)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 12,
-              fontWeight: 800,
-              color: "var(--color-text-primary)",
-              boxShadow: "0 1px 2px rgba(16,24,40,.07)",
-              pointerEvents: "none",
-              zIndex: 2,
-            }}
-          >
-            {e.type === "eq" ? "=" : "×"}
-          </span>
-        );
+        return <span key={`edge-${e.r1}-${e.c1}-${e.r2}-${e.c2}`} className="tg-edge-token" style={{ position: "absolute", left: `${cx}%`, top: `${cy}%`, transform: "translate(-50%, -50%)", width: 22, height: 22, borderRadius: "50%", background: "var(--color-surface-raised)", border: "1px solid var(--color-border-strong)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "var(--color-text-primary)", boxShadow: "0 1px 2px rgba(16,24,40,.07)", pointerEvents: "none", zIndex: 2 }}>{e.type === "eq" ? "=" : "×"}</span>;
       })}
-
-      {celebratingLines.map((line) => {
-        const [direction, rawIndex] = line.split("-");
-        const index = Number(rawIndex);
-        const isRow = direction === "row";
-        return (
-          <div
-            key={line}
-            className="tg-line-complete absolute pointer-events-none"
-            style={{
-              left: isRow ? 0 : `${(index / SIZE) * 100}%`,
-              top: isRow ? `${(index / SIZE) * 100}%` : 0,
-              width: isRow ? "100%" : `${100 / SIZE}%`,
-              height: isRow ? `${100 / SIZE}%` : "100%",
-              zIndex: 4,
-              border: "2px solid rgba(22,163,74,.78)",
-              background: isRow
-                ? "linear-gradient(90deg,rgba(22,163,74,.04),rgba(22,163,74,.22),rgba(255,255,255,.42),rgba(22,163,74,.04))"
-                : "linear-gradient(180deg,rgba(22,163,74,.04),rgba(22,163,74,.22),rgba(255,255,255,.42),rgba(22,163,74,.04))",
-              boxShadow: "0 0 22px rgba(22,163,74,.32), inset 0 0 18px rgba(255,255,255,.55)",
-            }}
-          >
-            <span
-              className="tg-line-spark absolute grid place-items-center rounded-full text-white font-bold"
-              style={{
-                left: "50%",
-                top: "50%",
-                width: 28,
-                height: 28,
-                background: "linear-gradient(145deg,#35C886,#0D9A62)",
-                boxShadow: "0 5px 16px rgba(13,154,98,.38)",
-              }}
-            >
-              ✓
-            </span>
-          </div>
-        );
-      })}
+      {celebratingLines.map((line) => { const [direction, rawIndex] = line.split("-"); const index = Number(rawIndex); const isRow = direction === "row"; return <div key={line} className="tg-line-complete absolute pointer-events-none" style={{ left: isRow ? 0 : `${(index / SIZE) * 100}%`, top: isRow ? `${(index / SIZE) * 100}%` : 0, width: isRow ? "100%" : `${100 / SIZE}%`, height: isRow ? `${100 / SIZE}%` : "100%", zIndex: 4, border: "2px solid rgba(22,163,74,.78)", background: isRow ? "linear-gradient(90deg,rgba(22,163,74,.04),rgba(22,163,74,.22),rgba(255,255,255,.42),rgba(22,163,74,.04))" : "linear-gradient(180deg,rgba(22,163,74,.04),rgba(22,163,74,.22),rgba(255,255,255,.42),rgba(22,163,74,.04))", boxShadow: "0 0 22px rgba(22,163,74,.32), inset 0 0 18px rgba(255,255,255,.55)" }}><span className="tg-line-spark absolute grid place-items-center rounded-full text-white font-bold" style={{ left: "50%", top: "50%", width: 28, height: 28, background: "linear-gradient(145deg,#35C886,#0D9A62)", boxShadow: "0 5px 16px rgba(13,154,98,.38)" }}>✓</span></div>; })}
     </div>
   );
 
-  return (
-    <div
-      className="flex items-start justify-center p-4"
-      style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif", paddingTop: "var(--game-content-top)" }}
-    >
-      <style>{`
-        .game-toolbar > * { width: 100%; min-width: 0; }
-        @keyframes popIn { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        @keyframes fadeUp { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
-        @keyframes hintPulseError { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(217,105,92,1); } 50% { box-shadow: inset 0 0 0 3px rgba(217,105,92,0.25); } }
-        @keyframes hintPulseForced { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(95,168,163,1); } 50% { box-shadow: inset 0 0 0 3px rgba(95,168,163,0.25); } }
-        @keyframes hintPulseNext { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(217,174,88,1); } 50% { box-shadow: inset 0 0 0 3px rgba(217,174,88,0.25); } }
-        @keyframes lineSweep { 0% { opacity: 0; transform: scale(.92); } 28% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.025); } }
-        @keyframes lineSpark { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.4) rotate(-20deg); } 35% { opacity: 1; transform: translate(-50%,-50%) scale(1.15) rotate(8deg); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(.85) rotate(18deg); } }
-        @keyframes twistGlow { 0%, 100% { transform: translate3d(0,0,0); opacity: .42; } 50% { transform: translate3d(6px,-4px,0); opacity: .6; } }
-        .tg-symbol { animation: popIn 0.22s ease-out; }
-        .tg-card { animation: fadeUp 0.4s ease-out; }
-        .tg-board-shell::before, .tg-board-shell::after {
-          content: "";
-          position: absolute;
-          border-radius: 999px;
-          filter: blur(1px);
-          pointer-events: none;
-          animation: twistGlow 7s ease-in-out infinite;
-        }
-        .tg-board-shell::before { width: 42%; height: 42%; left: -12%; top: -15%; background: rgba(255,122,89,.18); }
-        .tg-board-shell::after { width: 46%; height: 46%; right: -15%; bottom: -18%; background: rgba(95,216,240,.14); animation-delay: -3.5s; }
-        .tg-cell::after {
-          content: "";
-          position: absolute;
-          inset: 5px;
+  return <div className="flex items-start justify-center p-4" style={{ background: BG, minHeight: "100vh", fontFamily: "'Inter', sans-serif", paddingTop: "var(--game-content-top)" }}>
+    <style>{`
+      .game-toolbar > * { width: 100%; min-width: 0; }
+      @keyframes popIn { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+      @keyframes fadeUp { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+      @keyframes hintPulseError { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(217,105,92,1); } 50% { box-shadow: inset 0 0 0 3px rgba(217,105,92,0.25); } }
+      @keyframes hintPulseForced { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(95,168,163,1); } 50% { box-shadow: inset 0 0 0 3px rgba(95,168,163,0.25); } }
+      @keyframes hintPulseNext { 0%, 100% { box-shadow: inset 0 0 0 3px rgba(217,174,88,1); } 50% { box-shadow: inset 0 0 0 3px rgba(217,174,88,0.25); } }
+      @keyframes lineSweep { 0% { opacity: 0; transform: scale(.92); } 28% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.025); } }
+      @keyframes lineSpark { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.4) rotate(-20deg); } 35% { opacity: 1; transform: translate(-50%,-50%) scale(1.15) rotate(8deg); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(.85) rotate(18deg); } }
+      @keyframes twistGlow { 0%, 100% { transform: translate3d(0,0,0); opacity: .42; } 50% { transform: translate3d(6px,-4px,0); opacity: .6; } }
+      .tg-symbol { animation: popIn 0.22s ease-out; }
+      .tg-card { animation: fadeUp 0.4s ease-out; }
+      .tg-board-shell::before, .tg-board-shell::after { content: ""; position: absolute; border-radius: 999px; filter: blur(1px); pointer-events: none; animation: twistGlow 7s ease-in-out infinite; }
+      .tg-board-shell::before { width: 42%; height: 42%; left: -12%; top: -15%; background: rgba(255,122,89,.18); }
+      .tg-board-shell::after { width: 46%; height: 46%; right: -15%; bottom: -18%; background: rgba(95,216,240,.14); animation-delay: -3.5s; }
+      .tg-cell::after { content: ""; position: absolute; inset: 5px; border-radius: 10px; border: 1px solid transparent; transition: border-color .18s ease, background .18s ease, transform .18s ease; pointer-events: none; }
+      .tg-cell { -webkit-tap-highlight-color: transparent; }
+      .tg-cell:focus { outline: none; }
+      .tg-symbol-disc { width: clamp(40px, 14cqw, 60px); height: clamp(40px, 14cqw, 60px); display: grid; place-items: center; border-radius: 999px; position: relative; z-index: 1; }
+      .tg-symbol-disc--flame { background: transparent; filter: drop-shadow(0 0 8px rgba(255,105,61,.44)) drop-shadow(0 3px 3px rgba(0,0,0,.24)); }
+      .tg-symbol-disc--frost { background: transparent; filter: drop-shadow(0 0 9px rgba(40,200,255,.46)) drop-shadow(0 3px 3px rgba(0,0,0,.22)); }
+      .tg-symbol-disc--flame > svg { animation: flameFlicker .5s ease-out 1; transform-origin: 50% 80%; }
+      .tg-symbol-disc--frost > svg { animation: frostShimmer .55s ease-out 1; transform-origin: 50% 50%; }
+      @keyframes flameFlicker { 0% { transform: scale(.82) translateY(2px); opacity: .5; } 35% { transform: scale(1.08) translateY(-1px); opacity: 1; } 55% { transform: scale(.97) skewX(-2.5deg); } 72% { transform: scale(1.03) skewX(1.5deg); } 100% { transform: scale(1); opacity: 1; } }
+      @keyframes frostShimmer { 0% { transform: scale(.84) rotate(-6deg); opacity: .45; filter: brightness(1.6); } 45% { transform: scale(1.06) rotate(2deg); opacity: 1; filter: brightness(1.85); } 70% { filter: brightness(1.15); } 100% { transform: scale(1) rotate(0); opacity: 1; filter: brightness(1); } }
+      .tg-cell:disabled .tg-symbol-disc { opacity: .96; }
+      .tg-edge-token { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+      .tg-hint-error { animation: hintPulseError 1.1s ease-in-out infinite; }
+      .tg-hint-forced { animation: hintPulseForced 1.1s ease-in-out infinite; }
+      .tg-hint-next { animation: hintPulseNext 1.1s ease-in-out infinite; }
+      .tg-line-complete { animation: lineSweep .85s ease-out both; }
+      .tg-line-spark { animation: lineSpark .85s ease-out both; }
+      @media (prefers-reduced-motion: reduce) { .tg-symbol, .tg-card, .tg-hint-error, .tg-hint-forced, .tg-hint-next, .tg-line-complete, .tg-line-spark, .tg-board-shell::before, .tg-board-shell::after, .tg-symbol-disc--flame > svg, .tg-symbol-disc--frost > svg { animation: none !important; } }
+      @media (hover: hover) and (pointer: fine) { .tg-cell:not(:disabled):hover::after { border-color: rgba(74,111,165,.18); transform: scale(.96); } .tg-cell:not(:disabled):hover { filter: brightness(1.03); } .tg-icon-btn:hover { opacity: 0.85; } .tg-toolbar-btn:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.03); } }
+    `}</style>
 
-          border-radius: 10px;
-          border: 1px solid transparent;
-          transition: border-color .18s ease, background .18s ease, transform .18s ease;
-          pointer-events: none;
-        }
-        .tg-cell { -webkit-tap-highlight-color: transparent; }
-        .tg-cell:focus { outline: none; }
-        .tg-symbol-disc {
-          width: clamp(38px, 13cqw, 56px);
-          height: clamp(38px, 13cqw, 56px);
-          display: grid;
-          place-items: center;
-          border-radius: 999px;
-          position: relative;
-          z-index: 1;
-        }
-        /* The glow is the dimensionality: a warm halo under the flame, a cold
-           rim under the shard, both cast onto the dark board. */
-        .tg-symbol-disc--flame {
-          background: transparent;
-          filter: drop-shadow(0 0 6px rgba(255,122,89,.36)) drop-shadow(0 2px 2px rgba(0,0,0,.26));
-        }
-        .tg-symbol-disc--frost {
-          background: transparent;
-          filter: drop-shadow(0 0 6px rgba(95,216,240,.34)) drop-shadow(0 2px 2px rgba(0,0,0,.26));
-        }
-        /* Placement feedback. Keyed on the cell so React remounts the symbol
-           and the animation restarts on every placement, not just the first. */
-        .tg-symbol-disc--flame > svg { animation: flameFlicker .5s ease-out 1; transform-origin: 50% 80%; }
-        .tg-symbol-disc--frost > svg { animation: frostShimmer .55s ease-out 1; transform-origin: 50% 50%; }
-        @keyframes flameFlicker {
-          0%   { transform: scale(.82) translateY(2px); opacity: .5; }
-          35%  { transform: scale(1.08) translateY(-1px); opacity: 1; }
-          55%  { transform: scale(.97) skewX(-2.5deg); }
-          72%  { transform: scale(1.03) skewX(1.5deg); }
-          100% { transform: scale(1) skewX(0); opacity: 1; }
-        }
-        @keyframes frostShimmer {
-          0%   { transform: scale(.84) rotate(-6deg); opacity: .45; filter: brightness(1.6); }
-          45%  { transform: scale(1.06) rotate(2deg); opacity: 1; filter: brightness(1.85); }
-          70%  { filter: brightness(1.15); }
-          100% { transform: scale(1) rotate(0); opacity: 1; filter: brightness(1); }
-        }
-        .tg-cell:disabled .tg-symbol-disc { opacity: .96; }
-        .tg-edge-token { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
-        .tg-hint-error { animation: hintPulseError 1.1s ease-in-out infinite; }
-        .tg-hint-forced { animation: hintPulseForced 1.1s ease-in-out infinite; }
-        .tg-hint-next { animation: hintPulseNext 1.1s ease-in-out infinite; }
-        .tg-line-complete { animation: lineSweep .85s ease-out both; }
-        .tg-line-spark { animation: lineSpark .85s ease-out both; }
-        @media (prefers-reduced-motion: reduce) {
-          .tg-symbol, .tg-card, .tg-hint-error, .tg-hint-forced, .tg-hint-next, .tg-line-complete, .tg-line-spark, .tg-board-shell::before, .tg-board-shell::after,
-          .tg-symbol-disc--flame > svg, .tg-symbol-disc--frost > svg { animation: none !important; }
-        }
-        @media (hover: hover) and (pointer: fine) {
-          .tg-cell:not(:disabled):hover::after { border-color: rgba(74,111,165,.18); transform: scale(.96); }
-          .tg-cell:not(:disabled):hover { filter: brightness(1.03); }
-          .tg-icon-btn:hover { opacity: 0.85; }
-          .tg-play-again:hover { filter: brightness(1.08); }
-          .tg-toolbar-btn:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.03); }
-        }
-      `}</style>
-
-      <div
-        className="tg-card w-full max-w-md sm:max-w-lg lg:max-w-xl rounded-2xl p-5 lg:p-6 relative"
-        style={{ maxWidth: "var(--game-page-max-width)", background: PANEL, boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}
-      >
-        <button
-          onClick={() => setShowHelp((h) => !h)}
-          className="tg-icon-btn absolute top-4 right-4 transition-opacity"
-          style={{ color: CREAM, opacity: 0.5 }}
-        >
-          <HelpCircle size={16} />
-        </button>
-
-        {/* header */}
-        <div className="text-center mb-3">
-          <h1
-            style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }}
-            className="text-3xl lg:text-4xl"
-          >
-            Twist
-          </h1>
-          <p style={{ color: CREAM, opacity: 0.58 }} className="text-[13px] mt-0.5">
-            Place equal flame and frost in every row and column.
-          </p>
-        </div>
-
-        {/* day selector — you already picked the day you just played; it
-            belongs on the next puzzle, not this result. */}
-        {!solved && (isChallenge ? (
-          <div className="flex justify-center mb-4">
-            <div className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: `${GOLD}18`, color: GOLD }}>
-              <span className="text-xs font-semibold">{t("common.todaysChallenge")}</span>
-              <span className="text-[10px] opacity-80">{GIVEN_TARGETS[dayIdx]} clues</span>
-            </div>
-          </div>
-        ) : (
-          <DaySelector
-            days={DAYS}
-            value={dayIdx}
-            onChange={setDayIdx}
-          />
-        ))}
-
-        {/* stats row — redundant with GameSolvedPanel's own stats once solved */}
-        {!solved && (
-          <div className="flex items-center justify-center gap-4 mb-3 px-1">
-            <div className="flex items-center gap-1.5" style={{ color: CREAM, opacity: 0.7 }}>
-              <TimerIcon size={14} />
-              <span className="text-xs tabular-nums">{fmtTime(seconds)}</span>
-            </div>
-            <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
-              mistakes: <span style={{ color: mistakes > 0 ? RED : CREAM }}>{mistakes}</span>
-            </div>
-            <div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">
-              hints: <span style={{ color: hintsUsed > 0 ? GOLD : CREAM }}>{hintsUsed}</span>
-            </div>
-          </div>
-        )}
-
-        {/* toolbar — Undo/Reset/Hint only ever act on a puzzle still in
-            progress; once solved there's nothing left for any of them to do
-            (Play Again in the solved panel below replaces "New"). */}
-        {!solved && (
-          <div className="game-toolbar mb-3 px-1" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "var(--space-2)" }}>
-            {[
-              { label: t("common.undo"), onClick: handleUndo, disabled: history.length === 0 },
-              { label: t("common.reset"), onClick: handleReset, disabled: false },
-              { label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge },
-              {
-                label: t("common.hint"),
-                onClick: handleHint,
-                disabled: false,
-                hint: true,
-              },
-            ].map(({ label, onClick, disabled, hint }) => hint ? (
-              <HintCooldownButton
-                key="hint"
-                cooldown={hintCooldown}
-                label={label}
-                onClick={onClick}
-                disabled={disabled}
-              />
-            ) : (
-              <Button
-                key={label}
-                onClick={onClick}
-                disabled={disabled}
-                aria-label={label}
-                variant="secondary"
-                size="sm"
-                fullWidth
-              >
-                {label}
-              </Button>
-            ))}
-          </div>
-        )}
-
-        {!solved && showHelp && (
-          <div
-            className="text-xs rounded-lg p-2.5 mb-3"
-            style={{ background: "rgba(16,24,40,0.05)", color: CREAM, opacity: 0.75, lineHeight: 1.4 }}
-          >
-            Tap a blank cell to cycle flame → frost → blank. Every row and column needs three flames and
-            three frost symbols, and no more than two matching symbols can sit together. An "=" between
-            two cells means they match; a "×" means they differ. Hint flags one wrong symbol, or one
-            cell that's already logically forced, or — as a last resort — just points at a blank one.
-          </div>
-        )}
-
-        <GameSolvedPanel
-          solved={solved}
-          difficultyRating={difficultyRating}
-          stats={
-            <>
-              {fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}
-            </>
-          }
-          rewardResult={rewardResult}
-          savedStatId={savedStatId}
-          onRated={setDifficultyRating}
-          completionSeconds={seconds}
-          allowScoreChallenge
-          scoreToBeatSeconds={scoreToBeatSeconds}
-          scoreChallengerName={scoreChallengerName}
-          showPlayAgain={!isChallenge}
-          onPlayAgain={() => newPuzzle(dayIdx)}
-        />
-
-        {solved && <BoardReviewToggle reviewing={reviewing} onToggle={() => setReviewing((value) => !value)} />}
-        {(!solved || reviewing) && boardGrid}
-
-        {!solved && (
-          <p style={{ color: CREAM, opacity: 0.35 }} className="text-center text-[11px] mt-3">
-            {filledCount}/{SIZE * SIZE} filled
-          </p>
-        )}
-      </div>
+    <div className="tg-card w-full max-w-md sm:max-w-lg lg:max-w-xl rounded-2xl p-5 lg:p-6 relative" style={{ maxWidth: "var(--game-page-max-width)", background: PANEL, boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}>
+      <button onClick={() => setShowHelp((h) => !h)} className="tg-icon-btn absolute top-4 right-4 transition-opacity" style={{ color: CREAM, opacity: 0.5 }}><HelpCircle size={16} /></button>
+      <div className="text-center mb-3"><h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }} className="text-3xl lg:text-4xl">Twist</h1><p style={{ color: CREAM, opacity: 0.58 }} className="text-[13px] mt-0.5">Place equal flame and frost in every row and column.</p></div>
+      {!solved && (isChallenge ? <div className="flex justify-center mb-4"><div className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: `${GOLD}18`, color: GOLD }}><span className="text-xs font-semibold">{t("common.todaysChallenge")}</span><span className="text-[10px] opacity-80">{GIVEN_TARGETS[dayIdx]} clues</span></div></div> : <DaySelector days={DAYS} value={dayIdx} onChange={setDayIdx} />)}
+      {!solved && <div className="flex items-center justify-center gap-4 mb-3 px-1"><div className="flex items-center gap-1.5" style={{ color: CREAM, opacity: 0.7 }}><TimerIcon size={14} /><span className="text-xs tabular-nums">{fmtTime(seconds)}</span></div><div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">mistakes: <span style={{ color: mistakes > 0 ? RED : CREAM }}>{mistakes}</span></div><div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">hints: <span style={{ color: hintsUsed > 0 ? GOLD : CREAM }}>{hintsUsed}</span></div></div>}
+      {!solved && <div className="game-toolbar mb-3 px-1" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "var(--space-2)" }}>{[{ label: t("common.undo"), onClick: handleUndo, disabled: history.length === 0 }, { label: t("common.reset"), onClick: handleReset, disabled: false }, { label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge }, { label: t("common.hint"), onClick: handleHint, disabled: false, hint: true }].map(({ label, onClick, disabled, hint }) => hint ? <HintCooldownButton key="hint" cooldown={hintCooldown} label={label} onClick={onClick} disabled={disabled} /> : <Button key={label} onClick={onClick} disabled={disabled} aria-label={label} variant="secondary" size="sm" fullWidth>{label}</Button>)}</div>}
+      {!solved && showHelp && <div className="text-xs rounded-lg p-2.5 mb-3" style={{ background: "rgba(16,24,40,0.05)", color: CREAM, opacity: 0.75, lineHeight: 1.4 }}>Tap a blank cell to cycle flame → frost → blank. Every row and column needs three flames and three frost symbols, and no more than two matching symbols can sit together. An "=" between two cells means they match; a "×" means they differ. Hint flags one wrong symbol, or one cell that's already logically forced, or — as a last resort — just points at a blank one.</div>}
+      <GameSolvedPanel solved={solved} difficultyRating={difficultyRating} stats={<>{fmtTime(seconds)} &middot; {mistakes} mistake{mistakes === 1 ? "" : "s"} &middot; {hintsUsed} hint{hintsUsed === 1 ? "" : "s"}</>} rewardResult={rewardResult} savedStatId={savedStatId} onRated={setDifficultyRating} completionSeconds={seconds} allowScoreChallenge scoreToBeatSeconds={scoreToBeatSeconds} scoreChallengerName={scoreChallengerName} showPlayAgain={!isChallenge} onPlayAgain={() => newPuzzle(dayIdx)} />
+      {solved && <BoardReviewToggle reviewing={reviewing} onToggle={() => setReviewing((value) => !value)} />}
+      {(!solved || reviewing) && boardGrid}
+      {!solved && <p style={{ color: CREAM, opacity: 0.35 }} className="text-center text-[11px] mt-3">{filledCount}/{SIZE * SIZE} filled</p>}
     </div>
-  );
+  </div>;
 }
