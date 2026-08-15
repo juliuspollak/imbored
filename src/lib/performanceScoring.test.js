@@ -25,10 +25,10 @@ test("performance adjustment is bounded and based on scored time", () => {
   assert.equal(performanceAdjustment({ seconds: 70, hints: 1, mistakes: 1 }, 100), 0);
 });
 
-test("challenge score uses the same penalties", () => {
+test("challenge score uses the same penalties and rewards completion", () => {
   assert.deepEqual(challengeScore({ seconds: 70, hints: 1, mistakes: 1 }, 100), { adjusted: 100, accuracy: 1, speedScore: 100, score: 100 });
   assert.equal(challengeScore({ seconds: 1 }, 100).score, 150);
-  assert.equal(challengeScore({ seconds: 1000 }, 100).score, 20);
+  assert.equal(challengeScore({ seconds: 1000 }, 100).score, 45);
 });
 
 test("missing benchmarks use the same 100-second fallback as PostgreSQL", () => {
@@ -68,6 +68,15 @@ test("bailing out of a quiz can no longer beat playing it properly", () => {
   const carefulRun = challengeScore({ seconds: 120, mistakes: 0, correct_count: 9, total_count: 9 }, 100);
   assert.equal(wipeoutInTenSeconds.score, 0);
   assert.ok(carefulRun.score > wipeoutInTenSeconds.score);
+});
+
+test("completion floor is still scaled by quiz accuracy", () => {
+  const slowPerfect = challengeScore({ seconds: 1000, correct_count: 9, total_count: 9 }, 100);
+  const slowHalfCorrect = challengeScore({ seconds: 1000, correct_count: 5, total_count: 10 }, 100);
+  const slowWipeout = challengeScore({ seconds: 1000, correct_count: 0, total_count: 10 }, 100);
+  assert.equal(slowPerfect.score, 45);
+  assert.equal(slowHalfCorrect.score, 23);
+  assert.equal(slowWipeout.score, 0);
 });
 
 test("accuracy and speed both move the score", () => {
