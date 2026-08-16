@@ -19,6 +19,12 @@ const FACT_CLUE_SOURCES = [
   { type: "language", field: "languages", pick: (v) => v?.name },
 ];
 
+// Language and currency are structured facts that are frequently shared by
+// several countries. A Zoom round has to remain solvable all the way from
+// continent -> subregion -> country, so these clue types are only eligible
+// when the exact language/currency identifies one country in our dataset.
+const UNIQUE_COUNTRY_CLUE_TYPES = new Set(["currency", "language"]);
+
 // Each quiz deliberately mixes subjects. Previously countries were chosen
 // first and clues second, which made animals and flora rare because most of
 // the larger country list only contains currency/language data.
@@ -93,7 +99,7 @@ const LEVEL1_TEMPLATES = {
   food: (name) => `Which continent does the dish ${name} come from?`,
   naturalFeature: (name) => `Which continent is ${name} located on?`,
   currency: (name) => `Which continent uses a currency called the ${name}?`,
-  language: (name) => `Which continent is ${name} widely spoken on, in this country?`,
+  language: (name) => `This country's language clue is ${name}. Which continent is the country on?`,
   flag: () => "Which continent does this flag belong to?",
 };
 
@@ -105,7 +111,7 @@ const LEVEL2_TEMPLATES = {
   food: (name, continent) => `Still thinking of ${name} — which part of ${continent} does it come from?`,
   naturalFeature: (name, continent) => `Still thinking of ${name} — which part of ${continent} is it in?`,
   currency: (name, continent) => `Same currency, the ${name} — which part of ${continent} is it used in?`,
-  language: (name, continent) => `Same country — which part of ${continent} is it in?`,
+  language: (name, continent) => `Same language clue, ${name} — which part of ${continent} is the country in?`,
   flag: (name, continent) => `Same flag — which part of ${continent} does it belong to?`,
 };
 
@@ -125,11 +131,36 @@ function clueSource(type) {
   return FACT_CLUE_SOURCES.find((source) => source.type === type);
 }
 
+function clueIdentity(source, value) {
+  const picked = source?.pick ? source.pick(value) : value;
+  const identity = value?.code || picked;
+  return String(identity || "").trim().toLowerCase();
+}
+
+function structuredClueCountryCount(type, value) {
+  if (!UNIQUE_COUNTRY_CLUE_TYPES.has(type)) return 1;
+  const source = clueSource(type);
+  const identity = clueIdentity(source, value);
+  if (!source || !identity) return 0;
+
+  return COUNTRIES.filter((country) =>
+    (country[source.field] || []).some((candidate) => clueIdentity(source, candidate) === identity)
+  ).length;
+}
+
+function usableClueValues(country, type) {
+  const source = clueSource(type);
+  if (!source) return [];
+  const values = (country[source.field] || []).filter((value) =>
+    source.pick ? Boolean(source.pick(value)) : Boolean(value)
+  );
+  if (!UNIQUE_COUNTRY_CLUE_TYPES.has(type)) return values;
+  return values.filter((value) => structuredClueCountryCount(type, value) === 1);
+}
+
 function hasClue(country, type) {
   if (type === "flag") return Boolean(country.flagEmoji);
-  const source = clueSource(type);
-  if (!source) return false;
-  return (country[source.field] || []).some((value) => source.pick ? Boolean(source.pick(value)) : Boolean(value));
+  return usableClueValues(country, type).length > 0;
 }
 
 function pickClue(country, preferredTypes = []) {
@@ -141,7 +172,7 @@ function pickClue(country, preferredTypes = []) {
   if (!usable) {
     return { type: "capital", name: country.capital || country.capitals?.[0] || country.name };
   }
-  const raw = shuffle(country[usable.field]).find((value) => usable.pick ? Boolean(usable.pick(value)) : Boolean(value));
+  const raw = shuffle(usableClueValues(country, usable.type))[0];
   const name = usable.pick ? usable.pick(raw) : raw;
   return { type: usable.type, name, code: usable.type === "currency" || usable.type === "language" ? raw?.code : undefined };
 }
@@ -257,4 +288,11 @@ function generateZoomQuiz(dayIdx, recentIds = []) {
   return steps;
 }
 
-export { generateZoomQuiz, ROUNDS_PER_QUIZ, LEVELS_PER_ROUND, DIFFICULTY_CEILING, ROUND_THEMES };
+export {
+  generateZoomQuiz,
+  ROUNDS_PER_QUIZ,
+  LEVELS_PER_ROUND,
+  DIFFICULTY_CEILING,
+  ROUND_THEMES,
+  structuredClueCountryCount,
+};
