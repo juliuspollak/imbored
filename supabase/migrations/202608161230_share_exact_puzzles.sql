@@ -6,6 +6,30 @@
 -- No score threshold applies and replay results are saved by the client as
 -- ordinary practice results.
 
+create or replace function public.replay_puzzle_seed(source_result public.game_stats)
+returns text
+language sql
+stable
+set search_path to 'public'
+as $$
+  select coalesce(
+    nullif(source_result.seed,''),
+    case
+      -- Geo/Zoom challenge rounds have always been deterministic, but older
+      -- results did not persist that derived seed in game_stats. Reconstruct
+      -- exactly the same seed ChallengeGate supplied to the game.
+      when source_result.mode='challenge' and source_result.challenge_date is not null then
+        source_result.game || '-' || source_result.challenge_date::text ||
+        case
+          when source_result.circle_challenge_id is not null
+            then '-circle-' || source_result.circle_challenge_id::text
+          else ''
+        end
+      else null
+    end
+  )
+$$;
+
 create or replace function public.get_replayable_puzzle(target_stat_id bigint)
 returns jsonb
 language plpgsql
@@ -14,6 +38,7 @@ set search_path to 'public'
 as $$
 declare
   source_result public.game_stats;
+  resolved_seed text;
   allowed boolean:=false;
 begin
   select * into source_result
@@ -24,9 +49,10 @@ begin
     raise exception 'Puzzle result not found.' using errcode='P0002';
   end if;
 
+  resolved_seed:=public.replay_puzzle_seed(source_result);
   if source_result.game not in ('hive','binary','gridly','minisudoku','geo','zoom')
-     or nullif(source_result.seed,'') is null then
-    raise exception 'This game cannot be replayed from a saved puzzle.' using errcode='22023';
+     or nullif(resolved_seed,'') is null then
+    raise exception 'This game result cannot be replayed as the exact same puzzle.' using errcode='22023';
   end if;
 
   allowed:=source_result.user_id=auth.uid()
@@ -46,7 +72,7 @@ begin
     'source_stat_id',source_result.id,
     'game',source_result.game,
     'day_index',source_result.day_index,
-    'seed',source_result.seed
+    'seed',resolved_seed
   );
 end;
 $$;
@@ -59,6 +85,7 @@ set search_path to 'public'
 as $$
 declare
   source_result public.game_stats;
+  resolved_seed text;
   sender_name text;
   game_label text;
   eligible_count integer:=0;
@@ -72,9 +99,10 @@ begin
     raise exception 'Puzzle result not found.' using errcode='42501';
   end if;
 
+  resolved_seed:=public.replay_puzzle_seed(source_result);
   if source_result.game not in ('hive','binary','gridly','minisudoku','geo','zoom')
-     or nullif(source_result.seed,'') is null then
-    raise exception 'This game cannot be shared as an exact puzzle.' using errcode='22023';
+     or nullif(resolved_seed,'') is null then
+    raise exception 'This game result cannot be shared as the exact same puzzle.' using errcode='22023';
   end if;
 
   select coalesce(nullif(trim(name),''),'Someone')
@@ -159,8 +187,10 @@ begin
 end;
 $$;
 
+revoke all on function public.replay_puzzle_seed(public.game_stats) from public;
 revoke all on function public.get_replayable_puzzle(bigint) from public;
 revoke all on function public.share_puzzle_with_circles(bigint) from public;
+grant execute on function public.replay_puzzle_seed(public.game_stats) to authenticated;
 grant execute on function public.get_replayable_puzzle(bigint) to authenticated;
 grant execute on function public.share_puzzle_with_circles(bigint) to authenticated;
 
