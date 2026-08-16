@@ -3,8 +3,9 @@ import ScoreBreakdown from "./ScoreBreakdown.jsx";
 import { rewardStatusText } from "./lib/rewardStatus.js";
 import { rateDifficulty } from "./lib/saveStats.js";
 import { useI18n } from "./lib/i18n.jsx";
+import { openPuzzlePractice, sharePuzzleWithCircles } from "./lib/puzzleSharing.js";
 import { useEffect, useMemo, useState } from "react";
-import { CircleCheckBig, Swords } from "lucide-react";
+import { CircleCheckBig, RefreshCw, Share2, Swords } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import "./game-solved-panel.css";
 
@@ -50,10 +51,12 @@ export default function GameSolvedPanel({
   const { t } = useI18n();
   const [challengeState, setChallengeState] = useState({ status:"idle", message:"" });
   const [challengeEligible, setChallengeEligible] = useState(false);
+  const [puzzleShareState, setPuzzleShareState] = useState({ status:"idle", message:"" });
   // Why the dare is unavailable, so a slow round explains itself rather than
   // the button silently not being there.
   const [challengeBlockedReason, setChallengeBlockedReason] = useState("");
   useEffect(() => setChallengeState({ status:"idle",message:"" }), [savedStatId]);
+  useEffect(() => setPuzzleShareState({ status:"idle",message:"" }), [savedStatId]);
   useEffect(() => {
     let active = true;
     setChallengeEligible(false);
@@ -112,6 +115,27 @@ export default function GameSolvedPanel({
         : "No eligible circle members to challenge yet.",
     });
   }
+
+  async function sharePuzzle() {
+    if (!savedStatId || puzzleShareState.status === "sending") return;
+    setPuzzleShareState({ status:"sending",message:"Sharing…" });
+    const { data,error } = await sharePuzzleWithCircles(savedStatId);
+    if (error) {
+      setPuzzleShareState({ status:"error",message:error.message || "Couldn’t share this puzzle." });
+      return;
+    }
+    const recipients = Number(data?.recipient_count) || 0;
+    const sent = Number(data?.sent_count) || 0;
+    setPuzzleShareState({
+      status:recipients > 0 ? "sent" : "empty",
+      message:recipients === 0
+        ? "No circle members to share this puzzle with yet."
+        : sent > 0
+          ? `Puzzle shared with ${recipients} ${recipients === 1 ? "person" : "people"} in your circles.`
+          : "This puzzle was already shared with your circle members.",
+    });
+  }
+
   if (!solved) return null;
 
   return (
@@ -149,6 +173,39 @@ export default function GameSolvedPanel({
           </div>
         )}
       </div>
+
+      {savedStatId && (
+        <div style={{ width:"100%", display:"grid", gridTemplateColumns:"repeat(2,minmax(0,1fr))", gap:"var(--space-2)", marginTop:"var(--space-2)" }}>
+          <button
+            type="button"
+            onClick={() => openPuzzlePractice(savedStatId)}
+            className="game-solved-play-again mt-0 px-3 py-2 rounded-full text-xs font-semibold transition-colors"
+            style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", gap:6 }}
+          >
+            <RefreshCw size={14} aria-hidden="true" />
+            Practise this game
+          </button>
+          <button
+            type="button"
+            onClick={sharePuzzle}
+            disabled={puzzleShareState.status === "sending"}
+            className="game-solved-play-again mt-0 px-3 py-2 rounded-full text-xs font-semibold transition-colors"
+            style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", gap:6 }}
+          >
+            <Share2 size={14} aria-hidden="true" />
+            {puzzleShareState.status === "sending" ? "Sharing…" : "Share puzzle"}
+          </button>
+          {puzzleShareState.message && (
+            <p
+              role="status"
+              style={{ gridColumn:"1 / -1", margin:"2px 0 0", textAlign:"center", fontSize:"var(--text-caption-size)", color:puzzleShareState.status === "error" ? "var(--color-danger-text)" : "var(--color-text-secondary)" }}
+            >
+              {puzzleShareState.message}
+            </p>
+          )}
+        </div>
+      )}
+
       {allowScoreChallenge && savedStatId && challengeEligible && (
         <div className="game-solved-challenge-wrap">
           <button
