@@ -163,3 +163,5 @@ revoke all on function public.get_replayable_puzzle(bigint) from public;
 revoke all on function public.share_puzzle_with_circles(bigint) from public;
 grant execute on function public.get_replayable_puzzle(bigint) to authenticated;
 grant execute on function public.share_puzzle_with_circles(bigint) to authenticated;
+
+notify pgrst, 'reload schema';
