@@ -51,12 +51,26 @@ export default function GameSolvedPanel({
   const { t } = useI18n();
   const [challengeState, setChallengeState] = useState({ status:"idle", message:"" });
   const [challengeEligible, setChallengeEligible] = useState(false);
+  const [puzzleReplayEligible, setPuzzleReplayEligible] = useState(false);
   const [puzzleShareState, setPuzzleShareState] = useState({ status:"idle", message:"" });
   // Why the dare is unavailable, so a slow round explains itself rather than
   // the button silently not being there.
   const [challengeBlockedReason, setChallengeBlockedReason] = useState("");
   useEffect(() => setChallengeState({ status:"idle",message:"" }), [savedStatId]);
   useEffect(() => setPuzzleShareState({ status:"idle",message:"" }), [savedStatId]);
+
+  useEffect(() => {
+    let active = true;
+    setPuzzleReplayEligible(false);
+    if (!supabaseReady || !savedStatId) return () => { active = false; };
+    supabase.rpc("get_replayable_puzzle", { target_stat_id:savedStatId })
+      .then(({ data,error }) => {
+        if (!active) return;
+        setPuzzleReplayEligible(!error && !!data?.seed);
+      });
+    return () => { active = false; };
+  }, [savedStatId]);
+
   useEffect(() => {
     let active = true;
     setChallengeEligible(false);
@@ -174,7 +188,7 @@ export default function GameSolvedPanel({
         )}
       </div>
 
-      {savedStatId && (
+      {savedStatId && puzzleReplayEligible && (
         <div style={{ width:"100%", display:"grid", gridTemplateColumns:"repeat(2,minmax(0,1fr))", gap:"var(--space-2)", marginTop:"var(--space-2)" }}>
           <button
             type="button"
