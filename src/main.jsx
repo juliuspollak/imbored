@@ -1,11 +1,13 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
+import SharedPuzzleApp from "./SharedPuzzleApp.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import InvitedApprovalNotice from "./InvitedApprovalNotice.jsx";
 import { I18nProvider } from "./lib/i18n.jsx";
 import { enableAutomaticAppUpdates } from "./lib/appUpdate.js";
 import { applyThemePreference, getCachedThemePreference } from "./lib/theme.js";
+import { enablePuzzleShareLinks } from "./lib/puzzleSharing.js";
 import "./lib/twistInvalidLineFeedback.js";
 // Fonts are bundled rather than fetched from Google's CDN. A packaged app
 // should render its own type with no network at all, and shipping them removes
@@ -45,12 +47,17 @@ enableAutomaticAppUpdates();
 // fetch completes) falls back to the raw system theme, flashing dark even
 // when the signed-in profile is set to light.
 applyThemePreference(getCachedThemePreference());
+enablePuzzleShareLinks();
+
+const puzzleStatId = typeof window === "undefined"
+  ? null
+  : new URLSearchParams(window.location.search).get("puzzle");
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <I18nProvider>
       <ErrorBoundary onReset={() => window.location.reload()}>
-        <App />
+        {puzzleStatId ? <SharedPuzzleApp statId={puzzleStatId} /> : <App />}
         <InvitedApprovalNotice />
       </ErrorBoundary>
     </I18nProvider>
