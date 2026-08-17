@@ -1,4 +1,4 @@
-import geoFacts from "./geoFacts.json";
+import geoFacts from "./geoFacts.json" with { type: "json" };
 
 const CITIES = [
   { name: "Paris", continent: "Europe", difficulty: 1 },
