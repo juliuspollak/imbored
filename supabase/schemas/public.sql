@@ -5168,6 +5168,8 @@ declare
   day_weight numeric:=1;
   spread_mean numeric;
   spread_sd numeric;
+  spread_day_mean numeric;
+  spread_day_count integer:=0;
   benchmark public.game_time_benchmarks;
 begin
   select * into benchmark
@@ -5249,6 +5251,19 @@ begin
   -- this weekday using the seeded Mon->Sun ramp. That uses all 15 samples
   -- instead of 2, and keeps the intended difficulty curve rather than paying
   -- every weekday the same time.
+  -- This weekday's share of the game's designed Mon->Sun ramp. Needed whether
+  -- or not the pooled branch runs, because the spread section below uses it to
+  -- place a weekday that has too little play of its own.
+  select case
+    when coalesce(avg(other.provisional_seconds),0)>0
+      then benchmark.provisional_seconds/avg(other.provisional_seconds)
+    else 1
+  end
+  into day_weight
+  from public.game_time_benchmarks other
+  where other.game=target_game
+    and other.mode=target_mode;
+
   if eligible_players<2 then
     with clean as (
       select stat.user_id,stat.seconds,
@@ -5302,10 +5317,14 @@ begin
   -- seconds) -- the clock divided by the share of answers that were right --
   -- and pooled across weekdays, because per-weekday samples are far too thin
   -- to estimate a standard deviation from.
-  select avg(ln(value)),stddev_samp(ln(value))
-  into spread_mean,spread_sd
+  select
+    avg(ln(sample.value)) filter (where sample.day_index=target_day_index),
+    count(sample.value) filter (where sample.day_index=target_day_index),
+    avg(ln(sample.value)),
+    stddev_samp(ln(sample.value))
+  into spread_day_mean,spread_day_count,spread_mean,spread_sd
   from (
-    select public.effective_round_seconds(
+    select stat.day_index, public.effective_round_seconds(
       stat.seconds,stat.hints,stat.mistakes,
       coalesce(nullif(benchmark.effective_seconds,0),100),
       stat.correct_count,stat.total_count
@@ -5316,6 +5335,25 @@ begin
       and stat.completed_at>=now()-interval '90 days'
       and stat.seconds between 5 and 3600
   ) sample;
+
+  -- The spread (log_sd) is pooled across weekdays because a standard deviation
+  -- needs more samples than one weekday can supply. The MIDDLE must not be:
+  -- pooling it too threw away the Mon->Sun difficulty ramp, so a player at
+  -- Sunday pace was measured against a reference that includes easy Mondays.
+  -- On the live benchmarks that was worth up to 64 points between two players
+  -- of identical standing -- a worse unfairness than the cross-game gap this
+  -- scoring was built to remove.
+  --
+  -- So: use this weekday's own mean once it has enough play to be worth
+  -- trusting, and otherwise place the pooled mean onto this weekday using the
+  -- designed ramp. Shifting a log-mean by ln(weight) is exactly scaling the
+  -- underlying time by that weight.
+  if spread_day_count>=5 and spread_day_mean is not null then
+    spread_mean:=spread_day_mean;
+  elsif spread_mean is not null then
+    spread_mean:=spread_mean+ln(greatest(0.05,coalesce(day_weight,1)));
+  end if;
+
 
   update public.game_time_benchmarks current_benchmark
   set observed_median_seconds=case when eligible_players>=2 then community_median else null end,
