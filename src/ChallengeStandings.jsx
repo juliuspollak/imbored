@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, LockKeyhole, Trophy } from "lucide-react";
 import { MISSED_ROUND_PENALTY, buildChallengeStandings, explainTiebreak, fromServerStandings } from "./lib/challengeStandingsScoring.js";
+import { MAX_DAILY_SCORE } from "./lib/performanceScoring.js";
 import { useI18n } from "./lib/i18n.jsx";
 import { GAME_NAMES } from "./lib/gameBranding.jsx";
 
@@ -162,6 +163,7 @@ function StandingsList({ standings, expandedPlayerIds, setExpandedPlayerIds, pre
         const isLeader = rank === 1 && player.score > 0;
         const expanded = expandedPlayerIds.has(player.userId);
         const isWinner = closed && winnerId === player.userId;
+        const maxScore = player.total * MAX_DAILY_SCORE;
         // Why this player is above the next one when the score cannot say.
         // Without it, a table of identical scores looks arbitrary.
         const tiebreak = explainTiebreak(player, standings[playerIndex + 1]);
@@ -208,7 +210,7 @@ function StandingsList({ standings, expandedPlayerIds, setExpandedPlayerIds, pre
                 )}
               </span>
               <span style={{ flexShrink: 0, textAlign: "right" }}>
-                <span style={{ display: "block", color: isLeader ? "var(--color-warning-text)" : "var(--color-text-primary)", fontSize: 19, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{player.score}</span>
+                <span style={{ display: "block", color: isLeader ? "var(--color-warning-text)" : "var(--color-text-primary)", fontSize: 19, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{player.score} / {maxScore}</span>
                 <span style={{ display: "block", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{t("standings.score")}</span>
               </span>
               <ChevronDown size={17} style={{ flexShrink: 0, color: "var(--color-icon-subtle)", transform: expanded ? "rotate(180deg)" : "none", transition: "transform var(--transition-fast)" }} />
@@ -227,7 +229,7 @@ function StandingsList({ standings, expandedPlayerIds, setExpandedPlayerIds, pre
                       const score = player.dailyScores[di];
                       return (
                         <span key={di} style={{ minHeight: 36, display: "flex", alignItems: "center", justifyContent: "center", padding: "6px 8px", border: `1px solid ${score >= 50 ? "var(--color-primary-subtle-border)" : "var(--color-danger-text)"}`, borderRadius: "var(--radius-sm)", background: score >= 50 ? "var(--color-primary-subtle)" : "var(--color-danger-bg)", color: score >= 50 ? "var(--color-primary)" : "var(--color-danger-text)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>
-                          {GAME_NAMES[res.game] || res.game} {score}pt
+                          {GAME_NAMES[res.game] || res.game} {score}/{MAX_DAILY_SCORE}
                         </span>
                       );
                     })}
