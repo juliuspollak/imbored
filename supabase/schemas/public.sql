@@ -2161,6 +2161,63 @@ CREATE FUNCTION public.challenge_benchmark_seconds(target_game text, target_chal
   ),100)::numeric
 $$;
 
+--
+-- Name: effective_round_seconds; Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.effective_round_seconds(
+  elapsed_seconds integer,
+  hint_count integer,
+  mistake_count integer,
+  benchmark_seconds numeric,
+  correct_answers integer default null,
+  total_answers integer default null
+) returns numeric
+    language sql immutable
+    as $$
+  with share as (
+    select case
+      when coalesce(total_answers,0) <= 0 then 1::numeric
+      else least(1,greatest(0,coalesce(correct_answers,0))::numeric/total_answers)
+    end as accuracy
+  )
+  select case when share.accuracy <= 0 then null else
+    greatest(1,
+      greatest(0,coalesce(elapsed_seconds,0))
+      + greatest(0,coalesce(hint_count,0))*coalesce(benchmark_seconds,100)*0.20
+      -- An ungraded puzzle has no accuracy to divide by, so its slips are
+      -- charged as time. A graded round is not charged here as well: its
+      -- mistakes ARE the wrong answers already priced into the divisor.
+      + case when coalesce(total_answers,0) > 0 then 0
+             else greatest(0,coalesce(mistake_count,0))*coalesce(benchmark_seconds,100)*0.10 end
+    ) / (share.accuracy * share.accuracy)
+  end
+  from share
+$$;
+
+--
+-- Name: challenge_benchmark_profile; Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.challenge_benchmark_profile(
+  target_game text,
+  target_challenge_date date
+) returns table(seconds numeric, log_mean numeric, log_sd numeric)
+    language sql stable security definer
+    set search_path to 'public'
+    as $$
+  select
+    coalesce(nullif(benchmark.effective_seconds,0),100)::numeric,
+    benchmark.log_mean,
+    benchmark.log_sd
+  from public.game_time_benchmarks benchmark
+  where benchmark.game=target_game
+    and benchmark.mode='challenge'
+    and benchmark.day_index=extract(isodow from target_challenge_date)::integer-1
+  order by benchmark.updated_at desc nulls last
+  limit 1
+$$;
+
 
 --
 -- Name: circle_challenge_daily_score(text, date, integer, integer, integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
@@ -2170,36 +2227,51 @@ $$;
 -- quiz was the winning strategy: a wrong answer ends the round early, and the
 -- 150 cap made a fast wipeout indistinguishable from a fast perfect run.
 -- Games that record no per-answer breakdown score on time only, as before.
-CREATE FUNCTION public.circle_challenge_daily_score(target_game text, target_challenge_date date, elapsed_seconds integer, hint_count integer, mistake_count integer, correct_answers integer DEFAULT NULL::integer, total_answers integer DEFAULT NULL::integer) RETURNS integer
-    LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
-  with typical as (
-    select public.challenge_benchmark_seconds(target_game,target_challenge_date) as seconds
+CREATE FUNCTION public.circle_challenge_daily_score(
+  target_game text,
+  target_challenge_date date,
+  elapsed_seconds integer,
+  hint_count integer,
+  mistake_count integer,
+  correct_answers integer default null,
+  total_answers integer default null
+) returns integer
+    language sql stable security definer
+    set search_path to 'public'
+    as $$
+  with profile as (
+    select seconds,log_mean,log_sd
+    from public.challenge_benchmark_profile(target_game,target_challenge_date)
+    union all
+    select 100::numeric,null::numeric,null::numeric
+    limit 1
   ),
-  graded as (
-    select coalesce(total_answers,0) > 0 as by_answers
-  ),
-  accuracy as (
-    select case
-      when coalesce(total_answers,0) <= 0 then 1::numeric
-      else least(1,greatest(0,coalesce(correct_answers,0))::numeric/total_answers)
-    end as share
-  ),
-  speed as (
-    select greatest(45,least(150,round(
-      100*typical.seconds/greatest(1,public.scored_game_seconds(
-        elapsed_seconds,
-        hint_count,
-        -- Already paid for through the accuracy share on a graded round.
-        case when graded.by_answers then 0 else mistake_count end,
-        typical.seconds
-      ))
-    )::integer)) as score
-    from typical,graded
+  effective as (
+    select
+      profile.seconds,
+      profile.log_mean,
+      profile.log_sd,
+      public.effective_round_seconds(
+        elapsed_seconds,hint_count,mistake_count,profile.seconds,correct_answers,total_answers
+      ) as value
+    from profile
   )
-  select round(speed.score*accuracy.share)::integer
-  from speed,accuracy
+  select case
+    -- Nothing correct: no pace to measure, and no points.
+    when effective.value is null then 0
+    -- Measured spread: score against it.
+    when effective.log_mean is not null and coalesce(effective.log_sd,0) > 0.01 then
+      greatest(20,least(150,round(
+        100 + 25*((effective.log_mean - ln(effective.value))/effective.log_sd)
+      )::integer))
+    -- Not yet measured: the previous ratio rule, floor and all, so a game with
+    -- no history still scores sensibly.
+    else
+      greatest(45,least(150,round(
+        100*effective.seconds/effective.value
+      )::integer))
+  end
+  from effective
 $$;
 
 
@@ -5066,6 +5138,8 @@ CREATE TABLE public.game_time_benchmarks (
     clean_sample_count integer DEFAULT 0 NOT NULL,
     effective_seconds numeric NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    log_mean numeric,
+    log_sd numeric,
     CONSTRAINT game_time_benchmarks_day_index_check CHECK (((day_index >= 0) AND (day_index <= 6))),
     CONSTRAINT game_time_benchmarks_mode_check CHECK ((mode = ANY (ARRAY['practice'::text, 'challenge'::text]))),
     CONSTRAINT game_time_benchmarks_provisional_seconds_check CHECK (((provisional_seconds >= 5) AND (provisional_seconds <= 3600)))
@@ -5088,6 +5162,8 @@ declare
   pooled_samples integer:=0;
   pooled_median numeric;
   day_weight numeric:=1;
+  spread_mean numeric;
+  spread_sd numeric;
   benchmark public.game_time_benchmarks;
 begin
   select * into benchmark
@@ -5217,6 +5293,26 @@ begin
     end if;
   end if;
 
+  -- The score is now counted in spreads, not ratios, so the benchmark has to
+  -- carry the spread as well as the middle. Measured over ln(effective
+  -- seconds) -- the clock divided by the share of answers that were right --
+  -- and pooled across weekdays, because per-weekday samples are far too thin
+  -- to estimate a standard deviation from.
+  select avg(ln(value)),stddev_samp(ln(value))
+  into spread_mean,spread_sd
+  from (
+    select public.effective_round_seconds(
+      stat.seconds,stat.hints,stat.mistakes,
+      coalesce(nullif(benchmark.effective_seconds,0),100),
+      stat.correct_count,stat.total_count
+    ) as value
+    from public.game_stats stat
+    where stat.game=target_game
+      and stat.mode=target_mode
+      and stat.completed_at>=now()-interval '90 days'
+      and stat.seconds between 5 and 3600
+  ) sample;
+
   update public.game_time_benchmarks current_benchmark
   set observed_median_seconds=case when eligible_players>=2 then community_median else null end,
       clean_sample_count=case when eligible_players>=2 then qualifying_samples else 0 end,
@@ -5228,6 +5324,10 @@ begin
           then greatest(5,least(3600,round(community_median)))
         else current_benchmark.provisional_seconds
       end,
+      -- Below a usable sample a standard deviation is noise; leave it null
+      -- and circle_challenge_daily_score() falls back to the ratio rule.
+      log_mean=case when spread_sd is not null and spread_sd>0.01 then spread_mean else null end,
+      log_sd=case when spread_sd is not null and spread_sd>0.01 then spread_sd else null end,
       updated_at=now()
   where current_benchmark.game=target_game
     and current_benchmark.day_index=target_day_index

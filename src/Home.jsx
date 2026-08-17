@@ -249,7 +249,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
       const [current, { data:roundRows }, { data:benchmarkRows }, { data:personalProfiles }, { data:rankedRows, error:rankedError }, previous, { data:previousRoundRows }] = await Promise.all([
         fetchPeriodRows(selectedPeriod),
         fetchPeriodRounds(selectedPeriod),
-        supabase.from("game_time_benchmarks").select("game,day_index,effective_seconds").eq("mode","challenge"),
+        supabase.from("game_time_benchmarks").select("game,day_index,effective_seconds,log_mean,log_sd").eq("mode","challenge"),
         challengeScope?.type !== "circle" ? supabase.from("profiles").select("id,name,icon,show_stats_to_others").eq("is_approved",true).eq("hidden_from_others",false) : Promise.resolve({ data:[] }),
         selectedPeriod.challengeId != null ? supabase.rpc("get_circle_challenge_standings", { target_challenge_id:selectedPeriod.challengeId }) : Promise.resolve({ data:null }),
         comparisonPeriod ? fetchPeriodRows(comparisonPeriod) : Promise.resolve({ rows:[], profiles:[] }),

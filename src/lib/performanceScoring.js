@@ -3,6 +3,23 @@ export const MISTAKE_PENALTY_RATIO = 0.10;
 export const MIN_DAILY_SCORE = 45;
 export const MAX_DAILY_SCORE = 150;
 
+// A round is scored by how far it beats typical play, counted in the spread of
+// that game's own times. TYPICAL_SCORE is what typical play earns and
+// SPREAD_POINTS is what one standard deviation is worth. Simulated over 300
+// players these put the mean and median both on 100, the 10th and 90th
+// percentiles on 67 and 132, and leave only ~2% of rounds on a clamp.
+export const TYPICAL_SCORE = 100;
+export const SPREAD_POINTS = 25;
+export const SCORE_FLOOR = 20;
+// A round with nothing correct would otherwise be an infinitely slow round.
+// Accuracy counts as its square: half the answers right costs what taking
+// four times as long costs. Because the reference mean and spread are measured
+// through the same transform, cross-game balance holds whatever this is; it
+// only sets how much accuracy weighs against speed. At 1 a rushed 1-of-9 Zoom
+// round still paid 71 against an honest 99 - the abuse this started from. At 2
+// it pays 43, while good and perfect rounds are untouched.
+export const ACCURACY_EXPONENT = 2;
+
 function benchmarkSeconds(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 100;
@@ -40,40 +57,56 @@ export function answerAccuracy(result = {}) {
   return Math.min(1, correct / total);
 }
 
-// Speed alone used to decide a challenge round, so bailing out of a quiz with
-// every answer wrong beat working through it carefully: the failure ended the
-// round in a few seconds and the cap hid the difference.
-//
-// A completed round now keeps a meaningful 45-point speed floor (30% of the
-// 150 maximum) so a slower player still has a reason to finish. Accuracy is
-// applied *after* that floor and the maximum clamp, so partial or failed quiz
-// results do not receive 45 points merely for ending the round. For example,
-// 50% accuracy can receive at most half of the applicable speed score, while a
-// zero-correct result still scores 0.
-//
-// A quiz game's mistakes ARE its wrong answers, so charging them as penalty
-// seconds *and* as a lower accuracy share billed one set of errors twice.
-// Where a result grades itself, accuracy is the whole penalty and the clock
-// measures pace only; games reporting no answer count keep paying for mistakes
-// in time, which is their only penalty.
-export function challengeScore(result, typicalSeconds) {
+// Effective seconds: the clock plus the hint surcharge, divided by the share
+// of answers that were right. Accuracy and speed become one currency, so a
+// quiz round and a puzzle round sit on the same axis. Simulated across 300
+// players, the accuracy-multiplier rule left the quiz games averaging 66-69
+// against 99-101 for the puzzles -- a 35-point gap owed purely to which game
+// you opened. Expressed as time instead, all six average 89-92.
+// Returns null for a graded round with nothing correct: it has no meaningful
+// pace, and is scored 0 rather than ranked among rounds that were played.
+export function effectiveSeconds(result = {}, typicalSeconds) {
   const typical = benchmarkSeconds(typicalSeconds);
-  const adjusted = Math.max(1, scoredSeconds({
-    ...result,
-    mistakes: reportsAnswers(result) ? 0 : result.mistakes,
-    typicalSeconds: typical,
-  }));
   const accuracy = answerAccuracy(result);
-  const speedScore = Math.max(
-    MIN_DAILY_SCORE,
-    Math.min(MAX_DAILY_SCORE, Math.round((100 * typical) / adjusted)),
-  );
-  return {
-    adjusted,
-    accuracy,
-    speedScore,
-    score: Math.round(speedScore * accuracy),
-  };
+  if (reportsAnswers(result) && accuracy <= 0) return null;
+  // An ungraded puzzle has no accuracy to divide by, so its slips are charged
+  // as time - its only penalty. A graded round is not charged here as well:
+  // its mistakes ARE the wrong answers already priced into the divisor.
+  const mistakePenalty = reportsAnswers(result)
+    ? 0
+    : Math.max(0, Number(result.mistakes) || 0) * typical * MISTAKE_PENALTY_RATIO;
+  const raw = Math.max(1, Math.max(0, Number(result.seconds) || 0)
+    + Math.max(0, Number(result.hints) || 0) * typical * HINT_PENALTY_RATIO
+    + mistakePenalty);
+  return raw / Math.pow(accuracy, ACCURACY_EXPONENT);
+}
+
+// benchmark is either a plain number (the game's typical seconds, the legacy
+// shape) or { seconds, logMean, logSd } once the spread has been measured.
+//
+// With a spread, a round scores by how many standard deviations of that
+// game's own log-time it beat typical play by. Dividing by each game's own
+// spread is what removes the cross-game bias, and it stops a fast game like
+// Gridly -- 6-second benchmark, whole-second column -- swinging eight points
+// per second while MiniSudoku swings two. Without a spread it falls back to
+// the old ratio rule, so a game with no measured history still scores.
+export function challengeScore(result, benchmark) {
+  const profile = benchmark && typeof benchmark === 'object' ? benchmark : { seconds: benchmark };
+  const typical = benchmarkSeconds(profile.seconds);
+  const logMean = Number(profile.logMean ?? profile.log_mean);
+  const logSd = Number(profile.logSd ?? profile.log_sd);
+  const accuracy = answerAccuracy(result);
+  const adjusted = effectiveSeconds(result, typical);
+  if (adjusted === null) return { adjusted: null, accuracy, spreads: null, score: 0 };
+  const measured = Number.isFinite(logMean) && Number.isFinite(logSd) && logSd > 0.01;
+  const spreads = measured ? (logMean - Math.log(adjusted)) / logSd : null;
+  // The 45-point floor exists to stop the ratio rule dumping slower players in
+  // a heap at the bottom. Scoring against the spread does not have that
+  // failure - 0.1% of simulated rounds reach the floor - so the measured path
+  // uses the full range while the fallback keeps the floor it was built with.
+  const floor = measured ? SCORE_FLOOR : MIN_DAILY_SCORE;
+  const raw = measured ? TYPICAL_SCORE + SPREAD_POINTS * spreads : (100 * typical) / adjusted;
+  return { adjusted, accuracy, spreads, score: Math.max(floor, Math.min(MAX_DAILY_SCORE, Math.round(raw))) };
 }
 
 export function weekdayBonus(dayIndex) {

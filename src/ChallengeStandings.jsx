@@ -5,8 +5,14 @@ import { MAX_DAILY_SCORE } from "./lib/performanceScoring.js";
 import { useI18n } from "./lib/i18n.jsx";
 import { GAME_NAMES } from "./lib/gameBranding.jsx";
 
+// The scorer needs the spread of a game's times, not just the middle of them:
+// a round is scored by how many standard deviations it beats typical play by.
 function toBenchmarkMap(benchmarks) {
-  return Object.fromEntries(benchmarks.map((item) => [`${item.game}:${item.day_index}`, Number(item.effective_seconds) || 100]));
+  return Object.fromEntries(benchmarks.map((item) => [`${item.game}:${item.day_index}`, {
+    seconds: Number(item.effective_seconds) || 100,
+    logMean: item.log_mean == null ? null : Number(item.log_mean),
+    logSd: item.log_sd == null ? null : Number(item.log_sd),
+  }]));
 }
 
 function toSlots({ isCircle, rounds, games }) {
