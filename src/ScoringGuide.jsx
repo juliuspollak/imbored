@@ -18,6 +18,7 @@ export default function ScoringGuide({ rules }) {
   const streakBonus = Number(rules?.streak_weekly_bonus) || 20;
 
   const sections = [
+    ["guide.scale", t("guide.scaleDetail")],
     ["guide.finishing", t("guide.finishingDetail", { base })],
     ["guide.accuracy", t("guide.accuracyDetail")],
     ["guide.weekday", t("guide.weekdayDetail")],
