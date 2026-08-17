@@ -13,13 +13,15 @@ export const SHUFFLE_DURATION_MS = 800;
 export const DIFFICULTY_MODES = [
   { id: "easy", label: "Easy", description: "Cards stay visible" },
   { id: "standard", label: "Standard", description: "Cards reveal with the animal" },
-  { id: "hard", label: "Hard", description: "Cards reshuffle and keep spinning" },
+  { id: "hard", label: "Hard", description: "Match the animal and its visual detail" },
 ];
 export const COLOUR_MODES = [
   { id: "individual", label: "Animal colours", description: "Each animal has its own colour" },
   { id: "uniform", label: "One colour", description: "Harder · recognise the shape" },
   { id: "mixed", label: "Mixed colours", description: "Die colours are misleading" },
 ];
+
+export const HARD_FACE_MUTATIONS = ["normal", "closedEyes", "missingEar"];
 
 export function animalById(id) {
   return ANIMALS.find((animal) => animal.id === id) || ANIMALS[0];
@@ -37,20 +39,12 @@ export function isPhoneDevice({
   coarsePointer = false,
 } = {}) {
   const phoneUserAgent = /iPhone|iPod|Android.+Mobile|Windows Phone/i.test(userAgent);
-  // iPadOS can use either an explicit iPad UA or a desktop-style Macintosh UA.
-  // A real Mac does not report multiple touch points, so the latter remains a
-  // safe way to admit iPads without opening the game to desktop browsers.
   const appleTablet = /iPad/i.test(userAgent)
     || (/Macintosh/i.test(userAgent) && maxTouchPoints > 1);
   const reportsMobile = typeof userAgentMobile === "boolean" ? userAgentMobile : phoneUserAgent;
   return (reportsMobile || appleTablet) && maxTouchPoints > 0 && coarsePointer;
 }
 
-/**
- * Returns a shuffled copy of the array where no element stays in its
- * original position (a derangement). Falls back to a simple shuffle if
- * no derangement is found after a short loop — extremely rare with 6 items.
- */
 export function derangedShuffle(arr) {
   if (arr.length < 2) return [...arr];
   const original = [...arr];
@@ -59,7 +53,6 @@ export function derangedShuffle(arr) {
     result = [...original].sort(() => Math.random() - 0.5);
     if (!result.every((val, idx) => val === original[idx])) return result;
   }
-  // Fallback: force-swap first element with a random other
   result = [...original].sort(() => Math.random() - 0.5);
   if (result.every((val, idx) => val === original[idx])) {
     const swapIdx = 1 + Math.floor(Math.random() * (result.length - 1));
@@ -68,9 +61,6 @@ export function derangedShuffle(arr) {
   return result;
 }
 
-/**
- * Picks a random animal that is not the previous target.
- */
 export function pickNextTarget(previousTarget) {
   const options = ANIMAL_IDS.filter((id) => id !== previousTarget);
   return options[Math.floor(Math.random() * options.length)];
@@ -136,13 +126,6 @@ export function playerRoundOutcome({
   return attemptCorrect ? "win" : "loss";
 }
 
-// Hard mode also turns each card, so shape recognition cannot lean on a
-// familiar upright silhouette.
-//
-// Six evenly spaced angles are dealt out one per card, so no two cards in a
-// round share an angle, and the whole set is nudged by a per-round offset so
-// the same six angles never come back in the same places. Nothing is upright
-// unless the offset happens to land there.
 export const CARD_ROTATION_STEPS = [0, 60, 120, 180, 240, 300];
 
 function rotationHash(seed) {
@@ -155,17 +138,32 @@ function rotationHash(seed) {
   return hash >>> 0;
 }
 
-/**
- * Degrees to turn every card this round, keyed by animal id.
- *
- * Derived from the round seed rather than randomised per client: Animal Rush
- * is a race, so every player has to be looking at the identical board.
- */
+function roundKeyFromSeed(seed) {
+  const text = String(seed ?? "0");
+  const separator = text.lastIndexOf(":");
+  return separator >= 0 ? text.slice(separator + 1) : text;
+}
+
+export function hardModeTargetMutation(roundSeedOrKey) {
+  const roundKey = roundKeyFromSeed(roundSeedOrKey);
+  return HARD_FACE_MUTATIONS[rotationHash(`hard-face:${roundKey}`) % HARD_FACE_MUTATIONS.length];
+}
+
+function differentHardMutation(targetMutation, roundSeed) {
+  const alternatives = HARD_FACE_MUTATIONS.filter((mutation) => mutation !== targetMutation);
+  return alternatives[rotationHash(`${roundSeed}:decoy-face`) % alternatives.length];
+}
+
+function correctMutationSentinel(mutation) {
+  if (mutation === "closedEyes") return 0;
+  if (mutation === "missingEar") return "";
+  return false;
+}
+
 export function cardRotations({ difficulty, roundSeed, animalIds = ANIMAL_IDS } = {}) {
   if (difficulty !== "hard") return {};
   const hash = rotationHash(roundSeed);
   const offset = hash % 60;
-  // Deterministic Fisher-Yates over the angle steps, driven by the same hash.
   const steps = [...CARD_ROTATION_STEPS];
   let cursor = hash;
   for (let index = steps.length - 1; index > 0; index -= 1) {
@@ -179,9 +177,11 @@ export function cardRotations({ difficulty, roundSeed, animalIds = ANIMAL_IDS } 
 }
 
 /**
- * Builds the playable card list. Hard mode keeps exactly six cards, replacing
- * one non-target animal with an identical copy of the target. One of the two
- * copies is deterministically designated the decoy so every phone is fair.
+ * Builds the playable card list. Hard mode keeps six cards, but one non-target
+ * card is replaced by a second copy of the target. The die and one target card
+ * share the same visual mutation; the other target card is a near-match decoy
+ * with a different mutation. This prevents players from solving the round by
+ * simply spotting the duplicated animal in the deck.
  */
 export function playableCards({ order, targetAnimal, difficulty, roundSeed } = {}) {
   const safeOrder = Array.isArray(order) && order.length === ANIMAL_IDS.length ? order : ANIMAL_IDS;
@@ -197,12 +197,20 @@ export function playableCards({ order, targetAnimal, difficulty, roundSeed } = {
     .map((_, index) => index)
     .filter((index) => index !== targetIndex);
   const replaceIndex = replaceableIndexes[rotationHash(`${roundSeed}:replace`) % replaceableIndexes.length];
-  const originalIsDecoy = rotationHash(`${roundSeed}:correct`) % 2 === 0;
-  cards[targetIndex] = { ...cards[targetIndex], isDecoy: originalIsDecoy };
+  const targetMutation = hardModeTargetMutation(roundSeed);
+  const decoyMutation = differentHardMutation(targetMutation, roundSeed);
+  const originalIsCorrect = rotationHash(`${roundSeed}:correct`) % 2 === 0;
+  const correctCard = { isDecoy: correctMutationSentinel(targetMutation) };
+  const decoyCard = { isDecoy: decoyMutation };
+
+  cards[targetIndex] = {
+    ...cards[targetIndex],
+    ...(originalIsCorrect ? correctCard : decoyCard),
+  };
   cards[replaceIndex] = {
     key: `${targetAnimal}-duplicate`,
     animalId: targetAnimal,
-    isDecoy: !originalIsDecoy,
+    ...(originalIsCorrect ? decoyCard : correctCard),
   };
   return cards;
 }

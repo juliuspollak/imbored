@@ -1,6 +1,11 @@
 import { useRef, useState } from "react";
 import AnimalFace from "./AnimalFace.jsx";
-import { animalById, animalColour } from "./engine.js";
+import {
+  DIE_ROLL_DURATION_MS,
+  animalById,
+  animalColour,
+  hardModeTargetMutation,
+} from "./engine.js";
 
 const DIE_FACES = [
   ["fox", "front"],
@@ -22,19 +27,11 @@ const TARGET_ROTATIONS = {
   frog: "rotateX(90deg) rotateY(0deg)",
 };
 
-/**
- * Returns the ID of the next animal in the list — used in "mixed" mode
- * to override both the background colour and shape fills on die faces.
- * Each face shows a completely different animal's colour scheme so
- * players must identify the silhouette, not the hue.
- * Returns undefined for non-mixed modes.
- */
 function misdirectAnimalId(animalId, colourMode) {
   if (colourMode !== "mixed") return undefined;
   const idx = ANIMAL_IDS.indexOf(animalId);
   if (idx === -1) return undefined;
-  const nextIdx = (idx + 1) % ANIMAL_IDS.length;
-  return ANIMAL_IDS[nextIdx];
+  return ANIMAL_IDS[(idx + 1) % ANIMAL_IDS.length];
 }
 
 export default function AnimalDie({
@@ -57,6 +54,12 @@ export default function AnimalDie({
       elapsedMs: Math.max(0, Math.min(durationMs, Number(rollElapsedMs) || 0)),
     };
   }
+
+  // Animal Rush already gives Hard mode a 200 ms die-cover extension. Reuse
+  // that existing signal so the cube and deck can share the same deterministic
+  // visual mutation without changing the room schema or live-game protocol.
+  const hardMode = Math.abs((Number(rollDurationMs) || 0) - (DIE_ROLL_DURATION_MS + 200)) < 1;
+  const targetMutation = hardMode ? hardModeTargetMutation(roundKey) : "normal";
 
   return (
     <div
@@ -87,11 +90,8 @@ export default function AnimalDie({
                 animalId={animalId}
                 colourMode={colourMode}
                 size={58}
-                bgColour={
-                  misdirectedId
-                    ? animalColour(misdirectedId, "mixed")
-                    : undefined
-                }
+                mutation={animalId === targetId ? targetMutation : "normal"}
+                bgColour={misdirectedId ? animalColour(misdirectedId, "mixed") : undefined}
                 overrideColourAnimalId={misdirectedId}
               />
             </span>
