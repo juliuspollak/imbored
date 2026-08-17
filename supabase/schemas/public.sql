@@ -2199,6 +2199,11 @@ $$;
 -- Name: challenge_benchmark_profile; Type: FUNCTION; Schema: public; Owner: -
 --
 
+-- Always returns exactly one row. The earlier version appended a fallback row
+-- with UNION ALL and took LIMIT 1, but the order of UNION ALL branches is not
+-- guaranteed -- Postgres could hand back the 100-second fallback even when a
+-- measured benchmark existed, silently scoring every round against a made-up
+-- number. Scalar subqueries cannot do that.
 CREATE FUNCTION public.challenge_benchmark_profile(
   target_game text,
   target_challenge_date date
@@ -2206,16 +2211,19 @@ CREATE FUNCTION public.challenge_benchmark_profile(
     language sql stable security definer
     set search_path to 'public'
     as $$
+  with chosen as (
+    select benchmark.effective_seconds,benchmark.log_mean,benchmark.log_sd
+    from public.game_time_benchmarks benchmark
+    where benchmark.game=target_game
+      and benchmark.mode='challenge'
+      and benchmark.day_index=extract(isodow from target_challenge_date)::integer-1
+    order by benchmark.updated_at desc nulls last
+    limit 1
+  )
   select
-    coalesce(nullif(benchmark.effective_seconds,0),100)::numeric,
-    benchmark.log_mean,
-    benchmark.log_sd
-  from public.game_time_benchmarks benchmark
-  where benchmark.game=target_game
-    and benchmark.mode='challenge'
-    and benchmark.day_index=extract(isodow from target_challenge_date)::integer-1
-  order by benchmark.updated_at desc nulls last
-  limit 1
+    coalesce((select nullif(chosen.effective_seconds,0) from chosen),100)::numeric,
+    (select chosen.log_mean from chosen),
+    (select chosen.log_sd from chosen)
 $$;
 
 
@@ -2240,11 +2248,7 @@ CREATE FUNCTION public.circle_challenge_daily_score(
     set search_path to 'public'
     as $$
   with profile as (
-    select seconds,log_mean,log_sd
-    from public.challenge_benchmark_profile(target_game,target_challenge_date)
-    union all
-    select 100::numeric,null::numeric,null::numeric
-    limit 1
+    select * from public.challenge_benchmark_profile(target_game,target_challenge_date)
   ),
   effective as (
     select

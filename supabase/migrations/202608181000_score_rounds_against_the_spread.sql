@@ -87,6 +87,11 @@ create or replace function public.effective_round_seconds(
   from share
 $$;
 
+-- Always returns exactly one row. The earlier version appended a fallback row
+-- with UNION ALL and took LIMIT 1, but the order of UNION ALL branches is not
+-- guaranteed -- Postgres could hand back the 100-second fallback even when a
+-- measured benchmark existed, silently scoring every round against a made-up
+-- number. Scalar subqueries cannot do that.
 create or replace function public.challenge_benchmark_profile(
   target_game text,
   target_challenge_date date
@@ -94,16 +99,19 @@ create or replace function public.challenge_benchmark_profile(
     language sql stable security definer
     set search_path to 'public'
     as $$
+  with chosen as (
+    select benchmark.effective_seconds,benchmark.log_mean,benchmark.log_sd
+    from public.game_time_benchmarks benchmark
+    where benchmark.game=target_game
+      and benchmark.mode='challenge'
+      and benchmark.day_index=extract(isodow from target_challenge_date)::integer-1
+    order by benchmark.updated_at desc nulls last
+    limit 1
+  )
   select
-    coalesce(nullif(benchmark.effective_seconds,0),100)::numeric,
-    benchmark.log_mean,
-    benchmark.log_sd
-  from public.game_time_benchmarks benchmark
-  where benchmark.game=target_game
-    and benchmark.mode='challenge'
-    and benchmark.day_index=extract(isodow from target_challenge_date)::integer-1
-  order by benchmark.updated_at desc nulls last
-  limit 1
+    coalesce((select nullif(chosen.effective_seconds,0) from chosen),100)::numeric,
+    (select chosen.log_mean from chosen),
+    (select chosen.log_sd from chosen)
 $$;
 
 create or replace function public.circle_challenge_daily_score(
@@ -119,11 +127,7 @@ create or replace function public.circle_challenge_daily_score(
     set search_path to 'public'
     as $$
   with profile as (
-    select seconds,log_mean,log_sd
-    from public.challenge_benchmark_profile(target_game,target_challenge_date)
-    union all
-    select 100::numeric,null::numeric,null::numeric
-    limit 1
+    select * from public.challenge_benchmark_profile(target_game,target_challenge_date)
   ),
   effective as (
     select
@@ -151,4 +155,201 @@ create or replace function public.circle_challenge_daily_score(
       )::integer))
   end
   from effective
+$$;
+
+-- The writer. Without this the two columns above stay null forever and every
+-- round keeps scoring through the old ratio fallback, so it has to ship in the
+-- same migration as the reader.
+--
+-- The spread is measured over ln(effective seconds) across ALL rounds in the
+-- window, not just flawless ones: the score is a position within the real
+-- distribution, so the real distribution is what has to be measured. Rounds
+-- with nothing correct return null from effective_round_seconds() and drop out
+-- of avg/stddev on their own.
+create or replace function public.refresh_game_time_benchmark(target_game text, target_day_index integer, target_mode text) RETURNS public.game_time_benchmarks
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+declare
+  eligible_players integer:=0;
+  qualifying_samples integer:=0;
+  community_median numeric;
+  pooled_players integer:=0;
+  pooled_samples integer:=0;
+  pooled_median numeric;
+  day_weight numeric:=1;
+  spread_mean numeric;
+  spread_sd numeric;
+  benchmark public.game_time_benchmarks;
+begin
+  select * into benchmark
+  from public.game_time_benchmarks
+  where game=target_game
+    and day_index=target_day_index
+    and mode=target_mode;
+
+  if not found then
+    return null;
+  end if;
+
+  -- A 90-day community median does not move between one puzzle and the next,
+  -- but this used to recompute -- and write -- on every single save and every
+  -- share-eligibility check, putting a 90-day scan and a row-level write lock
+  -- in the hot path of finishing a game. Recompute at most hourly per
+  -- (game, day, mode). To force one, age the row:
+  --   update public.game_time_benchmarks set updated_at=now()-interval '1 day';
+  if benchmark.updated_at>now()-interval '1 hour' then
+    return benchmark;
+  end if;
+
+  -- If another session is already refreshing this row, serve the value we
+  -- have rather than queueing behind its write. A player's save is never
+  -- blocked by someone else's benchmark maintenance.
+  if not pg_try_advisory_xact_lock(
+    hashtextextended(
+      format('benchmark:%s:%s:%s',target_game,target_day_index,target_mode),
+      0
+    )
+  ) then
+    return benchmark;
+  end if;
+
+  with clean as (
+    select stat.user_id,stat.seconds,
+      row_number() over(partition by stat.user_id order by stat.completed_at desc,stat.id desc) as recent_rank,
+      count(*) over(partition by stat.user_id) as player_sample_count
+    from public.game_stats stat
+    where stat.game=target_game
+      and stat.day_index=target_day_index
+      and stat.mode=target_mode
+      and stat.completed_at>=now()-interval '90 days'
+      and stat.seconds between 5 and 3600
+      and coalesce(stat.hints,0)=0
+      and (
+        -- Quiz games report an answer count, and every question is answered
+        -- whatever the result, so a wrong answer costs a tap rather than
+        -- minutes. Demanding a flawless round excluded them permanently: Zoom
+        -- needs 9-for-9 to qualify, which is rare enough that it had no clean
+        -- samples at all and could never leave its seeded guess. A hint still
+        -- disqualifies a sample, because a hint genuinely shortens the clock.
+        coalesce(stat.total_count,0)>0
+        or coalesce(stat.mistakes,0)=0
+      )
+  ), player_medians as (
+    select user_id,
+      count(*)::integer as sample_count,
+      percentile_cont(0.5) within group(order by seconds) as median_seconds
+    from clean
+    where player_sample_count>=2 and recent_rank<=5
+    group by user_id
+  )
+  select count(*)::integer,
+    coalesce(sum(sample_count),0)::integer,
+    percentile_cont(0.5) within group(order by median_seconds)
+  into eligible_players,qualifying_samples,community_median
+  from player_medians;
+
+  -- The sample set above is per weekday, and that is what actually starved
+  -- these benchmarks: a daily challenge offers each weekday once a week, so
+  -- qualifying needs two players with two clean results each on the SAME
+  -- weekday -- a fortnight of flawless play per weekday, per game. Gridly has
+  -- 15 clean results spread over 7 weekdays: about 2 per day, against the 4
+  -- required. Lowering the player bar alone would not have helped.
+  --
+  -- So when a weekday cannot qualify on its own, fall back to the same
+  -- calculation pooled across every weekday, then scale the result back onto
+  -- this weekday using the seeded Mon->Sun ramp. That uses all 15 samples
+  -- instead of 2, and keeps the intended difficulty curve rather than paying
+  -- every weekday the same time.
+  if eligible_players<2 then
+    with clean as (
+      select stat.user_id,stat.seconds,
+        row_number() over(partition by stat.user_id order by stat.completed_at desc,stat.id desc) as recent_rank,
+        count(*) over(partition by stat.user_id) as player_sample_count
+      from public.game_stats stat
+      where stat.game=target_game
+        and stat.mode=target_mode
+        and stat.completed_at>=now()-interval '90 days'
+        and stat.seconds between 5 and 3600
+        and coalesce(stat.hints,0)=0
+        and (
+          coalesce(stat.total_count,0)>0
+          or coalesce(stat.mistakes,0)=0
+        )
+    ), player_medians as (
+      select user_id,
+        count(*)::integer as sample_count,
+        percentile_cont(0.5) within group(order by seconds) as median_seconds
+      from clean
+      where player_sample_count>=2 and recent_rank<=10
+      group by user_id
+    )
+    select count(*)::integer,
+      coalesce(sum(sample_count),0)::integer,
+      percentile_cont(0.5) within group(order by median_seconds)
+    into pooled_players,pooled_samples,pooled_median
+    from player_medians;
+
+    -- This weekday's share of the game's seeded ramp. Sunday stays harder than
+    -- Monday because the provisional values say so, not because of thin data.
+    select case
+      when coalesce(avg(other.provisional_seconds),0)>0
+        then benchmark.provisional_seconds/avg(other.provisional_seconds)
+      else 1
+    end
+    into day_weight
+    from public.game_time_benchmarks other
+    where other.game=target_game
+      and other.mode=target_mode;
+
+    if pooled_players>=2 and pooled_median is not null then
+      eligible_players:=pooled_players;
+      qualifying_samples:=pooled_samples;
+      community_median:=pooled_median*coalesce(day_weight,1);
+    end if;
+  end if;
+
+  -- The score is now counted in spreads, not ratios, so the benchmark has to
+  -- carry the spread as well as the middle. Measured over ln(effective
+  -- seconds) -- the clock divided by the share of answers that were right --
+  -- and pooled across weekdays, because per-weekday samples are far too thin
+  -- to estimate a standard deviation from.
+  select avg(ln(value)),stddev_samp(ln(value))
+  into spread_mean,spread_sd
+  from (
+    select public.effective_round_seconds(
+      stat.seconds,stat.hints,stat.mistakes,
+      coalesce(nullif(benchmark.effective_seconds,0),100),
+      stat.correct_count,stat.total_count
+    ) as value
+    from public.game_stats stat
+    where stat.game=target_game
+      and stat.mode=target_mode
+      and stat.completed_at>=now()-interval '90 days'
+      and stat.seconds between 5 and 3600
+  ) sample;
+
+  update public.game_time_benchmarks current_benchmark
+  set observed_median_seconds=case when eligible_players>=2 then community_median else null end,
+      clean_sample_count=case when eligible_players>=2 then qualifying_samples else 0 end,
+      -- effective_seconds carries no CHECK of its own, and it is a divisor in
+      -- every score. Hold it to the same 5..3600 range provisional_seconds is
+      -- constrained to, so a thin or skewed sample cannot round it to zero.
+      effective_seconds=case
+        when eligible_players>=2 and community_median is not null
+          then greatest(5,least(3600,round(community_median)))
+        else current_benchmark.provisional_seconds
+      end,
+      -- Below a usable sample a standard deviation is noise; leave it null
+      -- and circle_challenge_daily_score() falls back to the ratio rule.
+      log_mean=case when spread_sd is not null and spread_sd>0.01 then spread_mean else null end,
+      log_sd=case when spread_sd is not null and spread_sd>0.01 then spread_sd else null end,
+      updated_at=now()
+  where current_benchmark.game=target_game
+    and current_benchmark.day_index=target_day_index
+    and current_benchmark.mode=target_mode
+  returning * into benchmark;
+
+  return benchmark;
+end;
 $$;
