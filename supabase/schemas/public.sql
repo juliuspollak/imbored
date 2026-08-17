@@ -2177,22 +2177,26 @@ CREATE FUNCTION public.circle_challenge_daily_score(target_game text, target_cha
   with typical as (
     select public.challenge_benchmark_seconds(target_game,target_challenge_date) as seconds
   ),
+  graded as (
+    select coalesce(total_answers,0) > 0 as by_answers
+  ),
   accuracy as (
     select case
       when coalesce(total_answers,0) <= 0 then 1::numeric
       else least(1,greatest(0,coalesce(correct_answers,0))::numeric/total_answers)
     end as share
   ),
-  -- Accuracy multiplies the clamped speed score, not the raw one. Scaling
-  -- before the clamp let a fast enough round stay above 150 despite a wrong
-  -- answer, so the cap hid the penalty and a flawed round still read 150.
   speed as (
-    select greatest(20,least(150,round(
+    select greatest(45,least(150,round(
       100*typical.seconds/greatest(1,public.scored_game_seconds(
-        elapsed_seconds,hint_count,mistake_count,typical.seconds
+        elapsed_seconds,
+        hint_count,
+        -- Already paid for through the accuracy share on a graded round.
+        case when graded.by_answers then 0 else mistake_count end,
+        typical.seconds
       ))
     )::integer)) as score
-    from typical
+    from typical,graded
   )
   select round(speed.score*accuracy.share)::integer
   from speed,accuracy

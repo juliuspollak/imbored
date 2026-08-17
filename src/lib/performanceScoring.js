@@ -23,6 +23,13 @@ export function performanceAdjustment(result, typicalSeconds) {
   )));
 }
 
+// Whether this result grades its own answers. Quiz games do; the solve-the-
+// board puzzles report no answer count and are judged on the clock alone.
+export function reportsAnswers(result = {}) {
+  const total = Number(result.total_count ?? result.totalCount);
+  return Number.isFinite(total) && total > 0;
+}
+
 // Share of the round's questions actually answered correctly, 0..1. Games that
 // don't report a per-answer breakdown score purely on time, as before.
 export function answerAccuracy(result = {}) {
@@ -43,9 +50,19 @@ export function answerAccuracy(result = {}) {
 // results do not receive 45 points merely for ending the round. For example,
 // 50% accuracy can receive at most half of the applicable speed score, while a
 // zero-correct result still scores 0.
+//
+// A quiz game's mistakes ARE its wrong answers, so charging them as penalty
+// seconds *and* as a lower accuracy share billed one set of errors twice.
+// Where a result grades itself, accuracy is the whole penalty and the clock
+// measures pace only; games reporting no answer count keep paying for mistakes
+// in time, which is their only penalty.
 export function challengeScore(result, typicalSeconds) {
   const typical = benchmarkSeconds(typicalSeconds);
-  const adjusted = Math.max(1, scoredSeconds({ ...result, typicalSeconds: typical }));
+  const adjusted = Math.max(1, scoredSeconds({
+    ...result,
+    mistakes: reportsAnswers(result) ? 0 : result.mistakes,
+    typicalSeconds: typical,
+  }));
   const accuracy = answerAccuracy(result);
   const speedScore = Math.max(
     MIN_DAILY_SCORE,

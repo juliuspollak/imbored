@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { answerAccuracy, challengeScore, performanceAdjustment, scoredSeconds, weekdayBonus } from "./performanceScoring.js";
+import { answerAccuracy, challengeScore, reportsAnswers, performanceAdjustment, scoredSeconds, weekdayBonus } from "./performanceScoring.js";
 
 test("penalties scale with the puzzle's typical time", () => {
   assert.equal(scoredSeconds({ seconds: 60, hints: 1, mistakes: 1, typicalSeconds: 100 }), 90);
@@ -88,4 +88,25 @@ test("accuracy and speed both move the score", () => {
 
 test("weekday progression is modest and monotonic", () => {
   assert.deepEqual(Array.from({ length: 7 }, (_, day) => weekdayBonus(day)), [0, 0, 1, 1, 1, 2, 2]);
+});
+
+// A quiz game's mistakes are its wrong answers, so charging them as penalty
+// seconds as well as a lower accuracy share billed one set of errors twice.
+test("a graded round is penalised by accuracy, not by accuracy plus a time charge", () => {
+  // Real row: Geo, 17s, 1 wrong, 4 of 5 correct, 15s benchmark.
+  const geo = { seconds: 17, mistakes: 1, correct_count: 4, total_count: 5 };
+  assert.ok(reportsAnswers(geo));
+  assert.equal(challengeScore(geo, 15).adjusted, 17, "the clock reads 17s, not 17 + 15*0.10");
+  assert.equal(challengeScore(geo, 15).score, 70);
+
+  // An ungraded game still pays for its mistakes in time — its only penalty.
+  const binary = { seconds: 51, mistakes: 4, hints: 1 };
+  assert.equal(reportsAnswers(binary), false);
+  assert.equal(challengeScore(binary, 28).adjusted, 67.8);
+});
+
+test("hints still cost time on a graded round", () => {
+  const withHint = challengeScore({ seconds: 20, hints: 1, correct_count: 5, total_count: 5 }, 15);
+  const without = challengeScore({ seconds: 20, hints: 0, correct_count: 5, total_count: 5 }, 15);
+  assert.ok(withHint.score < without.score, "a hint shortens the round, so it is charged");
 });
