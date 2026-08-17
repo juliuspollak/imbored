@@ -5317,13 +5317,20 @@ begin
   -- seconds) -- the clock divided by the share of answers that were right --
   -- and pooled across weekdays, because per-weekday samples are far too thin
   -- to estimate a standard deviation from.
-  select
-    avg(ln(sample.value)) filter (where sample.day_index=target_day_index),
-    count(sample.value) filter (where sample.day_index=target_day_index),
-    avg(ln(sample.value)),
-    stddev_samp(ln(sample.value))
-  into spread_day_mean,spread_day_count,spread_mean,spread_sd
-  from (
+  -- The spread must be the WITHIN-weekday spread. Pooling ln(value) raw across
+  -- weekdays folded the Mon->Sun ramp into it: hive's between-day spread alone
+  -- is 0.50 and the pooled figure was 0.61, so the real within-day spread was
+  -- about 0.35 and every score was divided by a number ~1.7x too large. That
+  -- squashed the whole game toward 100 -- the fastest Tuesday hive round on
+  -- record scored 114, barely above typical, which reads as a punishment for
+  -- a good round.
+  --
+  -- Centring each round on its own weekday's mean before measuring removes the
+  -- ramp and leaves the spread of actual play. Days with a single round are
+  -- excluded, since their residual is 0 by construction. Using stddev_samp on
+  -- residuals divides by n-1 rather than n-k, which understates the spread by
+  -- under 2% at these sample sizes -- small enough to leave alone.
+  with sample as (
     select stat.day_index, public.effective_round_seconds(
       stat.seconds,stat.hints,stat.mistakes,
       coalesce(nullif(benchmark.effective_seconds,0),100),
@@ -5334,7 +5341,23 @@ begin
       and stat.mode=target_mode
       and stat.completed_at>=now()-interval '90 days'
       and stat.seconds between 5 and 3600
-  ) sample;
+  ), centred as (
+    select
+      sample.day_index,
+      ln(sample.value) as log_value,
+      ln(sample.value)-avg(ln(sample.value)) over (partition by sample.day_index) as residual,
+      count(*) over (partition by sample.day_index) as day_rows
+    from sample
+    where sample.value is not null
+  )
+  select
+    avg(centred.log_value) filter (where centred.day_index=target_day_index),
+    count(*) filter (where centred.day_index=target_day_index),
+    avg(centred.log_value),
+    stddev_samp(centred.residual) filter (where centred.day_rows>=2)
+  into spread_day_mean,spread_day_count,spread_mean,spread_sd
+  from centred;
+
 
   -- The spread (log_sd) is pooled across weekdays because a standard deviation
   -- needs more samples than one weekday can supply. The MIDDLE must not be:
