@@ -113,8 +113,30 @@ test('an ungraded puzzle still pays for its mistakes, a graded one does not', ()
 });
 
 test('a game with no measured spread falls back to the ratio rule and its floor', () => {
-  const result = challengeScore({ seconds: 70, hints: 1, mistakes: 1 }, 100);
+  const result = challengeScore({ seconds: 70 }, 100);
   assert.equal(result.spreads, null);
-  assert.equal(result.score, 100);
+  assert.equal(result.score, 143);
   assert.equal(challengeScore({ seconds: 10000 }, 100).score, MIN_DAILY_SCORE);
+});
+
+// Two thirds of real rounds have no mistakes and no hints, so for the pure
+// puzzles the clock was the only thing being measured. These are the one
+// non-speed signal those games already record, and they have to be worth
+// something for a clean round to beat a scrappy one of the same length.
+test('a hint and a mistake cost a challenge round real ground', () => {
+  // Binary's live profile. Measured spread, not the ratio fallback — the
+  // fallback's 45 floor squashes the gap and is not the path that ships.
+  const BINARY = { seconds: 28, logMean: Math.log(48.5), logSd: 0.35 };
+  const clean = challengeScore({ seconds: 51 }, BINARY);
+  const messy = challengeScore({ seconds: 51, mistakes: 4 }, BINARY);
+  assert.ok(clean.score - messy.score >= 25,
+    `four mistakes moved the score by only ${clean.score - messy.score} points`);
+  assert.equal(effectiveSeconds({ seconds: 51, mistakes: 4 }, 28), 51 + 4 * 28 * 0.25);
+  assert.equal(effectiveSeconds({ seconds: 51, hints: 2 }, 28), 51 + 2 * 28 * 0.35);
+});
+
+// The points economy prices the same events separately; moving the challenge
+// costs must not drag everyone's balances with it.
+test('the points economy keeps its own hint and mistake prices', () => {
+  assert.equal(scoredSeconds({ seconds: 60, hints: 1, mistakes: 1, typicalSeconds: 100 }), 90);
 });

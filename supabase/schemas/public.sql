@@ -2184,12 +2184,16 @@ CREATE FUNCTION public.effective_round_seconds(
   select case when share.accuracy <= 0 then null else
     greatest(1,
       greatest(0,coalesce(elapsed_seconds,0))
-      + greatest(0,coalesce(hint_count,0))*coalesce(benchmark_seconds,100)*0.20
+      -- A hint and a mistake cost more in a CHALLENGE round than they do in
+      -- the points economy (scored_game_seconds, still 0.20/0.10). Two thirds
+      -- of real rounds have neither, so for those games the clock was the only
+      -- thing being measured; this is the one non-speed signal already recorded.
+      + greatest(0,coalesce(hint_count,0))*coalesce(benchmark_seconds,100)*0.35
       -- An ungraded puzzle has no accuracy to divide by, so its slips are
       -- charged as time. A graded round is not charged here as well: its
       -- mistakes ARE the wrong answers already priced into the divisor.
       + case when coalesce(total_answers,0) > 0 then 0
-             else greatest(0,coalesce(mistake_count,0))*coalesce(benchmark_seconds,100)*0.10 end
+             else greatest(0,coalesce(mistake_count,0))*coalesce(benchmark_seconds,100)*0.25 end
     ) / (share.accuracy * share.accuracy)
   end
   from share

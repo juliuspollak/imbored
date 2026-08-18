@@ -20,6 +20,20 @@ export const SCORE_FLOOR = 20;
 // it pays 43, while good and perfect rounds are untouched.
 export const ACCURACY_EXPONENT = 2;
 
+// What a hint and a mistake cost a CHALLENGE round, as a share of the game's
+// typical time. Deliberately separate from HINT_PENALTY_RATIO and
+// MISTAKE_PENALTY_RATIO, which price the same events for the points economy -
+// moving those would shift everyone's balances.
+//
+// Across 93 real rounds, 66% had no mistakes and no hints at all, and Hive and
+// MiniSudoku had none in 29 rounds between them, so their scores were decided
+// by the clock alone. At the old 10% a four-mistake Binary round lost 14 points
+// against a clean one of the same length; at 25% it loses 36. Raising the cost
+// is the only lever that works without new measurements, because it is the one
+// non-speed signal these games already record.
+export const CHALLENGE_HINT_COST = 0.35;
+export const CHALLENGE_MISTAKE_COST = 0.25;
+
 function benchmarkSeconds(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 100;
@@ -74,9 +88,9 @@ export function effectiveSeconds(result = {}, typicalSeconds) {
   // its mistakes ARE the wrong answers already priced into the divisor.
   const mistakePenalty = reportsAnswers(result)
     ? 0
-    : Math.max(0, Number(result.mistakes) || 0) * typical * MISTAKE_PENALTY_RATIO;
+    : Math.max(0, Number(result.mistakes) || 0) * typical * CHALLENGE_MISTAKE_COST;
   const raw = Math.max(1, Math.max(0, Number(result.seconds) || 0)
-    + Math.max(0, Number(result.hints) || 0) * typical * HINT_PENALTY_RATIO
+    + Math.max(0, Number(result.hints) || 0) * typical * CHALLENGE_HINT_COST
     + mistakePenalty);
   return raw / Math.pow(accuracy, ACCURACY_EXPONENT);
 }
