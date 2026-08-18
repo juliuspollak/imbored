@@ -19,7 +19,7 @@ const files=fs.readdirSync("supabase/migrations").filter(f=>f.endsWith(".sql")).
 const fns=["refresh_game_time_benchmark","circle_challenge_member_totals","circle_challenge_daily_score",
   "effective_round_seconds","round_inefficiency","challenge_benchmark_profile",
   "get_personal_challenge_standings","get_circle_challenge_standings","award_game_points"];
-console.log("function                          last migration defining it                    shipped?");
+const rows=[];
 for(const fn of fns){
   const inSchema=bodyFrom(schema,["CREATE FUNCTION public."+fn+"("]);
   let latest=null,latestBody=null;
@@ -29,8 +29,7 @@ for(const fn of fns){
     if(b){ latest=f; latestBody=b; }
   }
   const ok = inSchema && latestBody ? norm(inSchema)===norm(latestBody) : false;
-  console.log(fn.padEnd(34),(latest||"NONE").slice(0,44).padEnd(46),
-    !inSchema?"n/a":(ok?"yes":"NO  <-- schema ahead of migrations"));
+  rows.push([fn,(latest||"NONE"),!inSchema?"n/a":(ok?"yes":"NO  <-- schema ahead of migrations")]);
 }
 
 
