@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, LockKeyhole, RefreshCw, Trophy, X } from "lucide-react";
 import { MISSED_ROUND_PENALTY, buildChallengeStandings, explainTiebreak, fromServerStandings } from "./lib/challengeStandingsScoring.js";
 import { TYPICAL_SCORE } from "./lib/performanceScoring.js";
@@ -148,12 +148,14 @@ function NavigatorButton({ onClick, disabled, ariaLabel, children }) {
 function StandingsList({ standings, expandedPlayerIds, setExpandedPlayerIds, previousRankMap, closed, winnerId, userId }) {
   const { t } = useI18n();
   const [selectedResult, setSelectedResult] = useState(null);
+  const resultRequestRef = useRef(0);
 
   async function openCompletedResult(result, score) {
     if (!result?.game || !result?.challenge_date || !userId) return;
+    const requestId = ++resultRequestRef.current;
     setSelectedResult({ ...result, score, loading:true, loadError:"" });
     if (!supabaseReady) {
-      setSelectedResult({ ...result, score, loading:false, loadError:"This result cannot be reopened right now." });
+      if (requestId === resultRequestRef.current) setSelectedResult({ ...result, score, loading:false, loadError:"This result cannot be reopened right now." });
       return;
     }
     const { data, error } = await supabase
@@ -166,11 +168,19 @@ function StandingsList({ standings, expandedPlayerIds, setExpandedPlayerIds, pre
       .order("completed_at", { ascending:false })
       .limit(1)
       .maybeSingle();
+    if (requestId !== resultRequestRef.current) return;
     if (error || !data) {
       setSelectedResult({ ...result, score, loading:false, loadError:"This saved game could not be opened." });
       return;
     }
     setSelectedResult({ ...result, ...data, score, loading:false, loadError:"" });
+  }
+
+  function closeCompletedResult() {
+    // Invalidate an in-flight result lookup before hiding the sheet. Otherwise
+    // its response can arrive after the tap and immediately reopen the popup.
+    resultRequestRef.current += 1;
+    setSelectedResult(null);
   }
 
   return (
@@ -271,7 +281,7 @@ function StandingsList({ standings, expandedPlayerIds, setExpandedPlayerIds, pre
           );
         })}
       </div>
-      {selectedResult && <CompletedResultDialog result={selectedResult} onClose={() => setSelectedResult(null)} />}
+      {selectedResult && <CompletedResultDialog result={selectedResult} onClose={closeCompletedResult} />}
     </>
   );
 }
@@ -288,14 +298,14 @@ function CompletedResultDialog({ result, onClose }) {
   return (
     <div
       role="presentation"
-      onClick={onClose}
+      onPointerDown={onClose}
       style={{ position:"fixed", zIndex:1000, inset:0, display:"flex", alignItems:"flex-end", justifyContent:"center", padding:"var(--space-3)", background:"rgba(0,0,0,.42)" }}
     >
       <section
         role="dialog"
         aria-modal="true"
         aria-label={`${gameName} completed result`}
-        onClick={(event) => event.stopPropagation()}
+        onPointerDown={(event) => event.stopPropagation()}
         style={{ width:"min(100%,430px)", maxHeight:"85dvh", overflow:"auto", border:"1px solid var(--color-border)", borderRadius:"var(--radius-xl)", background:"var(--color-surface)", boxShadow:"var(--shadow-card)", padding:"var(--space-4)" }}
       >
         <div style={{ display:"flex", alignItems:"flex-start", gap:"var(--space-3)" }}>
@@ -303,7 +313,17 @@ function CompletedResultDialog({ result, onClose }) {
             <p style={{ margin:0, color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:700, textTransform:"uppercase", letterSpacing:".04em" }}>Completed game</p>
             <h3 style={{ margin:"3px 0 0", color:"var(--color-text-primary)", fontSize:20 }}>{gameName} · {result.score}</h3>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close result" className="challenge-result-close" style={{ width:34, height:34, display:"grid", placeItems:"center", border:0, borderRadius:"50%", background:"var(--color-surface-elevated)", color:"var(--color-text-secondary)", cursor:"pointer" }}><X size={17} /></button>
+          <button
+            type="button"
+            onPointerDown={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onClose();
+            }}
+            aria-label="Close result"
+            className="challenge-result-close"
+            style={{ width:40, height:40, margin:"-3px -3px 0 0", display:"grid", placeItems:"center", flexShrink:0, border:0, borderRadius:"50%", background:"var(--color-surface-elevated)", color:"var(--color-text-secondary)", cursor:"pointer", touchAction:"manipulation" }}
+          ><X size={18} /></button>
         </div>
 
         {result.loading ? (
