@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { answerAccuracy, challengeScore, effectiveSeconds, reportsAnswers, MIN_DAILY_SCORE, performanceAdjustment, scoredSeconds, weekdayBonus } from "./performanceScoring.js";
+import { answerAccuracy, challengeScore, effectiveSeconds, roundInefficiency, reportsAnswers, MIN_DAILY_SCORE, performanceAdjustment, scoredSeconds, weekdayBonus } from "./performanceScoring.js";
 
 test("penalties scale with the puzzle's typical time", () => {
   assert.equal(scoredSeconds({ seconds: 60, hints: 1, mistakes: 1, typicalSeconds: 100 }), 90);
@@ -139,4 +139,30 @@ test('a hint and a mistake cost a challenge round real ground', () => {
 // costs must not drag everyone's balances with it.
 test('the points economy keeps its own hint and mistake prices', () => {
   assert.equal(scoredSeconds({ seconds: 60, hints: 1, mistakes: 1, typicalSeconds: 100 }), 90);
+});
+
+// Gridly records backtracked cells against required moves - the only signal any
+// puzzle game has beyond the clock. 0 means the route was planned, 119 on a
+// 48-move board means it was brute-forced.
+test('route planning counts, not just pace', () => {
+  const GRIDLY = { seconds: 6, logMean: Math.log(21.4), logSd: 0.45 };
+  const at = (seconds, backtracked) => challengeScore(
+    { seconds, zip_backtracked_cells: backtracked, zip_required_moves: 48 }, GRIDLY).score;
+
+  // Same time, different amounts of flailing.
+  assert.ok(at(12, 0) > at(12, 15), 'a planned route beats a typical one');
+  assert.ok(at(12, 15) > at(12, 50), 'heavy backtracking costs');
+  assert.ok(at(12, 50) > at(12, 119), 'brute force costs more still');
+
+  // The point of the whole exercise: thinking can beat hurrying.
+  assert.ok(at(20, 0) > at(8, 50),
+    `slow and clean (${at(20, 0)}) must beat fast and scrappy (${at(8, 50)})`);
+});
+
+test('games that record no efficiency signal are untouched', () => {
+  const HIVE = { seconds: 14, logMean: Math.log(16.9), logSd: 0.35 };
+  assert.equal(roundInefficiency({ seconds: 14 }), 0);
+  assert.equal(roundInefficiency({ zip_backtracked_cells: 5, zip_required_moves: 0 }), 0);
+  assert.equal(challengeScore({ seconds: 14 }, HIVE).score,
+               challengeScore({ seconds: 14, zip_backtracked_cells: null }, HIVE).score);
 });

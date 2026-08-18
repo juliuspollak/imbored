@@ -2171,7 +2171,8 @@ CREATE FUNCTION public.effective_round_seconds(
   mistake_count integer,
   benchmark_seconds numeric,
   correct_answers integer default null,
-  total_answers integer default null
+  total_answers integer default null,
+  inefficiency numeric default 0
 ) returns numeric
     language sql immutable
     as $$
@@ -2184,19 +2185,40 @@ CREATE FUNCTION public.effective_round_seconds(
   select case when share.accuracy <= 0 then null else
     greatest(1,
       greatest(0,coalesce(elapsed_seconds,0))
-      -- A hint and a mistake cost more in a CHALLENGE round than they do in
-      -- the points economy (scored_game_seconds, still 0.20/0.10). Two thirds
-      -- of real rounds have neither, so for those games the clock was the only
-      -- thing being measured; this is the one non-speed signal already recorded.
+      -- A hint and a mistake cost more in a CHALLENGE round than they do in the
+      -- points economy (scored_game_seconds, still 0.20/0.10).
       + greatest(0,coalesce(hint_count,0))*coalesce(benchmark_seconds,100)*0.35
       -- An ungraded puzzle has no accuracy to divide by, so its slips are
       -- charged as time. A graded round is not charged here as well: its
       -- mistakes ARE the wrong answers already priced into the divisor.
       + case when coalesce(total_answers,0) > 0 then 0
              else greatest(0,coalesce(mistake_count,0))*coalesce(benchmark_seconds,100)*0.25 end
-    ) / (share.accuracy * share.accuracy)
+    )
+    -- Work the puzzle did not require - backtracking today, undo and reset
+    -- counts once the other games record them. A multiplier, not a surcharge
+    -- scaled by benchmark_seconds: that column is a median of raw seconds and
+    -- can sit at half the typical EFFECTIVE time, which quietly halved the
+    -- intended weight. This form does not depend on the benchmark at all.
+    * (1 + greatest(0,coalesce(inefficiency,0))*2.5)
+    / (share.accuracy * share.accuracy)
   end
   from share
+$$;
+
+--
+-- Name: round_inefficiency; Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.round_inefficiency(
+  backtracked_cells integer,
+  required_moves integer
+) returns numeric
+    language sql immutable
+    as $$
+  select case
+    when coalesce(required_moves,0) <= 0 then 0::numeric
+    else least(4, greatest(0,coalesce(backtracked_cells,0))::numeric/required_moves)
+  end
 $$;
 
 --
@@ -2246,7 +2268,8 @@ CREATE FUNCTION public.circle_challenge_daily_score(
   hint_count integer,
   mistake_count integer,
   correct_answers integer default null,
-  total_answers integer default null
+  total_answers integer default null,
+  inefficiency numeric default 0
 ) returns integer
     language sql stable security definer
     set search_path to 'public'
@@ -2260,20 +2283,17 @@ CREATE FUNCTION public.circle_challenge_daily_score(
       profile.log_mean,
       profile.log_sd,
       public.effective_round_seconds(
-        elapsed_seconds,hint_count,mistake_count,profile.seconds,correct_answers,total_answers
+        elapsed_seconds,hint_count,mistake_count,profile.seconds,
+        correct_answers,total_answers,inefficiency
       ) as value
     from profile
   )
   select case
-    -- Nothing correct: no pace to measure, and no points.
     when effective.value is null then 0
-    -- Measured spread: score against it.
     when effective.log_mean is not null and coalesce(effective.log_sd,0) > 0.01 then
       greatest(20,least(150,round(
         100 + 25*((effective.log_mean - ln(effective.value))/effective.log_sd)
       )::integer))
-    -- Not yet measured: the previous ratio rule, floor and all, so a game with
-    -- no history still scores sensibly.
     else
       greatest(45,least(150,round(
         100*effective.seconds/effective.value
@@ -2316,7 +2336,8 @@ CREATE FUNCTION public.circle_challenge_member_totals(target_challenge_id bigint
           result.hints,
           result.mistakes,
           result.correct_count,
-          result.total_count
+          result.total_count,
+          public.round_inefficiency(result.zip_backtracked_cells,result.zip_required_moves)
         )
       end as round_score
     from challenge
@@ -5378,7 +5399,8 @@ begin
     select stat.day_index, public.effective_round_seconds(
       stat.seconds,stat.hints,stat.mistakes,
       coalesce(nullif(benchmark.effective_seconds,0),100),
-      stat.correct_count,stat.total_count
+      stat.correct_count,stat.total_count,
+      public.round_inefficiency(stat.zip_backtracked_cells,stat.zip_required_moves)
     ) as value
     from public.game_stats stat
     left join current_config on current_config.day_index=stat.day_index

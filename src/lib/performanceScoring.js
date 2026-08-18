@@ -34,6 +34,23 @@ export const ACCURACY_EXPONENT = 2;
 export const CHALLENGE_HINT_COST = 0.35;
 export const CHALLENGE_MISTAKE_COST = 0.25;
 
+// Work the puzzle did not require, priced as time. Gridly records backtracked
+// cells against required moves - 0 means the route was planned, 119 on a
+// 48-move board means it was brute-forced. At 1.5 a clean route beats a typical
+// one by 32 points and a slow clean solve beats a fast scrappy one - 104 to
+// 83 - which is the whole point: the clock stops being the only measure.
+export const INEFFICIENCY_COST = 2.5;
+
+// Backtracked cells over required moves, clamped. A game recording neither
+// contributes nothing. Undo and reset counts can feed the same channel.
+export function roundInefficiency(result = {}) {
+  const required = Number(result.zip_required_moves ?? result.gridlyRequiredMoves);
+  if (!Number.isFinite(required) || required <= 0) return 0;
+  const wasted = Number(result.zip_backtracked_cells ?? result.gridlyBacktrackedCells);
+  if (!Number.isFinite(wasted) || wasted <= 0) return 0;
+  return Math.min(4, wasted / required);
+}
+
 function benchmarkSeconds(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 100;
@@ -91,7 +108,11 @@ export function effectiveSeconds(result = {}, typicalSeconds) {
     : Math.max(0, Number(result.mistakes) || 0) * typical * CHALLENGE_MISTAKE_COST;
   const raw = Math.max(1, Math.max(0, Number(result.seconds) || 0)
     + Math.max(0, Number(result.hints) || 0) * typical * CHALLENGE_HINT_COST
-    + mistakePenalty);
+    + mistakePenalty)
+    // A multiplier, not a benchmark-scaled surcharge: `typical` is a median of
+    // raw seconds and can be half the typical EFFECTIVE time, which quietly
+    // halved the intended weight.
+    * (1 + roundInefficiency(result) * INEFFICIENCY_COST);
   return raw / Math.pow(accuracy, ACCURACY_EXPONENT);
 }
 
