@@ -53,11 +53,31 @@ function decoratePuzzleText(element) {
   element.insertAdjacentElement("afterend", button);
 }
 
+// ChallengeStandings already has the saved game_stats id. The replay RPC is
+// deliberately responsible for deciding whether that result can be replayed
+// and for reconstructing older deterministic seeds where possible. Do not make
+// the client-side button depend on game_stats.seed being populated: Geo/Zoom
+// and some older challenge rows can be replayable even when the raw seed column
+// is empty.
+function enableChallengeResultReplay(root = document) {
+  const buttons = [];
+  if (root.matches?.(".challenge-result-replay")) buttons.push(root);
+  root.querySelectorAll?.(".challenge-result-replay").forEach((button) => buttons.push(button));
+  buttons.forEach((button) => {
+    if (!button.disabled) return;
+    button.disabled = false;
+    button.style.opacity = "1";
+    button.style.cursor = "pointer";
+    button.style.touchAction = "manipulation";
+  });
+}
+
 export function enablePuzzleShareLinks() {
   if (typeof document === "undefined" || typeof MutationObserver === "undefined") return () => {};
 
   const scan = (root = document) => {
     root.querySelectorAll?.(".chat-text, .chats-preview").forEach(decoratePuzzleText);
+    enableChallengeResultReplay(root);
   };
 
   scan();
