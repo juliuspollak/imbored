@@ -5174,6 +5174,8 @@ declare
   spread_sd numeric;
   spread_day_mean numeric;
   spread_day_count integer:=0;
+  matched_config_rows integer:=0;
+  use_current_config boolean:=false;
   benchmark public.game_time_benchmarks;
 begin
   select * into benchmark
@@ -5334,17 +5336,60 @@ begin
   -- excluded, since their residual is 0 by construction. Using stddev_samp on
   -- residuals divides by n-1 rather than n-k, which understates the spread by
   -- under 2% at these sample sizes -- small enough to leave alone.
-  with sample as (
+  -- Gridly's difficulty is admin-tunable per weekday (grid size, checkpoints,
+  -- walls, black holes, tunnels), so an admin raising Sunday's difficulty makes
+  -- every earlier Sunday round incomparable. Left alone, the 90-day window
+  -- keeps scoring players against the easier board for three months.
+  --
+  -- generator_config is stored on every round, so prefer rounds played on the
+  -- configuration currently in force for each weekday. Fall back to the whole
+  -- window when that leaves too little to measure, since a wrong-but-stable
+  -- reference beats one built from three rounds. Games that record no config
+  -- (the quiz games) match everything and are unaffected.
+  select count(*)
+  into matched_config_rows
+  from public.game_stats stat
+  join (
+    select distinct on (recent.day_index) recent.day_index, recent.generator_config
+    from public.game_stats recent
+    where recent.game=target_game
+      and recent.mode=target_mode
+      and recent.completed_at>=now()-interval '90 days'
+      and recent.generator_config is not null
+    order by recent.day_index, recent.completed_at desc, recent.id desc
+  ) current_config on current_config.day_index=stat.day_index
+  where stat.game=target_game
+    and stat.mode=target_mode
+    and stat.completed_at>=now()-interval '90 days'
+    and stat.seconds between 5 and 3600
+    and stat.generator_config=current_config.generator_config;
+
+  use_current_config:=matched_config_rows>=8;
+
+  with current_config as (
+    select distinct on (recent.day_index) recent.day_index, recent.generator_config
+    from public.game_stats recent
+    where recent.game=target_game
+      and recent.mode=target_mode
+      and recent.completed_at>=now()-interval '90 days'
+      and recent.generator_config is not null
+    order by recent.day_index, recent.completed_at desc, recent.id desc
+  ), sample as (
     select stat.day_index, public.effective_round_seconds(
       stat.seconds,stat.hints,stat.mistakes,
       coalesce(nullif(benchmark.effective_seconds,0),100),
       stat.correct_count,stat.total_count
     ) as value
     from public.game_stats stat
+    left join current_config on current_config.day_index=stat.day_index
     where stat.game=target_game
       and stat.mode=target_mode
       and stat.completed_at>=now()-interval '90 days'
       and stat.seconds between 5 and 3600
+      and (
+        not use_current_config
+        or stat.generator_config=current_config.generator_config
+      )
   ), centred as (
     select
       sample.day_index,
