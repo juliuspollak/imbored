@@ -28,8 +28,6 @@ function decoratePuzzleText(element) {
   element.dataset.puzzleShareDecorated = "true";
   element.textContent = text.replace(PUZZLE_MARKER, "").trim();
 
-  // Conversation previews should stay clean; the actual Play control is added
-  // only inside the opened chat bubble.
   if (element.classList.contains("chats-preview")) return;
 
   const button = document.createElement("button");
@@ -53,12 +51,10 @@ function decoratePuzzleText(element) {
   element.insertAdjacentElement("afterend", button);
 }
 
-// ChallengeStandings already has the saved game_stats id. The replay RPC is
-// deliberately responsible for deciding whether that result can be replayed
-// and for reconstructing older deterministic seeds where possible. Do not make
-// the client-side button depend on game_stats.seed being populated: Geo/Zoom
-// and some older challenge rows can be replayable even when the raw seed column
-// is empty.
+// ChallengeStandings has the saved game_stats id. The replay RPC owns the
+// decision about whether that result can be replayed, including reconstructing
+// older deterministic seeds. React can re-apply the old disabled prop after a
+// standings refresh, so keep the DOM control enabled whenever that happens.
 function enableChallengeResultReplay(root = document) {
   const buttons = [];
   if (root.matches?.(".challenge-result-replay")) buttons.push(root);
@@ -83,6 +79,12 @@ export function enablePuzzleShareLinks() {
   scan();
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
+      if (mutation.type === "attributes") {
+        if (mutation.target instanceof Element && mutation.target.matches?.(".challenge-result-replay")) {
+          enableChallengeResultReplay(mutation.target);
+        }
+        continue;
+      }
       for (const node of mutation.addedNodes) {
         if (!(node instanceof Element)) continue;
         if (node.matches?.(".chat-text, .chats-preview")) decoratePuzzleText(node);
@@ -90,6 +92,6 @@ export function enablePuzzleShareLinks() {
       }
     }
   });
-  observer.observe(document.body, { childList:true, subtree:true });
+  observer.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:["disabled"] });
   return () => observer.disconnect();
 }
