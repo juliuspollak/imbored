@@ -2211,14 +2211,22 @@ $$;
 
 CREATE FUNCTION public.round_inefficiency(
   backtracked_cells integer,
-  required_moves integer
+  required_moves integer,
+  wasted_moves integer default null,
+  expected_moves integer default null
 ) returns numeric
     language sql immutable
     as $$
+  with pair as (
+    select
+      coalesce(wasted_moves,backtracked_cells) as wasted,
+      coalesce(expected_moves,required_moves) as required
+  )
   select case
-    when coalesce(required_moves,0) <= 0 then 0::numeric
-    else least(4, greatest(0,coalesce(backtracked_cells,0))::numeric/required_moves)
+    when coalesce(pair.required,0) <= 0 then 0::numeric
+    else least(4, greatest(0,coalesce(pair.wasted,0))::numeric/pair.required)
   end
+  from pair
 $$;
 
 --
@@ -2337,7 +2345,7 @@ CREATE FUNCTION public.circle_challenge_member_totals(target_challenge_id bigint
           result.mistakes,
           result.correct_count,
           result.total_count,
-          public.round_inefficiency(result.zip_backtracked_cells,result.zip_required_moves)
+          public.round_inefficiency(result.zip_backtracked_cells,result.zip_required_moves,result.wasted_moves,result.expected_moves)
         )
       end as round_score
     from challenge
@@ -3698,7 +3706,7 @@ $$;
 -- Name: get_personal_challenge_standings(date, date); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_personal_challenge_standings(start_date_in date, end_date_in date) RETURNS TABLE(result_user_id uuid, game text, challenge_date date, seconds integer, mistakes integer, hints integer, correct_count integer, total_count integer, zip_backtracked_cells integer, zip_required_moves integer, completed_at timestamp with time zone)
+CREATE FUNCTION public.get_personal_challenge_standings(start_date_in date, end_date_in date) RETURNS TABLE(result_user_id uuid, game text, challenge_date date, seconds integer, mistakes integer, hints integer, correct_count integer, total_count integer, zip_backtracked_cells integer, zip_required_moves integer, wasted_moves integer, expected_moves integer, completed_at timestamp with time zone)
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -3715,6 +3723,8 @@ CREATE FUNCTION public.get_personal_challenge_standings(start_date_in date, end_
     gs.total_count,
     gs.zip_backtracked_cells,
     gs.zip_required_moves,
+    gs.wasted_moves,
+    gs.expected_moves,
     gs.completed_at
   from public.game_stats gs
   join public.profiles profile on profile.id=gs.user_id
@@ -5400,7 +5410,7 @@ begin
       stat.seconds,stat.hints,stat.mistakes,
       coalesce(nullif(benchmark.effective_seconds,0),100),
       stat.correct_count,stat.total_count,
-      public.round_inefficiency(stat.zip_backtracked_cells,stat.zip_required_moves)
+      public.round_inefficiency(stat.zip_backtracked_cells,stat.zip_required_moves,stat.wasted_moves,stat.expected_moves)
     ) as value
     from public.game_stats stat
     left join current_config on current_config.day_index=stat.day_index
@@ -7290,6 +7300,8 @@ CREATE TABLE public.game_stats (
     rounds_nailed integer,
     zip_backtracked_cells integer,
     zip_required_moves integer,
+    wasted_moves integer,
+    expected_moves integer,
     seed text,
     generator_version text,
     generator_config jsonb,

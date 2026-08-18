@@ -420,6 +420,8 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
   const [difficultyRating, setDifficultyRating] = useState(null);
   const [hintCell, setHintCell] = useState(null);
   const [history, setHistory] = useState([]);
+  // Work placed and taken back - the same signal Gridly gets from backtracking.
+  const [undos, setUndos] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [celebratingLines, setCelebratingLines] = useState([]);
@@ -467,7 +469,7 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
     if (getConflicts(board, puzzle.edgeMap).size === 0 && !solved) {
       setSolved(true);
       setRunning(false);
-      onSolved && onSolved({ userId, game: "binary", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed, seed: attemptSeedRef.current, generatorVersion: TANGO_GENERATOR_VERSION, generatorConfig: { size: SIZE, givenTarget: GIVEN_TARGETS[dayIdx], edgeTarget: EDGE_TARGETS[dayIdx] }, mode, challengeDate: isChallenge ? challengeDate : undefined });
+      onSolved && onSolved({ userId, game: "binary", dayIndex: dayIdx, seconds, mistakes, hints: hintsUsed, seed: attemptSeedRef.current, generatorVersion: TANGO_GENERATOR_VERSION, generatorConfig: { size: SIZE, givenTarget: GIVEN_TARGETS[dayIdx], edgeTarget: EDGE_TARGETS[dayIdx] }, wastedMoves: undos, expectedMoves: SIZE * SIZE, mode, challengeDate: isChallenge ? challengeDate : undefined });
     }
   }, [board, puzzle]);
 
@@ -528,7 +530,7 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
   function pushHistory() { setHistory((h) => [...h, { board: board.map((row) => row.slice()) }].slice(-50)); }
   function performTapCycle(r, c) { pushHistory(); setBoard((prev) => { const next = prev.map((row) => row.slice()); next[r][c] = (next[r][c] + 1) % 3; return next; }); }
   function handleCellClick(r, c) { if (solved || puzzle.givens[r][c] !== 0) return; setHintCell(null); performTapCycle(r, c); }
-  function handleUndo() { if (solved || history.length === 0) return; const last = history[history.length - 1]; setHistory((h) => h.slice(0, -1)); skipNextInvalidMistakeRef.current = true; setBoard(last.board); setHintCell(null); setSolved(false); setRunning(true); }
+  function handleUndo() { if (solved || history.length === 0) return; const last = history[history.length - 1]; setUndos((count) => count + 1); setHistory((h) => h.slice(0, -1)); skipNextInvalidMistakeRef.current = true; setBoard(last.board); setHintCell(null); setSolved(false); setRunning(true); }
   function handleReset() {
     if (solved) return;
     setBoard(puzzle.givens.map((row) => row.slice()));

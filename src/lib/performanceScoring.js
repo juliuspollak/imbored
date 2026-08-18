@@ -44,9 +44,15 @@ export const INEFFICIENCY_COST = 2.5;
 // Backtracked cells over required moves, clamped. A game recording neither
 // contributes nothing. Undo and reset counts can feed the same channel.
 export function roundInefficiency(result = {}) {
-  const required = Number(result.zip_required_moves ?? result.gridlyRequiredMoves);
+  const required = Number(
+    result.expected_moves ?? result.expectedMoves
+    ?? result.zip_required_moves ?? result.gridlyRequiredMoves,
+  );
   if (!Number.isFinite(required) || required <= 0) return 0;
-  const wasted = Number(result.zip_backtracked_cells ?? result.gridlyBacktrackedCells);
+  const wasted = Number(
+    result.wasted_moves ?? result.wastedMoves
+    ?? result.zip_backtracked_cells ?? result.gridlyBacktrackedCells,
+  );
   if (!Number.isFinite(wasted) || wasted <= 0) return 0;
   return Math.min(4, wasted / required);
 }

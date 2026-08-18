@@ -166,3 +166,34 @@ test('games that record no efficiency signal are untouched', () => {
   assert.equal(challengeScore({ seconds: 14 }, HIVE).score,
                challengeScore({ seconds: 14, zip_backtracked_cells: null }, HIVE).score);
 });
+
+// Hive, Twist and Sudoku had zero mistakes across 29 real rounds, so their
+// score was pace and nothing else. All three track an undo stack that never
+// reached the database; an undo is work placed and then taken back, the same
+// signal Gridly gets from backtracking.
+test('undos count for the puzzles that record no mistakes', () => {
+  const HIVE = { seconds: 14, logMean: Math.log(21), logSd: 0.35 };
+  const at = (seconds, undos) => challengeScore(
+    { seconds, wasted_moves: undos, expected_moves: 25 }, HIVE).score;
+  assert.ok(at(14, 0) > at(14, 2), 'a clean solve beats one with rework');
+  assert.ok(at(14, 2) > at(14, 6));
+  assert.ok(at(14, 6) > at(14, 15));
+  assert.ok(at(14, 0) - at(14, 15) > 50, 'rework has to be worth real points');
+});
+
+// Rounds saved before the columns existed must score exactly as they did.
+test('rounds with no recorded rework are unaffected', () => {
+  const HIVE = { seconds: 14, logMean: Math.log(21), logSd: 0.35 };
+  assert.equal(roundInefficiency({ seconds: 14 }), 0);
+  assert.equal(roundInefficiency({ wasted_moves: 3, expected_moves: null }), 0);
+  assert.equal(challengeScore({ seconds: 14 }, HIVE).score,
+               challengeScore({ seconds: 14, wasted_moves: null, expected_moves: null }, HIVE).score);
+});
+
+// The generic pair wins over Gridly's older columns when both are present.
+test('the generic rework columns take precedence over Gridly-specific ones', () => {
+  assert.equal(roundInefficiency({
+    wasted_moves: 5, expected_moves: 50,
+    zip_backtracked_cells: 40, zip_required_moves: 48,
+  }), 0.1);
+});

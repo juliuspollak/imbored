@@ -329,6 +329,9 @@ export default function Hive({
   const [puzzle, setPuzzle] = useState(() => createPuzzleForSeed(n, attemptSeedRef.current));
   const [board, setBoard] = useState(() => initialBoard(n));
   const [history, setHistory] = useState([]);
+  // Work placed and then taken back - this puzzle's version of the backtracking
+  // Gridly records. Without it the clock is all the score can see.
+  const [undos, setUndos] = useState(0);
   // Seeded from the server-recorded attempt start, so leaving and re-entering
   // resumes the same clock instead of handing out a fresh one.
   const [seconds, setSeconds] = useState(initialSeconds);
@@ -355,7 +358,7 @@ export default function Hive({
   const didRunDayEffectRef = useRef(false);
   const saveInFlightRef = useRef(false);
   const savedOnceRef = useRef(false);
-  const statsRef = useRef({ seconds: 0, mistakes: 0, hintsUsed: 0 });
+  const statsRef = useRef({ seconds: 0, mistakes: 0, hintsUsed: 0, undos: 0 });
   const hintCooldown = useHintCooldown(5);
   const savedStatId = completedStatId ?? localSavedStatId;
   const rewardResult = completedReward ?? localRewardResult;
@@ -371,8 +374,8 @@ export default function Hive({
   useGameTimer(running, solved, setSeconds);
 
   useEffect(() => {
-    statsRef.current = { seconds, mistakes, hintsUsed };
-  }, [hintsUsed, mistakes, seconds]);
+    statsRef.current = { seconds, mistakes, hintsUsed, undos };
+  }, [hintsUsed, mistakes, seconds, undos]);
 
   useEffect(() => {
     if (!solved || savedOnceRef.current || saveInFlightRef.current) return;
@@ -390,6 +393,8 @@ export default function Hive({
         seed: attemptSeedRef.current,
         generatorVersion: HIVE_GENERATOR_VERSION,
         generatorConfig: { size: n },
+        wastedMoves: solvedStats.undos,
+        expectedMoves: n * n,
         mode,
         challengeDate:isChallenge ? challengeDate : undefined,
       };
@@ -658,6 +663,7 @@ export default function Hive({
 
   function handleUndo() {
     if (!history.length || solved) return;
+    setUndos((count) => count + 1);
     const prev = history[history.length - 1];
     setBoard(prev.map((row) => row.slice()));
     setHistory((h) => h.slice(0, -1));

@@ -229,17 +229,17 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
       }
       async function fetchPeriodRows(period) {
         if (period.challengeId != null) {
-          const embedded = await supabase.from("game_stats").select("user_id,game,challenge_date,seconds,mistakes,hints,correct_count,total_count,zip_backtracked_cells,zip_required_moves,completed_at,profiles(name,icon,show_stats_to_others)").eq("mode","challenge").eq("circle_challenge_id",period.challengeId);
+          const embedded = await supabase.from("game_stats").select("user_id,game,challenge_date,seconds,mistakes,hints,correct_count,total_count,zip_backtracked_cells,zip_required_moves,wasted_moves,expected_moves,completed_at,profiles(name,icon,show_stats_to_others)").eq("mode","challenge").eq("circle_challenge_id",period.challengeId);
           if (!embedded.error) {
             const rows = embedded.data || [];
             return { rows, profiles:rows.flatMap((row) => row.profiles ? [{ id:row.user_id, ...row.profiles }] : []) };
           }
-          const { data } = await supabase.from("game_stats").select("user_id,game,challenge_date,seconds,mistakes,hints,correct_count,total_count,zip_backtracked_cells,zip_required_moves,completed_at").eq("mode","challenge").eq("circle_challenge_id",period.challengeId);
+          const { data } = await supabase.from("game_stats").select("user_id,game,challenge_date,seconds,mistakes,hints,correct_count,total_count,zip_backtracked_cells,zip_required_moves,wasted_moves,expected_moves,completed_at").eq("mode","challenge").eq("circle_challenge_id",period.challengeId);
           return withLookedUpProfiles(data || []);
         }
         const personalResult = await supabase.rpc("get_personal_challenge_standings", { start_date_in:period.date, end_date_in:period.date });
         if (!personalResult.error) return { rows:(personalResult.data || []).map((row) => ({ ...row, user_id:row.result_user_id })), profiles:[] };
-        const { data } = await supabase.from("game_stats").select("user_id,game,challenge_date,seconds,mistakes,hints,correct_count,total_count,zip_backtracked_cells,zip_required_moves,completed_at").eq("mode","challenge").is("circle_challenge_id",null).eq("challenge_date",period.date);
+        const { data } = await supabase.from("game_stats").select("user_id,game,challenge_date,seconds,mistakes,hints,correct_count,total_count,zip_backtracked_cells,zip_required_moves,wasted_moves,expected_moves,completed_at").eq("mode","challenge").is("circle_challenge_id",null).eq("challenge_date",period.date);
         return withLookedUpProfiles(data || []);
       }
       function fetchPeriodRounds(period) {

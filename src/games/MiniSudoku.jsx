@@ -258,6 +258,9 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   const [difficultyRating, setDifficultyRating] = useState(null);
   const [hintCell, setHintCell] = useState(null);
   const [history, setHistory] = useState([]);
+  // Undos are this puzzle's version of Gridly's backtracking: work placed and
+  // then taken back. Without it the clock is the only thing the score can see.
+  const [undos, setUndos] = useState(0);
   const [notes, setNotes] = useState(emptyNotes);
   const [noteMode, setNoteMode] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -313,6 +316,8 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         seed: attemptSeedRef.current,
         generatorVersion: SUDOKU_GENERATOR_VERSION,
         generatorConfig: { size: N, boxRows: BOX_R, boxColumns: BOX_C, givenCount: GIVEN_TARGETS[dayIdx] },
+        wastedMoves: undos,
+        expectedMoves: N * N,
         mode,
         challengeDate: isChallenge ? challengeDate : undefined,
       });
@@ -415,6 +420,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
   function handleUndo() {
     if (solved || history.length === 0) return;
     const last = history[history.length - 1];
+    setUndos((count) => count + 1);
     setHistory((h) => h.slice(0, -1));
     setBoard(last.board);
     setNotes(last.notes || emptyNotes());
