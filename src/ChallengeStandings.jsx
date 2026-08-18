@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, LockKeyhole, Trophy } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, LockKeyhole, RefreshCw, Trophy, X } from "lucide-react";
 import { MISSED_ROUND_PENALTY, buildChallengeStandings, explainTiebreak, fromServerStandings } from "./lib/challengeStandingsScoring.js";
 import { TYPICAL_SCORE } from "./lib/performanceScoring.js";
 import { useI18n } from "./lib/i18n.jsx";
 import { GAME_NAMES } from "./lib/gameBranding.jsx";
+import { openPuzzlePractice } from "./lib/puzzleSharing.js";
+import { supabase, supabaseReady } from "./lib/supabase.js";
 
 // The scorer needs the spread of a game's times, not just the middle of them:
 // a round is scored by how many standard deviations it beats typical play by.
@@ -27,8 +29,6 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
   const [expandedPlayerIds, setExpandedPlayerIds] = useState(() => new Set());
 
   const standings = useMemo(() => {
-    // The database ranks circle challenges so the standings agree with the
-    // winner it pays. Score locally only when that RPC is unavailable.
     if (isCircle && serverStandings?.length) return fromServerStandings(serverStandings, userId);
     const slots = toSlots({ isCircle, rounds, games });
     if (slots.length === 0) return [];
@@ -57,9 +57,6 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
 
   const hasHistory = !!onPeriodChange && periodCount > 1;
 
-  // Without the navigator there is nothing to render for an empty period. With
-  // it, the arrows must survive an empty period or you cannot step back out of
-  // a week nobody played.
   if (!standings.length && !hasHistory) {
     return loading ? <div role="status" style={{ textAlign: "center", padding: "var(--space-4)", color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)" }}>{t("standings.loading")}</div> : null;
   }
@@ -73,7 +70,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
   const body = loading
     ? <div role="status" style={{ textAlign: "center", padding: "var(--space-4)", color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)" }}>{t("standings.loading")}</div>
     : standings.length
-      ? <StandingsList standings={standings} expandedPlayerIds={expandedPlayerIds} setExpandedPlayerIds={setExpandedPlayerIds} previousRankMap={previousRankMap} closed={closed} winnerId={winnerId} />
+      ? <StandingsList standings={standings} expandedPlayerIds={expandedPlayerIds} setExpandedPlayerIds={setExpandedPlayerIds} previousRankMap={previousRankMap} closed={closed} winnerId={winnerId} userId={userId} />
       : <p style={{ margin: 0, textAlign: "center", padding: "var(--space-4)", color: "var(--color-text-secondary)", fontSize: "var(--text-body-secondary-size)" }}>{t("standings.emptyPeriod")}</p>;
 
   if (embedded) {
@@ -112,19 +109,13 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
   );
 }
 
-// Steps through past periods of the same challenge. Index 0 is the live one and
-// higher indexes are further back, so "older" moves right and "newer" left.
 function PeriodNavigator({ label, index, count, onChange, refreshing = false }) {
   const { t } = useI18n();
   const atOldest = index >= count - 1;
   const atNewest = index <= 0;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", margin: "var(--space-2) 0 var(--space-3)", padding: 3, border: "1px solid var(--color-border)", borderRadius: "var(--radius-full)", background: "var(--color-surface-elevated)" }}>
-      <NavigatorButton
-        onClick={() => onChange(index + 1)}
-        disabled={atOldest}
-        ariaLabel={t("standings.olderPeriod")}
-      >
+      <NavigatorButton onClick={() => onChange(index + 1)} disabled={atOldest} ariaLabel={t("standings.olderPeriod")}>
         <ChevronLeft size={17} />
       </NavigatorButton>
       <span aria-live="polite" style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "center", color: "var(--color-text-primary)", fontSize: "var(--text-body-secondary-size)", fontWeight: 600 }}>
@@ -132,11 +123,7 @@ function PeriodNavigator({ label, index, count, onChange, refreshing = false }) 
         {index > 0 && <span style={{ marginLeft: 6, color: "var(--color-text-secondary)", fontWeight: 500 }}>{t("standings.pastPeriod")}</span>}
         {refreshing && <span style={{ marginLeft: 6, color: "var(--color-text-muted)", fontWeight: 500 }}>{t("standings.updating")}</span>}
       </span>
-      <NavigatorButton
-        onClick={() => onChange(index - 1)}
-        disabled={atNewest}
-        ariaLabel={t("standings.newerPeriod")}
-      >
+      <NavigatorButton onClick={() => onChange(index - 1)} disabled={atNewest} ariaLabel={t("standings.newerPeriod")}>
         <ChevronRight size={17} />
       </NavigatorButton>
     </div>
@@ -158,99 +145,212 @@ function NavigatorButton({ onClick, disabled, ariaLabel, children }) {
   );
 }
 
-function StandingsList({ standings, expandedPlayerIds, setExpandedPlayerIds, previousRankMap, closed, winnerId }) {
+function StandingsList({ standings, expandedPlayerIds, setExpandedPlayerIds, previousRankMap, closed, winnerId, userId }) {
   const { t } = useI18n();
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-      {standings.map((player, playerIndex) => {
-        const rank = player.rank;
-        const previousRank = previousRankMap[player.userId] ?? rank;
-        const delta = rank == null || previousRank == null ? 0 : previousRank - rank;
-        const isLeader = rank === 1 && player.score > 0;
-        const expanded = expandedPlayerIds.has(player.userId);
-        const isWinner = closed && winnerId === player.userId;
-        // Anchor on typical play, not on the maximum. 150 is roughly the top 2%
-        // of rounds, so "105 / 900" made beating the average read as 70% — the
-        // opposite of what the score means.
-        const typicalScore = player.total * TYPICAL_SCORE;
-        // Why this player is above the next one when the score cannot say.
-        // Without it, a table of identical scores looks arbitrary.
-        const tiebreak = explainTiebreak(player, standings[playerIndex + 1]);
+  const [selectedResult, setSelectedResult] = useState(null);
 
-        return (
-          <article
-            key={player.userId}
-            style={{
-              overflow: "hidden",
-              borderRadius: "var(--radius-md)",
-              border: `1px solid ${player.isCurrentUser ? "var(--color-primary-subtle-border)" : isWinner ? "var(--color-warning-border)" : "var(--color-border)"}`,
-              background: player.isCurrentUser ? "var(--color-primary-subtle)" : isWinner ? "var(--color-warning-bg)" : "var(--color-surface-elevated)",
-            }}
-          >
+  async function openCompletedResult(result, score) {
+    if (!result?.game || !result?.challenge_date || !userId) return;
+    setSelectedResult({ ...result, score, loading:true, loadError:"" });
+    if (!supabaseReady) {
+      setSelectedResult({ ...result, score, loading:false, loadError:"This result cannot be reopened right now." });
+      return;
+    }
+    const { data, error } = await supabase
+      .from("game_stats")
+      .select("id,game,challenge_date,seconds,mistakes,hints,correct_count,total_count,wasted_moves,expected_moves,zip_backtracked_cells,zip_required_moves,completed_at,seed")
+      .eq("user_id", userId)
+      .eq("mode", "challenge")
+      .eq("game", result.game)
+      .eq("challenge_date", result.challenge_date)
+      .order("completed_at", { ascending:false })
+      .limit(1)
+      .maybeSingle();
+    if (error || !data) {
+      setSelectedResult({ ...result, score, loading:false, loadError:"This saved game could not be opened." });
+      return;
+    }
+    setSelectedResult({ ...result, ...data, score, loading:false, loadError:"" });
+  }
+
+  return (
+    <>
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+        {standings.map((player, playerIndex) => {
+          const rank = player.rank;
+          const previousRank = previousRankMap[player.userId] ?? rank;
+          const delta = rank == null || previousRank == null ? 0 : previousRank - rank;
+          const isLeader = rank === 1 && player.score > 0;
+          const expanded = expandedPlayerIds.has(player.userId);
+          const isWinner = closed && winnerId === player.userId;
+          const typicalScore = player.total * TYPICAL_SCORE;
+          const tiebreak = explainTiebreak(player, standings[playerIndex + 1]);
+
+          return (
+            <article
+              key={player.userId}
+              style={{
+                overflow: "hidden",
+                borderRadius: "var(--radius-md)",
+                border: `1px solid ${player.isCurrentUser ? "var(--color-primary-subtle-border)" : isWinner ? "var(--color-warning-border)" : "var(--color-border)"}`,
+                background: player.isCurrentUser ? "var(--color-primary-subtle)" : isWinner ? "var(--color-warning-bg)" : "var(--color-surface-elevated)",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setExpandedPlayerIds((current) => {
+                  const next = new Set(current);
+                  if (next.has(player.userId)) next.delete(player.userId);
+                  else next.add(player.userId);
+                  return next;
+                })}
+                aria-expanded={expanded}
+                aria-controls={`player-results-${player.userId}`}
+                className="challenge-player-toggle"
+                style={{ width: "100%", minHeight: 64, display: "flex", alignItems: "center", gap: "var(--space-3)", padding: "var(--space-3)", border: 0, background: "transparent", color: "inherit", font: "inherit", textAlign: "left", cursor: "pointer" }}
+              >
+                <span style={{ minWidth: 24, flexShrink: 0, textAlign: "center", color: "var(--color-text-secondary)", fontSize: "var(--text-body-size)", fontWeight: 700 }}>
+                  {isLeader || isWinner ? <Trophy size={19} style={{ color: "var(--color-warning-gold)", display: "inline" }} /> : rank}
+                </span>
+                <span aria-hidden="true" style={{ width: 36, height: 36, display: "grid", placeItems: "center", flexShrink: 0, borderRadius: "50%", background: "var(--color-avatar-bg)", border: "2px solid var(--color-avatar-border)", fontSize: 20 }}>{player.icon || "🙂"}</span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--color-text-primary)", fontSize: "var(--text-body-size)", fontWeight: 600 }}>{player.name}{player.isCurrentUser ? t("standings.you") : ""}</span>
+                  <span style={{ display: "block", marginTop: 2, color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>
+                    {t("standings.played", { played: player.played, total: player.total })}
+                    {player.missed > 0 && t("standings.missed", { count: player.missed })}
+                    {player.isPrivate && t("standings.private")}
+                    {delta !== 0 && ` · ${delta > 0 ? "↑" : "↓"}${Math.abs(delta)}`}
+                  </span>
+                  {tiebreak && (
+                    <span style={{ display: "block", marginTop: 3, color: "var(--color-warning-text)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>
+                      {t(`standings.tiebreak.${tiebreak}`)}
+                    </span>
+                  )}
+                </span>
+                <span style={{ flexShrink: 0, textAlign: "right" }}>
+                  <span style={{ display: "block", color: isLeader ? "var(--color-warning-text)" : "var(--color-text-primary)", fontSize: 19, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{player.score}</span>
+                  <span style={{ display: "block", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{t("standings.ofTypical", { typical: typicalScore })}</span>
+                </span>
+                <ChevronDown size={17} style={{ flexShrink: 0, color: "var(--color-icon-subtle)", transform: expanded ? "rotate(180deg)" : "none", transition: "transform var(--transition-fast)" }} />
+              </button>
+              {expanded && (
+                <div id={`player-results-${player.userId}`} style={{ padding: "var(--space-3)", borderTop: "1px solid var(--color-border)" }}>
+                  {player.detailHidden ? (
+                    <p style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, margin: 0, minHeight: 36, color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>
+                      <LockKeyhole size={13} /> {t("standings.privateDetail", { name: player.name })}
+                    </p>
+                  ) : (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-2)" }}>
+                      {player.dailyResults.map((res, di) => {
+                        if (!res) return <span key={di} style={{ minHeight: 36, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-surface)", color: "var(--color-text-muted)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>{t("standings.missedTile")}</span>;
+                        if (res.is_private) return <span key={di} style={{ minHeight: 36, display: "flex", alignItems: "center", justifyContent: "center", gap: 5, border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-surface)", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}><LockKeyhole size={13} /> {t("standings.privateTile")}</span>;
+                        const score = player.dailyScores[di];
+                        const resultStyle = { minHeight: 36, display: "flex", alignItems: "center", justifyContent: "center", gap:5, padding: "6px 8px", border: `1px solid ${score >= TYPICAL_SCORE ? "var(--color-success-border)" : score >= TYPICAL_SCORE * 0.8 ? "var(--color-primary-subtle-border)" : "var(--color-danger-text)"}`, borderRadius: "var(--radius-sm)", background: score >= TYPICAL_SCORE ? "var(--color-success-bg)" : score >= TYPICAL_SCORE * 0.8 ? "var(--color-primary-subtle)" : "var(--color-danger-bg)", color: score >= TYPICAL_SCORE ? "var(--color-success-text)" : score >= TYPICAL_SCORE * 0.8 ? "var(--color-primary)" : "var(--color-danger-text)", fontSize: "var(--text-caption-size)", fontWeight: 600 };
+                        if (!player.isCurrentUser) {
+                          return <span key={di} title={t("standings.roundHint")} style={resultStyle}>{GAME_NAMES[res.game] || res.game} {score}</span>;
+                        }
+                        return (
+                          <button
+                            key={di}
+                            type="button"
+                            onClick={() => openCompletedResult(res, score)}
+                            aria-label={`Open ${GAME_NAMES[res.game] || res.game} result, score ${score}`}
+                            className="challenge-result-button"
+                            style={{ ...resultStyle, width:"100%", fontFamily:"inherit", cursor:"pointer" }}
+                          >
+                            <span>{GAME_NAMES[res.game] || res.game} {score}</span>
+                            <ChevronRight size={14} aria-hidden="true" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </article>
+          );
+        })}
+      </div>
+      {selectedResult && <CompletedResultDialog result={selectedResult} onClose={() => setSelectedResult(null)} />}
+    </>
+  );
+}
+
+function CompletedResultDialog({ result, onClose }) {
+  const gameName = GAME_NAMES[result.game] || result.game;
+  const seconds = Number(result.seconds);
+  const mistakes = Math.max(0, Number(result.mistakes) || 0);
+  const hints = Math.max(0, Number(result.hints) || 0);
+  const accuracy = Number(result.total_count) > 0
+    ? Math.round((Math.max(0, Number(result.correct_count) || 0) / Number(result.total_count)) * 100)
+    : null;
+
+  return (
+    <div
+      role="presentation"
+      onClick={onClose}
+      style={{ position:"fixed", zIndex:1000, inset:0, display:"flex", alignItems:"flex-end", justifyContent:"center", padding:"var(--space-3)", background:"rgba(0,0,0,.42)" }}
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${gameName} completed result`}
+        onClick={(event) => event.stopPropagation()}
+        style={{ width:"min(100%,430px)", maxHeight:"85dvh", overflow:"auto", border:"1px solid var(--color-border)", borderRadius:"var(--radius-xl)", background:"var(--color-surface)", boxShadow:"var(--shadow-card)", padding:"var(--space-4)" }}
+      >
+        <div style={{ display:"flex", alignItems:"flex-start", gap:"var(--space-3)" }}>
+          <div style={{ flex:1, minWidth:0 }}>
+            <p style={{ margin:0, color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:700, textTransform:"uppercase", letterSpacing:".04em" }}>Completed game</p>
+            <h3 style={{ margin:"3px 0 0", color:"var(--color-text-primary)", fontSize:20 }}>{gameName} · {result.score}</h3>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close result" className="challenge-result-close" style={{ width:34, height:34, display:"grid", placeItems:"center", border:0, borderRadius:"50%", background:"var(--color-surface-elevated)", color:"var(--color-text-secondary)", cursor:"pointer" }}><X size={17} /></button>
+        </div>
+
+        {result.loading ? (
+          <p role="status" style={{ margin:"var(--space-4) 0", color:"var(--color-text-secondary)", fontSize:"var(--text-body-secondary-size)" }}>Opening your saved result…</p>
+        ) : result.loadError ? (
+          <p role="status" style={{ margin:"var(--space-4) 0", color:"var(--color-danger-text)", fontSize:"var(--text-body-secondary-size)" }}>{result.loadError}</p>
+        ) : (
+          <>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(2,minmax(0,1fr))", gap:"var(--space-2)", marginTop:"var(--space-4)" }}>
+              <ResultFact label="Time" value={Number.isFinite(seconds) ? formatTime(seconds) : "—"} />
+              <ResultFact label="Challenge score" value={result.score ?? "—"} />
+              <ResultFact label="Mistakes" value={mistakes} />
+              <ResultFact label="Hints" value={hints} />
+              {accuracy !== null && <ResultFact label="Accuracy" value={`${accuracy}%`} />}
+            </div>
+            <div style={{ marginTop:"var(--space-4)", padding:"var(--space-3)", border:"1px solid var(--color-primary-subtle-border)", borderRadius:"var(--radius-md)", background:"var(--color-primary-subtle)" }}>
+              <p style={{ margin:0, color:"var(--color-text-primary)", fontSize:"var(--text-body-secondary-size)", fontWeight:700 }}>Your original Challenge result stays locked.</p>
+              <p style={{ margin:"4px 0 0", color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", lineHeight:1.45 }}>Replaying opens the exact same puzzle as Practice, so it cannot replace or change this score.</p>
+            </div>
             <button
               type="button"
-              onClick={() => setExpandedPlayerIds((current) => {
-                const next = new Set(current);
-                if (next.has(player.userId)) next.delete(player.userId);
-                else next.add(player.userId);
-                return next;
-              })}
-              aria-expanded={expanded}
-              aria-controls={`player-results-${player.userId}`}
-              className="challenge-player-toggle"
-              style={{ width: "100%", minHeight: 64, display: "flex", alignItems: "center", gap: "var(--space-3)", padding: "var(--space-3)", border: 0, background: "transparent", color: "inherit", font: "inherit", textAlign: "left", cursor: "pointer" }}
+              onClick={() => openPuzzlePractice(result.id)}
+              disabled={!result.id || !result.seed}
+              className="challenge-result-replay"
+              style={{ width:"100%", minHeight:44, marginTop:"var(--space-4)", display:"inline-flex", alignItems:"center", justifyContent:"center", gap:7, border:0, borderRadius:"var(--radius-full)", background:"var(--color-primary)", color:"var(--color-primary-text)", fontFamily:"inherit", fontSize:"var(--text-button-size)", fontWeight:800, cursor:result.id && result.seed ? "pointer" : "default", opacity:result.id && result.seed ? 1 : .5 }}
             >
-              <span style={{ minWidth: 24, flexShrink: 0, textAlign: "center", color: "var(--color-text-secondary)", fontSize: "var(--text-body-size)", fontWeight: 700 }}>
-                {isLeader || isWinner ? <Trophy size={19} style={{ color: "var(--color-warning-gold)", display: "inline" }} /> : rank}
-              </span>
-              <span aria-hidden="true" style={{ width: 36, height: 36, display: "grid", placeItems: "center", flexShrink: 0, borderRadius: "50%", background: "var(--color-avatar-bg)", border: "2px solid var(--color-avatar-border)", fontSize: 20 }}>{player.icon || "🙂"}</span>
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--color-text-primary)", fontSize: "var(--text-body-size)", fontWeight: 600 }}>{player.name}{player.isCurrentUser ? t("standings.you") : ""}</span>
-                <span style={{ display: "block", marginTop: 2, color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>
-                  {t("standings.played", { played: player.played, total: player.total })}
-                  {player.missed > 0 && t("standings.missed", { count: player.missed })}
-                  {player.isPrivate && t("standings.private")}
-                  {delta !== 0 && ` · ${delta > 0 ? "↑" : "↓"}${Math.abs(delta)}`}
-                </span>
-                {tiebreak && (
-                  <span style={{ display: "block", marginTop: 3, color: "var(--color-warning-text)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>
-                    {t(`standings.tiebreak.${tiebreak}`)}
-                  </span>
-                )}
-              </span>
-              <span style={{ flexShrink: 0, textAlign: "right" }}>
-                <span style={{ display: "block", color: isLeader ? "var(--color-warning-text)" : "var(--color-text-primary)", fontSize: 19, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{player.score}</span>
-                <span style={{ display: "block", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{t("standings.ofTypical", { typical: typicalScore })}</span>
-              </span>
-              <ChevronDown size={17} style={{ flexShrink: 0, color: "var(--color-icon-subtle)", transform: expanded ? "rotate(180deg)" : "none", transition: "transform var(--transition-fast)" }} />
+              <RefreshCw size={16} /> Practise this game
             </button>
-            {expanded && (
-              <div id={`player-results-${player.userId}`} style={{ padding: "var(--space-3)", borderTop: "1px solid var(--color-border)" }}>
-                {player.detailHidden ? (
-                  <p style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, margin: 0, minHeight: 36, color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>
-                    <LockKeyhole size={13} /> {t("standings.privateDetail", { name: player.name })}
-                  </p>
-                ) : (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-2)" }}>
-                    {player.dailyResults.map((res, di) => {
-                      if (!res) return <span key={di} style={{ minHeight: 36, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-surface)", color: "var(--color-text-muted)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>{t("standings.missedTile")}</span>;
-                      if (res.is_private) return <span key={di} style={{ minHeight: 36, display: "flex", alignItems: "center", justifyContent: "center", gap: 5, border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-surface)", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}><LockKeyhole size={13} /> {t("standings.privateTile")}</span>;
-                      const score = player.dailyScores[di];
-                      return (
-                        <span key={di} title={t("standings.roundHint")} style={{ minHeight: 36, display: "flex", alignItems: "center", justifyContent: "center", padding: "6px 8px", border: `1px solid ${score >= TYPICAL_SCORE ? "var(--color-success-border)" : score >= TYPICAL_SCORE * 0.8 ? "var(--color-primary-subtle-border)" : "var(--color-danger-text)"}`, borderRadius: "var(--radius-sm)", background: score >= TYPICAL_SCORE ? "var(--color-success-bg)" : score >= TYPICAL_SCORE * 0.8 ? "var(--color-primary-subtle)" : "var(--color-danger-bg)", color: score >= TYPICAL_SCORE ? "var(--color-success-text)" : score >= TYPICAL_SCORE * 0.8 ? "var(--color-primary)" : "var(--color-danger-text)", fontSize: "var(--text-caption-size)", fontWeight: 600 }}>
-                          {GAME_NAMES[res.game] || res.game} {score}
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-          </article>
-        );
-      })}
+          </>
+        )}
+      </section>
     </div>
   );
+}
+
+function ResultFact({ label, value }) {
+  return (
+    <div style={{ minHeight:58, padding:"var(--space-2) var(--space-3)", border:"1px solid var(--color-border)", borderRadius:"var(--radius-md)", background:"var(--color-surface-elevated)" }}>
+      <span style={{ display:"block", color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)" }}>{label}</span>
+      <strong style={{ display:"block", marginTop:3, color:"var(--color-text-primary)", fontSize:"var(--text-body-size)", fontVariantNumeric:"tabular-nums" }}>{value}</strong>
+    </div>
+  );
+}
+
+function formatTime(value) {
+  const seconds = Math.max(0, Math.round(Number(value) || 0));
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
 function StandingsStyles() {
@@ -258,7 +358,10 @@ function StandingsStyles() {
     <style>{`
       .challenge-standings-toggle:focus-visible,
       .challenge-player-toggle:focus-visible,
-      .challenge-period-button:focus-visible {
+      .challenge-period-button:focus-visible,
+      .challenge-result-button:focus-visible,
+      .challenge-result-close:focus-visible,
+      .challenge-result-replay:focus-visible {
         outline: 2px solid var(--color-primary);
         outline-offset: -2px;
       }
@@ -267,8 +370,12 @@ function StandingsStyles() {
         .challenge-player-toggle:hover {
           background: var(--color-surface-elevated) !important;
         }
-        .challenge-period-button:not(:disabled):hover {
+        .challenge-period-button:not(:disabled):hover,
+        .challenge-result-close:hover {
           background: var(--color-surface) !important;
+        }
+        .challenge-result-button:hover {
+          filter: brightness(.98);
         }
       }
       @media (min-width: 480px) {
