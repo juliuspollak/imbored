@@ -23,6 +23,14 @@ end
 post_install do |installer|
   assertDeploymentTarget(installer)
 
+  # CapacitorCordova 7.x still uses quoted imports in public framework headers.
+  # Xcode 26's module verifier otherwise promotes these imports to build errors.
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+    end
+  end
+
   # Input/output paths are intentionally disabled above to prevent stale
   # framework copies after plugin changes. Tell Xcode this phase is expected
   # to run on every build so it does not emit a dependency-analysis warning.
