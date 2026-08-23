@@ -182,6 +182,21 @@ export default function ZoomCountryMap({
         overflow: "hidden",
       }}
     >
+      {!answered && (
+        <style>{`
+          .zoom-answer-grid .zoom-option:nth-child(1):not(:disabled) {
+            background: ${OPTION_STYLES[0].fill} !important;
+            border-color: ${OPTION_STYLES[0].stroke} !important;
+            color: ${OPTION_STYLES[0].text} !important;
+          }
+          .zoom-answer-grid .zoom-option:nth-child(2):not(:disabled) {
+            background: ${OPTION_STYLES[1].fill} !important;
+            border-color: ${OPTION_STYLES[1].stroke} !important;
+            color: ${OPTION_STYLES[1].text} !important;
+          }
+        `}</style>
+      )}
+
       {!geoJson && !loadFailed && (
         <div style={{ height: compact ? 118 : 170, display: "grid", placeItems: "center", color: "var(--color-text-muted)", fontSize: 11 }}>
           Loading map…
@@ -223,43 +238,6 @@ export default function ZoomCountryMap({
             })}
           </g>
         </svg>
-      )}
-
-      {!compact && (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${Math.min(optionCountries.length, 2)}, minmax(0, 1fr))`,
-            gap: 6,
-            padding: "2px 2px 0",
-          }}
-        >
-          {optionCountries.map((countryName) => {
-            const style = countryStyle(countryName, optionCountries, answered, selectedCountry, correctCountry);
-            return (
-              <div
-                key={countryName}
-                style={{
-                  minWidth: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "5px 7px",
-                  borderRadius: 999,
-                  background: "rgba(255,255,255,0.82)",
-                  border: `1px solid ${style.stroke}`,
-                  color: style.text,
-                  fontSize: 10,
-                  fontWeight: 700,
-                  lineHeight: 1.2,
-                }}
-              >
-                <span style={{ width: 10, height: 10, borderRadius: 999, flex: "0 0 auto", background: style.fill, border: `1px solid ${style.stroke}` }} />
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{labelFor(countryName)}</span>
-              </div>
-            );
-          })}
-        </div>
       )}
     </div>
   );
