@@ -1,4 +1,5 @@
 import { supabase, supabaseReady } from "./supabase.js";
+import { cancelDailyReminderForDate } from "./nativeNotifications.js";
 
 // Fire-and-forget: called once, right when a puzzle is solved. Silently
 // no-ops if Supabase isn't configured or nobody's logged in, so the games
@@ -78,6 +79,7 @@ export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hin
       return { alreadyPlayed: true };
     }
     if (data?.id) {
+      if (data.circle_challenge_id && data.challenge_date) void cancelDailyReminderForDate(data.challenge_date);
       const { data: reward, error: rewardError } = await supabase.rpc("award_game_points", { target_stat_id: data.id });
       return { data, error, reward, rewardError };
     }

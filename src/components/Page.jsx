@@ -20,8 +20,8 @@ export default function Page({
       className="design-page"
       style={{
         background: "var(--color-page-bg)",
-        minHeight: "100vh",
-        // border-box keeps the safe-area padding inside the 100vh box, so the
+        minHeight: "100dvh",
+        // border-box keeps the safe-area padding inside the viewport box, so the
         // notch and home indicator are cleared without the page growing taller
         // than the viewport.
         boxSizing: "border-box",

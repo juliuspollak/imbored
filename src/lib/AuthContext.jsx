@@ -1,7 +1,76 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { supabase, supabaseReady } from "./supabase.js";
+import { App } from "@capacitor/app";
+import { Browser } from "@capacitor/browser";
+import { supabase, supabaseAuthStorage, supabaseAuthStorageKey, supabaseReady } from "./supabase.js";
+import { isNativePlatform } from "./platform.js";
+import { unregisterNativeDevice } from "./nativeNotifications.js";
 
 const AuthContext = createContext(null);
+const NATIVE_AUTH_CALLBACK = "imbored://auth/callback";
+const NATIVE_OAUTH_PENDING_KEY = "imbored-native-oauth-pending";
+const NATIVE_OAUTH_PENDING_TTL_MS = 10 * 60 * 1000;
+const PKCE_VERIFIER_KEY = `${supabaseAuthStorageKey}-code-verifier`;
+const handledNativeOAuthUrls = new Set();
+let nativeOAuthExchange = null;
+
+function nativeOAuthIsPending() {
+  const startedAt = Number(supabaseAuthStorage?.getItem(NATIVE_OAUTH_PENDING_KEY));
+  const pending = Number.isFinite(startedAt) && Date.now() - startedAt < NATIVE_OAUTH_PENDING_TTL_MS;
+  if (!pending) supabaseAuthStorage?.removeItem(NATIVE_OAUTH_PENDING_KEY);
+  return pending;
+}
+
+function markNativeOAuthPending(pending) {
+  if (!supabaseAuthStorage) return;
+  if (pending) supabaseAuthStorage.setItem(NATIVE_OAUTH_PENDING_KEY, String(Date.now()));
+  else supabaseAuthStorage.removeItem(NATIVE_OAUTH_PENDING_KEY);
+}
+
+async function completeNativeOAuth(url) {
+  if (!url?.startsWith(NATIVE_AUTH_CALLBACK)) return;
+
+  // appUrlOpen and getLaunchUrl can both report the same URL, including
+  // across a React lifecycle remount. A PKCE code and verifier are one-use.
+  if (handledNativeOAuthUrls.has(url)) return nativeOAuthExchange;
+  handledNativeOAuthUrls.add(url);
+  nativeOAuthExchange = exchangeNativeOAuth(url);
+  return nativeOAuthExchange;
+}
+
+async function exchangeNativeOAuth(url) {
+
+  const callback = new URL(url);
+  const hash = new URLSearchParams(callback.hash.replace(/^#/, ""));
+  const errorDescription = callback.searchParams.get("error_description")
+    || hash.get("error_description");
+  if (errorDescription) throw new Error(errorDescription);
+
+  try {
+    const code = callback.searchParams.get("code");
+    if (code) {
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) throw error;
+    } else {
+      const accessToken = hash.get("access_token");
+      const refreshToken = hash.get("refresh_token");
+      if (!accessToken || !refreshToken) throw new Error("The sign-in callback did not contain a session.");
+      const { error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+      if (error) throw error;
+    }
+  } finally {
+    markNativeOAuthPending(false);
+  }
+
+  try {
+    await Browser.close();
+  } catch (error) {
+    // The deep link can dismiss SFSafariViewController before this runs.
+    console.debug("OAuth browser was already closed:", error);
+  }
+}
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(undefined); // undefined = still loading, null = logged out
@@ -85,6 +154,9 @@ export function AuthProvider({ children }) {
 
     async function clearInvalidLocalSession(reason) {
       console.warn("Clearing an invalid local Supabase session:", reason);
+      // signOut removes Supabase's PKCE verifier. Do not erase an OAuth flow
+      // merely because iOS suspended/resumed the WebView mid-authorization.
+      if (isNativePlatform() && nativeOAuthIsPending()) return;
       try {
         await supabase.auth.signOut({ scope: "local" });
       } catch (signOutError) {
@@ -165,6 +237,34 @@ export function AuthProvider({ children }) {
     };
   }, [loadProfile]);
 
+  useEffect(() => {
+    if (!supabaseReady || !isNativePlatform()) return undefined;
+
+    let cancelled = false;
+    async function handleUrl(url) {
+      if (cancelled || !url?.startsWith(NATIVE_AUTH_CALLBACK)) return;
+      try {
+        await completeNativeOAuth(url);
+      } catch (error) {
+        console.error("Unable to complete native OAuth sign-in:", error);
+        if (!cancelled) window.alert(`Google sign-in could not be completed: ${error.message}`);
+      }
+    }
+
+    let listenerHandle;
+    void App.addListener("appUrlOpen", ({ url }) => { void handleUrl(url); })
+      .then((handle) => {
+        if (cancelled) void handle.remove();
+        else listenerHandle = handle;
+      });
+    void App.getLaunchUrl().then((launch) => { void handleUrl(launch?.url); });
+
+    return () => {
+      cancelled = true;
+      void listenerHandle?.remove();
+    };
+  }, []);
+
   async function signInWithEmail(email) {
     if (!supabaseReady) return { error: new Error("Supabase isn't configured yet") };
 
@@ -189,11 +289,38 @@ export function AuthProvider({ children }) {
 
   async function signInWithGoogle() {
     if (!supabaseReady) return { error: new Error("Supabase isn't configured yet") };
-    const result = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/`, skipBrowserRedirect: true },
-    });
-    if (!result.error && result.data?.url) window.location.assign(result.data.url);
+    const native = isNativePlatform();
+    if (native) markNativeOAuthPending(true);
+    let result;
+    try {
+      result = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: native ? NATIVE_AUTH_CALLBACK : `${window.location.origin}/`,
+          skipBrowserRedirect: true,
+        },
+      });
+    } catch (error) {
+      if (native) markNativeOAuthPending(false);
+      return { data: null, error };
+    }
+    if (native && (result.error || !supabaseAuthStorage?.getItem(PKCE_VERIFIER_KEY))) {
+      markNativeOAuthPending(false);
+      return result.error
+        ? result
+        : { data: result.data, error: new Error("Google sign-in could not securely save its PKCE verifier.") };
+    }
+    if (!result.error && result.data?.url) {
+      if (native) {
+        try {
+          await Browser.open({ url: result.data.url });
+        } catch (error) {
+          markNativeOAuthPending(false);
+          return { data: result.data, error };
+        }
+      }
+      else window.location.assign(result.data.url);
+    }
     return result;
   }
 
@@ -270,6 +397,7 @@ export function AuthProvider({ children }) {
 
   async function signOut() {
     if (!supabaseReady) return;
+    await unregisterNativeDevice();
     await supabase.auth.signOut();
   }
 

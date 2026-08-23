@@ -34,6 +34,12 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Normal native pages use the WebView's document scrolling. Puzzle boards
+   retain the fixed viewport they were designed for. */
+body.native-game-scroll-lock {
+  overflow: hidden;
+}
+
 /* Text the player is meant to read or copy stays selectable; game surfaces do
    not, so a drag never turns into a text selection. */
 button, [role="button"], .rush-card, .hive-cell, .tango-cell, .gridly-cell {

@@ -12,6 +12,7 @@ import ChallengeGate from "./ChallengeGate.jsx";
 import OnlineWidget from "./OnlineWidget.jsx";
 import PokeOverlay from "./PokeOverlay.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
+import NotificationPermissionPrompt from "./components/NotificationPermissionPrompt.jsx";
 import { AuthProvider, useAuth } from "./lib/AuthContext.jsx";
 
 // Games and the less-frequently-visited screens (circles/stats/admin/etc.) are
@@ -55,6 +56,8 @@ import { usePendingPlayersCount } from "./lib/usePendingPlayersCount.js";
 import { useI18n } from "./lib/i18n.jsx";
 import { applyThemePreference, cacheThemePreference } from "./lib/theme.js";
 import { GRIDLY_BRAND, HIVE_BRAND } from "./lib/gameBranding.jsx";
+import { isNativePlatform } from "./lib/platform.js";
+import { loadNotificationPreferences, startNativeNotificationListeners, syncDailyChallengeReminders } from "./lib/nativeNotifications.js";
 
 const GAME_COMPONENTS = {
   hive: { Component: HiveGame, label: HIVE_BRAND.name },
@@ -91,6 +94,12 @@ function AppShell() {
   const [rewardRequestsReturn, setRewardRequestsReturn] = useState(null);
   const [circlesTarget, setCirclesTarget] = useState(null);
   const [scoreChallenge, setScoreChallenge] = useState(null);
+  useEffect(() => {
+    if (!isNativePlatform()) return undefined;
+    const gameIsActive = Boolean(scoreChallenge || GAME_COMPONENTS[active]);
+    document.body.classList.toggle("native-game-scroll-lock", gameIsActive);
+    return () => document.body.classList.remove("native-game-scroll-lock");
+  }, [active, scoreChallenge]);
   // Challenge mode needs an account to mean anything (once-per-day + history
   // are tied to a user) — default to it when logged in, otherwise practice
   // is the only real option.
@@ -251,6 +260,18 @@ function AppShell() {
     setCirclesTarget(target?.circleId ? target : null);
     openSection("circles");
   }
+
+  useEffect(() => {
+    if (!user?.id || !isNativePlatform()) return undefined;
+    let cleanup = () => {};
+    void startNativeNotificationListeners(user.id).then((remove) => { cleanup = remove; });
+    void loadNotificationPreferences(user.id).then((preferences) => syncDailyChallengeReminders(user.id, preferences));
+    function navigateFromNotification(event) {
+      if (event.detail?.screen === "circles") openCircles({ circleId:event.detail.circleId, challengeId:event.detail.challengeId });
+    }
+    window.addEventListener("imbored:navigate", navigateFromNotification);
+    return () => { cleanup(); window.removeEventListener("imbored:navigate", navigateFromNotification); };
+  }, [user?.id]);
 
   async function openScoreChallenge(sourceStatId) {
     const { data,error } = await supabase.rpc("get_score_challenge", {
@@ -532,6 +553,7 @@ function AppShell() {
           onChallengeScopeChange={setChallengeScope}
         />
         {accountMenu}
+        <NotificationPermissionPrompt userId={user?.id} />
       </>
     );
   }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock, Unlock, Users, Fingerprint, Trash2, Plus, Link2, Unlink, Mail, Languages, Monitor, Sun, Moon } from "lucide-react";
+import { Bell, Lock, Unlock, Users, Fingerprint, Trash2, Plus, Link2, Unlink, Mail, Languages, Monitor, Sun, Moon } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { PROFILE_ICONS } from "./lib/icons.js";
 import { useI18n } from "./lib/i18n.jsx";
@@ -11,6 +11,8 @@ import Card from "./components/Card.jsx";
 import TextInput from "./components/TextInput.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
 import AccountSafety from "./AccountSafety.jsx";
+import { isNativePlatform } from "./lib/platform.js";
+import { enableNativeNotifications, loadNotificationPreferences, nativePermissionStatus, saveNotificationPreferences } from "./lib/nativeNotifications.js";
 
 const passkeySupported = typeof window !== "undefined" && !!window.PublicKeyCredential;
 
@@ -38,6 +40,10 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
   const [identities, setIdentities] = useState([]);
   const [identityBusy, setIdentityBusy] = useState(false);
   const [identityError, setIdentityError] = useState(null);
+  const [notificationPreferences, setNotificationPreferences] = useState(null);
+  const [notificationPermission, setNotificationPermission] = useState("prompt");
+  const [notificationBusy, setNotificationBusy] = useState(false);
+  const [notificationError, setNotificationError] = useState("");
 
   function friendlyIdentityError(message) {
     const text = decodeURIComponent(String(message || "").replace(/\+/g, " "));
@@ -126,6 +132,33 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
       setThemePreference(profile.theme_preference || "system");
     }
   }, [profile]);
+
+  useEffect(() => {
+    if (isFirstTime || !user?.id || !isNativePlatform()) return;
+    let cancelled = false;
+    void Promise.all([loadNotificationPreferences(user.id), nativePermissionStatus()]).then(([preferences, permission]) => {
+      if (!cancelled) { setNotificationPreferences(preferences); setNotificationPermission(permission.receive); }
+    });
+    return () => { cancelled = true; };
+  }, [isFirstTime, user?.id]);
+
+  async function requestNotifications() {
+    setNotificationBusy(true); setNotificationError("");
+    const result = await enableNativeNotifications();
+    setNotificationBusy(false);
+    setNotificationPermission(result.granted ? "granted" : result.reason);
+    if (!result.granted) setNotificationError(result.reason === "denied" ? "Notifications are disabled in iPhone Settings." : "Notifications were not enabled.");
+    return result.granted;
+  }
+
+  async function updateNotificationPreference(patch) {
+    const next = { ...notificationPreferences, ...patch };
+    setNotificationPreferences(next); setNotificationError("");
+    const turnsSomethingOn = patch.circle_challenges_enabled === true || patch.competition_updates_enabled === true || (patch.daily_reminder_period && patch.daily_reminder_period !== "off");
+    if (turnsSomethingOn && notificationPermission !== "granted") await requestNotifications();
+    const { error } = await saveNotificationPreferences(user.id, next);
+    if (error) setNotificationError(error.message);
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -227,6 +260,14 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
         <Card style={{ marginBottom: "var(--space-3)", padding: 0, overflow: "hidden" }}>
           <ToggleRow icon={showStatsToOthers ? Unlock : Lock} label={t("profile.showStats")} description={showStatsToOthers ? t("profile.statsPublic") : t("profile.statsPrivate")} checked={showStatsToOthers} onChange={setShowStatsToOthers} />
         </Card>
+
+        {!isFirstTime && isNativePlatform() && notificationPreferences && <Card style={{ marginBottom: "var(--space-3)", padding: 0, overflow:"hidden" }}>
+          <div style={{ padding:"var(--space-4)" }}><SectionTitle icon={Bell}>Notifications</SectionTitle><p style={{ margin:0, fontSize:"var(--text-caption-size)", color:"var(--color-text-secondary)" }}>Circle reminders use this iPhone’s local time.</p>{notificationPermission !== "granted" && <Button type="button" variant="secondary" fullWidth loading={notificationBusy} onClick={requestNotifications} style={{ marginTop:"var(--space-3)" }}>Enable notifications</Button>}</div>
+          <ToggleRow icon={Bell} label="New Circle challenges" description="When a Circle schedules a new challenge" checked={notificationPreferences.circle_challenges_enabled} onChange={(value) => updateNotificationPreference({ circle_challenges_enabled:value })} divided />
+          <div style={{ padding:"var(--space-4)", borderTop:"1px solid var(--color-border)" }}><div style={{ color:"var(--color-text-primary)", fontSize:"var(--text-body-size)", fontWeight:600 }}>Daily challenge reminder</div><div style={{ marginTop:"var(--space-2)" }}><SegmentedControl value={notificationPreferences.daily_reminder_period} onChange={(value) => updateNotificationPreference({ daily_reminder_period:value })} options={[{value:"off",label:"Off"},{value:"morning",label:"Morning"},{value:"afternoon",label:"Afternoon"},{value:"evening",label:"Evening"}]} /></div><p style={{ margin:"var(--space-2) 0 0", fontSize:11, color:"var(--color-text-secondary)" }}>Morning 9 AM · Afternoon 3 PM · Evening 7 PM</p></div>
+          <ToggleRow icon={Bell} label="Score & competition updates" description="Results and changes in your challenge standings" checked={notificationPreferences.competition_updates_enabled} onChange={(value) => updateNotificationPreference({ competition_updates_enabled:value })} divided />
+          {notificationError && <div style={{ padding:"0 var(--space-4) var(--space-4)" }}><StatusBanner variant="warning">{notificationError}</StatusBanner></div>}
+        </Card>}
 
         {/* Private mode lives on the bubble beside your avatar, not here — one
             control, one meaning. This only explains where it went. */}

@@ -5,6 +5,11 @@
   "ios": {
     "contentInset": "never",
     "backgroundColor": "#ffffff",
-    "scrollEnabled": false
+    "scrollEnabled": true
+  },
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
   }
 }
