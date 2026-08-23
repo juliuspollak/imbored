@@ -10124,12 +10124,10 @@ begin
   if clean_installation is null or char_length(clean_installation) not between 8 and 200 then raise exception 'Invalid installation identifier.' using errcode='22023'; end if;
   if clean_token is null or char_length(clean_token) not between 16 and 512 then raise exception 'Invalid device token.' using errcode='22023'; end if;
 
-  -- A physical installation or refreshed APNs token belongs to exactly one
-  -- signed-in player. This also prevents a token remaining attached after a
-  -- different player signs into the same iPhone.
+  -- Only remove a stale token registration owned by this same player.
   delete from public.push_device_registrations
-  where platform=platform_in and (installation_id=clean_installation or device_token=clean_token)
-    and user_id<>auth.uid();
+  where user_id=auth.uid() and platform=platform_in and device_token=clean_token
+    and installation_id<>clean_installation;
 
   insert into public.push_device_registrations(user_id,installation_id,platform,device_token,timezone)
   values(auth.uid(),clean_installation,platform_in,clean_token,public.resolve_timezone(timezone_in))
@@ -10138,7 +10136,13 @@ begin
     device_token=excluded.device_token,
     timezone=excluded.timezone,
     updated_at=now(),
-    last_seen_at=now();
+    last_seen_at=now()
+  where push_device_registrations.user_id=auth.uid()
+     or push_device_registrations.device_token=excluded.device_token;
+
+  if not found then
+    raise exception 'This installation is already registered with another device token.' using errcode='23505';
+  end if;
 end;
 $$;
 

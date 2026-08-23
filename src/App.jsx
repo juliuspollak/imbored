@@ -57,7 +57,8 @@ import { useI18n } from "./lib/i18n.jsx";
 import { applyThemePreference, cacheThemePreference } from "./lib/theme.js";
 import { GRIDLY_BRAND, HIVE_BRAND } from "./lib/gameBranding.jsx";
 import { isNativePlatform } from "./lib/platform.js";
-import { loadNotificationPreferences, startNativeNotificationListeners, syncDailyChallengeReminders } from "./lib/nativeNotifications.js";
+import { shouldLockNativeDocumentScroll } from "./lib/nativeScrollLock.js";
+import { refreshNativeNotificationState, startNativeNotificationListeners } from "./lib/nativeNotifications.js";
 
 const GAME_COMPONENTS = {
   hive: { Component: HiveGame, label: HIVE_BRAND.name },
@@ -96,7 +97,12 @@ function AppShell() {
   const [scoreChallenge, setScoreChallenge] = useState(null);
   useEffect(() => {
     if (!isNativePlatform()) return undefined;
-    const gameIsActive = Boolean(scoreChallenge || GAME_COMPONENTS[active]);
+    const gameIsActive = shouldLockNativeDocumentScroll({
+      native:true,
+      active,
+      scoreChallenge,
+      gameIds:Object.keys(GAME_COMPONENTS),
+    });
     document.body.classList.toggle("native-game-scroll-lock", gameIsActive);
     return () => document.body.classList.remove("native-game-scroll-lock");
   }, [active, scoreChallenge]);
@@ -262,15 +268,35 @@ function AppShell() {
   }
 
   useEffect(() => {
-    if (!user?.id || !isNativePlatform()) return undefined;
+    if (!isNativePlatform()) return undefined;
+    let cancelled = false;
     let cleanup = () => {};
-    void startNativeNotificationListeners(user.id).then((remove) => { cleanup = remove; });
-    void loadNotificationPreferences(user.id).then((preferences) => syncDailyChallengeReminders(user.id, preferences));
     function navigateFromNotification(event) {
       if (event.detail?.screen === "circles") openCircles({ circleId:event.detail.circleId, challengeId:event.detail.challengeId });
     }
     window.addEventListener("imbored:navigate", navigateFromNotification);
-    return () => { cleanup(); window.removeEventListener("imbored:navigate", navigateFromNotification); };
+    void startNativeNotificationListeners(user?.id || null)
+      .then((remove) => {
+        if (cancelled) remove();
+        else cleanup = remove;
+      })
+      .catch((error) => console.error("Unable to start native notification listeners:", error));
+
+    function refreshReminders() {
+      if (user?.id && document.visibilityState === "visible") {
+        void refreshNativeNotificationState(user.id).catch((error) => console.error("Unable to refresh native reminders:", error));
+      }
+    }
+    window.addEventListener("imbored:challenge-completed", refreshReminders);
+    document.addEventListener("visibilitychange", refreshReminders);
+    refreshReminders();
+    return () => {
+      cancelled = true;
+      cleanup();
+      window.removeEventListener("imbored:navigate", navigateFromNotification);
+      window.removeEventListener("imbored:challenge-completed", refreshReminders);
+      document.removeEventListener("visibilitychange", refreshReminders);
+    };
   }, [user?.id]);
 
   async function openScoreChallenge(sourceStatId) {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Bell, Lock, Unlock, Users, Fingerprint, Trash2, Plus, Link2, Unlink, Mail, Languages, Monitor, Sun, Moon } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { PROFILE_ICONS } from "./lib/icons.js";
@@ -44,6 +44,7 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
   const [notificationPermission, setNotificationPermission] = useState("prompt");
   const [notificationBusy, setNotificationBusy] = useState(false);
   const [notificationError, setNotificationError] = useState("");
+  const notificationUpdateRef = useRef(0);
 
   function friendlyIdentityError(message) {
     const text = decodeURIComponent(String(message || "").replace(/\+/g, " "));
@@ -136,28 +137,53 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
   useEffect(() => {
     if (isFirstTime || !user?.id || !isNativePlatform()) return;
     let cancelled = false;
-    void Promise.all([loadNotificationPreferences(user.id), nativePermissionStatus()]).then(([preferences, permission]) => {
-      if (!cancelled) { setNotificationPreferences(preferences); setNotificationPermission(permission.receive); }
-    });
+    void Promise.all([loadNotificationPreferences(user.id), nativePermissionStatus()])
+      .then(([preferences, permission]) => {
+        if (!cancelled) {
+          setNotificationPreferences(preferences);
+          setNotificationPermission(permission.receive);
+          if (preferences.loadError) setNotificationError(preferences.loadError);
+        }
+      })
+      .catch((loadError) => {
+        if (!cancelled) setNotificationError(loadError.message || "Notifications are unavailable.");
+      });
     return () => { cancelled = true; };
   }, [isFirstTime, user?.id]);
 
   async function requestNotifications() {
     setNotificationBusy(true); setNotificationError("");
-    const result = await enableNativeNotifications();
-    setNotificationBusy(false);
-    setNotificationPermission(result.granted ? "granted" : result.reason);
-    if (!result.granted) setNotificationError(result.reason === "denied" ? "Notifications are disabled in iPhone Settings." : "Notifications were not enabled.");
-    return result.granted;
+    try {
+      const result = await enableNativeNotifications();
+      setNotificationPermission(result.granted ? "granted" : result.reason);
+      if (!result.granted) setNotificationError(result.reason === "denied" ? "Notifications are disabled in iPhone Settings." : "Notifications were not enabled.");
+      return result.granted;
+    } finally {
+      setNotificationBusy(false);
+    }
   }
 
   async function updateNotificationPreference(patch) {
+    if (notificationBusy) return;
+    const updateId = ++notificationUpdateRef.current;
+    const previous = notificationPreferences;
     const next = { ...notificationPreferences, ...patch };
-    setNotificationPreferences(next); setNotificationError("");
+    setNotificationPreferences(next); setNotificationError(""); setNotificationBusy(true);
     const turnsSomethingOn = patch.circle_challenges_enabled === true || patch.competition_updates_enabled === true || (patch.daily_reminder_period && patch.daily_reminder_period !== "off");
-    if (turnsSomethingOn && notificationPermission !== "granted") await requestNotifications();
-    const { error } = await saveNotificationPreferences(user.id, next);
-    if (error) setNotificationError(error.message);
+    try {
+      if (turnsSomethingOn && notificationPermission !== "granted") {
+        const enabled = await enableNativeNotifications();
+        setNotificationPermission(enabled.granted ? "granted" : enabled.reason);
+        if (!enabled.granted) throw new Error(enabled.reason === "denied" ? "Notifications are disabled in iPhone Settings." : "Notifications were not enabled.");
+      }
+      const { error } = await saveNotificationPreferences(user.id, next);
+      if (error) throw error;
+    } catch (saveError) {
+      if (updateId === notificationUpdateRef.current) setNotificationPreferences(previous);
+      setNotificationError(saveError.message || "Couldn't save notification settings.");
+    } finally {
+      if (updateId === notificationUpdateRef.current) setNotificationBusy(false);
+    }
   }
 
   async function handleSubmit(e) {
@@ -263,9 +289,9 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
 
         {!isFirstTime && isNativePlatform() && notificationPreferences && <Card style={{ marginBottom: "var(--space-3)", padding: 0, overflow:"hidden" }}>
           <div style={{ padding:"var(--space-4)" }}><SectionTitle icon={Bell}>Notifications</SectionTitle><p style={{ margin:0, fontSize:"var(--text-caption-size)", color:"var(--color-text-secondary)" }}>Circle reminders use this iPhone’s local time.</p>{notificationPermission !== "granted" && <Button type="button" variant="secondary" fullWidth loading={notificationBusy} onClick={requestNotifications} style={{ marginTop:"var(--space-3)" }}>Enable notifications</Button>}</div>
-          <ToggleRow icon={Bell} label="New Circle challenges" description="When a Circle schedules a new challenge" checked={notificationPreferences.circle_challenges_enabled} onChange={(value) => updateNotificationPreference({ circle_challenges_enabled:value })} divided />
-          <div style={{ padding:"var(--space-4)", borderTop:"1px solid var(--color-border)" }}><div style={{ color:"var(--color-text-primary)", fontSize:"var(--text-body-size)", fontWeight:600 }}>Daily challenge reminder</div><div style={{ marginTop:"var(--space-2)" }}><SegmentedControl value={notificationPreferences.daily_reminder_period} onChange={(value) => updateNotificationPreference({ daily_reminder_period:value })} options={[{value:"off",label:"Off"},{value:"morning",label:"Morning"},{value:"afternoon",label:"Afternoon"},{value:"evening",label:"Evening"}]} /></div><p style={{ margin:"var(--space-2) 0 0", fontSize:11, color:"var(--color-text-secondary)" }}>Morning 9 AM · Afternoon 3 PM · Evening 7 PM</p></div>
-          <ToggleRow icon={Bell} label="Score & competition updates" description="Results and changes in your challenge standings" checked={notificationPreferences.competition_updates_enabled} onChange={(value) => updateNotificationPreference({ competition_updates_enabled:value })} divided />
+          <ToggleRow icon={Bell} label="New Circle challenges" description="When a Circle schedules a new challenge" checked={notificationPreferences.circle_challenges_enabled} disabled={notificationBusy} onChange={(value) => updateNotificationPreference({ circle_challenges_enabled:value })} divided />
+          <div style={{ padding:"var(--space-4)", borderTop:"1px solid var(--color-border)" }}><div style={{ color:"var(--color-text-primary)", fontSize:"var(--text-body-size)", fontWeight:600 }}>Daily challenge reminder</div><div style={{ marginTop:"var(--space-2)" }}><SegmentedControl value={notificationPreferences.daily_reminder_period} disabled={notificationBusy} onChange={(value) => updateNotificationPreference({ daily_reminder_period:value })} options={[{value:"off",label:"Off"},{value:"morning",label:"Morning"},{value:"afternoon",label:"Afternoon"},{value:"evening",label:"Evening"}]} /></div><p style={{ margin:"var(--space-2) 0 0", fontSize:11, color:"var(--color-text-secondary)" }}>Morning 9 AM · Afternoon 3 PM · Evening 7 PM</p></div>
+          <ToggleRow icon={Bell} label="Score & competition updates" description="Results and changes in your challenge standings" checked={notificationPreferences.competition_updates_enabled} disabled={notificationBusy} onChange={(value) => updateNotificationPreference({ competition_updates_enabled:value })} divided />
           {notificationError && <div style={{ padding:"0 var(--space-4) var(--space-4)" }}><StatusBanner variant="warning">{notificationError}</StatusBanner></div>}
         </Card>}
 
@@ -370,7 +396,7 @@ function FormField({ label, children, last = false }) {
   );
 }
 
-function SegmentedControl({ value, onChange, options }) {
+function SegmentedControl({ value, onChange, options, disabled = false }) {
   return (
     <div role="group" style={{ display: "grid", gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))`, gap: 2, padding: 3, border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)" }}>
       {options.map(({ value: optionValue, label, Icon }) => {
@@ -379,6 +405,7 @@ function SegmentedControl({ value, onChange, options }) {
           <button
             type="button"
             key={optionValue}
+            disabled={disabled}
             onClick={() => onChange(optionValue)}
             aria-pressed={selected}
             className="profile-segment-button"
@@ -393,12 +420,13 @@ function SegmentedControl({ value, onChange, options }) {
   );
 }
 
-function ToggleRow({ icon: Icon, label, description, checked, onChange, divided = false }) {
+function ToggleRow({ icon: Icon, label, description, checked, onChange, divided = false, disabled = false }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
       className="profile-toggle-row"
       style={{ width: "100%", minHeight: 68, display: "flex", alignItems: "center", gap: "var(--space-3)", padding: "var(--space-3) var(--space-4)", border: 0, borderTop: divided ? "1px solid var(--color-border)" : 0, background: "transparent", color: "inherit", font: "inherit", textAlign: "left", cursor: "pointer" }}

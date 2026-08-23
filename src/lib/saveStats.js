@@ -79,7 +79,10 @@ export async function saveStats({ userId, game, dayIndex, seconds, mistakes, hin
       return { alreadyPlayed: true };
     }
     if (data?.id) {
-      if (data.circle_challenge_id && data.challenge_date) void cancelDailyReminderForDate(data.challenge_date);
+      if (data.circle_challenge_id && data.challenge_date) {
+        void cancelDailyReminderForDate(data.challenge_date);
+        if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("imbored:challenge-completed"));
+      }
       const { data: reward, error: rewardError } = await supabase.rpc("award_game_points", { target_stat_id: data.id });
       return { data, error, reward, rewardError };
     }

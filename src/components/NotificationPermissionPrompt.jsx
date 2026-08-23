@@ -16,8 +16,12 @@ export default function NotificationPermissionPrompt({ userId }) {
     const timer = window.setTimeout(async () => {
       let dismissed = false;
       try { dismissed = window.localStorage.getItem(dismissedKey) === "true"; } catch { /* session-only prompt */ }
-      const status = await nativePermissionStatus();
-      if (!cancelled && !dismissed && status.receive === "prompt") setVisible(true);
+      try {
+        const status = await nativePermissionStatus();
+        if (!cancelled && !dismissed && status.receive === "prompt") setVisible(true);
+      } catch {
+        // Native notification support is optional; never interrupt app startup.
+      }
     }, 1200);
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [dismissedKey, userId]);
@@ -29,10 +33,13 @@ export default function NotificationPermissionPrompt({ userId }) {
 
   async function enable() {
     setBusy(true); setMessage("");
-    const result = await enableNativeNotifications();
-    setBusy(false);
-    if (result.granted) dismiss();
-    else setMessage(result.reason === "denied" ? "Notifications are disabled in iPhone Settings." : "Notifications were not enabled.");
+    try {
+      const result = await enableNativeNotifications();
+      if (result.granted) dismiss();
+      else setMessage(result.reason === "denied" ? "Notifications are disabled in iPhone Settings." : "Notifications were not enabled.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (!visible) return null;

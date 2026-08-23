@@ -3,15 +3,13 @@ import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 import { supabase, supabaseAuthStorage, supabaseAuthStorageKey, supabaseReady } from "./supabase.js";
 import { isNativePlatform } from "./platform.js";
-import { unregisterNativeDevice } from "./nativeNotifications.js";
+import { prepareNativeNotificationLogout } from "./nativeNotifications.js";
+import { NATIVE_AUTH_CALLBACK, completeNativeOAuthCallback, parseNativeOAuthCallback } from "./nativeOAuth.js";
 
 const AuthContext = createContext(null);
-const NATIVE_AUTH_CALLBACK = "imbored://auth/callback";
 const NATIVE_OAUTH_PENDING_KEY = "imbored-native-oauth-pending";
 const NATIVE_OAUTH_PENDING_TTL_MS = 10 * 60 * 1000;
 const PKCE_VERIFIER_KEY = `${supabaseAuthStorageKey}-code-verifier`;
-const handledNativeOAuthUrls = new Set();
-let nativeOAuthExchange = null;
 
 function nativeOAuthIsPending() {
   const startedAt = Number(supabaseAuthStorage?.getItem(NATIVE_OAUTH_PENDING_KEY));
@@ -27,49 +25,17 @@ function markNativeOAuthPending(pending) {
 }
 
 async function completeNativeOAuth(url) {
-  if (!url?.startsWith(NATIVE_AUTH_CALLBACK)) return;
-
-  // appUrlOpen and getLaunchUrl can both report the same URL, including
-  // across a React lifecycle remount. A PKCE code and verifier are one-use.
-  if (handledNativeOAuthUrls.has(url)) return nativeOAuthExchange;
-  handledNativeOAuthUrls.add(url);
-  nativeOAuthExchange = exchangeNativeOAuth(url);
-  return nativeOAuthExchange;
-}
-
-async function exchangeNativeOAuth(url) {
-
-  const callback = new URL(url);
-  const hash = new URLSearchParams(callback.hash.replace(/^#/, ""));
-  const errorDescription = callback.searchParams.get("error_description")
-    || hash.get("error_description");
-  if (errorDescription) throw new Error(errorDescription);
-
-  try {
-    const code = callback.searchParams.get("code");
-    if (code) {
+  return completeNativeOAuthCallback(url, async (code) => {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
       if (error) throw error;
-    } else {
-      const accessToken = hash.get("access_token");
-      const refreshToken = hash.get("refresh_token");
-      if (!accessToken || !refreshToken) throw new Error("The sign-in callback did not contain a session.");
-      const { error } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      });
-      if (error) throw error;
-    }
-  } finally {
     markNativeOAuthPending(false);
-  }
-
-  try {
-    await Browser.close();
-  } catch (error) {
-    // The deep link can dismiss SFSafariViewController before this runs.
-    console.debug("OAuth browser was already closed:", error);
-  }
+    try {
+      await Browser.close();
+    } catch (error) {
+      // The deep link can dismiss SFSafariViewController before this runs.
+      console.debug("OAuth browser was already closed:", error);
+    }
+  });
 }
 
 export function AuthProvider({ children }) {
@@ -242,10 +208,15 @@ export function AuthProvider({ children }) {
 
     let cancelled = false;
     async function handleUrl(url) {
-      if (cancelled || !url?.startsWith(NATIVE_AUTH_CALLBACK)) return;
+      const callback = parseNativeOAuthCallback(url);
+      if (cancelled || !callback) return;
       try {
         await completeNativeOAuth(url);
       } catch (error) {
+        if (callback.errorDescription) {
+          markNativeOAuthPending(false);
+          void Browser.close().catch(() => {});
+        }
         console.error("Unable to complete native OAuth sign-in:", error);
         if (!cancelled) window.alert(`Google sign-in could not be completed: ${error.message}`);
       }
@@ -256,8 +227,11 @@ export function AuthProvider({ children }) {
       .then((handle) => {
         if (cancelled) void handle.remove();
         else listenerHandle = handle;
-      });
-    void App.getLaunchUrl().then((launch) => { void handleUrl(launch?.url); });
+      })
+      .catch((error) => console.error("Unable to listen for native OAuth callbacks:", error));
+    void App.getLaunchUrl()
+      .then((launch) => { void handleUrl(launch?.url); })
+      .catch((error) => console.error("Unable to inspect the native launch URL:", error));
 
     return () => {
       cancelled = true;
@@ -397,8 +371,11 @@ export function AuthProvider({ children }) {
 
   async function signOut() {
     if (!supabaseReady) return;
-    await unregisterNativeDevice();
-    await supabase.auth.signOut();
+    try {
+      await prepareNativeNotificationLogout();
+    } finally {
+      await supabase.auth.signOut();
+    }
   }
 
   async function saveProfile({ name, icon, is_private, mood, default_mode, show_stats_to_others, week_starts_on, theme_preference }) {

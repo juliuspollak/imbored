@@ -3,35 +3,30 @@ import { LocalNotifications } from "@capacitor/local-notifications";
 import { isNativePlatform } from "./platform.js";
 import { supabase, supabaseReady } from "./supabase.js";
 import { buildDailyReminderCandidates, localCalendarDate } from "./notificationSchedule.js";
+import { notificationNavigation } from "./notificationNavigation.js";
 
 const INSTALLATION_KEY = "imbored-native-installation-id";
 const LOCAL_REMINDER_KIND = "circle-daily-reminder";
 let activeUserId = null;
 let listenersPromise = null;
+let reminderSyncVersion = 0;
 
 function installationId() {
-  let value = window.localStorage.getItem(INSTALLATION_KEY);
-  if (!value) {
-    value = globalThis.crypto?.randomUUID?.() || `ios-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    window.localStorage.setItem(INSTALLATION_KEY, value);
+  try {
+    let value = window.localStorage.getItem(INSTALLATION_KEY);
+    if (!value) {
+      value = globalThis.crypto?.randomUUID?.() || `ios-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      window.localStorage.setItem(INSTALLATION_KEY, value);
+    }
+    return value;
+  } catch (error) {
+    console.error("Unable to access the native notification installation identifier:", error);
+    return null;
   }
-  return value;
 }
 
 function currentTimezone() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-}
-
-function notificationNavigation(data = {}) {
-  const route = data.route || data.type;
-  if (["circle_challenge", "daily_challenge", "competition_update", "challenge_result"].includes(route)) {
-    return {
-      screen:"circles",
-      circleId:Number(data.circleId || data.circle_id) || null,
-      challengeId:Number(data.challengeId || data.challenge_id) || null,
-    };
-  }
-  return null;
 }
 
 function dispatchNotificationNavigation(data) {
@@ -41,18 +36,33 @@ function dispatchNotificationNavigation(data) {
 
 async function registerDeviceToken(token) {
   if (!activeUserId || !supabaseReady || !token) return;
-  const { error } = await supabase.rpc("register_native_push_device", {
-    installation_id_in:installationId(),
-    platform_in:"ios",
-    device_token_in:token,
-    timezone_in:currentTimezone(),
-  });
-  if (error) console.error("Unable to register this device for notifications:", error.message);
+  const nativeInstallationId = installationId();
+  if (!nativeInstallationId) return;
+  try {
+    const { error } = await supabase.rpc("register_native_push_device", {
+      installation_id_in:nativeInstallationId,
+      platform_in:"ios",
+      device_token_in:token,
+      timezone_in:currentTimezone(),
+    });
+    if (error) console.error("Unable to register this device for notifications:", error.message);
+  } catch (error) {
+    console.error("Unable to register this device for notifications:", error);
+  }
 }
 
 async function unregisterNativeDevice() {
   if (!isNativePlatform() || !supabaseReady) return;
-  await supabase.rpc("unregister_native_push_device", { installation_id_in:installationId() });
+  const nativeInstallationId = installationId();
+  if (!nativeInstallationId) return;
+  const { error } = await supabase.rpc("unregister_native_push_device", { installation_id_in:nativeInstallationId });
+  if (error) throw error;
+}
+
+async function registerForPushIfGranted() {
+  if (!activeUserId) return;
+  const permission = await PushNotifications.checkPermissions();
+  if (permission.receive === "granted") await PushNotifications.register();
 }
 
 async function startNativeNotificationListeners(userId) {
@@ -70,24 +80,39 @@ async function startNativeNotificationListeners(userId) {
     ]);
   }
   await listenersPromise;
+  try {
+    await registerForPushIfGranted();
+  } catch (error) {
+    console.error("Unable to refresh native push registration:", error);
+  }
   return () => { if (activeUserId === userId) activeUserId = null; };
 }
 
 async function nativePermissionStatus() {
   if (!isNativePlatform()) return { native:false, receive:"unavailable" };
-  const push = await PushNotifications.checkPermissions();
-  return { native:true, receive:push.receive };
+  try {
+    const push = await PushNotifications.checkPermissions();
+    return { native:true, receive:push.receive };
+  } catch (error) {
+    return { native:true, receive:"unavailable", error };
+  }
 }
 
 async function enableNativeNotifications() {
   if (!isNativePlatform()) return { granted:false, reason:"unavailable" };
-  let push = await PushNotifications.checkPermissions();
-  if (push.receive === "prompt" || push.receive === "prompt-with-rationale") push = await PushNotifications.requestPermissions();
-  if (push.receive !== "granted") return { granted:false, reason:push.receive };
-  const local = await LocalNotifications.checkPermissions();
-  if (local.display !== "granted") await LocalNotifications.requestPermissions();
-  await PushNotifications.register();
-  return { granted:true };
+  try {
+    let push = await PushNotifications.checkPermissions();
+    if (push.receive === "prompt" || push.receive === "prompt-with-rationale") push = await PushNotifications.requestPermissions();
+    if (push.receive !== "granted") return { granted:false, reason:push.receive };
+    await PushNotifications.register();
+    let local = await LocalNotifications.checkPermissions();
+    if (local.display !== "granted") local = await LocalNotifications.requestPermissions();
+    if (local.display !== "granted") return { granted:false, reason:local.display };
+    return { granted:true };
+  } catch (error) {
+    console.error("Unable to enable native notifications:", error);
+    return { granted:false, reason:"unavailable", error };
+  }
 }
 
 async function loadNotificationPreferences(userId) {
@@ -108,28 +133,47 @@ async function saveNotificationPreferences(userId, preferences) {
     updated_at:new Date().toISOString(),
   };
   const { data, error } = await supabase.from("notification_preferences").upsert(payload).select().single();
-  if (!error) await syncDailyChallengeReminders(userId, data);
+  if (!error) {
+    try {
+      await syncDailyChallengeReminders(userId, data);
+    } catch (syncError) {
+      // The preference is saved server-side even if iOS scheduling is
+      // temporarily unavailable. Foreground refresh will retry it later.
+      console.error("Unable to apply daily challenge reminders:", syncError);
+    }
+  }
   return { data, error };
 }
 
 async function cancelDailyChallengeReminders() {
   if (!isNativePlatform()) return;
-  const pending = await LocalNotifications.getPending();
-  const reminders = pending.notifications.filter((item) => item.extra?.kind === LOCAL_REMINDER_KIND).map(({ id }) => ({ id }));
-  if (reminders.length) await LocalNotifications.cancel({ notifications:reminders });
+  try {
+    const pending = await LocalNotifications.getPending();
+    const reminders = pending.notifications.filter((item) => item.extra?.kind === LOCAL_REMINDER_KIND).map(({ id }) => ({ id }));
+    if (reminders.length) await LocalNotifications.cancel({ notifications:reminders });
+  } catch (error) {
+    console.error("Unable to cancel daily challenge reminders:", error);
+  }
 }
 
 async function cancelDailyReminderForDate(dateString) {
   if (!isNativePlatform() || !dateString) return;
-  const pending = await LocalNotifications.getPending();
-  const reminder = pending.notifications.find((item) => item.id === Number(String(dateString).replaceAll("-", "")) && item.extra?.kind === LOCAL_REMINDER_KIND);
-  if (reminder) await LocalNotifications.cancel({ notifications:[{ id:reminder.id }] });
+  try {
+    const pending = await LocalNotifications.getPending();
+    const reminder = pending.notifications.find((item) => item.id === Number(String(dateString).replaceAll("-", "")) && item.extra?.kind === LOCAL_REMINDER_KIND);
+    if (reminder) await LocalNotifications.cancel({ notifications:[{ id:reminder.id }] });
+  } catch (error) {
+    console.error("Unable to cancel the completed challenge reminder:", error);
+  }
 }
 
 async function syncDailyChallengeReminders(userId, preferences) {
   if (!isNativePlatform()) return;
-  await cancelDailyChallengeReminders();
-  if (!userId || preferences?.daily_reminder_period === "off") return;
+  const syncVersion = ++reminderSyncVersion;
+  if (!userId || preferences?.daily_reminder_period === "off") {
+    await cancelDailyChallengeReminders();
+    return;
+  }
   const permission = await LocalNotifications.checkPermissions();
   if (permission.display !== "granted") return;
   const today = localCalendarDate();
@@ -144,12 +188,20 @@ async function syncDailyChallengeReminders(userId, preferences) {
     return;
   }
   const challengeIds = [...new Set((rounds || []).map((item) => item.challenge_id))];
-  if (!challengeIds.length) return;
+  if (!challengeIds.length) {
+    if (syncVersion === reminderSyncVersion) await cancelDailyChallengeReminders();
+    return;
+  }
   const { data:challenges, error:challengeError } = await supabase.from("circle_weekly_challenges").select("id,circle_id,title,closed_at").in("id", challengeIds).is("closed_at", null);
-  if (challengeError) return;
+  if (challengeError) {
+    console.error("Unable to refresh daily challenge reminders:", challengeError.message);
+    return;
+  }
   const challengeById = new Map((challenges || []).map((item) => [Number(item.id), item]));
   const eligibleRounds = (rounds || []).filter((item) => challengeById.has(Number(item.challenge_id)));
   const reminders = buildDailyReminderCandidates({ rounds:eligibleRounds, completed:completed || [], period:preferences.daily_reminder_period });
+  if (syncVersion !== reminderSyncVersion) return;
+  await cancelDailyChallengeReminders();
   if (!reminders.length) return;
   await LocalNotifications.schedule({ notifications:reminders.map((item) => {
     const challenge = challengeById.get(Number(item.round.challenge_id));
@@ -163,12 +215,36 @@ async function syncDailyChallengeReminders(userId, preferences) {
   }) });
 }
 
+async function refreshNativeNotificationState(userId) {
+  if (!userId || !isNativePlatform()) return;
+  const preferences = await loadNotificationPreferences(userId);
+  if (preferences.loadError) {
+    console.error("Unable to load notification preferences:", preferences.loadError);
+    return;
+  }
+  await syncDailyChallengeReminders(userId, preferences);
+}
+
+async function prepareNativeNotificationLogout() {
+  if (!isNativePlatform()) return;
+  activeUserId = null;
+  reminderSyncVersion += 1;
+  const results = await Promise.allSettled([
+    cancelDailyChallengeReminders(),
+    unregisterNativeDevice(),
+  ]);
+  for (const result of results) {
+    if (result.status === "rejected") console.error("Unable to fully clean up native notifications during sign-out:", result.reason);
+  }
+}
+
 export {
   enableNativeNotifications,
   cancelDailyReminderForDate,
   loadNotificationPreferences,
   nativePermissionStatus,
-  notificationNavigation,
+  prepareNativeNotificationLogout,
+  refreshNativeNotificationState,
   saveNotificationPreferences,
   startNativeNotificationListeners,
   syncDailyChallengeReminders,
