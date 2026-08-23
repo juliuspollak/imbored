@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  calendarDateInTimezone,
   mondayForDateString,
   pastIsoDays,
   resolveChallengeDates,
@@ -65,4 +66,20 @@ test("existing challenge records retain their stored week and legacy records get
   const now = localNoon(2026, 8, 23);
   assert.equal(weekStartForChallenge({ week_start:"2026-08-24" }, now), "2026-08-24");
   assert.equal(weekStartForChallenge({ challenge_id:42 }, now), "2026-08-17");
+});
+
+test("Circle timezone, not device timezone, controls the Sunday/Monday boundary", () => {
+  const instant = new Date("2026-08-23T14:30:00.000Z");
+  const sydneyToday = calendarDateInTimezone("Australia/Sydney", instant);
+  const losAngelesToday = calendarDateInTimezone("America/Los_Angeles", instant);
+  assert.equal(sydneyToday, "2026-08-24");
+  assert.equal(losAngelesToday, "2026-08-23");
+  assert.equal(weekStartForMode("this", { calendarToday:sydneyToday }), "2026-08-24");
+  assert.equal(weekStartForMode("this", { calendarToday:losAngelesToday }), "2026-08-17");
+});
+
+test("Sydney calendar dates remain stable across DST and year/month boundaries", () => {
+  assert.equal(calendarDateInTimezone("Australia/Sydney", new Date("2026-10-03T15:30:00.000Z")), "2026-10-04");
+  assert.equal(calendarDateInTimezone("Australia/Sydney", new Date("2026-12-31T13:30:00.000Z")), "2027-01-01");
+  assert.equal(calendarDateInTimezone("Invalid/Timezone", new Date("2026-08-31T14:30:00.000Z")), "2026-09-01");
 });

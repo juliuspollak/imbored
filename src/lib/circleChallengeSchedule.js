@@ -12,8 +12,25 @@ function mondayForDateString(dateString) {
   return localDateString(date);
 }
 
-function weekStartForMode(mode, { now = new Date(), chosenDate = null } = {}) {
-  const thisWeek = currentMondayString(now);
+function resolveCalendarTimezone(timezone) {
+  try {
+    new Intl.DateTimeFormat("en-AU", { timeZone:timezone || "Australia/Sydney" }).format(new Date());
+    return timezone || "Australia/Sydney";
+  } catch {
+    return "Australia/Sydney";
+  }
+}
+
+function calendarDateInTimezone(timezone, now = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone:resolveCalendarTimezone(timezone), year:"numeric", month:"2-digit", day:"2-digit",
+  }).formatToParts(now);
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${value.year}-${value.month}-${value.day}`;
+}
+
+function weekStartForMode(mode, { now = new Date(), chosenDate = null, calendarToday = null } = {}) {
+  const thisWeek = mondayForDateString(calendarToday || localDateString(now));
   if (mode === "next") return addDays(thisWeek, 7);
   if (mode === "choose" && chosenDate) return mondayForDateString(chosenDate);
   return thisWeek;
@@ -29,16 +46,16 @@ function resolveChallengeDates({ weekStart, selectedDays = [] }) {
     .map((isoDay) => ({ isoDay, date: addDays(weekStart, isoDay - 1) }));
 }
 
-function pastIsoDays(weekStart, now = new Date()) {
-  const today = localDateString(now);
+function pastIsoDays(weekStart, now = new Date(), calendarToday = null) {
+  const today = calendarToday || localDateString(now);
   return new Set(resolveChallengeDates({ weekStart, selectedDays:[1,2,3,4,5,6,7] })
     .filter((item) => item.date < today)
     .map((item) => item.isoDay));
 }
 
-function shouldAdvanceToNextWeek({ weekStart, selectedDays = [], now = new Date() }) {
-  if (weekStart !== currentMondayString(now) || !selectedDays.length) return false;
-  const today = localDateString(now);
+function shouldAdvanceToNextWeek({ weekStart, selectedDays = [], now = new Date(), calendarToday = null }) {
+  const today = calendarToday || localDateString(now);
+  if (weekStart !== mondayForDateString(today) || !selectedDays.length) return false;
   return resolveChallengeDates({ weekStart, selectedDays }).every((item) => item.date < today);
 }
 
@@ -54,12 +71,14 @@ function formatChallengeWeek(weekStart, locale = undefined) {
 }
 
 export {
+  calendarDateInTimezone,
   formatChallengeDate,
   formatChallengeWeek,
   mondayForDateString,
   parseLocalDate,
   pastIsoDays,
   resolveChallengeDates,
+  resolveCalendarTimezone,
   shouldAdvanceToNextWeek,
   weekStartForChallenge,
   weekStartForMode,

@@ -2,11 +2,13 @@ import { PushNotifications } from "@capacitor/push-notifications";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { isNativePlatform } from "./platform.js";
 import { supabase, supabaseReady } from "./supabase.js";
-import { buildDailyReminderCandidates, localCalendarDate } from "./notificationSchedule.js";
+import { buildDailyReminderCandidates, localCalendarDate, reminderHorizonEnd } from "./notificationSchedule.js";
 import { notificationNavigation } from "./notificationNavigation.js";
+import { hasReminderTimezoneChanged } from "./notificationTimezone.js";
 
 const INSTALLATION_KEY = "imbored-native-installation-id";
 const LOCAL_REMINDER_KIND = "circle-daily-reminder";
+const REMINDER_TIMEZONE_KEY_PREFIX = "imbored-reminder-timezone";
 let activeUserId = null;
 let listenersPromise = null;
 let reminderSyncVersion = 0;
@@ -27,6 +29,22 @@ function installationId() {
 
 function currentTimezone() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+}
+
+function reminderTimezoneKey(userId) {
+  return `${REMINDER_TIMEZONE_KEY_PREFIX}-${userId}`;
+}
+
+function reminderTimezoneChanged(userId, timezone = currentTimezone()) {
+  try {
+    return hasReminderTimezoneChanged(window.localStorage.getItem(reminderTimezoneKey(userId)), timezone);
+  } catch {
+    return true;
+  }
+}
+
+function rememberReminderTimezone(userId, timezone = currentTimezone()) {
+  try { window.localStorage.setItem(reminderTimezoneKey(userId), timezone); } catch { /* foreground refresh remains the fallback */ }
 }
 
 function dispatchNotificationNavigation(data) {
@@ -172,15 +190,15 @@ async function syncDailyChallengeReminders(userId, preferences) {
   const syncVersion = ++reminderSyncVersion;
   if (!userId || preferences?.daily_reminder_period === "off") {
     await cancelDailyChallengeReminders();
+    if (userId) rememberReminderTimezone(userId);
     return;
   }
   const permission = await LocalNotifications.checkPermissions();
   if (permission.display !== "granted") return;
   const today = localCalendarDate();
-  const through = new Date();
-  through.setDate(through.getDate() + 30);
+  const through = reminderHorizonEnd();
   const [{ data:rounds, error:roundError }, { data:completed, error:completedError }] = await Promise.all([
-    supabase.from("circle_challenge_rounds").select("challenge_id,challenge_date,game").gte("challenge_date", today).lte("challenge_date", localCalendarDate(through)).order("challenge_date"),
+    supabase.from("circle_challenge_rounds").select("challenge_id,challenge_date,game").gte("challenge_date", today).lte("challenge_date", through).order("challenge_date"),
     supabase.from("game_stats").select("circle_challenge_id,challenge_date").eq("user_id", userId).not("circle_challenge_id", "is", null).gte("challenge_date", today),
   ]);
   if (roundError || completedError) {
@@ -189,7 +207,10 @@ async function syncDailyChallengeReminders(userId, preferences) {
   }
   const challengeIds = [...new Set((rounds || []).map((item) => item.challenge_id))];
   if (!challengeIds.length) {
-    if (syncVersion === reminderSyncVersion) await cancelDailyChallengeReminders();
+    if (syncVersion === reminderSyncVersion) {
+      await cancelDailyChallengeReminders();
+      rememberReminderTimezone(userId);
+    }
     return;
   }
   const { data:challenges, error:challengeError } = await supabase.from("circle_weekly_challenges").select("id,circle_id,title,closed_at").in("id", challengeIds).is("closed_at", null);
@@ -202,7 +223,10 @@ async function syncDailyChallengeReminders(userId, preferences) {
   const reminders = buildDailyReminderCandidates({ rounds:eligibleRounds, completed:completed || [], period:preferences.daily_reminder_period });
   if (syncVersion !== reminderSyncVersion) return;
   await cancelDailyChallengeReminders();
-  if (!reminders.length) return;
+  if (!reminders.length) {
+    rememberReminderTimezone(userId);
+    return;
+  }
   await LocalNotifications.schedule({ notifications:reminders.map((item) => {
     const challenge = challengeById.get(Number(item.round.challenge_id));
     return {
@@ -213,6 +237,7 @@ async function syncDailyChallengeReminders(userId, preferences) {
       extra:{ kind:LOCAL_REMINDER_KIND, route:"daily_challenge", circleId:challenge?.circle_id, challengeId:item.round.challenge_id, challengeDate:item.date },
     };
   }) });
+  rememberReminderTimezone(userId);
 }
 
 async function refreshNativeNotificationState(userId) {
@@ -245,6 +270,7 @@ export {
   nativePermissionStatus,
   prepareNativeNotificationLogout,
   refreshNativeNotificationState,
+  reminderTimezoneChanged,
   saveNotificationPreferences,
   startNativeNotificationListeners,
   syncDailyChallengeReminders,

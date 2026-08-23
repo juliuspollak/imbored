@@ -58,7 +58,7 @@ import { applyThemePreference, cacheThemePreference } from "./lib/theme.js";
 import { GRIDLY_BRAND, HIVE_BRAND } from "./lib/gameBranding.jsx";
 import { isNativePlatform } from "./lib/platform.js";
 import { shouldLockNativeDocumentScroll } from "./lib/nativeScrollLock.js";
-import { refreshNativeNotificationState, startNativeNotificationListeners } from "./lib/nativeNotifications.js";
+import { refreshNativeNotificationState, reminderTimezoneChanged, startNativeNotificationListeners } from "./lib/nativeNotifications.js";
 
 const GAME_COMPONENTS = {
   hive: { Component: HiveGame, label: HIVE_BRAND.name },
@@ -284,6 +284,10 @@ function AppShell() {
 
     function refreshReminders() {
       if (user?.id && document.visibilityState === "visible") {
+        // A foreground refresh also rolls the 30-day horizon forward. The
+        // persisted comparison makes timezone changes explicit and testable;
+        // the same refresh picks up Circle edits/deletions even when unchanged.
+        if (reminderTimezoneChanged(user.id)) console.info("Device timezone changed; rebuilding local reminders.");
         void refreshNativeNotificationState(user.id).catch((error) => console.error("Unable to refresh native reminders:", error));
       }
     }

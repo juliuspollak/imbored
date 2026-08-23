@@ -9,10 +9,11 @@ import { useAuth } from "./lib/AuthContext.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
 import { buildCircleChallengeRounds } from "./lib/circleChallengeRounds.js";
-import { currentMondayString, localDateString } from "./lib/circleChallengeRounds.js";
+import { currentMondayString } from "./lib/circleChallengeRounds.js";
 import {
-  formatChallengeDate, formatChallengeWeek, pastIsoDays, resolveChallengeDates,
-  shouldAdvanceToNextWeek, weekStartForChallenge, weekStartForMode,
+  calendarDateInTimezone, formatChallengeDate, formatChallengeWeek, pastIsoDays,
+  resolveCalendarTimezone, resolveChallengeDates, shouldAdvanceToNextWeek,
+  weekStartForChallenge, weekStartForMode,
 } from "./lib/circleChallengeSchedule.js";
 import { useGameConfig } from "./lib/useGameConfig.js";
 import Page from "./components/Page.jsx";
@@ -196,6 +197,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
             rewardGoesTo:item.reward_goes_to || "winner",
             schedule:item.repeats_weekly ? "repeat" : "once",
             durationWeeks:Number(item.series_weeks || 1),
+            occurrenceNumber:Number(item.occurrence_number || 1),
             locked:!!item.is_locked,
             challengeId:item.challenge_id,
             stakeRewardId:item.stake_reward_id || null,
@@ -364,20 +366,27 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
     const edit = challengeFor(challengeKey);
     if (edit.locked) return;
     const days = edit.days.includes(day) ? edit.days.filter((i) => i !== day) : [...edit.days,day].sort();
-    if (!edit.challengeId && !edit.weekExplicit && shouldAdvanceToNextWeek({ weekStart:edit.weekStart, selectedDays:days })) {
-      patchChallenge(challengeKey, { days, weekMode:"next", weekStart:weekStartForMode("next"), chosenDate:"" });
+    const calendarToday = calendarDateInTimezone(rosterCircle?.timezone);
+    if (!edit.challengeId && !edit.weekExplicit && shouldAdvanceToNextWeek({ weekStart:edit.weekStart, selectedDays:days, calendarToday })) {
+      patchChallenge(challengeKey, { days, weekMode:"next", weekStart:weekStartForMode("next", { calendarToday }), chosenDate:"" });
     } else patchChallenge(challengeKey, { days });
   }
   function selectChallengeWeek(challengeKey, mode, chosenDate = "") {
-    const weekStart = weekStartForMode(mode, { chosenDate });
-    const unavailable = mode === "this" ? pastIsoDays(weekStart) : new Set();
+    const calendarToday = calendarDateInTimezone(rosterCircle?.timezone);
+    const weekStart = weekStartForMode(mode, { chosenDate, calendarToday });
+    const unavailable = mode === "this" ? pastIsoDays(weekStart, new Date(), calendarToday) : new Set();
     const edit = challengeFor(challengeKey);
     patchChallenge(challengeKey, {
       weekMode:mode, weekStart, chosenDate, weekExplicit:true,
       days:edit.days.filter((day) => !unavailable.has(day)),
     });
   }
-  function startNewChallenge(circleId) { patchChallenge(`new:${circleId}`, defaultChallenge()); setExpandedChallengeId(`new:${circleId}`); }
+  function startNewChallenge(circleId) {
+    const circle = circles.find((item) => Number(item.id) === Number(circleId));
+    const calendarToday = calendarDateInTimezone(circle?.timezone);
+    patchChallenge(`new:${circleId}`, { ...defaultChallenge(), weekStart:weekStartForMode("this", { calendarToday }) });
+    setExpandedChallengeId(`new:${circleId}`);
+  }
 
   async function saveCircleChallenge(circle, challengeKey) {
     const edit = challengeFor(challengeKey); const isStake = edit.rewardType === "stake";
@@ -390,11 +399,10 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
       reward_goes_to_in:edit.rewardType === "prize" ? edit.rewardGoesTo : "winner",
       target_challenge_id:edit.challengeId ? Number(edit.challengeId) : null,
       week_start_in:edit.weekStart,
+      stake_requested_in:isStake,
+      stake_reward_id_in:isStake && edit.stakeRewardId ? Number(edit.stakeRewardId) : null,
+      stake_split_method_in:isStake ? edit.stakeSplitMethod : null,
     });
-    if (!error && isStake && edit.stakeRewardId) {
-      const stakeResult = await supabase.rpc("set_circle_challenge_stake", { target_challenge_id:Number(data), target_reward_id:Number(edit.stakeRewardId), split_method:edit.stakeSplitMethod });
-      error = stakeResult.error;
-    }
     setMsg(error?.message || (edit.challengeId ? "Challenge updated" : "Challenge created"));
     if (!error) { setExpandedChallengeId(null); await refresh(); }
   }
@@ -660,6 +668,8 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
         const manager = canManage(rosterCircle);
         const member = mine.has(rosterCircle.id);
         const owner = rosterCircle.created_by === user?.id;
+        const circleTimezone = resolveCalendarTimezone(rosterCircle.timezone);
+        const circleToday = calendarDateInTimezone(circleTimezone);
         const rosterChallenges = challengesFor(rosterCircle.id);
         const nck = `new:${rosterCircle.id}`;
         const visibleChallenges = expandedChallengeId === nck ? [...rosterChallenges, { challenge_id: nck, challenge_title: "New challenge", isNew: true }] : rosterChallenges;
@@ -702,9 +712,9 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                       const edit = challengeFor(ck);
                       const open = String(expandedChallengeId) === ck;
                       const games = [...new Set([...configuredChallengeGames, ...edit.games.filter((g) => DEFAULT_GAMES.includes(g))])];
-                      const unavailableDays = challenge.isNew && edit.weekMode === "this" ? pastIsoDays(edit.weekStart) : new Set();
+                      const unavailableDays = challenge.isNew && edit.weekMode === "this" ? pastIsoDays(edit.weekStart, new Date(), circleToday) : new Set();
                       const resolvedDates = resolveChallengeDates({ weekStart:edit.weekStart, selectedDays:edit.days });
-                      const hasPastSelectedDay = challenge.isNew && edit.days.some((day) => pastIsoDays(edit.weekStart).has(day));
+                      const hasPastSelectedDay = challenge.isNew && edit.days.some((day) => pastIsoDays(edit.weekStart, new Date(), circleToday).has(day));
                       return <div key={ck} style={{ borderRadius: "var(--radius-md)", overflow: "hidden", background: "var(--color-surface-elevated)", border: open ? "1px solid var(--color-primary-subtle-border)" : "1px solid transparent" }}>
                         <button type="button" onClick={() => setExpandedChallengeId(open ? null : ck)} style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", width: "100%", padding: "var(--space-3)", textAlign: "left", background: "transparent", border: "none", cursor: "pointer", color: "inherit", fontFamily: "inherit" }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
@@ -724,10 +734,11 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                           {challenge.isNew && <fieldset style={{ marginTop: "var(--space-4)", border: "none", padding: 0 }} disabled={!owner || edit.locked}>
                             <legend style={{ fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-text-primary)" }}>Week</legend>
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginTop: "var(--space-2)" }}>
-                              {[["this","This week"],["next","Next week"],["choose","Choose week"]].map(([mode,label]) => <button key={mode} type="button" onClick={() => selectChallengeWeek(ck, mode, mode === "choose" ? (edit.chosenDate || weekStartForMode("next")) : "")} aria-pressed={edit.weekMode === mode} style={{ borderRadius: "var(--radius-sm)", padding: "8px 6px", fontSize: 11, fontWeight: 600, cursor: "pointer", ...challengeChoiceStyle(edit.weekMode === mode) }}>{label}</button>)}
+                              {[["this","This week"],["next","Next week"],["choose","Choose week"]].map(([mode,label]) => <button key={mode} type="button" onClick={() => selectChallengeWeek(ck, mode, mode === "choose" ? (edit.chosenDate || weekStartForMode("next", { calendarToday:circleToday })) : "")} aria-pressed={edit.weekMode === mode} style={{ borderRadius: "var(--radius-sm)", padding: "8px 6px", fontSize: 11, fontWeight: 600, cursor: "pointer", ...challengeChoiceStyle(edit.weekMode === mode) }}>{label}</button>)}
                             </div>
-                            {edit.weekMode === "choose" && <label style={{ display: "block", marginTop: "var(--space-2)" }}><span style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>Pick any date in the week</span><input type="date" min={localDateString()} value={edit.chosenDate || edit.weekStart} onChange={(event) => selectChallengeWeek(ck, "choose", event.target.value)} style={{ display: "block", width: "100%", boxSizing: "border-box", marginTop: 4, borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border-strong)", padding: "8px 12px", background: "var(--color-surface-input)", color: "var(--color-text-primary)", font: "inherit" }} /></label>}
+                            {edit.weekMode === "choose" && <label style={{ display: "block", marginTop: "var(--space-2)" }}><span style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>Pick any date in the week</span><input type="date" min={circleToday} value={edit.chosenDate || edit.weekStart} onChange={(event) => selectChallengeWeek(ck, "choose", event.target.value)} style={{ display: "block", width: "100%", boxSizing: "border-box", marginTop: 4, borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border-strong)", padding: "8px 12px", background: "var(--color-surface-input)", color: "var(--color-text-primary)", font: "inherit" }} /></label>}
                             <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: "var(--space-2)" }}>{formatChallengeWeek(edit.weekStart)}</div>
+                            <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 3 }}>Dates use {circleTimezone.replaceAll("_", " ")} time.</div>
                           </fieldset>}
                           <div style={{ fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-text-primary)", marginTop: "var(--space-4)", marginBottom: "var(--space-1)" }}>Playing days</div>
                           {challenge.isNew && <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginBottom: "var(--space-2)" }}>Choose every day this challenge can be played.</div>}
@@ -738,7 +749,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                           })}</div>
                           {!!edit.games.length && !!edit.days.length && <div style={{ borderRadius: "var(--radius-md)", padding: "var(--space-3)", marginTop: "var(--space-3)", background: "var(--color-primary-subtle)", border: "1px solid var(--color-primary-subtle-border)" }}><div style={{ fontSize: 11, fontWeight: 600, color: "var(--color-text-primary)", marginBottom: "var(--space-2)" }}>{challenge.isNew ? "Challenge dates" : "Daily game schedule"}</div><div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{buildCircleChallengeRounds({ activeDays: edit.days, gameIds: edit.games, weekStart:edit.weekStart }).map((r) => <span key={r.date} style={{ borderRadius: "var(--radius-full)", padding: "4px 10px", fontSize: 11, fontWeight: 600, background: "var(--color-surface)", color: "var(--color-text-primary)" }}>{formatChallengeDate(r.date)} · {GAME_LABELS[r.game] || r.game}</span>)}</div></div>}
                           {/* Schedule */}
-                          <fieldset style={{ marginTop: "var(--space-4)", border: "none", padding: 0 }} disabled={!owner || edit.locked}>
+                          {challenge.isNew ? <fieldset style={{ marginTop: "var(--space-4)", border: "none", padding: 0 }} disabled={!owner || edit.locked}>
                             <legend style={{ fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-text-primary)" }}>Schedule</legend>
                             <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 2, marginBottom: "var(--space-2)" }}>Choose one.</div>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-2)" }}>
@@ -750,13 +761,13 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                               })}
                             </div>
                             {edit.schedule === "repeat" && <label style={{ display: "block", marginTop: "var(--space-2)", borderRadius: "var(--radius-md)", padding: "var(--space-3)", background: "var(--color-primary-subtle)" }}><span style={{ fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-text-primary)" }}>How many weeks?</span><span style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginTop: 6 }}><input type="number" min="2" max="52" value={edit.durationWeeks} onChange={(e) => patchChallenge(ck, { durationWeeks: Math.min(52, Math.max(2, Number(e.target.value) || 2)) })} style={{ width: 72, borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border-strong)", padding: "8px 12px", fontSize: "var(--text-input-size)", background: "var(--color-surface-input)", color: "var(--color-text-primary)", boxSizing: "border-box" }} /><span style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>2–52 weeks</span></span></label>}
-                          </fieldset>
+                          </fieldset> : edit.durationWeeks > 1 && <div style={{ marginTop:"var(--space-4)", padding:"var(--space-3)", borderRadius:"var(--radius-sm)", background:"var(--color-info-bg)", color:"var(--color-info-text)", fontSize:11 }}>This edit changes occurrence {edit.occurrenceNumber} of {edit.durationWeeks} only. Other weeks remain unchanged.</div>}
                           {/* Prize */}
                           <div style={{ marginTop: "var(--space-4)" }}><span style={{ display: "flex", alignItems: "center", gap: "var(--space-1)", fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-text-primary)", marginBottom: "var(--space-2)" }}><Gift size={12} /> Winner's prize</span>
                           {owner && <div style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-2)" }}>{["points","prize","stake"].map((type) => <Button key={type} variant={edit.rewardType === type ? "secondary" : "ghost"} size="sm" disabled={edit.locked} onClick={() => patchChallenge(ck, { rewardType: type })}>{type === "points" ? "Points" : type === "prize" ? "Real prize" : "Stake an item"}</Button>)}</div>}
                           {edit.rewardType === "stake" ? (owner ? <div><select disabled={edit.locked} value={edit.stakeRewardId || ""} onChange={(e) => patchChallenge(ck, { stakeRewardId: e.target.value })} style={{ width: "100%", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border-strong)", padding: "8px 12px", fontSize: "var(--text-body-size)", background: "var(--color-surface-input)", color: "var(--color-text-primary)", boxSizing: "border-box" }}><option value="">Choose an approved item…</option>{myRewards.map((r) => <option key={r.id} value={r.id}>{r.name} · {r.points_cost} pts</option>)}</select><div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-2)" }}>{[["equal","Equal split"],["ranked","Ranked"]].map(([id,label]) => <label key={id} style={{ flex: 1, borderRadius: "var(--radius-sm)", padding: "var(--space-2)", fontSize: "var(--text-caption-size)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, background: edit.stakeSplitMethod === id ? "var(--color-primary-subtle)" : "var(--color-surface)", border: edit.stakeSplitMethod === id ? "1px solid var(--color-primary-subtle-border)" : "1px solid var(--color-border)" }}><input type="radio" name={`split-${ck}`} checked={edit.stakeSplitMethod === id} onChange={() => patchChallenge(ck, { stakeSplitMethod: id })} />{label}</label>)}</div></div> : <div style={{ fontSize: "var(--text-body-secondary-size)" }}><div>{edit.stakeRewardName || "An item"}</div>{!edit.stakeAccepted && <button type="button" onClick={() => acceptStake(ck)} style={{ marginTop: "var(--space-2)", padding: "6px 14px", borderRadius: "var(--radius-sm)", fontSize: "var(--text-caption-size)", fontWeight: 600, background: "var(--color-success-bg)", color: "var(--color-success-text)", border: "none", cursor: "pointer" }}>Accept — I'll pay my share if I don't win</button>}{edit.stakeAccepted && <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: "var(--space-1)" }}>You've accepted this stake.</div>}</div>) : owner ? edit.rewardType === "points" ? <div style={{ display: "flex", alignItems: "center", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border-strong)", background: "var(--color-surface-input)", padding: "0 12px" }}><input disabled={edit.locked} type="number" min="0" max={MAX_CHALLENGE_REWARD_POINTS} value={edit.reward} onChange={(e) => patchChallenge(ck, { reward: clampReward(e.target.value) })} style={{ width: "100%", padding: "8px 0", fontSize: "var(--text-input-size)", background: "transparent", border: "none", outline: "none", color: "var(--color-text-primary)" }} /><span style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)", flexShrink: 0 }}>points (max {MAX_CHALLENGE_REWARD_POINTS})</span></div> : <><div style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-2)" }}>{[["winner","Winner gets it"],["loser","Loser owes it"]].map(([id,label]) => <Button key={id} variant={edit.rewardGoesTo === id ? "secondary" : "ghost"} size="sm" disabled={edit.locked} onClick={() => patchChallenge(ck, { rewardGoesTo: id })}>{label}</Button>)}</div><input disabled={edit.locked} value={edit.rewardLabel} onChange={(e) => patchChallenge(ck, { rewardLabel: e.target.value })} placeholder={edit.rewardGoesTo === "loser" ? "e.g. Clean the bathroom" : "e.g. Movie ticket"} style={{ width: "100%", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border-strong)", padding: "8px 12px", fontSize: "var(--text-input-size)", background: "var(--color-surface-input)", color: "var(--color-text-primary)", boxSizing: "border-box" }} /></> : <div style={{ fontSize: "var(--text-body-secondary-size)", color: "var(--color-text-primary)" }}>{edit.rewardType === "points" ? `${edit.reward} points` : `${edit.rewardLabel || "Prize"}${edit.rewardGoesTo === "loser" ? " · loser owes it" : ""}`}{edit.rewardType === "prize" && !edit.stakeAccepted && <button type="button" onClick={() => acceptStake(ck)} style={{ display: "block", marginTop: "var(--space-2)", padding: "6px 14px", borderRadius: "var(--radius-sm)", fontSize: "var(--text-caption-size)", fontWeight: 600, background: "var(--color-success-bg)", color: "var(--color-success-text)", border: "none", cursor: "pointer" }}>{edit.rewardGoesTo === "loser" ? "Accept — I’ll settle it if I finish last" : "Accept — I’ll help cover it if I don’t win"}</button>}{edit.rewardType === "prize" && edit.stakeAccepted && <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: "var(--space-1)" }}>You’ve agreed to this.</div>}</div>}</div>
                           {challenge.isNew && resolvedDates.length > 0 && <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: "var(--space-3)", textAlign: "center" }}><strong style={{ color: "var(--color-text-primary)" }}>{edit.weekMode === "this" ? "This week" : edit.weekMode === "next" ? "Next week" : "Selected week"} · {resolvedDates.length} challenge day{resolvedDates.length === 1 ? "" : "s"}</strong><br />{formatChallengeWeek(edit.weekStart)}<br />{resolvedDates.map((item) => formatChallengeDate(item.date)).join(", ")}</div>}
-                          {owner && <Button variant="primary" fullWidth disabled={edit.locked || hasPastSelectedDay || !edit.title.trim() || !edit.games.length || !edit.days.length || !edit.schedule || (edit.schedule === "repeat" && (edit.durationWeeks < 2 || edit.durationWeeks > 52))} onClick={() => saveCircleChallenge(rosterCircle, ck)} style={{ marginTop: "var(--space-3)" }}>{challenge.isNew ? "Create challenge" : "Save changes"}</Button>}
+                          {owner && <Button variant="primary" fullWidth disabled={edit.locked || hasPastSelectedDay || !edit.title.trim() || !edit.games.length || !edit.days.length || (challenge.isNew && (!edit.schedule || (edit.schedule === "repeat" && (edit.durationWeeks < 2 || edit.durationWeeks > 52)))) || (edit.rewardType === "stake" && !edit.stakeRewardId)} onClick={() => saveCircleChallenge(rosterCircle, ck)} style={{ marginTop: "var(--space-3)" }}>{challenge.isNew ? "Create challenge" : "Save changes"}</Button>}
                         </div>}
                       </div>;
                     })}
