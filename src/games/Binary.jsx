@@ -15,7 +15,7 @@ import Button from "../components/Button.jsx";
 import { createGameAttemptSeed } from "../lib/gameAttemptSeed.js";
 
 // The in-game symbols deliberately echo the polished fire/ice artwork used on
-// the Binary tile. They are still strongly different by shape, so the puzzle
+// the Twist tile. They are still strongly different by shape, so the puzzle
 // does not rely on red-vs-blue colour discrimination alone.
 function FlameIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
   const id = React.useId().replace(/:/g, "");

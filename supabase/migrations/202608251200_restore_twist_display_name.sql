@@ -1,6 +1,6 @@
--- Keep the persisted game id `binary`, but finish the customer-facing rename
--- in server-generated Messages and notifications. Existing generated messages
--- are updated too so old copy does not remain visible in chat history.
+-- Keep the persisted game id `binary`, while ensuring every server-generated
+-- customer-facing game name is `Twist`. This also repairs system messages if
+-- an environment ever received copy containing the internal name `Binary`.
 do $$
 declare
   function_signature regprocedure;
@@ -12,11 +12,11 @@ begin
     'public.notify_circle_daily_challenge_completed()'::regprocedure
   ] loop
     function_definition:=pg_get_functiondef(function_signature);
-    execute replace(function_definition, '''Twist''', '''Binary''');
+    execute replace(function_definition, '''Binary''', '''Twist''');
   end loop;
 end;
 $$;
 
 update public.direct_messages
-set body=replace(body,'Twist','Binary')
-where system_generated=true and body like '%Twist%';
+set body=replace(body,'Binary','Twist')
+where system_generated=true and body like '%Binary%';

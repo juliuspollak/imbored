@@ -167,7 +167,7 @@ test('games that record no efficiency signal are untouched', () => {
                challengeScore({ seconds: 14, zip_backtracked_cells: null }, HIVE).score);
 });
 
-// Hive, Binary and Sudoku had zero mistakes across 29 real rounds, so their
+// Hive, Twist and Sudoku had zero mistakes across 29 real rounds, so their
 // score was pace and nothing else. All three track an undo stack that never
 // reached the database; an undo is work placed and then taken back, the same
 // signal Gridly gets from backtracking.

@@ -1,4 +1,4 @@
--- Rename the game id 'tango' -> 'binary' (display name: Binary).
+-- Rename the game id 'tango' -> 'binary' (display name: Twist).
 --
 -- The id is generic on purpose. 'Tango' is LinkedIn's brand for this puzzle;
 -- the puzzle itself is public-domain Takuzu/Binairo. Naming the id after the
@@ -81,7 +81,7 @@ begin
   get diagnostics recipients=row_count;
 
   select coalesce(name,'A friend') into challenger_name from public.profiles where id=auth.uid();
-  game_label:=case source_result.game when 'hive' then 'Hive' when 'binary' then 'Binary' when 'gridly' then 'Gridly' when 'minisudoku' then 'Sudoku' else initcap(replace(source_result.game,'_',' ')) end;
+  game_label:=case source_result.game when 'hive' then 'Hive' when 'binary' then 'Twist' when 'gridly' then 'Gridly' when 'minisudoku' then 'Sudoku' else initcap(replace(source_result.game,'_',' ')) end;
   insert into public.direct_messages(sender_id,recipient_id,body,system_generated,activity_type,source_stat_id)
   select recipient_id,recipient_id,format('%s set a %s score of %s. Can you beat it?',challenger_name,game_label,
     (round((eligibility->>'scored_seconds')::numeric)::integer/60)::text||':'||lpad((round((eligibility->>'scored_seconds')::numeric)::integer%60)::text,2,'0')),
@@ -170,7 +170,7 @@ declare player_name text; game_label text; notification_body text;
 begin
   if new.mode is distinct from 'challenge' or new.challenge_date is null or new.circle_challenge_id is null or new.circle_id is null then return new; end if;
   select coalesce(nullif(btrim(p.name),''),'A teammate') into player_name from public.profiles p where p.id=new.user_id;
-  game_label:=case lower(new.game) when 'hive' then 'Hive' when 'binary' then 'Binary' when 'gridly' then 'Gridly' when 'minisudoku' then 'Mini Sudoku' when 'geo' then 'Geo' else initcap(replace(new.game,'_',' ')) end;
+  game_label:=case lower(new.game) when 'hive' then 'Hive' when 'binary' then 'Twist' when 'gridly' then 'Gridly' when 'minisudoku' then 'Mini Sudoku' when 'geo' then 'Geo' else initcap(replace(new.game,'_',' ')) end;
   notification_body:=format('🏁 %s finished the %s circle challenge! Think you can beat them? 🎮',coalesce(player_name,'A teammate'),game_label);
   insert into public.direct_messages(sender_id,recipient_id,body,system_generated,activity_type,source_stat_id)
   select new.user_id,cm.user_id,notification_body,true,'circle_daily_challenge',new.id

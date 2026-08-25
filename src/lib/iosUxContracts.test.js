@@ -40,18 +40,28 @@ test("Zoom provides a bounded inner scroller and safe sticky answer controls", (
   assert.match(zoom, /padding-bottom: max\(var\(--space-2\), var\(--safe-bottom\)\)/);
 });
 
-test("Binary is the customer-facing name across app and server message contracts", () => {
+test("Twist is the customer-facing name across app and server message contracts", () => {
   const branding = source("./gameBranding.jsx");
+  const displayNames = source("./gameDisplayName.js");
   const home = source("../Home.jsx");
   const app = source("../App.jsx");
   const sharedPuzzle = source("../SharedPuzzleApp.jsx");
-  const serverRename = source("../../supabase/migrations/202608251200_finish_binary_display_name_rename.sql");
-  assert.match(branding, /binary: "Binary"/);
-  for (const appSurface of [home, app, sharedPuzzle]) assert.doesNotMatch(appSurface, /["']Twist["']/);
+  const game = source("../games/Binary.jsx");
+  const standings = source("../ChallengeStandings.jsx");
+  const progress = source("../Progress.jsx");
+  const circles = source("../Circles.jsx");
+  const serverRename = source("../../supabase/migrations/202608251200_restore_twist_display_name.sql");
+  assert.match(displayNames, /binary: "Twist"/);
+  for (const appSurface of [home, app, sharedPuzzle, game, standings, progress, circles]) {
+    assert.match(appSurface, /GAME_NAMES\.binary|GAME_NAMES|GAME_LABELS/);
+  }
   for (const signature of ["create_score_challenge", "share_puzzle_with_circles", "notify_circle_daily_challenge_completed"]) {
     assert.match(serverRename, new RegExp(signature));
   }
+  assert.match(serverRename, /'''Binary''', '''Twist'''/);
+  assert.match(serverRename, /replace\(body,'Binary','Twist'\)/);
   assert.match(serverRename, /update public\.direct_messages/);
+  assert.match(game, /game: "binary"/);
 });
 
 test("profile avatar editing lives in the settings card, not the page header", () => {

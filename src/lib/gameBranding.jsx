@@ -1,6 +1,9 @@
 import BeeIcon from "../components/BeeIcon.jsx";
 import HiveTileIcon from "../components/HiveTileIcon.jsx";
 import GridlyIcon from "../components/GridlyIcon.jsx";
+import { GAME_DISPLAY_NAMES } from "./gameDisplayName.js";
+
+export { displayGameName } from "./gameDisplayName.js";
 
 const ACTIVE_SEASON = import.meta.env?.VITE_SEASONAL_THEME || "default";
 
@@ -34,11 +37,7 @@ export const GRIDLY_BRAND = gameBrand({
 });
 
 export const GAME_NAMES = {
+  ...GAME_DISPLAY_NAMES,
   hive: HIVE_BRAND.name,
-  binary: "Binary",
   gridly: GRIDLY_BRAND.name,
-  minisudoku: "Sudoku",
-  geo: "Geo",
-  zoom: "Zoom",
-  animalrush: "Animal Rush",
 };
