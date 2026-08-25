@@ -20,8 +20,8 @@
   --game-tile-title: #fff8e7;
   --game-tile-meta: #bcd7ff;
   --game-tile-shadow: rgba(3, 16, 47, .30);
-  --game-tile-art-size: auto 92%;
-  --game-tile-position: left center;
+  --game-tile-art-size: cover;
+  --game-tile-position: center;
 }
 
 .home-game-tile--gridly {
@@ -43,9 +43,8 @@
   --game-tile-title: #ffffff;
   --game-tile-meta: #d6ddff;
   --game-tile-shadow: rgba(20, 24, 79, .30);
-  /* Its board fills almost two thirds of the source height. */
-  --game-tile-art-size: auto 78%;
-  --game-tile-position: left 70%;
+  --game-tile-art-size: cover;
+  --game-tile-position: center;
 }
 
 .home-game-tile--geo {
@@ -64,8 +63,8 @@
   --game-tile-title: #fff5ff;
   --game-tile-meta: #e9c8ff;
   --game-tile-shadow: rgba(28, 7, 68, .32);
-  --game-tile-art-size: auto 92%;
-  --game-tile-position: left center;
+  --game-tile-art-size: cover;
+  --game-tile-position: center;
 }
 
 .home-game-tile--animalrush {
@@ -74,8 +73,8 @@
   --game-tile-title: #073f2b;
   --game-tile-meta: #155c3f;
   --game-tile-shadow: rgba(4, 87, 58, .28);
-  --game-tile-art-size: auto 78%;
-  --game-tile-position: left 42%;
+  --game-tile-art-size: cover;
+  --game-tile-position: center;
 }
 
 .home-game-tile--artwork {
@@ -202,8 +201,8 @@
 .challenge-mini-game--binary {
   --challenge-art: url('/assets/twist-tile-bg.png');
   --game-tile-fallback: #07142f;
-  --game-tile-art-size: auto 92%;
-  --game-tile-position: left center;
+  --game-tile-art-size: cover;
+  --game-tile-position: center;
   --challenge-label: #fff8e7;
 }
 .challenge-mini-game--gridly {
@@ -216,8 +215,8 @@
 .challenge-mini-game--minisudoku {
   --challenge-art: url('/assets/minisudoku-tile-bg.webp');
   --game-tile-fallback: #111b53;
-  --game-tile-art-size: auto 78%;
-  --game-tile-position: left 70%;
+  --game-tile-art-size: cover;
+  --game-tile-position: center;
   --challenge-label: #ffffff;
 }
 .challenge-mini-game--geo {
@@ -230,15 +229,15 @@
 .challenge-mini-game--zoom {
   --challenge-art: url('/assets/zoom-tile-bg.webp');
   --game-tile-fallback: #170c38;
-  --game-tile-art-size: auto 92%;
-  --game-tile-position: left center;
+  --game-tile-art-size: cover;
+  --game-tile-position: center;
   --challenge-label: #fff5ff;
 }
 .challenge-mini-game--animalrush {
   --challenge-art: url('/assets/animalrush-tile-bg.webp');
   --game-tile-fallback: #16a66f;
-  --game-tile-art-size: auto 78%;
-  --game-tile-position: left 42%;
+  --game-tile-art-size: cover;
+  --game-tile-position: center;
   --challenge-label: #073f2b;
 }
 

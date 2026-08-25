@@ -10,12 +10,12 @@ test("game artwork uses one shared framing layer with calibrated source scales",
   assert.match(css, /background-size: var\(--game-tile-art-size, cover\)/);
   const expected = {
     hive:["auto 100%", "39% center"],
-    binary:["auto 92%", "left center"],
+    binary:["cover", "center"],
     gridly:["auto 145%", "22% center"],
-    minisudoku:["auto 78%", "left 70%"],
+    minisudoku:["cover", "center"],
     geo:["auto 100%", "center"],
-    zoom:["auto 92%", "left center"],
-    animalrush:["auto 78%", "left 42%"],
+    zoom:["cover", "center"],
+    animalrush:["cover", "center"],
   };
   for (const [game, [size, position]] of Object.entries(expected)) {
     for (const prefix of ["home-game-tile", "challenge-mini-game"]) {
