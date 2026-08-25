@@ -2,4 +2,8 @@ function shouldLockNativeDocumentScroll({ native, active, scoreChallenge, gameId
   return Boolean(native && (scoreChallenge || gameIds.includes(active)));
 }
 
-export { shouldLockNativeDocumentScroll };
+function shouldLockAccountMenuScroll(menuOpen) {
+  return Boolean(menuOpen);
+}
+
+export { shouldLockNativeDocumentScroll, shouldLockAccountMenuScroll };

@@ -7,6 +7,7 @@ import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import BoardReviewToggle from "../BoardReviewToggle.jsx";
 import { Grid3x3, CornerUpLeft, Timer as TimerIcon, HelpCircle, Eraser, Pencil } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
+import { shouldShowGameHelp } from "../lib/gameUiState.js";
 import DaySelector from "../DaySelector.jsx";
 import Page from "../components/Page.jsx";
 import Card from "../components/Card.jsx";
@@ -618,7 +619,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
       `}</style>
 
       <Card className="ms-card" style={{ position: "relative", marginTop: "var(--game-content-top)", marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
-        <button
+        {shouldShowGameHelp(solved) && <button
           type="button"
           onClick={() => setShowHelp((h) => !h)}
           className="ms-help-button"
@@ -627,7 +628,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
           style={{ width: 40, height: 40, position: "absolute", top: "var(--space-3)", right: "var(--space-3)", display: "grid", placeItems: "center", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", color: "var(--color-icon-subtle)", cursor: "pointer" }}
         >
           <HelpCircle size={18} />
-        </button>
+        </button>}
 
         <header className="ms-header" style={{ marginBottom: "var(--space-4)", padding: "0 44px", textAlign: "center" }}>
           <h1 style={{ margin: 0, color: "var(--color-text-primary)", fontSize: "var(--text-page-title-size)", lineHeight: "var(--text-page-title-line)", fontWeight: "var(--text-page-title-weight)" }}>Sudoku</h1>

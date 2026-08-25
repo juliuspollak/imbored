@@ -40,6 +40,12 @@ body.native-game-scroll-lock {
   overflow: hidden;
 }
 
+/* Fixed account menus must own touch scrolling while open. Keep this separate
+   from the native game lock so either lifecycle can clean up independently. */
+body.account-menu-scroll-lock {
+  overflow: hidden;
+}
+
 /* Text the player is meant to read or copy stays selectable; game surfaces do
    not, so a drag never turns into a text selection. */
 button, [role="button"], .rush-card, .hive-cell, .tango-cell, .gridly-cell {

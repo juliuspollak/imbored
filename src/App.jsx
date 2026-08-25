@@ -57,7 +57,7 @@ import { useI18n } from "./lib/i18n.jsx";
 import { applyThemePreference, cacheThemePreference } from "./lib/theme.js";
 import { GRIDLY_BRAND, HIVE_BRAND } from "./lib/gameBranding.jsx";
 import { isNativePlatform } from "./lib/platform.js";
-import { shouldLockNativeDocumentScroll } from "./lib/nativeScrollLock.js";
+import { shouldLockAccountMenuScroll, shouldLockNativeDocumentScroll } from "./lib/nativeScrollLock.js";
 import { refreshNativeNotificationState, reminderTimezoneChanged, startNativeNotificationListeners } from "./lib/nativeNotifications.js";
 
 const GAME_COMPONENTS = {
@@ -876,6 +876,12 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
     };
   }, [menuOpen]);
 
+  useEffect(() => {
+    const shouldLock = shouldLockAccountMenuScroll(menuOpen);
+    document.body.classList.toggle("account-menu-scroll-lock", shouldLock);
+    return () => document.body.classList.remove("account-menu-scroll-lock");
+  }, [menuOpen]);
+
   const items = [
     { id:"profile", icon:User, label:t("account.myProfile"), onClick:onOpenProfile },
     { id:"whatsnew", icon:Sparkles, label:t("account.whatsNew"), onClick:onOpenWhatsNew, badge:sectionSignals.whatsnew ? 1 : 0 },
@@ -1008,6 +1014,8 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
             backdropFilter:"blur(18px)",
             WebkitBackdropFilter:"blur(18px)",
             WebkitOverflowScrolling:"touch",
+            overscrollBehavior:"contain",
+            touchAction:"pan-y",
           }}
         >
           <button type="button" onClick={() => openItem({ onClick:onOpenProfile })} className="w-full flex items-center gap-3 p-4 text-left" style={{ background:"linear-gradient(135deg,rgba(47,111,237,.08),rgba(139,92,246,.05))" }}>

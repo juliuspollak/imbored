@@ -10,6 +10,7 @@ import { shuffle, generateQuiz } from "./geo/geoGenerator.js";
 import { getQuestionHistory, rememberQuestions } from "./geo/geoHistory.js";
 import FlagImage from "./geo/FlagImage.jsx";
 import { useI18n } from "../lib/i18n.jsx";
+import { shouldShowGameHelp } from "../lib/gameUiState.js";
 import { localizeGeoQuestion, localizeGeoValue } from "./geo/geoLocalization.js";
 import DaySelector from "../DaySelector.jsx";
 import Page from "../components/Page.jsx";
@@ -220,9 +221,9 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
       `}</style>
 
       <Card className="geo-card" style={{ position: "relative", marginTop: "var(--game-content-top)", marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
-        <button type="button" onClick={() => setShowHelp((h) => !h)} aria-label={showHelp ? "Hide instructions" : "Show instructions"} aria-expanded={showHelp} className="geo-help-button" style={{ position: "absolute", top: "var(--space-3)", right: "var(--space-3)", width: 40, height: 40, display: "grid", placeItems: "center", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", color: "var(--color-icon-subtle)", cursor: "pointer" }}>
+        {shouldShowGameHelp(solved) && <button type="button" onClick={() => setShowHelp((h) => !h)} aria-label={showHelp ? "Hide instructions" : "Show instructions"} aria-expanded={showHelp} className="geo-help-button" style={{ position: "absolute", top: "var(--space-3)", right: "var(--space-3)", width: 40, height: 40, display: "grid", placeItems: "center", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", color: "var(--color-icon-subtle)", cursor: "pointer" }}>
           <HelpCircle size={16} />
-        </button>
+        </button>}
 
         <div className="text-center mb-4">
           <h1 style={{ margin: 0, fontSize: "var(--text-page-title-size)", lineHeight: "var(--text-page-title-line)", fontWeight: "var(--text-page-title-weight)", color: INK }}>

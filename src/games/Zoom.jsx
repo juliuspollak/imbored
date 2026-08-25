@@ -11,6 +11,7 @@ import ZoomContinentMap from "./zoom/ZoomContinentMap.jsx";
 import ZoomCountryMap from "./zoom/ZoomCountryMap.jsx";
 import FlagImage from "./geo/FlagImage.jsx";
 import { useI18n } from "../lib/i18n.jsx";
+import { shouldShowGameHelp } from "../lib/gameUiState.js";
 import { localizeZoomValue, localizeZoomPrompt, localizeZoomClueName } from "./zoom/zoomLocalization.js";
 import DaySelector from "../DaySelector.jsx";
 import Page from "../components/Page.jsx";
@@ -229,7 +230,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
   }).filter(Boolean).length;
 
   return (
-    <Page contentMaxWidth="var(--game-page-max-width)" style={{ alignItems: "flex-start" }}>
+    <Page contentMaxWidth="var(--game-page-max-width)" style={{ alignItems: "flex-start", height: "100dvh", overflowY: "auto", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" }}>
       <style>{`
         @media (hover: hover) and (pointer: fine) {
           .zoom-option:not(:disabled):hover { border-color: var(--color-primary-subtle-border) !important; transform: translateY(-1px); }
@@ -259,10 +260,17 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
         @media (max-width: 360px) {
           .zoom-answer-grid { grid-template-columns: minmax(0, 1fr); }
         }
+        .zoom-answer-footer {
+          position: sticky;
+          bottom: 0;
+          z-index: 5;
+          padding-bottom: max(var(--space-2), var(--safe-bottom));
+          background: var(--color-surface);
+        }
       `}</style>
 
       <Card className="zoom-card" style={{ position: "relative", marginTop: "var(--game-content-top)", marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
-        <button
+        {shouldShowGameHelp(solved) && <button
           type="button"
           onClick={() => setShowHelp((h) => !h)}
           aria-label={showHelp ? "Hide instructions" : "Show instructions"}
@@ -271,7 +279,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
           style={{ position: "absolute", top: "var(--space-3)", right: "var(--space-3)", width: 40, height: 40, display: "grid", placeItems: "center", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", color: "var(--color-icon-subtle)", cursor: "pointer" }}
         >
           <HelpCircle size={16} />
-        </button>
+        </button>}
 
         <div className="text-center mb-4">
           <h1 style={{ margin: 0, fontSize: "var(--text-page-title-size)", lineHeight: "var(--text-page-title-line)", fontWeight: "var(--text-page-title-weight)", color: INK }}>
@@ -447,36 +455,35 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
             </div>
 
             {answered && (
-              <div
-                className="mb-3 text-center rounded-xl px-3 py-2.5"
-                style={{
-                  background: selected === step.answer ? "var(--color-success-bg)" : "var(--color-danger-bg)",
-                  border: `1px solid ${selected === step.answer ? "var(--color-success-border)" : "var(--color-danger-solid)"}`,
-                }}
-              >
-                <div className="text-sm font-semibold" style={{ color: selected === step.answer ? GREEN : RED }}>
-                  {selected === step.answer
-                    ? t("zoom.correct", { answer: shownAnswer })
-                    : t("zoom.incorrect", { selected: shownSelected, answer: shownAnswer })}
-                </div>
-                {(step.levelKey === "country" || selected !== step.answer) && (
-                  <div className="text-xs mt-1" style={{ color: "var(--color-text-secondary)" }}>
-                    {step.levelKey === "country"
-                      ? t("zoom.roundAnswer", { country: shownCountry, flag: step.flagEmoji || "" })
-                      : whyExplanation}
+              <div className="zoom-answer-footer">
+                <div
+                  className="mb-3 text-center rounded-xl px-3 py-2.5"
+                  style={{
+                    background: selected === step.answer ? "var(--color-success-bg)" : "var(--color-danger-bg)",
+                    border: `1px solid ${selected === step.answer ? "var(--color-success-border)" : "var(--color-danger-solid)"}`,
+                  }}
+                >
+                  <div className="text-sm font-semibold" style={{ color: selected === step.answer ? GREEN : RED }}>
+                    {selected === step.answer
+                      ? t("zoom.correct", { answer: shownAnswer })
+                      : t("zoom.incorrect", { selected: shownSelected, answer: shownAnswer })}
                   </div>
-                )}
+                  {(step.levelKey === "country" || selected !== step.answer) && (
+                    <div className="text-xs mt-1" style={{ color: "var(--color-text-secondary)" }}>
+                      {step.levelKey === "country"
+                        ? t("zoom.roundAnswer", { country: shownCountry, flag: step.flagEmoji || "" })
+                        : whyExplanation}
+                    </div>
+                  )}
+                </div>
+                <Button onClick={next} fullWidth>
+                  {isLast
+                    ? t("common.seeResults")
+                    : step.levelKey === "country"
+                      ? t("zoom.nextRound")
+                      : t("common.nextQuestion")}
+                </Button>
               </div>
-            )}
-
-            {answered && (
-              <Button onClick={next} fullWidth>
-                {isLast
-                  ? t("common.seeResults")
-                  : step.levelKey === "country"
-                    ? t("zoom.nextRound")
-                    : t("common.nextQuestion")}
-              </Button>
             )}
           </>
         )}

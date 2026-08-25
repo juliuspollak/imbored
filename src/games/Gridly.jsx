@@ -7,6 +7,7 @@ import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import BoardReviewToggle from "../BoardReviewToggle.jsx";
 import { Eraser, CornerUpLeft, Sparkles, WandSparkles, Timer as TimerIcon, HelpCircle, Lock } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
+import { shouldShowGameHelp } from "../lib/gameUiState.js";
 import DaySelector from "../DaySelector.jsx";
 import Button from "../components/Button.jsx";
 import { GRIDLY_BRAND } from "../lib/gameBranding.jsx";
@@ -928,13 +929,13 @@ export default function GridlyGame({ userId, onSolved, mode = "practice", forced
         className="zp-card w-full max-w-md sm:max-w-lg lg:max-w-xl rounded-2xl p-5 lg:p-6 relative"
         style={{ maxWidth: "var(--game-page-max-width)", background: PANEL, boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}
       >
-        <button
+        {shouldShowGameHelp(solved) && <button
           onClick={() => setShowHelp((h) => !h)}
           className="zp-icon-btn absolute top-4 right-4 transition-opacity"
           style={{ color: CREAM, opacity: 0.5 }}
         >
           <HelpCircle size={16} />
-        </button>
+        </button>}
 
         <div className="text-center mb-4">
           <h1

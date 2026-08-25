@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Check, Send, Smile } from "lucide-react";
+import { Check, Send, Smile } from "lucide-react";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { sendPoke } from "./lib/pokes.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
@@ -7,6 +7,7 @@ import { useI18n } from "./lib/i18n.jsx";
 import Button from "./components/Button.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
 import ChatSafetyMenu from "./ChatSafetyMenu.jsx";
+import BackButton from "./BackButton.jsx";
 
 const QUICK_REACTIONS = ["👍", "👎", "❤️", "😂", "🔥", "👏"];
 const MESSAGE_REACTIONS = [
@@ -415,7 +416,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
       <style>{`
         .chat-screen { height: 100dvh; min-height: 0; overflow: hidden; background: var(--color-page-bg); color: var(--color-text-primary); }
         .chat-shell { width: min(100%, 760px); height: 100%; min-height: 0; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; background: var(--color-page-bg); }
-        .chat-header { flex: 0 0 auto; z-index: 20; display:flex; align-items:center; gap:12px; padding: 14px 16px; background: var(--color-surface); border-bottom:1px solid var(--color-border); }
+        .chat-header { flex: 0 0 auto; z-index: 20; display:flex; align-items:center; gap:12px; padding: calc(14px + var(--safe-top)) calc(16px + var(--safe-right)) 14px calc(16px + var(--safe-left)); background: var(--color-surface); border-bottom:1px solid var(--color-border); }
         .chat-avatar { width:44px; height:44px; border-radius:var(--radius-md); display:grid; place-items:center; font-size:25px; background:var(--color-primary-subtle); border:1px solid var(--color-primary-subtle-border); }
         .chat-poke { border:0; border-radius:var(--radius-full); padding:9px 13px; background:var(--color-warning-bg); color:var(--color-warning-text); font-weight:700; font-size:12px; cursor:pointer; transition:transform var(--transition-fast); }
         .chat-poke:hover { transform:translateY(-1px); }
@@ -465,7 +466,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
         .chat-picker-button { width:36px; height:34px; border:0; border-radius:var(--radius-sm); background:transparent; font-size:19px; cursor:pointer; transition:transform .13s ease,background .13s ease; }
         .chat-picker-button:hover { background:var(--color-primary-subtle); transform:scale(1.08); }
         @media (max-width: 520px) {
-          .chat-header { padding:10px 10px; gap:9px; }
+          .chat-header { padding:calc(10px + var(--safe-top)) calc(10px + var(--safe-right)) 10px calc(10px + var(--safe-left)); gap:9px; }
           .chat-avatar { width:40px; height:40px; border-radius:var(--radius-sm); font-size:22px; }
           .chat-poke { padding:8px 10px; }
           .chat-body { padding:12px 10px 16px; }
@@ -481,9 +482,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
 
       <div className="chat-shell">
         <header className="chat-header">
-          <Button type="button" variant="icon" onClick={onBack} aria-label="Back">
-            <ArrowLeft size={18} />
-          </Button>
+          <BackButton onClick={onBack} ariaLabel="Back" />
           <div className="chat-avatar">{peerAvailable ? (peerProfile?.icon || "🙂") : "🙂"}</div>
           <div style={{ flex:1, minWidth:0 }}>
             <div style={{ fontWeight:800, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{peerAvailable ? (peerProfile?.name || "Player") : "Unavailable player"}</div>

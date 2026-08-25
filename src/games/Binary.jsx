@@ -8,6 +8,7 @@ import GameSolvedPanel from "../GameSolvedPanel.jsx";
 import BoardReviewToggle from "../BoardReviewToggle.jsx";
 import { Timer as TimerIcon, HelpCircle } from "lucide-react";
 import { useI18n } from "../lib/i18n.jsx";
+import { shouldShowGameHelp } from "../lib/gameUiState.js";
 import DaySelector from "../DaySelector.jsx";
 import Button from "../components/Button.jsx";
 import { createGameAttemptSeed } from "../lib/gameAttemptSeed.js";
@@ -616,7 +617,7 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
     `}</style>
 
     <div className="tg-card w-full max-w-md sm:max-w-lg lg:max-w-xl rounded-2xl p-5 lg:p-6 relative" style={{ maxWidth: "var(--game-page-max-width)", background: PANEL, boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}>
-      <button onClick={() => setShowHelp((h) => !h)} className="tg-icon-btn absolute top-4 right-4 transition-opacity" style={{ color: CREAM, opacity: 0.5 }}><HelpCircle size={16} /></button>
+      {shouldShowGameHelp(solved) && <button onClick={() => setShowHelp((h) => !h)} className="tg-icon-btn absolute top-4 right-4 transition-opacity" style={{ color: CREAM, opacity: 0.5 }}><HelpCircle size={16} /></button>}
       <div className="text-center mb-3"><h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }} className="text-3xl lg:text-4xl">Twist</h1><p style={{ color: CREAM, opacity: 0.58 }} className="text-[13px] mt-0.5">Place equal flame and frost in every row and column.</p></div>
       {!solved && (isChallenge ? <div className="flex justify-center mb-4"><div className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: `${GOLD}18`, color: GOLD }}><span className="text-xs font-semibold">{t("common.todaysChallenge")}</span><span className="text-[10px] opacity-80">{GIVEN_TARGETS[dayIdx]} clues</span></div></div> : <DaySelector days={DAYS} value={dayIdx} onChange={setDayIdx} />)}
       {!solved && <div className="flex items-center justify-center gap-4 mb-3 px-1"><div className="flex items-center gap-1.5" style={{ color: CREAM, opacity: 0.7 }}><TimerIcon size={14} /><span className="text-xs tabular-nums">{fmtTime(seconds)}</span></div><div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">mistakes: <span style={{ color: mistakes > 0 ? RED : CREAM }}>{mistakes}</span></div><div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">hints: <span style={{ color: hintsUsed > 0 ? GOLD : CREAM }}>{hintsUsed}</span></div></div>}

@@ -28,6 +28,9 @@
   --game-tile-shadow: rgba(2, 55, 58, .22);
   --game-tile-hover-border: rgba(76, 231, 202, .55);
   --game-tile-hover-shadow: rgba(2, 55, 58, .30);
+  /* The source composes a much smaller board into the same 5:4 canvas. */
+  --game-tile-art-size: 124% auto;
+  --game-tile-position: 43% center;
 }
 
 .home-game-tile--minisudoku {
@@ -36,6 +39,8 @@
   --game-tile-title: #ffffff;
   --game-tile-meta: #d6ddff;
   --game-tile-shadow: rgba(20, 24, 79, .30);
+  /* Keep the oversized board closer to the Hive/Geo visual footprint. */
+  --game-tile-art-size: auto 92%;
 }
 
 .home-game-tile--geo {
@@ -76,7 +81,7 @@
   background-color: var(--game-tile-fallback) !important;
   background-image: var(--game-tile-art) !important;
   background-repeat: no-repeat !important;
-  background-size: cover !important;
+  background-size: var(--game-tile-art-size, cover) !important;
   background-position: var(--game-tile-position, center) !important;
   box-shadow: 0 10px 24px var(--game-tile-shadow) !important;
 }
@@ -89,7 +94,8 @@
   pointer-events: none;
   background-image: var(--game-tile-art);
   background-repeat: no-repeat;
-  background-size: cover;
+  background-color: var(--game-tile-fallback);
+  background-size: var(--game-tile-art-size, cover);
   background-position: var(--game-tile-position, center);
 }
 
