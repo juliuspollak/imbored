@@ -10,6 +10,8 @@
   --game-tile-meta-shadow: 0 1px 2px rgba(255, 255, 255, .82);
   --game-tile-hover-border: rgba(218, 145, 8, .78);
   --game-tile-hover-shadow: rgba(176, 109, 0, .22);
+  --game-tile-art-size: auto 100%;
+  --game-tile-position: 39% center;
 }
 
 .home-game-tile--binary {
@@ -18,6 +20,8 @@
   --game-tile-title: #fff8e7;
   --game-tile-meta: #bcd7ff;
   --game-tile-shadow: rgba(3, 16, 47, .30);
+  --game-tile-art-size: auto 92%;
+  --game-tile-position: left center;
 }
 
 .home-game-tile--gridly {
@@ -28,9 +32,9 @@
   --game-tile-shadow: rgba(2, 55, 58, .22);
   --game-tile-hover-border: rgba(76, 231, 202, .55);
   --game-tile-hover-shadow: rgba(2, 55, 58, .30);
-  /* The source composes a much smaller board into the same 5:4 canvas. */
-  --game-tile-art-size: 124% auto;
-  --game-tile-position: 43% center;
+  /* The board has the widest empty source margin of the set. */
+  --game-tile-art-size: auto 145%;
+  --game-tile-position: 22% center;
 }
 
 .home-game-tile--minisudoku {
@@ -39,8 +43,9 @@
   --game-tile-title: #ffffff;
   --game-tile-meta: #d6ddff;
   --game-tile-shadow: rgba(20, 24, 79, .30);
-  /* Keep the oversized board closer to the Hive/Geo visual footprint. */
-  --game-tile-art-size: auto 92%;
+  /* Its board fills almost two thirds of the source height. */
+  --game-tile-art-size: auto 78%;
+  --game-tile-position: left 70%;
 }
 
 .home-game-tile--geo {
@@ -49,6 +54,8 @@
   --game-tile-title: #062f52;
   --game-tile-meta: #124b67;
   --game-tile-shadow: rgba(4, 74, 113, .24);
+  --game-tile-art-size: auto 100%;
+  --game-tile-position: center;
 }
 
 .home-game-tile--zoom {
@@ -57,6 +64,8 @@
   --game-tile-title: #fff5ff;
   --game-tile-meta: #e9c8ff;
   --game-tile-shadow: rgba(28, 7, 68, .32);
+  --game-tile-art-size: auto 92%;
+  --game-tile-position: left center;
 }
 
 .home-game-tile--animalrush {
@@ -65,6 +74,8 @@
   --game-tile-title: #073f2b;
   --game-tile-meta: #155c3f;
   --game-tile-shadow: rgba(4, 87, 58, .28);
+  --game-tile-art-size: auto 78%;
+  --game-tile-position: left 42%;
 }
 
 .home-game-tile--artwork {
@@ -183,31 +194,51 @@
 
 .challenge-mini-game--hive {
   --challenge-art: url('/assets/hive-tile-bg-landscape.webp');
-  --challenge-art-position: 39% center;
+  --game-tile-fallback: #f9c543;
+  --game-tile-art-size: auto 100%;
+  --game-tile-position: 39% center;
   --challenge-label: #251706;
 }
 .challenge-mini-game--binary {
   --challenge-art: url('/assets/twist-tile-bg.png');
+  --game-tile-fallback: #07142f;
+  --game-tile-art-size: auto 92%;
+  --game-tile-position: left center;
   --challenge-label: #fff8e7;
 }
 .challenge-mini-game--gridly {
   --challenge-art: url('/assets/gridly-tile-bg.webp');
+  --game-tile-fallback: #063e42;
+  --game-tile-art-size: auto 145%;
+  --game-tile-position: 22% center;
   --challenge-label: #f4fffd;
 }
 .challenge-mini-game--minisudoku {
   --challenge-art: url('/assets/minisudoku-tile-bg.webp');
+  --game-tile-fallback: #111b53;
+  --game-tile-art-size: auto 78%;
+  --game-tile-position: left 70%;
   --challenge-label: #ffffff;
 }
 .challenge-mini-game--geo {
   --challenge-art: url('/assets/geo-tile-bg.webp');
+  --game-tile-fallback: #168bc2;
+  --game-tile-art-size: auto 100%;
+  --game-tile-position: center;
   --challenge-label: #062f52;
 }
 .challenge-mini-game--zoom {
   --challenge-art: url('/assets/zoom-tile-bg.webp');
+  --game-tile-fallback: #170c38;
+  --game-tile-art-size: auto 92%;
+  --game-tile-position: left center;
   --challenge-label: #fff5ff;
 }
 .challenge-mini-game--animalrush {
   --challenge-art: url('/assets/animalrush-tile-bg.webp');
+  --game-tile-fallback: #16a66f;
+  --game-tile-art-size: auto 78%;
+  --game-tile-position: left 42%;
   --challenge-label: #073f2b;
 }
 
@@ -216,8 +247,9 @@
 }
 .challenge-mini-game[style][class*="challenge-mini-game--"] {
   background-image: var(--challenge-art) !important;
-  background-size: cover !important;
-  background-position: var(--challenge-art-position, center) !important;
+  background-color: var(--game-tile-fallback, var(--color-surface-elevated)) !important;
+  background-size: var(--game-tile-art-size, cover) !important;
+  background-position: var(--game-tile-position, center) !important;
   background-repeat: no-repeat !important;
 }
 .challenge-mini-game[style][class*="challenge-mini-game--"] > span[aria-hidden="true"] {
