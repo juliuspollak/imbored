@@ -26,7 +26,7 @@ function accentSurface(accent, amount = 12) {
 
 export const GAME_META = [
   { id: "hive", label: HIVE_BRAND.name, desc: HIVE_BRAND.tagline, icon: HIVE_BRAND.GameIcon, tileIconSize: 32, tileBackground: HIVE_BRAND.tileBackground, accent: "#D99A18", available: true, challenge: true },
-  { id: "binary", label: "Twist", desc: "Place equal flame and frost in every row and column", icon: Flame, accent: "#FF7A59", available: true, challenge: true },
+  { id: "binary", label: GAME_NAMES.binary, desc: "Place equal flame and frost in every row and column", icon: Flame, accent: "#FF7A59", available: true, challenge: true },
   { id: "gridly", label: GRIDLY_BRAND.name, desc: GRIDLY_BRAND.tagline, icon: GRIDLY_BRAND.GameIcon, tileIconSize: GRIDLY_BRAND.tileIconSize, tileBackground: GRIDLY_BRAND.tileBackground, accent: "#12946A", available: true, challenge: true },
   { id: "minisudoku", label: "Sudoku", desc: "Classic sudoku, bite-sized", icon: Grid3x3, accent: "#0E7490", available: true, challenge: true },
   { id: "patches", label: "Patches", desc: "Fit every shape into the frame", icon: Puzzle, accent: "#B45309", available: false },

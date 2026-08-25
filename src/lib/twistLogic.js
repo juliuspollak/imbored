@@ -1,4 +1,4 @@
-// How much *thinking* a Twist board actually needs.
+// How much *thinking* a Binary board actually needs.
 //
 // First attempt at this counted solver sweeps. That was the wrong measure: one
 // sweep can place fifteen cells, so a board could score "deep" while never

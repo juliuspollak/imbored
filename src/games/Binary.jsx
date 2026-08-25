@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { withSeededRandom, shuffle } from "../lib/seededRandom.js";
 import { gradeTwistBoard } from "../lib/twistLogic.js";
+import { GAME_NAMES } from "../lib/gameBranding.jsx";
 import { useGameTimer } from "../lib/useGameTimer.js";
 import { useHintCooldown } from "../lib/useHintCooldown.js";
 import HintCooldownButton from "../HintCooldownButton.jsx";
@@ -14,7 +15,7 @@ import Button from "../components/Button.jsx";
 import { createGameAttemptSeed } from "../lib/gameAttemptSeed.js";
 
 // The in-game symbols deliberately echo the polished fire/ice artwork used on
-// the Twist tile. They are still strongly different by shape, so the puzzle
+// the Binary tile. They are still strongly different by shape, so the puzzle
 // does not rely on red-vs-blue colour discrimination alone.
 function FlameIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
   const id = React.useId().replace(/:/g, "");
@@ -618,7 +619,7 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
 
     <div className="tg-card w-full max-w-md sm:max-w-lg lg:max-w-xl rounded-2xl p-5 lg:p-6 relative" style={{ maxWidth: "var(--game-page-max-width)", background: PANEL, boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}>
       {shouldShowGameHelp(solved) && <button onClick={() => setShowHelp((h) => !h)} className="tg-icon-btn absolute top-4 right-4 transition-opacity" style={{ color: CREAM, opacity: 0.5 }}><HelpCircle size={16} /></button>}
-      <div className="text-center mb-3"><h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }} className="text-3xl lg:text-4xl">Twist</h1><p style={{ color: CREAM, opacity: 0.58 }} className="text-[13px] mt-0.5">Place equal flame and frost in every row and column.</p></div>
+      <div className="text-center mb-3"><h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }} className="text-3xl lg:text-4xl">{GAME_NAMES.binary}</h1><p style={{ color: CREAM, opacity: 0.58 }} className="text-[13px] mt-0.5">Place equal flame and frost in every row and column.</p></div>
       {!solved && (isChallenge ? <div className="flex justify-center mb-4"><div className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: `${GOLD}18`, color: GOLD }}><span className="text-xs font-semibold">{t("common.todaysChallenge")}</span><span className="text-[10px] opacity-80">{GIVEN_TARGETS[dayIdx]} clues</span></div></div> : <DaySelector days={DAYS} value={dayIdx} onChange={setDayIdx} />)}
       {!solved && <div className="flex items-center justify-center gap-4 mb-3 px-1"><div className="flex items-center gap-1.5" style={{ color: CREAM, opacity: 0.7 }}><TimerIcon size={14} /><span className="text-xs tabular-nums">{fmtTime(seconds)}</span></div><div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">mistakes: <span style={{ color: mistakes > 0 ? RED : CREAM }}>{mistakes}</span></div><div style={{ color: CREAM, opacity: 0.7 }} className="text-xs">hints: <span style={{ color: hintsUsed > 0 ? GOLD : CREAM }}>{hintsUsed}</span></div></div>}
       {!solved && <div className="game-toolbar mb-3 px-1" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "var(--space-2)" }}>{[{ label: t("common.undo"), onClick: handleUndo, disabled: history.length === 0 }, { label: t("common.reset"), onClick: handleReset, disabled: false }, { label: "New", onClick: () => newPuzzle(dayIdx), disabled: isChallenge }, { label: t("common.hint"), onClick: handleHint, disabled: false, hint: true }].map(({ label, onClick, disabled, hint }) => hint ? <HintCooldownButton key="hint" cooldown={hintCooldown} label={label} onClick={onClick} disabled={disabled} /> : <Button key={label} onClick={onClick} disabled={disabled} aria-label={label} variant="secondary" size="sm" fullWidth>{label}</Button>)}</div>}

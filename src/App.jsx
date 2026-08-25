@@ -55,14 +55,14 @@ import { useUnreadMessages } from "./lib/useUnreadMessages.js";
 import { usePendingPlayersCount } from "./lib/usePendingPlayersCount.js";
 import { useI18n } from "./lib/i18n.jsx";
 import { applyThemePreference, cacheThemePreference } from "./lib/theme.js";
-import { GRIDLY_BRAND, HIVE_BRAND } from "./lib/gameBranding.jsx";
+import { GAME_NAMES, GRIDLY_BRAND, HIVE_BRAND } from "./lib/gameBranding.jsx";
 import { isNativePlatform } from "./lib/platform.js";
 import { shouldLockAccountMenuScroll, shouldLockNativeDocumentScroll } from "./lib/nativeScrollLock.js";
 import { refreshNativeNotificationState, reminderTimezoneChanged, startNativeNotificationListeners } from "./lib/nativeNotifications.js";
 
 const GAME_COMPONENTS = {
   hive: { Component: HiveGame, label: HIVE_BRAND.name },
-  binary: { Component: BinaryGame, label: "Twist" },
+  binary: { Component: BinaryGame, label: GAME_NAMES.binary },
   gridly: { Component: GridlyGame, label: GRIDLY_BRAND.name },
   minisudoku: { Component: MiniSudokuGame, label: "Sudoku" },
   geo: { Component: GeoGame, label: "Geo" },

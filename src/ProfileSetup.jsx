@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, Lock, Unlock, Users, Fingerprint, Trash2, Plus, Link2, Unlink, Mail, Languages, Monitor, Sun, Moon } from "lucide-react";
+import { Bell, Lock, Unlock, Users, Fingerprint, Trash2, Plus, Link2, Unlink, Mail, Languages, Monitor, Sun, Moon, Camera } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { PROFILE_ICONS } from "./lib/icons.js";
 import { useI18n } from "./lib/i18n.jsx";
@@ -210,22 +210,26 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
         subtitle={isFirstTime ? t("profile.firstHint", { email: user?.email || "" }) : user?.email}
         onBack={onDone}
         backAriaLabel="Back to home"
-        action={
+      />
+
+      <form onSubmit={handleSubmit} style={{ paddingBottom: "var(--space-8)" }}>
+        <Card style={{ marginBottom: "var(--space-3)" }}>
           <button
             type="button"
             onClick={() => setShowIconPicker((value) => !value)}
             aria-label={showIconPicker ? "Close avatar picker" : "Change avatar"}
             aria-expanded={showIconPicker}
             className="profile-avatar-button"
-            style={{ width: 46, height: 46, display: "grid", placeItems: "center", borderRadius: "50%", border: showIconPicker ? "2px solid var(--color-primary)" : "1px solid var(--color-border)", background: showIconPicker ? "var(--color-primary-subtle)" : "var(--color-surface)", boxShadow: "var(--shadow-control)", color: "var(--color-text-primary)", fontSize: 23, cursor: "pointer" }}
+            style={{ width: "100%", minHeight: 56, display: "flex", alignItems: "center", gap: "var(--space-3)", marginBottom: "var(--space-4)", padding: "var(--space-2) var(--space-3)", borderRadius: "var(--radius-md)", border: showIconPicker ? "1px solid var(--color-primary)" : "1px solid var(--color-border)", background: showIconPicker ? "var(--color-primary-subtle)" : "var(--color-surface-elevated)", color: "var(--color-text-primary)", font: "inherit", textAlign: "left", cursor: "pointer" }}
           >
-            {icon}
+            <span aria-hidden="true" style={{ width: 40, height: 40, display: "grid", placeItems: "center", flexShrink: 0, borderRadius: "50%", background: "var(--color-surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-control)", fontSize: 21 }}>{icon}</span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <strong style={{ display: "block", fontSize: "var(--text-body-secondary-size)" }}>{t("profile.picture")}</strong>
+              <span style={{ display: "block", marginTop: 2, color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{t("profile.pictureHint")}</span>
+            </span>
+            <Camera size={18} aria-hidden="true" style={{ flexShrink: 0, color: "var(--color-primary)" }} />
           </button>
-        }
-      />
 
-      <form onSubmit={handleSubmit} style={{ paddingBottom: "var(--space-8)" }}>
-        <Card style={{ marginBottom: "var(--space-3)" }}>
           <FormField label={t("profile.name")}>
             <TextInput required value={name} onChange={(event) => setName(event.target.value)} placeholder={t("profile.namePlaceholder")} autoComplete="name" />
           </FormField>

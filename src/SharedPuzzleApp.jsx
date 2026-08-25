@@ -4,10 +4,11 @@ import { supabase, supabaseReady } from "./lib/supabase.js";
 import { saveStats } from "./lib/saveStats.js";
 import { useGameConfig } from "./lib/useGameConfig.js";
 import GameHomeButton from "./GameHomeButton.jsx";
+import { GAME_NAMES } from "./lib/gameBranding.jsx";
 
 const GAMES = {
   hive: { Component:lazy(() => import("./games/Hive.jsx")), label:"Hive" },
-  binary: { Component:lazy(() => import("./games/Binary.jsx")), label:"Twist" },
+  binary: { Component:lazy(() => import("./games/Binary.jsx")), label:GAME_NAMES.binary },
   gridly: { Component:lazy(() => import("./games/Gridly.jsx")), label:"Gridly" },
   minisudoku: { Component:lazy(() => import("./games/MiniSudoku.jsx")), label:"Sudoku" },
   geo: { Component:lazy(() => import("./games/Geo.jsx")), label:"Geo" },

@@ -35,7 +35,7 @@ export const GRIDLY_BRAND = gameBrand({
 
 export const GAME_NAMES = {
   hive: HIVE_BRAND.name,
-  binary: "Twist",
+  binary: "Binary",
   gridly: GRIDLY_BRAND.name,
   minisudoku: "Sudoku",
   geo: "Geo",
