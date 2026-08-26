@@ -112,6 +112,30 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Put bundled CocoaPods on PATH
+        run: |
+          set -euo pipefail
+          bundle binstubs cocoapods --path "$RUNNER_TEMP/bundle-bin"
+          echo "$RUNNER_TEMP/bundle-bin" >> "$GITHUB_PATH"
+
+      - name: Verify Ruby and CocoaPods toolchain
+        run: |
+          set -euo pipefail
+          which ruby
+          ruby --version
+          which bundle
+          bundle --version
+          bundle exec pod --version
+          which pod
+          pod --version
+          [[ "$(which pod)" == "$RUNNER_TEMP/bundle-bin/pod" ]] || { echo "::error::pod does not resolve to the Bundler binstub."; exit 1; }
+
       - name: Run tests and production web build
         run: |
           npm test
@@ -119,15 +143,6 @@ jobs:
 
       - name: Sync Capacitor iOS project
         run: npm run ios:sync
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.3"
-          bundler-cache: true
-
-      - name: Install CocoaPods dependencies
-        run: bundle exec pod install --project-directory=ios/App
 
       - name: Resolve unique build number
         id: build_number

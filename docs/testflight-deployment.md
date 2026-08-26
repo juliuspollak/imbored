@@ -4,6 +4,8 @@ The **Deploy to TestFlight** GitHub Actions workflow is deliberately manual. It 
 
 CI runs on GitHub's `macos-26` image and explicitly selects the newest installed stable Xcode 26 release. Before installing dependencies, it prints and validates both the Xcode version and iPhoneOS SDK version. The app is built with SDK 26 or later while its minimum supported deployment target remains iOS 15.0.
 
+Ruby 3.3 and the locked Bundler environment are configured before Capacitor sync. CI places a temporary CocoaPods binstub at the front of `PATH`, ensuring Capacitor's internal `pod install` uses the repository's bundled CocoaPods rather than the runner's Homebrew installation. The workflow prints safe Ruby, Bundler, and CocoaPods executable/version diagnostics before syncing.
+
 ## One-time Apple setup
 
 1. In App Store Connect, open **Users and Access → Integrations → App Store Connect API** and create a team API key with the **App Manager** role. Download its `.p8` file immediately; Apple only permits one download. Record the Key ID and Issuer ID.
@@ -68,7 +70,7 @@ The first external build of a version, and some later builds, may require Beta A
 - **Build number already used:** rerun with the build-number field blank; if another uploader raced the workflow, use an override greater than the newest build.
 - **External group not found:** use the exact App Store Connect group name, or leave it blank and assign the processed build manually.
 - **Upload succeeds but distribution warns:** inspect TestFlight for Beta App Review, export compliance, test information, or agreement prompts. The IPA does not need to be uploaded again.
-- **CocoaPods/Xcode compatibility failure:** inspect the runner's Xcode version and update the pinned `macos-15` runner or dependency constraints deliberately rather than switching automatically during a release.
+- **CocoaPods/Xcode compatibility failure:** inspect the early Xcode/SDK and Ruby/CocoaPods diagnostics. Capacitor's `pod` executable must resolve to the temporary Bundler binstub, not `/opt/homebrew`; update the locked dependency constraints deliberately if the bundled tools are incompatible.
 
 ## Manual Xcode fallback
 

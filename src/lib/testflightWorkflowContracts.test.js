@@ -38,3 +38,18 @@ test("TestFlight uses stable Xcode 26 while retaining the iOS 15 deployment targ
   assert.deepEqual([...project.matchAll(/IPHONEOS_DEPLOYMENT_TARGET = ([^;]+);/g)].map((match) => match[1]), ["15.0", "15.0", "15.0", "15.0"]);
   assert.match(podfile, /platform :ios, '15\.0'/);
 });
+
+test("Capacitor sync resolves CocoaPods through the Ruby 3.3 bundle", () => {
+  const workflow = read("../../.github/workflows/testflight.yml");
+  const rubySetupIndex = workflow.indexOf("uses: ruby/setup-ruby@v1");
+  const binstubIndex = workflow.indexOf("bundle binstubs cocoapods");
+  const syncIndex = workflow.indexOf("run: npm run ios:sync");
+  assert.match(workflow, /ruby-version: "3\.3"/);
+  assert.match(workflow, /bundler-cache: true/);
+  assert.ok(rubySetupIndex > -1 && rubySetupIndex < binstubIndex && binstubIndex < syncIndex);
+  assert.match(workflow, /echo "\$RUNNER_TEMP\/bundle-bin" >> "\$GITHUB_PATH"/);
+  assert.match(workflow, /bundle exec pod --version/);
+  assert.match(workflow, /which pod[\s\S]*pod --version/);
+  assert.match(workflow, /\$RUNNER_TEMP\/bundle-bin\/pod/);
+  assert.doesNotMatch(workflow, /brew (?:install|upgrade).*cocoapods|\/opt\/homebrew.*pod/);
+});
