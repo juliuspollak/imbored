@@ -375,6 +375,13 @@ export default function Hive({
   useGameTimer(running, solved, setSeconds);
 
   useEffect(() => {
+    // A completed board is supporting detail, not the default completion
+    // view. Reset only on the transition to solved; an intentional tap on the
+    // Review control can still expand it afterwards.
+    if (solved) setReviewing(false);
+  }, [solved]);
+
+  useEffect(() => {
     statsRef.current = { seconds, mistakes, hintsUsed, undos };
   }, [hintsUsed, mistakes, seconds, undos]);
 

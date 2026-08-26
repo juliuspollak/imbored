@@ -5,6 +5,7 @@ import { saveStats } from "./lib/saveStats.js";
 import { useGameConfig } from "./lib/useGameConfig.js";
 import GameHomeButton from "./GameHomeButton.jsx";
 import { GAME_NAMES } from "./lib/gameBranding.jsx";
+import { exitReplayToHome } from "./lib/replayNavigation.js";
 
 const GAMES = {
   hive: { Component:lazy(() => import("./games/Hive.jsx")), label:"Hive" },
@@ -15,12 +16,7 @@ const GAMES = {
   zoom: { Component:lazy(() => import("./games/Zoom.jsx")), label:"Zoom" },
 };
 
-function goHome() {
-  if (typeof window === "undefined") return;
-  const url = new URL(window.location.href);
-  url.searchParams.delete("puzzle");
-  window.location.assign(`${url.pathname}${url.search}${url.hash}`);
-}
+function goHome() { if (typeof window !== "undefined") exitReplayToHome(window); }
 
 function Message({ children }) {
   return (

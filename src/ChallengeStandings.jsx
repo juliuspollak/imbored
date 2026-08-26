@@ -7,6 +7,7 @@ import { useI18n } from "./lib/i18n.jsx";
 import { GAME_NAMES } from "./lib/gameBranding.jsx";
 import { openPuzzlePractice } from "./lib/puzzleSharing.js";
 import { supabase, supabaseReady } from "./lib/supabase.js";
+import { canOpenChallengeResult } from "./lib/challengeResultDetails.js";
 
 function toBenchmarkMap(benchmarks) {
   return Object.fromEntries(benchmarks.map((item) => [`${item.game}:${item.day_index}`, {
@@ -28,7 +29,7 @@ export default function ChallengeStandings({ rows = [], roster = [], games = [],
   const [expandedPlayerIds, setExpandedPlayerIds] = useState(() => new Set());
 
   const standings = useMemo(() => {
-    if (isCircle && serverStandings?.length) return fromServerStandings(serverStandings, userId);
+    if (isCircle && serverStandings?.length) return fromServerStandings(serverStandings, userId, rows);
     const slots = toSlots({ isCircle, rounds, games });
     if (slots.length === 0) return [];
     return buildChallengeStandings({ rows, roster, slots, benchmarkMap: toBenchmarkMap(benchmarks), userId, missedPenalty: isCircle ? MISSED_ROUND_PENALTY : 0 });
@@ -95,12 +96,17 @@ function StandingsList({ standings, expandedPlayerIds, setExpandedPlayerIds, pre
   const [selectedResult, setSelectedResult] = useState(null);
   const resultRequestRef = useRef(0);
 
-  async function openCompletedResult(result, score) {
-    if (!result?.game || !result?.challenge_date || !userId) return;
+  async function openCompletedResult(result, score, player) {
+    if (!canOpenChallengeResult(result, { isCurrentUser:player.isCurrentUser, detailHidden:player.detailHidden }) || !userId) return;
     const requestId = ++resultRequestRef.current;
-    setSelectedResult({ ...result, score, loading:true, loadError:"" });
+    const base = { ...result, score, playerName:player.name, isCurrentUser:player.isCurrentUser };
+    if (!player.isCurrentUser) {
+      setSelectedResult({ ...base, loading:false, loadError:"" });
+      return;
+    }
+    setSelectedResult({ ...base, loading:true, loadError:"" });
     if (!supabaseReady) {
-      if (requestId === resultRequestRef.current) setSelectedResult({ ...result, score, loading:false, loadError:"This result cannot be reopened right now." });
+      if (requestId === resultRequestRef.current) setSelectedResult({ ...base, loading:false, loadError:"This result cannot be reopened right now." });
       return;
     }
     const { data, error } = await supabase
@@ -115,10 +121,10 @@ function StandingsList({ standings, expandedPlayerIds, setExpandedPlayerIds, pre
       .maybeSingle();
     if (requestId !== resultRequestRef.current) return;
     if (error || !data) {
-      setSelectedResult({ ...result, score, loading:false, loadError:"This saved game could not be opened." });
+      setSelectedResult({ ...base, loading:false, loadError:"This saved game could not be opened." });
       return;
     }
-    setSelectedResult({ ...result, ...data, score, loading:false, loadError:"" });
+    setSelectedResult({ ...base, ...data, loading:false, loadError:"" });
   }
 
   function closeCompletedResult() {
@@ -159,8 +165,9 @@ function StandingsList({ standings, expandedPlayerIds, setExpandedPlayerIds, pre
                       if (res.is_private) return <span key={di} style={{ minHeight:36, display:"flex", alignItems:"center", justifyContent:"center", gap:5, border:"1px solid var(--color-border)", borderRadius:"var(--radius-sm)", background:"var(--color-surface)", color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:600 }}><LockKeyhole size={13} /> {t("standings.privateTile")}</span>;
                       const score = player.dailyScores[di];
                       const resultStyle = { minHeight:36, display:"flex", alignItems:"center", justifyContent:"center", gap:5, padding:"6px 8px", border:`1px solid ${score >= TYPICAL_SCORE ? "var(--color-success-border)" : score >= TYPICAL_SCORE * .8 ? "var(--color-primary-subtle-border)" : "var(--color-danger-text)"}`, borderRadius:"var(--radius-sm)", background:score >= TYPICAL_SCORE ? "var(--color-success-bg)" : score >= TYPICAL_SCORE * .8 ? "var(--color-primary-subtle)" : "var(--color-danger-bg)", color:score >= TYPICAL_SCORE ? "var(--color-success-text)" : score >= TYPICAL_SCORE * .8 ? "var(--color-primary)" : "var(--color-danger-text)", fontSize:"var(--text-caption-size)", fontWeight:600 };
-                      if (!player.isCurrentUser) return <span key={di} title={t("standings.roundHint")} style={resultStyle}>{GAME_NAMES[res.game] || res.game} {score}</span>;
-                      return <button key={di} type="button" onClick={() => openCompletedResult(res, score)} aria-label={`Open ${GAME_NAMES[res.game] || res.game} result, score ${score}`} className="challenge-result-button" style={{ ...resultStyle, width:"100%", fontFamily:"inherit", cursor:"pointer" }}><span>{GAME_NAMES[res.game] || res.game} {score}</span><ChevronRight size={14} aria-hidden="true" /></button>;
+                      const canOpen = canOpenChallengeResult(res, { isCurrentUser:player.isCurrentUser, detailHidden:player.detailHidden });
+                      if (!canOpen) return <span key={di} title={t("standings.roundHint")} style={resultStyle}>{GAME_NAMES[res.game] || res.game} {score}</span>;
+                      return <button key={di} type="button" onClick={() => openCompletedResult(res, score, player)} aria-label={`Open ${player.name}'s ${GAME_NAMES[res.game] || res.game} result, score ${score}`} className="challenge-result-button" style={{ ...resultStyle, width:"100%", fontFamily:"inherit", cursor:"pointer" }}><span>{GAME_NAMES[res.game] || res.game} {score}</span><ChevronRight size={14} aria-hidden="true" /></button>;
                     })}
                   </div>}
               </div>}
@@ -184,15 +191,15 @@ function CompletedResultDialog({ result, onClose }) {
     <div role="presentation" onClick={(event) => { if (event.target === event.currentTarget) onClose(); }} style={{ position:"fixed", zIndex:1000, inset:0, display:"flex", alignItems:"flex-end", justifyContent:"center", padding:"var(--space-3)", paddingBottom:"max(var(--space-3), env(safe-area-inset-bottom))", background:"rgba(0,0,0,.42)", overscrollBehavior:"contain" }}>
       <section role="dialog" aria-modal="true" aria-label={`${gameName} completed result`} style={{ width:"min(100%,430px)", maxHeight:"85dvh", overflow:"auto", border:"1px solid var(--color-border)", borderRadius:"var(--radius-xl)", background:"var(--color-surface)", boxShadow:"var(--shadow-card)", padding:"var(--space-4)", WebkitOverflowScrolling:"touch", touchAction:"pan-y" }}>
         <div style={{ display:"flex", alignItems:"flex-start", gap:"var(--space-3)" }}>
-          <div style={{ flex:1, minWidth:0 }}><p style={{ margin:0, color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:700, textTransform:"uppercase", letterSpacing:".04em" }}>Completed game</p><h3 style={{ margin:"3px 0 0", color:"var(--color-text-primary)", fontSize:20 }}>{gameName} · {result.score}</h3></div>
+          <div style={{ flex:1, minWidth:0 }}><p style={{ margin:0, color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:700, textTransform:"uppercase", letterSpacing:".04em" }}>{result.isCurrentUser ? "Your completed game" : `${result.playerName}'s completed game`}</p><h3 style={{ margin:"3px 0 0", color:"var(--color-text-primary)", fontSize:20 }}>{gameName} · {result.score}</h3></div>
           <button type="button" onClick={onClose} aria-label="Close result" className="challenge-result-close" style={{ width:40, height:40, margin:"-3px -3px 0 0", display:"grid", placeItems:"center", flexShrink:0, border:0, borderRadius:"50%", background:"var(--color-surface-elevated)", color:"var(--color-text-secondary)", cursor:"pointer", touchAction:"manipulation" }}><X size={18} /></button>
         </div>
         {result.loading ? <p role="status" style={{ margin:"var(--space-4) 0", color:"var(--color-text-secondary)", fontSize:"var(--text-body-secondary-size)" }}>Opening your saved result…</p> : result.loadError ? <p role="status" style={{ margin:"var(--space-4) 0", color:"var(--color-danger-text)", fontSize:"var(--text-body-secondary-size)" }}>{result.loadError}</p> : <>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(2,minmax(0,1fr))", gap:"var(--space-2)", marginTop:"var(--space-4)" }}>
             <ResultFact label="Time" value={Number.isFinite(seconds) ? formatTime(seconds) : "—"} /><ResultFact label="Challenge score" value={result.score ?? "—"} /><ResultFact label="Mistakes" value={mistakes} /><ResultFact label="Hints" value={hints} />{accuracy !== null && <ResultFact label="Accuracy" value={`${accuracy}%`} />}
           </div>
-          <div style={{ marginTop:"var(--space-4)", padding:"var(--space-3)", border:"1px solid var(--color-primary-subtle-border)", borderRadius:"var(--radius-md)", background:"var(--color-primary-subtle)" }}><p style={{ margin:0, color:"var(--color-text-primary)", fontSize:"var(--text-body-secondary-size)", fontWeight:700 }}>Your original Challenge result stays locked.</p><p style={{ margin:"4px 0 0", color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", lineHeight:1.45 }}>Replaying opens the exact same puzzle as Practice, so it cannot replace or change this score.</p></div>
-          <button type="button" onClick={() => openPuzzlePractice(result.id)} disabled={!result.id} className="challenge-result-replay" style={{ width:"100%", minHeight:44, marginTop:"var(--space-4)", display:"inline-flex", alignItems:"center", justifyContent:"center", gap:7, border:0, borderRadius:"var(--radius-full)", background:"var(--color-primary)", color:"var(--color-primary-text)", fontFamily:"inherit", fontSize:"var(--text-button-size)", fontWeight:800, cursor:result.id ? "pointer" : "default", opacity:result.id ? 1 : .5, touchAction:"manipulation" }}><RefreshCw size={16} /> Practise this game</button>
+          {result.isCurrentUser && <><div style={{ marginTop:"var(--space-4)", padding:"var(--space-3)", border:"1px solid var(--color-primary-subtle-border)", borderRadius:"var(--radius-md)", background:"var(--color-primary-subtle)" }}><p style={{ margin:0, color:"var(--color-text-primary)", fontSize:"var(--text-body-secondary-size)", fontWeight:700 }}>Your original Challenge result stays locked.</p><p style={{ margin:"4px 0 0", color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", lineHeight:1.45 }}>Replaying opens the exact same puzzle as Practice, so it cannot replace or change this score.</p></div>
+          <button type="button" onClick={() => openPuzzlePractice(result.id)} disabled={!result.id} className="challenge-result-replay" style={{ width:"100%", minHeight:44, marginTop:"var(--space-4)", display:"inline-flex", alignItems:"center", justifyContent:"center", gap:7, border:0, borderRadius:"var(--radius-full)", background:"var(--color-primary)", color:"var(--color-primary-text)", fontFamily:"inherit", fontSize:"var(--text-button-size)", fontWeight:800, cursor:result.id ? "pointer" : "default", opacity:result.id ? 1 : .5, touchAction:"manipulation" }}><RefreshCw size={16} /> Practise this game</button></>}
         </>}
       </section>
     </div>

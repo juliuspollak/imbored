@@ -1,4 +1,5 @@
 import { challengeScore } from "./performanceScoring.js";
+import { mergeChallengeRoundSummary } from "./challengeResultDetails.js";
 
 // Mirrors circle_challenge_member_totals(), so the standings a circle sees
 // during the week match the winner the server picks when it closes.
@@ -154,7 +155,7 @@ export function buildChallengeStandings({
 // Circle standings computed and ranked by the database, so the browser holds
 // no copy of the weekly scoring formula. Private profiles are excluded rather
 // than anonymised because private accounts cannot participate in circles.
-export function fromServerStandings(serverRows = [], userId = null) {
+export function fromServerStandings(serverRows = [], userId = null, detailRows = []) {
   const entries = serverRows
     .filter((row) => (row.member_id === userId || !row.is_private) && Number(row.rounds_played) > 0)
     .map((row) => {
@@ -179,7 +180,7 @@ export function fromServerStandings(serverRows = [], userId = null) {
         unranked: false,
         detailHidden: rounds === null,
         dailyResults: rounds
-          ? rounds.map((round) => (round.score == null ? null : { game: round.game, challenge_date: round.challenge_date }))
+          ? rounds.map((round) => mergeChallengeRoundSummary(round, detailRows, userId, row.member_id))
           : [],
         dailyScores: rounds ? rounds.map((round) => round.score) : [],
       };

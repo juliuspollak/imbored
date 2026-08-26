@@ -220,19 +220,17 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
             aria-label={showIconPicker ? "Close avatar picker" : "Change avatar"}
             aria-expanded={showIconPicker}
             className="profile-avatar-button"
-            style={{ width: "100%", minHeight: 56, display: "flex", alignItems: "center", gap: "var(--space-3)", marginBottom: "var(--space-4)", padding: "var(--space-2) var(--space-3)", borderRadius: "var(--radius-md)", border: showIconPicker ? "1px solid var(--color-primary)" : "1px solid var(--color-border)", background: showIconPicker ? "var(--color-primary-subtle)" : "var(--color-surface-elevated)", color: "var(--color-text-primary)", font: "inherit", textAlign: "left", cursor: "pointer" }}
+            style={{ width: "100%", minHeight: 112, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "var(--space-2)", margin:"var(--space-2) 0 var(--space-5)", padding: "var(--space-3)", borderRadius: "var(--radius-lg)", border: showIconPicker ? "1px solid var(--color-primary)" : "1px solid var(--color-border)", background: showIconPicker ? "var(--color-primary-subtle)" : "var(--color-surface-elevated)", color: "var(--color-text-primary)", font: "inherit", textAlign: "center", cursor: "pointer" }}
           >
-            <span aria-hidden="true" style={{ width: 40, height: 40, display: "grid", placeItems: "center", flexShrink: 0, borderRadius: "50%", background: "var(--color-surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-control)", fontSize: 21 }}>{icon}</span>
-            <span style={{ flex: 1, minWidth: 0 }}>
+            <span aria-hidden="true" style={{ position:"relative", width: 64, height: 64, display: "grid", placeItems: "center", flexShrink: 0, borderRadius: "50%", background: "var(--color-surface)", border: "2px solid var(--color-avatar-border)", boxShadow: "var(--shadow-control)", fontSize: 34 }}>
+              {icon}
+              <span style={{ position:"absolute", right:-3, bottom:-3, width:25, height:25, display:"grid", placeItems:"center", borderRadius:"50%", border:"2px solid var(--color-surface-elevated)", background:"var(--color-primary)", color:"var(--color-primary-text)" }}><Camera size={13} /></span>
+            </span>
+            <span style={{ minWidth: 0 }}>
               <strong style={{ display: "block", fontSize: "var(--text-body-secondary-size)" }}>{t("profile.picture")}</strong>
               <span style={{ display: "block", marginTop: 2, color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{t("profile.pictureHint")}</span>
             </span>
-            <Camera size={18} aria-hidden="true" style={{ flexShrink: 0, color: "var(--color-primary)" }} />
           </button>
-
-          <FormField label={t("profile.name")}>
-            <TextInput required value={name} onChange={(event) => setName(event.target.value)} placeholder={t("profile.namePlaceholder")} autoComplete="name" />
-          </FormField>
 
           {showIconPicker && (
             <div role="group" aria-label="Choose avatar" style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: "var(--space-2)", marginBottom: "var(--space-4)", padding: "var(--space-3)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)" }}>
@@ -251,6 +249,10 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
               ))}
             </div>
           )}
+
+          <FormField label={t("profile.name")}>
+            <TextInput required value={name} onChange={(event) => setName(event.target.value)} placeholder={t("profile.namePlaceholder")} autoComplete="name" />
+          </FormField>
 
           <FormField label={t("profile.mood")}>
             <TextInput value={mood} onChange={(event) => setMood(event.target.value)} placeholder={t("profile.moodPlaceholder")} maxLength={40} />

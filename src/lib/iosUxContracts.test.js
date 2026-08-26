@@ -69,5 +69,20 @@ test("profile avatar editing lives in the settings card, not the page header", (
   const headerCall = profile.match(/<PageHeader[\s\S]*?\/>/)?.[0] || "";
   assert.doesNotMatch(headerCall, /action=/);
   assert.match(profile, /<Card[^>]*>[\s\S]*?className="profile-avatar-button"[\s\S]*?profile\.picture/);
-  assert.match(profile, /minHeight: 56/);
+  assert.match(profile, /minHeight: 112/);
+  assert.match(profile, /width: 64, height: 64/);
+});
+
+test("Hive completion collapses its board until Review is intentionally selected", () => {
+  const hive = source("../games/Hive.jsx");
+  assert.match(hive, /if \(solved\) setReviewing\(false\)/);
+  assert.match(hive, /\{\(!solved \|\| reviewing\) && boardGrid\}/);
+});
+
+test("standings keep own details and permit eligible read-only participant details", () => {
+  const standings = source("../ChallengeStandings.jsx");
+  assert.match(standings, /canOpenChallengeResult\(res/);
+  assert.match(standings, /!player\.isCurrentUser/);
+  assert.match(standings, /result\.isCurrentUser && <></);
+  assert.match(standings, /Practise this game/);
 });
