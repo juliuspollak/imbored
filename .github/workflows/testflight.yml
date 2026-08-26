@@ -113,23 +113,45 @@ jobs:
           security create-keychain -p "$keychain_password" "$keychain"
           security set-keychain-settings -lut 21600 "$keychain"
           security unlock-keychain -p "$keychain_password" "$keychain"
-          security import "$certificate" -P "$IOS_DISTRIBUTION_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$keychain"
+          # Import the complete PKCS#12. Supplying `-t cert` can restrict the
+          # import to the certificate and leave its private key unavailable.
+          security import "$certificate" -P "$IOS_DISTRIBUTION_CERTIFICATE_PASSWORD" -A -f pkcs12 -k "$keychain"
           security set-key-partition-list -S apple-tool:,apple: -k "$keychain_password" "$keychain"
-          security list-keychain -d user -s "$keychain" login.keychain-db
+          security list-keychains -d user -s "$keychain" login.keychain-db
           profile_plist="$RUNNER_TEMP/profile.plist"
           security cms -D -i "$profile" > "$profile_plist"
           profile_uuid=$(/usr/libexec/PlistBuddy -c 'Print UUID' "$profile_plist")
+          profile_name=$(/usr/libexec/PlistBuddy -c 'Print Name' "$profile_plist")
+          profile_team=$(/usr/libexec/PlistBuddy -c 'Print TeamIdentifier:0' "$profile_plist")
           profile_app_id=$(/usr/libexec/PlistBuddy -c 'Print Entitlements:application-identifier' "$profile_plist")
           profile_aps=$(/usr/libexec/PlistBuddy -c 'Print Entitlements:aps-environment' "$profile_plist")
+          [[ "$profile_team" == "$APPLE_TEAM_ID" ]] || { echo "::error::Provisioning profile belongs to team $profile_team, expected $APPLE_TEAM_ID"; exit 1; }
           [[ "$profile_app_id" == "$APPLE_TEAM_ID.$APP_IDENTIFIER" ]] || { echo "::error::Provisioning profile is for $profile_app_id, expected $APPLE_TEAM_ID.$APP_IDENTIFIER"; exit 1; }
           [[ "$profile_aps" == "production" ]] || { echo "::error::Provisioning profile does not contain the production APNs entitlement."; exit 1; }
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
           cp "$profile" "$HOME/Library/MobileDevice/Provisioning Profiles/$profile_uuid.mobileprovision"
-          echo "profile_uuid=$profile_uuid" >> "$GITHUB_OUTPUT"
 
-      - name: Archive app
+          # Safe diagnostic: this prints only identity hashes and display names.
+          # It never prints the certificate, private key, profile, or passwords.
+          identities=$(security find-identity -v -p codesigning "$keychain")
+          printf '%s\n' "$identities"
+          identity_line=$(printf '%s\n' "$identities" | grep -m1 '"Apple Distribution:') || { echo "::error::No usable Apple Distribution identity with a private key was imported from the .p12."; exit 1; }
+          identity_hash=$(printf '%s\n' "$identity_line" | awk '{ print $2 }')
+          identity_name=$(printf '%s\n' "$identity_line" | sed -E 's/.*"([^"]+)".*/\1/')
+          profile_certificate_hashes=$(ruby -r rexml/document -r digest -r base64 -e 'doc=REXML::Document.new(File.read(ARGV.fetch(0))); nodes=doc.get_elements("plist/dict").first.elements.to_a; index=nodes.index { |node| node.name=="key" && node.text=="DeveloperCertificates" }; abort("Profile has no DeveloperCertificates") unless index; nodes.fetch(index+1).get_elements("data").each { |node| puts Digest::SHA1.hexdigest(Base64.decode64(node.text.to_s)).upcase }' "$profile_plist")
+          printf '%s\n' "$profile_certificate_hashes" | grep -Fxq "$identity_hash" || { echo "::error::The imported Apple Distribution certificate is not included in the provisioning profile. Regenerate the profile using this distribution certificate."; exit 1; }
+          echo "profile_uuid=$profile_uuid" >> "$GITHUB_OUTPUT"
+          echo "profile_name=$profile_name" >> "$GITHUB_OUTPUT"
+          echo "identity_name=$identity_name" >> "$GITHUB_OUTPUT"
+
+      - name: Configure signing for the App target only
         env:
           PROFILE_UUID: ${{ steps.signing.outputs.profile_uuid }}
+          PROFILE_NAME: ${{ steps.signing.outputs.profile_name }}
+          SIGNING_IDENTITY: ${{ steps.signing.outputs.identity_name }}
+        run: bundle exec fastlane ios configure_ci_signing
+
+      - name: Archive app
         run: |
           xcodebuild archive \
             -workspace ios/App/App.xcworkspace \
@@ -137,13 +159,8 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/imBored.xcarchive" \
-            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
-            PRODUCT_BUNDLE_IDENTIFIER="$APP_IDENTIFIER" \
             MARKETING_VERSION="$APP_VERSION" \
-            CURRENT_PROJECT_VERSION="${{ steps.build_number.outputs.build_number }}" \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY='Apple Distribution' \
-            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID"
+            CURRENT_PROJECT_VERSION="${{ steps.build_number.outputs.build_number }}"
 
       - name: Export signed IPA
         env:
@@ -156,6 +173,7 @@ jobs:
           /usr/libexec/PlistBuddy -c 'Add :uploadSymbols bool true' "$export_plist"
           /usr/libexec/PlistBuddy -c 'Add :provisioningProfiles dict' "$export_plist"
           /usr/libexec/PlistBuddy -c "Add :provisioningProfiles:$APP_IDENTIFIER string $PROFILE_UUID" "$export_plist"
+          plutil -lint "$export_plist"
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/imBored.xcarchive" \
             -exportPath "$RUNNER_TEMP/export" \
@@ -174,3 +192,4 @@ jobs:
         run: |
           security delete-keychain "$RUNNER_TEMP/testflight.keychain-db" 2>/dev/null || true
           rm -f "$RUNNER_TEMP/distribution.p12" "$RUNNER_TEMP/app-store.mobileprovision" "$RUNNER_TEMP/profile.plist"
+          rm -f "$HOME/Library/MobileDevice/Provisioning Profiles/${{ steps.signing.outputs.profile_uuid }}.mobileprovision"

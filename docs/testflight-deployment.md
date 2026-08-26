@@ -10,7 +10,7 @@ The **Deploy to TestFlight** GitHub Actions workflow is deliberately manual. It 
 4. Create an **App Store Connect** distribution provisioning profile for `au.imbored.app` using that certificate. Download the `.mobileprovision`. It must contain the production `aps-environment` entitlement. The workflow validates both the App ID and that entitlement before archiving.
 5. Confirm the existing external TestFlight group name (for example, `Family Testers`) and complete the app's Test Information, export-compliance, and Beta App Review contact fields in App Store Connect.
 
-Automatic signing remains enabled for local Xcode use. CI overrides it only for the archive command, using the supplied certificate/profile. No signing setting or build number is committed back to the repository.
+Automatic signing remains enabled for local Xcode use. On the disposable CI checkout, Fastlane changes only the `App` target's Release configuration to manual signing. CocoaPods and Capacitor framework targets do not receive an app provisioning profile. No signing setting or build number is committed back to the repository.
 
 ## GitHub secrets
 
@@ -59,6 +59,8 @@ The first external build of a version, and some later builds, may require Beta A
 - **Missing secret:** add the named secret to the `testflight` environment or repository. Environment secrets take effect only after any environment approval.
 - **No signing certificate/private key:** export the `.p12` from a Mac that holds both the Apple Distribution certificate and its private key, then replace both certificate secrets.
 - **Profile mismatch or non-production APNs:** regenerate an App Store Connect profile for `au.imbored.app` after enabling Push Notifications. Do not use a development or Ad Hoc profile.
+- **Certificate is not included in profile:** regenerate the App Store provisioning profile and explicitly select the Apple Distribution certificate exported into `IOS_DISTRIBUTION_CERTIFICATE_BASE64`. The workflow compares their SHA-1 identifiers before archiving.
+- **No usable Apple Distribution identity:** re-export the `.p12` from Keychain Access with both the certificate and its private key. The CI diagnostic lists only safe identity hashes/names from the temporary keychain.
 - **Profile/certificate expired:** renew both in the Developer portal and replace the base64 secrets together.
 - **API authorization error:** confirm Key ID, Issuer ID, complete `.p8` content, and the App Manager role. Replace revoked keys.
 - **Build number already used:** rerun with the build-number field blank; if another uploader raced the workflow, use an override greater than the newest build.
