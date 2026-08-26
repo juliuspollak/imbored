@@ -115,7 +115,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.3"
+          ruby-version: "3.1.7"
           bundler-cache: true
 
       - name: Put bundled CocoaPods on PATH
@@ -124,13 +124,14 @@ jobs:
           bundle binstubs cocoapods --path "$RUNNER_TEMP/bundle-bin"
           echo "$RUNNER_TEMP/bundle-bin" >> "$GITHUB_PATH"
 
-      - name: Verify Ruby and CocoaPods toolchain
+      - name: Verify bundled Ruby toolchain
         run: |
           set -euo pipefail
           which ruby
           ruby --version
           which bundle
           bundle --version
+          bundle exec fastlane --version
           bundle exec pod --version
           which pod
           pod --version

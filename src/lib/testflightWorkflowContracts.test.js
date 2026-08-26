@@ -39,15 +39,20 @@ test("TestFlight uses stable Xcode 26 while retaining the iOS 15 deployment targ
   assert.match(podfile, /platform :ios, '15\.0'/);
 });
 
-test("Capacitor sync resolves CocoaPods through the Ruby 3.3 bundle", () => {
+test("Capacitor sync uses a Ruby compatible with the locked bundle", () => {
   const workflow = read("../../.github/workflows/testflight.yml");
+  const lockfile = read("../../Gemfile.lock");
   const rubySetupIndex = workflow.indexOf("uses: ruby/setup-ruby@v1");
   const binstubIndex = workflow.indexOf("bundle binstubs cocoapods");
   const syncIndex = workflow.indexOf("run: npm run ios:sync");
-  assert.match(workflow, /ruby-version: "3\.3"/);
+  const rubyVersion = workflow.match(/ruby-version: "(\d+)\.(\d+)(?:\.\d+)?"/)?.slice(1, 3).map(Number);
+  assert.deepEqual(rubyVersion, [3, 1]);
+  assert.match(lockfile, /CFPropertyList \(3\.0\.9\)/);
+  assert.match(lockfile, /BUNDLED WITH\s+2\.5\.23/);
   assert.match(workflow, /bundler-cache: true/);
   assert.ok(rubySetupIndex > -1 && rubySetupIndex < binstubIndex && binstubIndex < syncIndex);
   assert.match(workflow, /echo "\$RUNNER_TEMP\/bundle-bin" >> "\$GITHUB_PATH"/);
+  assert.match(workflow, /bundle exec fastlane --version/);
   assert.match(workflow, /bundle exec pod --version/);
   assert.match(workflow, /which pod[\s\S]*pod --version/);
   assert.match(workflow, /\$RUNNER_TEMP\/bundle-bin\/pod/);

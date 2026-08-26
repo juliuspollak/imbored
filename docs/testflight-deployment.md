@@ -4,7 +4,7 @@ The **Deploy to TestFlight** GitHub Actions workflow is deliberately manual. It 
 
 CI runs on GitHub's `macos-26` image and explicitly selects the newest installed stable Xcode 26 release. Before installing dependencies, it prints and validates both the Xcode version and iPhoneOS SDK version. The app is built with SDK 26 or later while its minimum supported deployment target remains iOS 15.0.
 
-Ruby 3.3 and the locked Bundler environment are configured before Capacitor sync. CI places a temporary CocoaPods binstub at the front of `PATH`, ensuring Capacitor's internal `pod install` uses the repository's bundled CocoaPods rather than the runner's Homebrew installation. The workflow prints safe Ruby, Bundler, and CocoaPods executable/version diagnostics before syncing.
+Ruby 3.1.7 and the locked Bundler environment are configured before Capacitor sync. This interpreter satisfies the locked CFPropertyList 3.0.9 requirement for Ruby below 3.2. CI places a temporary CocoaPods binstub at the front of `PATH`, ensuring Capacitor's internal `pod install` uses the repository's bundled CocoaPods rather than the runner's Homebrew installation. The workflow prints safe Ruby, Bundler, Fastlane, and CocoaPods executable/version diagnostics before syncing.
 
 ## One-time Apple setup
 
