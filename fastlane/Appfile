@@ -1,0 +1,2 @@
+app_identifier(ENV.fetch("APP_IDENTIFIER", "au.imbored.app"))
+team_id(ENV["APPLE_TEAM_ID"])

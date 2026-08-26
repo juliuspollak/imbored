@@ -1,0 +1,66 @@
+default_platform(:ios)
+
+def app_store_connect_key
+  app_store_connect_api_key(
+    key_id: ENV.fetch("APP_STORE_CONNECT_API_KEY_ID"),
+    issuer_id: ENV.fetch("APP_STORE_CONNECT_ISSUER_ID"),
+    key_content: ENV.fetch("APP_STORE_CONNECT_API_KEY_BASE64"),
+    is_key_content_base64: true
+  )
+end
+
+platform :ios do
+  desc "Choose latest TestFlight build + 1, or validate an explicit override"
+  lane :resolve_build_number do
+    key = app_store_connect_key
+    latest = latest_testflight_build_number(
+      api_key: key,
+      app_identifier: ENV.fetch("APP_IDENTIFIER"),
+      version: ENV.fetch("APP_VERSION"),
+      initial_build_number: 0
+    ).to_i
+    override = ENV.fetch("BUILD_NUMBER_OVERRIDE", "").strip
+    unless override.empty? || override.match?(/\A[1-9]\d*\z/)
+      UI.user_error!("Build number override must be a positive integer")
+    end
+    selected = override.empty? ? latest + 1 : override.to_i
+    UI.user_error!("Build number #{selected} must be greater than latest TestFlight build #{latest}") if selected <= latest
+    File.open(ENV.fetch("GITHUB_OUTPUT"), "a") { |file| file.puts("build_number=#{selected}") }
+    UI.success("Using TestFlight build number #{selected}")
+  end
+
+  desc "Upload an IPA, then optionally distribute it to an external group"
+  lane :upload do
+    key = app_store_connect_key
+    upload_to_testflight(
+      api_key: key,
+      app_identifier: ENV.fetch("APP_IDENTIFIER"),
+      ipa: ENV.fetch("IPA_PATH"),
+      app_version: ENV.fetch("APP_VERSION"),
+      build_number: ENV.fetch("BUILD_NUMBER"),
+      changelog: ENV.fetch("RELEASE_NOTES", ""),
+      skip_waiting_for_build_processing: false,
+      distribute_external: false
+    )
+
+    group = ENV.fetch("TESTER_GROUP", "").strip
+    next if group.empty?
+
+    begin
+      upload_to_testflight(
+        api_key: key,
+        app_identifier: ENV.fetch("APP_IDENTIFIER"),
+        app_version: ENV.fetch("APP_VERSION"),
+        build_number: ENV.fetch("BUILD_NUMBER"),
+        distribute_only: true,
+        distribute_external: true,
+        groups: [group],
+        notify_external_testers: true
+      )
+    rescue => error
+      UI.important("The build uploaded successfully but external distribution was not completed.")
+      UI.important("This is expected when Beta App Review or missing TestFlight metadata requires action in App Store Connect.")
+      UI.important(error.message)
+    end
+  end
+end
