@@ -22,3 +22,19 @@ test("CI signing is target-scoped and imports a codesign-capable private key", (
   assert.match(workflow, /security find-identity -v -p codesigning/);
   assert.match(workflow, /profile_certificate_hashes/);
 });
+
+test("TestFlight uses stable Xcode 26 while retaining the iOS 15 deployment target", () => {
+  const workflow = read("../../.github/workflows/testflight.yml");
+  const project = read("../../ios/App/App.xcodeproj/project.pbxproj");
+  const podfile = read("../../ios/App/Podfile");
+  assert.match(workflow, /runs-on: macos-26/);
+  assert.match(workflow, /Xcode_26\*\.app/);
+  assert.doesNotMatch(workflow, /Xcode_16|Xcode_27/);
+  assert.match(workflow, /xcode-select --switch/);
+  assert.match(workflow, /xcodebuild -version/);
+  assert.match(workflow, /xcode_major[\s\S]*-ge 26/);
+  assert.match(workflow, /xcrun --sdk iphoneos --show-sdk-version/);
+  assert.match(workflow, /sdk_major[\s\S]*-ge 26/);
+  assert.deepEqual([...project.matchAll(/IPHONEOS_DEPLOYMENT_TARGET = ([^;]+);/g)].map((match) => match[1]), ["15.0", "15.0", "15.0", "15.0"]);
+  assert.match(podfile, /platform :ios, '15\.0'/);
+});

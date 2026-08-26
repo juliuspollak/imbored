@@ -2,6 +2,8 @@
 
 The **Deploy to TestFlight** GitHub Actions workflow is deliberately manual. It checks out `main`, tests and builds the web app, syncs Capacitor, archives and signs the iOS app, uploads it to TestFlight, and optionally distributes it to an existing external group.
 
+CI runs on GitHub's `macos-26` image and explicitly selects the newest installed stable Xcode 26 release. Before installing dependencies, it prints and validates both the Xcode version and iPhoneOS SDK version. The app is built with SDK 26 or later while its minimum supported deployment target remains iOS 15.0.
+
 ## One-time Apple setup
 
 1. In App Store Connect, open **Users and Access → Integrations → App Store Connect API** and create a team API key with the **App Manager** role. Download its `.p8` file immediately; Apple only permits one download. Record the Key ID and Issuer ID.

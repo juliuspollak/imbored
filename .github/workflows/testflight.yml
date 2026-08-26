@@ -27,7 +27,7 @@ concurrency:
 jobs:
   deploy:
     name: Build, sign, and upload
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 60
     environment: testflight
     env:
@@ -46,6 +46,46 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: main
+
+      - name: Select and validate stable Xcode 26
+        run: |
+          set -euo pipefail
+          selected_xcode=""
+          selected_minor=-1
+          selected_patch=-1
+          for xcode_app in /Applications/Xcode_26*.app; do
+            [[ -d "$xcode_app" ]] || continue
+            case "$xcode_app" in
+              *[Bb]eta*|*[Rr][Cc]*) continue ;;
+            esac
+            candidate_version=$("$xcode_app/Contents/Developer/usr/bin/xcodebuild" -version | awk 'NR == 1 { print $2 }')
+            candidate_major=${candidate_version%%.*}
+            candidate_rest=${candidate_version#*.}
+            candidate_minor=${candidate_rest%%.*}
+            candidate_patch=0
+            if [[ "$candidate_rest" == *.* ]]; then
+              candidate_patch=${candidate_rest#*.}
+              candidate_patch=${candidate_patch%%.*}
+            fi
+            if [[ "$candidate_major" =~ ^[0-9]+$ && "$candidate_minor" =~ ^[0-9]+$ && "$candidate_patch" =~ ^[0-9]+$ && "$candidate_major" -eq 26 ]] &&
+              (( candidate_minor > selected_minor || (candidate_minor == selected_minor && candidate_patch > selected_patch) )); then
+              selected_xcode="$xcode_app"
+              selected_minor="$candidate_minor"
+              selected_patch="$candidate_patch"
+            fi
+          done
+          [[ -n "$selected_xcode" ]] || { echo "::error::No stable Xcode 26 installation was found on this runner."; exit 1; }
+          sudo xcode-select --switch "$selected_xcode/Contents/Developer"
+          echo "DEVELOPER_DIR=$selected_xcode/Contents/Developer" >> "$GITHUB_ENV"
+
+          xcodebuild -version
+          xcode_version=$(xcodebuild -version | awk 'NR == 1 { print $2 }')
+          xcode_major=${xcode_version%%.*}
+          sdk_version=$(xcrun --sdk iphoneos --show-sdk-version)
+          sdk_major=${sdk_version%%.*}
+          echo "iPhoneOS SDK $sdk_version"
+          [[ "$xcode_major" =~ ^[0-9]+$ && "$xcode_major" -ge 26 ]] || { echo "::error::Xcode 26 or later is required; found $xcode_version."; exit 1; }
+          [[ "$sdk_major" =~ ^[0-9]+$ && "$sdk_major" -ge 26 ]] || { echo "::error::iPhoneOS SDK 26 or later is required; found $sdk_version."; exit 1; }
 
       - name: Validate required secrets
         env:
