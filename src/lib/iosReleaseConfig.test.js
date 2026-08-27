@@ -26,3 +26,10 @@ test("push and remote-notification capabilities remain committed", () => {
   assert.match(plist, /<string>remote-notification<\/string>/);
   assert.match(entitlements, /<key>aps-environment<\/key>/);
 });
+
+test("Sign in with Apple is recorded in both the entitlement and Xcode target capability",()=>{
+  const entitlements=readFileSync(new URL("../../ios/App/App/App.entitlements",import.meta.url),"utf8");
+  const project=readFileSync(new URL("../../ios/App/App.xcodeproj/project.pbxproj",import.meta.url),"utf8");
+  assert.match(entitlements,/com\.apple\.developer\.applesignin/);
+  assert.match(project,/com\.apple\.SignInWithApple = \{[\s\S]*?enabled = 1;/);
+});

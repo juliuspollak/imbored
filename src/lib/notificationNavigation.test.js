@@ -12,6 +12,10 @@ test("notification navigation accepts allowlisted routes with valid record IDs",
   assert.deepEqual(notificationNavigation({ route:"daily_challenge", circleId:"12", challenge_id:34 }), {
     screen:"circles", circleId:12, challengeId:34,
   });
+  assert.deepEqual(notificationNavigation({ route:"circle",circleId:12,challengeId:34 }),{
+    screen:"circles",circleId:12,challengeId:34,
+  });
+  assert.deepEqual(notificationNavigation({ route:"circle",circleId:12 }),{ screen:"circles",circleId:12 });
 });
 
 test("notification navigation rejects unknown routes and missing or malformed IDs", () => {

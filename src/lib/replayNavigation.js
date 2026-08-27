@@ -9,9 +9,9 @@ export const REPLAYABLE_GAME_IDS = Object.freeze([
 
 export function homeLocationFrom(currentLocation) {
   const url = new URL(currentLocation, "https://imbored.invalid");
-  url.searchParams.delete("puzzle");
-  url.searchParams.delete("rush");
-  return `${url.pathname}${url.search}${url.hash}`;
+  // Home is a canonical route, not a cleaned-up replay route. Discard every
+  // query/hash input that could bootstrap another screen.
+  return url.pathname;
 }
 
 export function exitReplayToHome(browserWindow = window) {

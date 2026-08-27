@@ -11,11 +11,11 @@ function base64url(value:Uint8Array|string) {
   let binary=""; for (const byte of input) binary+=String.fromCharCode(byte);
   return btoa(binary).replaceAll("+","-").replaceAll("/","_").replace(/=+$/g,"");
 }
-export async function createProviderToken(keyId:string,teamId:string,pem:string) {
+export async function createProviderToken(keyId:string,teamId:string,pem:string,nowMs=Date.now()) {
   const der=Uint8Array.from(atob(pem.replace(/-----[^-]+-----|\s/g,"")),(c)=>c.charCodeAt(0));
   const key=await crypto.subtle.importKey("pkcs8",der,{ name:"ECDSA",namedCurve:"P-256" },false,["sign"]);
   const header=base64url(JSON.stringify({ alg:"ES256",kid:keyId }));
-  const claims=base64url(JSON.stringify({ iss:teamId,iat:Math.floor(Date.now()/1000) }));
+  const claims=base64url(JSON.stringify({ iss:teamId,iat:Math.floor(nowMs/1000) }));
   const signature=new Uint8Array(await crypto.subtle.sign({ name:"ECDSA",hash:"SHA-256" },key,bytes(`${header}.${claims}`)));
   return `${header}.${claims}.${base64url(signature)}`;
 }
