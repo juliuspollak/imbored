@@ -14,6 +14,7 @@ import AccountSafety from "./AccountSafety.jsx";
 import { isNativePlatform } from "./lib/platform.js";
 import { enableNativeNotifications, loadNotificationPreferences, nativePermissionStatus, saveNotificationPreferences } from "./lib/nativeNotifications.js";
 import SandboxPushTest from "./components/SandboxPushTest.jsx";
+import { sandboxPushTestEnabled } from "./lib/sandboxPushTestConfig.js";
 
 const passkeySupported = typeof window !== "undefined" && !!window.PublicKeyCredential;
 
@@ -300,7 +301,7 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
           <div style={{ padding:"var(--space-4)", borderTop:"1px solid var(--color-border)" }}><div style={{ color:"var(--color-text-primary)", fontSize:"var(--text-body-size)", fontWeight:600 }}>Daily challenge reminder</div><div style={{ marginTop:"var(--space-2)" }}><SegmentedControl value={notificationPreferences.daily_reminder_period} disabled={notificationBusy} onChange={(value) => updateNotificationPreference({ daily_reminder_period:value })} options={[{value:"off",label:"Off"},{value:"morning",label:"Morning"},{value:"afternoon",label:"Afternoon"},{value:"evening",label:"Evening"}]} /></div><p style={{ margin:"var(--space-2) 0 0", fontSize:11, color:"var(--color-text-secondary)" }}>Morning 9 AM · Afternoon 3 PM · Evening 7 PM</p></div>
           <ToggleRow icon={Bell} label="Score & competition updates" description="Results and changes in your challenge standings" checked={notificationPreferences.competition_updates_enabled} disabled={notificationBusy} onChange={(value) => updateNotificationPreference({ competition_updates_enabled:value })} divided />
           {notificationError && <div style={{ padding:"0 var(--space-4) var(--space-4)" }}><StatusBanner variant="warning">{notificationError}</StatusBanner></div>}
-          {import.meta.env.DEV && <SandboxPushTest />}
+          {sandboxPushTestEnabled(import.meta.env) && <SandboxPushTest />}
         </Card>}
 
         {/* Private mode lives on the bubble beside your avatar, not here — one

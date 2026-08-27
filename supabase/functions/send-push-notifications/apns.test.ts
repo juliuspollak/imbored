@@ -1,4 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { apnsHost,classifyApns } from "./apns.ts";
+import { apnsHost,classifyApns,diagnoseProviderConfiguration } from "./apns.ts";
 Deno.test("TestFlight uses production APNs and direct builds may use sandbox",()=>{ assertEquals(apnsHost("production"),"https://api.push.apple.com");assertEquals(apnsHost("sandbox"),"https://api.sandbox.push.apple.com"); });
 Deno.test("invalid tokens are retired while transient APNs failures retry",()=>{ assertEquals(classifyApns(410,"Unregistered"),"invalid_token");assertEquals(classifyApns(400,"BadDeviceToken"),"invalid_token");assertEquals(classifyApns(503,"Shutdown"),"retry");assertEquals(classifyApns(403,"InvalidProviderToken"),"failed"); });
+Deno.test("provider diagnostics never echo credential values",async()=>{const diagnostic=await diagnoseProviderConfiguration("SECRETKEY","SECRETTEAM","not-a-key",0);const encoded=JSON.stringify(diagnostic);assertEquals(diagnostic.keyIdLength,9);assertEquals(diagnostic.teamIdLength,10);assertEquals(diagnostic.privateKeyParses,false);assertEquals(encoded.includes("SECRET"),false);});

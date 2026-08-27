@@ -67,6 +67,10 @@ while true; do
     echo "The selected file does not look like an APNs .p8 private key." >&2
     continue
   fi
+  if ! openssl pkey -in "$p8_path" -noout >/dev/null 2>&1; then
+    echo "The selected .p8 file is not a valid PKCS#8 private key." >&2
+    continue
+  fi
   break
 done
 

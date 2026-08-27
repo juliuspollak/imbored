@@ -1,4 +1,4 @@
-import { apnsHost,classifyApns } from "./apns.ts";
+import { apnsHost,classifyApns,diagnoseProviderConfiguration } from "./apns.ts";
 import { APNS_TIMEOUT_MS,buildApnsPayload,classifyWorkerError,constantTimeEqual } from "./workerCore.ts";
 
 type Dependencies={ env:(key:string)=>string|undefined;createClient:()=>any;createUserClient?:(authorization:string)=>any;providerToken:(config:{keyId:string;teamId:string;privateKey:string})=>Promise<string>;fetch:typeof fetch };
@@ -16,11 +16,15 @@ function safeQueueDiagnostic(query:string,error:unknown){
 export function createPushHandler(deps:Dependencies) { return async(request:Request)=>{
   if(request.method==="OPTIONS")return new Response("ok",{headers:cors});
   const payload=await request.json().catch(()=>null) as {mode?:unknown;registrationId?:unknown}|null;
-  if(payload?.mode==="sandbox-self-test"){
+  if(payload?.mode==="sandbox-self-test"||payload?.mode==="apns-auth-check"){
     const authorization=request.headers.get("authorization")||"";
     if(!authorization.startsWith("Bearer ")||!deps.createUserClient)return json({ok:false,mode:"sandbox-self-test",reason:"Not authenticated"},401);
     const {data:identity,error:identityError}=await deps.createUserClient(authorization).auth.getUser();
     if(identityError||!identity?.user)return json({ok:false,mode:"sandbox-self-test",reason:"Not authenticated"},401);
+    if(payload.mode==="apns-auth-check"){
+      const keyId=deps.env("APNS_KEY_ID")||"",teamId=deps.env("APNS_TEAM_ID")||"",privateKey=(deps.env("APNS_PRIVATE_KEY")||"").replaceAll("\\n","\n");
+      return json({ok:true,mode:"apns-auth-check",diagnostic:await diagnoseProviderConfiguration(keyId,teamId,privateKey)});
+    }
     const supabase=deps.createClient();
     let registrationsQuery=supabase.from("push_device_registrations").select("id,installation_id,last_seen_at,device_token,apns_environment").eq("user_id",identity.user.id).eq("platform","ios").eq("apns_environment","sandbox").eq("is_active",true).order("last_seen_at",{ascending:false});
     const {data:registrations,error:registrationError}=await registrationsQuery;
