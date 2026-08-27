@@ -36,7 +36,7 @@
   margin: 0 auto;
   /* The bottom inset was already handled; the top one was not, so on a
      notched phone the score row sat under the status bar. */
-  padding: calc(var(--game-content-top) + var(--safe-top, 0px)) 16px
+  padding: calc(var(--game-content-offset) + max(var(--global-player-bubble-offset), var(--safe-top, 0px))) 16px
     max(22px, var(--safe-bottom, 0px));
 }
 

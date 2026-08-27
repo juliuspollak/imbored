@@ -602,7 +602,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
         }
         @media (max-height: 760px) {
           .ms-card {
-            margin-top: calc(var(--game-content-top) - 8px) !important;
+            margin-top: calc(var(--game-content-offset) - 8px) !important;
             padding: var(--space-4) !important;
           }
           .ms-header { margin-bottom: var(--space-2) !important; }
@@ -616,9 +616,16 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
           .ms-keypad { margin-top: 6px !important; padding: 8px !important; gap: 6px !important; }
           .ms-filled { margin-top: var(--space-2) !important; }
         }
+        @media (max-width: 600px) and (min-height: 761px) {
+          .ms-card { padding: clamp(14px, 2.1dvh, 20px) !important; margin-bottom: max(var(--space-3), var(--safe-bottom)) !important; }
+          .ms-header { margin-bottom: clamp(8px, 1.5dvh, 16px) !important; }
+          .ms-card .day-selector, .ms-challenge-badge, .ms-stats, .ms-toolbar { margin-bottom: clamp(8px, 1.35dvh, 16px) !important; }
+          .ms-entry-mode { margin-top: clamp(7px, 1.2dvh, 12px) !important; }
+          .ms-keypad { margin-top: clamp(5px, 1dvh, 8px) !important; padding: clamp(7px, 1.2dvh, 10px) !important; gap: clamp(5px, 1dvh, 8px) !important; }
+        }
       `}</style>
 
-      <Card className="ms-card" style={{ position: "relative", marginTop: "var(--game-content-top)", marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
+      <Card className="ms-card" style={{ position: "relative", marginTop: "var(--game-content-offset)", marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
         {shouldShowGameHelp(solved) && <button
           type="button"
           onClick={() => setShowHelp((h) => !h)}

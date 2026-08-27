@@ -418,7 +418,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
         .chat-shell { width: min(100%, 760px); height: 100%; min-height: 0; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; background: var(--color-page-bg); }
         .chat-header { flex: 0 0 auto; z-index: 20; display:flex; align-items:center; gap:12px; padding: calc(14px + var(--safe-top)) calc(16px + var(--safe-right)) 14px calc(16px + var(--safe-left)); background: var(--color-surface); border-bottom:1px solid var(--color-border); }
         .chat-avatar { width:44px; height:44px; border-radius:var(--radius-md); display:grid; place-items:center; font-size:25px; background:var(--color-primary-subtle); border:1px solid var(--color-primary-subtle-border); }
-        .chat-poke { border:0; border-radius:var(--radius-full); padding:9px 13px; background:var(--color-warning-bg); color:var(--color-warning-text); font-weight:700; font-size:12px; cursor:pointer; transition:transform var(--transition-fast); }
+        .chat-poke { min-width:76px; min-height:44px; border:1px solid var(--color-warning-border); border-radius:var(--radius-full); padding:9px 13px; background:var(--color-warning-bg); color:var(--color-warning-text); font-weight:700; font-size:12px; cursor:pointer; transition:transform var(--transition-fast); }
         .chat-poke:hover { transform:translateY(-1px); }
         .chat-poke:focus-visible { outline:2px solid var(--color-primary); outline-offset:2px; }
         .chat-body { flex:1 1 auto; min-height:0; padding:18px 14px 20px; overflow-y:auto; overscroll-behavior:contain; overflow-anchor:none; }
@@ -468,7 +468,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
         @media (max-width: 520px) {
           .chat-header { padding:calc(10px + var(--safe-top)) calc(10px + var(--safe-right)) 10px calc(10px + var(--safe-left)); gap:9px; }
           .chat-avatar { width:40px; height:40px; border-radius:var(--radius-sm); font-size:22px; }
-          .chat-poke { padding:8px 10px; }
+          .chat-poke { min-width:70px; padding:8px 10px; }
           .chat-body { padding:12px 10px 16px; }
           .chat-composer-wrap { padding-left:8px; padding-right:8px; }
           .chat-emoji-picker { grid-template-columns:repeat(7,1fr); }
@@ -491,11 +491,6 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
             </div>
           </div>
           {!isSystemConversation && (
-            <button type="button" disabled={!peerAvailable} onClick={handlePoke} className="chat-poke" style={{ opacity:peerAvailable ? 1 : .4 }}>
-              {pokeState === "sending" ? "Poking…" : pokeState === "sent" ? "Poked! 👋" : pokeState === "error" ? "Try again" : "👋 Poke"}
-            </button>
-          )}
-          {!isSystemConversation && (
             <ChatSafetyMenu
               peerId={peerId}
               peerName={peerProfile?.name}
@@ -503,6 +498,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
             />
           )}
         </header>
+        {!isSystemConversation && <div style={{ flex:"0 0 auto", display:"flex", justifyContent:"flex-end", padding:"8px calc(16px + var(--safe-right))", background:"var(--color-page-bg)", borderBottom:"1px solid var(--color-border)" }}><button type="button" disabled={!peerAvailable} onClick={handlePoke} className="chat-poke" style={{ opacity:peerAvailable ? 1 : .4 }}>{pokeState === "sending" ? "Poking…" : pokeState === "sent" ? "Poked! 👋" : pokeState === "error" ? "Try again" : "👋 Poke"}</button></div>}
 
         <main className="chat-body" ref={messagesRef}>
           {loading && <div className="chat-empty">Loading your chat…</div>}

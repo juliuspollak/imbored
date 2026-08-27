@@ -19,6 +19,15 @@ function parseNativeOAuthCallback(url) {
   return { url:callback.href, code };
 }
 
+function isOAuthCancellation(value) {
+  const message = String(value?.message || value?.errorDescription || value || "").toLowerCase();
+  return message.includes("access_denied")
+    || message.includes("user cancelled")
+    || message.includes("user canceled")
+    || message.includes("cancelled by user")
+    || message.includes("canceled by user");
+}
+
 function completeNativeOAuthCallback(url, exchange) {
   const callback = parseNativeOAuthCallback(url);
   if (!callback) return null;
@@ -46,4 +55,4 @@ function completeNativeOAuthCallback(url, exchange) {
   return completion;
 }
 
-export { NATIVE_AUTH_CALLBACK, completeNativeOAuthCallback, parseNativeOAuthCallback };
+export { NATIVE_AUTH_CALLBACK, completeNativeOAuthCallback, isOAuthCancellation, parseNativeOAuthCallback };

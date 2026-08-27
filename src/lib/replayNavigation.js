@@ -15,10 +15,8 @@ export function homeLocationFrom(currentLocation) {
 }
 
 export function exitReplayToHome(browserWindow = window) {
-  const destination = homeLocationFrom(browserWindow.location.href);
-  // Capacitor's local web server can treat a relative location assignment as
-  // a reload of the current document. Remove replay state from history first,
-  // then reload the now-clean location so main.jsx mounts the normal app.
-  browserWindow.history.replaceState({}, "", destination);
-  browserWindow.location.reload();
+  const destination = new URL(homeLocationFrom(browserWindow.location.href), browserWindow.location.href).href;
+  // Replay is selected by main.jsx before React mounts. A single absolute
+  // replace clears that bootstrap state and prevents Back returning to it.
+  browserWindow.location.replace(destination);
 }

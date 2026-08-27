@@ -4,7 +4,7 @@ import { Browser } from "@capacitor/browser";
 import { supabase, supabaseAuthStorage, supabaseAuthStorageKey, supabaseReady } from "./supabase.js";
 import { isNativePlatform } from "./platform.js";
 import { prepareNativeNotificationLogout } from "./nativeNotifications.js";
-import { NATIVE_AUTH_CALLBACK, completeNativeOAuthCallback, parseNativeOAuthCallback } from "./nativeOAuth.js";
+import { NATIVE_AUTH_CALLBACK, completeNativeOAuthCallback, isOAuthCancellation, parseNativeOAuthCallback } from "./nativeOAuth.js";
 
 const AuthContext = createContext(null);
 const NATIVE_OAUTH_PENDING_KEY = "imbored-native-oauth-pending";
@@ -217,8 +217,12 @@ export function AuthProvider({ children }) {
           markNativeOAuthPending(false);
           void Browser.close().catch(() => {});
         }
+        if (isOAuthCancellation(error)) {
+          console.info("OAuth sign-in was cancelled.");
+          return;
+        }
         console.error("Unable to complete native OAuth sign-in:", error);
-        if (!cancelled) window.alert(`Google sign-in could not be completed: ${error.message}`);
+        if (!cancelled) window.alert(`Sign-in could not be completed: ${error.message}`);
       }
     }
 
@@ -261,14 +265,14 @@ export function AuthProvider({ children }) {
     return supabase.auth.verifyOtp({ email, token, type: "email" });
   }
 
-  async function signInWithGoogle() {
+  async function signInWithOAuthProvider(provider) {
     if (!supabaseReady) return { error: new Error("Supabase isn't configured yet") };
     const native = isNativePlatform();
     if (native) markNativeOAuthPending(true);
     let result;
     try {
       result = await supabase.auth.signInWithOAuth({
-        provider: "google",
+        provider,
         options: {
           redirectTo: native ? NATIVE_AUTH_CALLBACK : `${window.location.origin}/`,
           skipBrowserRedirect: true,
@@ -282,7 +286,7 @@ export function AuthProvider({ children }) {
       markNativeOAuthPending(false);
       return result.error
         ? result
-        : { data: result.data, error: new Error("Google sign-in could not securely save its PKCE verifier.") };
+        : { data: result.data, error: new Error(`${provider === "apple" ? "Apple" : "Google"} sign-in could not securely save its PKCE verifier.`) };
     }
     if (!result.error && result.data?.url) {
       if (native) {
@@ -297,6 +301,9 @@ export function AuthProvider({ children }) {
     }
     return result;
   }
+
+  function signInWithGoogle() { return signInWithOAuthProvider("google"); }
+  function signInWithApple() { return signInWithOAuthProvider("apple"); }
 
   // Discoverable-credential sign-in: no email needed upfront, the
   // authenticator's own picker resolves which account. Only works for
@@ -440,6 +447,7 @@ export function AuthProvider({ children }) {
     signInWithEmail,
     verifyCode,
     signInWithGoogle,
+    signInWithApple,
     signInWithPasskey,
     registerPasskey,
     listPasskeys,

@@ -59,6 +59,7 @@ import { GAME_NAMES, GRIDLY_BRAND, HIVE_BRAND } from "./lib/gameBranding.jsx";
 import { isNativePlatform } from "./lib/platform.js";
 import { shouldLockAccountMenuScroll, shouldLockNativeDocumentScroll } from "./lib/nativeScrollLock.js";
 import { refreshNativeNotificationState, reminderTimezoneChanged, startNativeNotificationListeners } from "./lib/nativeNotifications.js";
+import { currentReleaseIdentity, hasUnseenRelease } from "./lib/releaseState.js";
 
 const GAME_COMPONENTS = {
   hive: { Component: HiveGame, label: HIVE_BRAND.name },
@@ -273,6 +274,11 @@ function AppShell() {
     let cleanup = () => {};
     function navigateFromNotification(event) {
       if (event.detail?.screen === "circles") openCircles({ circleId:event.detail.circleId, challengeId:event.detail.challengeId });
+      if (event.detail?.screen === "chat" && event.detail.playerId) {
+        void supabase.from("profiles").select("*").eq("id",event.detail.playerId).maybeSingle().then(({ data }) => {
+          if (data) { setActive(null);setChatReturn(null);setChatPlayer(data); }
+        });
+      }
     }
     window.addEventListener("imbored:navigate", navigateFromNotification);
     void startNativeNotificationListeners(user?.id || null)
@@ -368,7 +374,9 @@ function AppShell() {
         ...(requests || []).map(r => new Date(r.decided_at || r.requested_at).getTime()),
         ...(invitations || []).map(i => new Date(i.created_at).getTime())
       );
-      setSectionSignals({ whatsnew: latestNote > (vm.whatsnew || 0), circles: latestCircle > (vm.circles || 0) });
+      const releaseIdentity = await currentReleaseIdentity();
+      if (cancelled) return;
+      setSectionSignals({ whatsnew: hasUnseenRelease(releaseIdentity) || latestNote > (vm.whatsnew || 0), circles: latestCircle > (vm.circles || 0) });
     })();
     return () => { cancelled = true; };
   }, [user?.id]);

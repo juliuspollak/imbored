@@ -57,12 +57,20 @@ async function registerDeviceToken(token) {
   const nativeInstallationId = installationId();
   if (!nativeInstallationId) return;
   try {
-    const { error } = await supabase.rpc("register_native_push_device", {
+    const registration = {
       installation_id_in:nativeInstallationId,
       platform_in:"ios",
       device_token_in:token,
       timezone_in:currentTimezone(),
-    });
+      apns_environment_in:import.meta.env.VITE_APNS_ENVIRONMENT === "sandbox" ? "sandbox" : "production",
+    };
+    let { error } = await supabase.rpc("register_native_push_device",registration);
+    // Keeps Phase 1/2 registration working while the reviewed Phase 3
+    // migration is intentionally waiting to be applied.
+    if (error && /register_native_push_device|schema cache|function/i.test(error.message || "")) {
+      const { apns_environment_in:unused,...legacyRegistration }=registration;
+      ({ error }=await supabase.rpc("register_native_push_device",legacyRegistration));
+    }
     if (error) console.error("Unable to register this device for notifications:", error.message);
   } catch (error) {
     console.error("Unable to register this device for notifications:", error);

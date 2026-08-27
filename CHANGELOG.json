@@ -1,5 +1,12 @@
 [
   {
+    "id": "v168-native-reliability",
+    "version": "v168",
+    "date": "2026-08-27",
+    "title": "Safer sign-in, replay navigation and notifications",
+    "body": "Added Sign in with Apple, made Home reliably leave replayed games, tightened mobile game spacing and Sudoku controls, separated Chat’s Poke action, restored build-aware What’s New updates, and added the server-side foundation for timely push notifications."
+  },
+  {
     "id": "v167-shared-game-home-control",
     "version": "v167",
     "date": "2026-07-28",

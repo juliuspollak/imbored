@@ -30,9 +30,13 @@ function sourceFiles(directory, match) {
 }
 
 function definedFunctions() {
-  const schema = readFileSync(schemaFile, "utf8");
+  const migrationsDirectory = join(projectRoot,"supabase","migrations");
+  // Pending migrations are intentionally not folded into public.sql until
+  // they are applied, but Edge Functions added in the same change must still
+  // have their RPC contract checked during review.
+  const schema = [readFileSync(schemaFile,"utf8"),...sourceFiles(migrationsDirectory,/\.sql$/).map((file)=>readFileSync(file,"utf8"))].join("\n");
   const names = new Set();
-  for (const match of schema.matchAll(/^CREATE FUNCTION public\.([a-zA-Z0-9_]+)/gm)) {
+  for (const match of schema.matchAll(/^\s*create(?: or replace)? function public\.([a-zA-Z0-9_]+)/gim)) {
     names.add(match[1]);
   }
   return names;

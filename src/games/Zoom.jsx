@@ -269,7 +269,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
         }
       `}</style>
 
-      <Card className="zoom-card" style={{ position: "relative", marginTop: "var(--game-content-top)", marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
+      <Card className="zoom-card" style={{ position: "relative", marginTop: "var(--game-content-offset)", marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
         {shouldShowGameHelp(solved) && <button
           type="button"
           onClick={() => setShowHelp((h) => !h)}

@@ -7,8 +7,9 @@ import PageHeader from "./components/PageHeader.jsx";
 import Button from "./components/Button.jsx";
 import Card from "./components/Card.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
+import bundledNotes from "../CHANGELOG.json";
+import { currentReleaseIdentity, markReleaseSeen, releaseLabel } from "./lib/releaseState.js";
 
-const APP_VERSION = "v111";
 
 function fmtDate(iso) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
@@ -16,8 +17,12 @@ function fmtDate(iso) {
 
 export default function ReleaseNotes({ onBack }) {
   const { user, profile } = useAuth();
+  const [appVersion,setAppVersion] = useState("What’s New");
 
-  useEffect(() => { if (user?.id && supabaseReady) supabase.from("user_section_views").upsert({ user_id:user.id, section:"whatsnew", viewed_at:new Date().toISOString() }); }, [user?.id]);
+  useEffect(() => {
+    void currentReleaseIdentity().then((identity) => { setAppVersion(releaseLabel(identity));markReleaseSeen(identity); });
+    if (user?.id && supabaseReady) supabase.from("user_section_views").upsert({ user_id:user.id, section:"whatsnew", viewed_at:new Date().toISOString() });
+  }, [user?.id]);
   const [notes, setNotes] = useState([]);
   const [reactions, setReactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +40,9 @@ export default function ReleaseNotes({ onBack }) {
       supabase.from("release_notes").select("*"),
       supabase.from("release_note_reactions").select("*"),
     ]);
-    const sorted = [...(notesData || [])].sort((a, b) => {
+    const byId = new Map(bundledNotes.map((note) => [note.version || note.id,{ ...note,created_at:`${note.date}T00:00:00Z`,is_bundled:true }]));
+    for (const note of notesData || []) byId.set(note.version || note.id,note);
+    const sorted = [...byId.values()].sort((a, b) => {
       const va = parseInt((a.version || "v0").replace("v", ""), 10) || 0;
       const vb = parseInt((b.version || "v0").replace("v", ""), 10) || 0;
       return vb - va;
@@ -91,7 +98,7 @@ export default function ReleaseNotes({ onBack }) {
 
   return (
     <Page>
-      <PageHeader title="What's New" subtitle={`Current app version ${APP_VERSION}`} onBack={onBack} />
+      <PageHeader title="What's New" subtitle={appVersion} onBack={onBack} />
 
       {!supabaseReady ? (
         <StatusBanner variant="error">Supabase isn't configured yet.</StatusBanner>
@@ -124,7 +131,7 @@ export default function ReleaseNotes({ onBack }) {
                   <div style={{ flex: 1 }}>
                     <div style={{ display: "flex", alignItems: "flex-start", gap: "var(--space-2)" }}>
                       <div style={{ color: "var(--color-text-primary)", fontWeight: 600, fontSize: "var(--text-body-size)", flex: 1 }}>{n.title}</div>
-                      {profile?.is_admin && (
+                      {profile?.is_admin && !n.is_bundled && (
                         <button onClick={() => setNoteHidden(n.id, !n.is_hidden)} disabled={savingVisibilityId === n.id} title={n.is_hidden ? "Show" : "Hide"}
                           style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: "var(--radius-full)", padding: "2px 8px", fontSize: 10, fontWeight: 600, background: n.is_hidden ? "var(--color-success-bg)" : "var(--color-danger-bg)", color: n.is_hidden ? "var(--color-success-text)" : "var(--color-danger-text)", border: "none", cursor: "pointer" }}>
                           {n.is_hidden ? <Eye size={11} /> : <EyeOff size={11} />}
@@ -137,7 +144,7 @@ export default function ReleaseNotes({ onBack }) {
                     <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginTop: "var(--space-2)" }}>
                       {n.version && <span style={{ fontSize: 10, borderRadius: "var(--radius-full)", padding: "2px 6px", fontWeight: 700, background: "var(--color-info-bg)", color: "var(--color-primary)" }}>{n.version}</span>}
                       <span style={{ fontSize: 10, color: "var(--color-text-secondary)" }}>{fmtDate(n.created_at)}</span>
-                      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-1)", marginLeft: "auto" }}>
+                      {!n.is_bundled && <div style={{ display: "flex", alignItems: "center", gap: "var(--space-1)", marginLeft: "auto" }}>
                         <button onClick={() => setReaction(n.id, "up")} disabled={savingReactionId === n.id} aria-pressed={mine === "up"} title={mine === "up" ? "Remove thumbs up" : "Thumbs up"}
                           style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: "var(--radius-full)", padding: "2px 6px", fontSize: 10, fontWeight: 600, background: mine === "up" ? "var(--color-success-bg)" : "var(--color-surface-elevated)", color: mine === "up" ? "var(--color-success-text)" : "var(--color-text-secondary)", border: "1px solid var(--color-border)", cursor: "pointer" }}>
                           <ThumbsUp size={11} fill={mine === "up" ? "currentColor" : "none"} />
@@ -148,7 +155,7 @@ export default function ReleaseNotes({ onBack }) {
                           <ThumbsDown size={11} fill={mine === "down" ? "currentColor" : "none"} />
                           <span>{downCount}</span>
                         </button>
-                      </div>
+                      </div>}
                     </div>
                     {isReporting && (
                       <div style={{ marginTop: "var(--space-3)", paddingTop: "var(--space-3)", borderTop: "1px solid var(--color-border)" }}>
