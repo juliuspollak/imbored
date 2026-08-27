@@ -14,7 +14,11 @@ export function createPushHandler(deps:Dependencies) { return async(request:Requ
       supabase.from("notification_events").select("id",{count:"exact",head:true}).is("processed_at",null).lte("available_at",now),
       supabase.from("notification_deliveries").select("id",{count:"exact",head:true}).lt("attempt_count",5).or(`and(status.in.(pending,retry),next_attempt_at.lte.${now}),and(status.eq.sending,lease_expires_at.lte.${now})`),
     ]);
-    if(events.error||deliveries.error) return Response.json({ok:false,mode:"empty-check",error:"Unable to inspect push queue"},{status:500});
+    if(events.error||deliveries.error){
+      const failed=events.error?"notification_events":"notification_deliveries",code=(events.error||deliveries.error)?.code||"unknown";
+      console.error(JSON.stringify({event:"push_empty_check_error",query:failed,code}));
+      return Response.json({ok:false,mode:"empty-check",error:"Unable to inspect push queue",diagnostic:{query:failed,code}},{status:500});
+    }
     const eligible=(events.count??0)+(deliveries.count??0);
     return Response.json({ok:true,mode:"empty-check",eligible,safeToSmokeTest:eligible===0});
   }
