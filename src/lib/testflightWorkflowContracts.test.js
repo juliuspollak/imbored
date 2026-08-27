@@ -3,6 +3,16 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const read = (relativePath) => readFileSync(new URL(relativePath, import.meta.url), "utf8");
+const versionParts = (version) => version.split(".").map(Number);
+const compareVersions = (left, right) => {
+  const a = versionParts(left);
+  const b = versionParts(right);
+  for (let index = 0; index < Math.max(a.length, b.length); index += 1) {
+    const difference = (a[index] || 0) - (b[index] || 0);
+    if (difference) return Math.sign(difference);
+  }
+  return 0;
+};
 
 test("TestFlight archive does not apply the app provisioning profile globally", () => {
   const workflow = read("../../.github/workflows/testflight.yml");
@@ -46,8 +56,13 @@ test("Capacitor sync uses a Ruby compatible with the locked bundle", () => {
   const binstubIndex = workflow.indexOf("bundle binstubs cocoapods");
   const syncIndex = workflow.indexOf("run: npm run ios:sync");
   const rubyVersion = workflow.match(/ruby-version: "(\d+)\.(\d+)(?:\.\d+)?"/)?.slice(1, 3).map(Number);
+  const propertyListVersion = lockfile.match(/^    CFPropertyList \((\d+\.\d+\.\d+)\)$/m)?.[1];
   assert.deepEqual(rubyVersion, [3, 1]);
-  assert.match(lockfile, /CFPropertyList \(3\.0\.9\)/);
+  assert.ok(propertyListVersion, "CFPropertyList must remain locked");
+  assert.ok(compareVersions(propertyListVersion, "2.3.3") >= 0, "CFPropertyList must satisfy xcodeproj's lower bound");
+  assert.ok(compareVersions(propertyListVersion, "4.0.0") < 0, "CFPropertyList must satisfy Fastlane and xcodeproj's upper bound");
+  assert.match(lockfile, /fastlane \([^)]+\)[\s\S]*?CFPropertyList \(>= 2\.3, < 4\.0\.0\)/);
+  assert.match(lockfile, /xcodeproj \([^)]+\)[\s\S]*?CFPropertyList \(>= 2\.3\.3, < 4\.0\)/);
   assert.match(lockfile, /BUNDLED WITH\s+2\.5\.23/);
   assert.match(workflow, /bundler-cache: true/);
   assert.ok(rubySetupIndex > -1 && rubySetupIndex < binstubIndex && binstubIndex < syncIndex);
