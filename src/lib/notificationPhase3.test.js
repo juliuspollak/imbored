@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const migration=readFileSync(new URL("../../supabase/migrations/202608271200_server_push_notification_outbox.sql",import.meta.url),"utf8");
-const sender=readFileSync(new URL("../../supabase/functions/send-push-notifications/index.ts",import.meta.url),"utf8");
+const sender=["index.ts","handler.ts"].map((file)=>readFileSync(new URL(`../../supabase/functions/send-push-notifications/${file}`,import.meta.url),"utf8")).join("\n");
 const workerCore=readFileSync(new URL("../../supabase/functions/send-push-notifications/workerCore.ts",import.meta.url),"utf8");
 
 test("push outbox deduplicates events and deliveries across worker retries",()=>{

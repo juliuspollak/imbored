@@ -29,11 +29,11 @@ After review:
 
 ```sh
 npx supabase db push
-npx supabase secrets set APNS_KEY_ID=YOUR_KEY_ID APNS_TEAM_ID=YOUR_TEAM_ID APNS_BUNDLE_ID=au.imbored.app
-npx supabase secrets set APNS_PRIVATE_KEY="$(< /secure/location/AuthKey_XXXXXXXXXX.p8)"
-npx supabase secrets set PUSH_WORKER_SECRET="$(openssl rand -hex 32)"
+./scripts/setup-push-secrets.sh
 npx supabase functions deploy send-push-notifications --no-verify-jwt
 ```
+
+The secrets helper prompts for the APNs Key ID, Team ID, and local `.p8` path. It generates `PUSH_WORKER_SECRET`, formats the private key for the Edge Function, and sends all five push secrets to the currently linked Supabase project through a mode-600 temporary file under `/private/tmp`. The file is deleted automatically, and neither sensitive value is printed or stored in the repository.
 
 Store the generated `PUSH_WORKER_SECRET` in the scheduler configuration too. Invoke the function on a short schedule with `Authorization: Bearer <PUSH_WORKER_SECRET>`. Supabase Cron plus Vault is preferred; do not place this secret in browser code. The standard `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` Edge Function secrets are provided by Supabase.
 
