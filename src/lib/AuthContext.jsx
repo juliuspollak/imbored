@@ -28,6 +28,7 @@ async function completeNativeOAuth(url) {
   return completeNativeOAuthCallback(url, async (code) => {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
       if (error) throw error;
+    window.dispatchEvent(new Event("imbored:auth-identities-changed"));
     markNativeOAuthPending(false);
     try {
       await Browser.close();
@@ -354,6 +355,42 @@ export function AuthProvider({ children }) {
     return result;
   }
 
+  async function linkAppleIdentity() {
+    if (!supabaseReady || !session) return { error: new Error("Not logged in") };
+    const native = isNativePlatform();
+    if (native) markNativeOAuthPending(true);
+    let result;
+    try {
+      result = await supabase.auth.linkIdentity({
+        provider: "apple",
+        options: {
+          redirectTo: native ? NATIVE_AUTH_CALLBACK : `${window.location.origin}/?auth_return=profile`,
+          skipBrowserRedirect: true,
+        },
+      });
+    } catch (error) {
+      if (native) markNativeOAuthPending(false);
+      return { data: null, error };
+    }
+    if (native && (result.error || !supabaseAuthStorage?.getItem(PKCE_VERIFIER_KEY))) {
+      markNativeOAuthPending(false);
+      return result.error
+        ? result
+        : { data: result.data, error: new Error("Apple linking could not securely save its PKCE verifier.") };
+    }
+    if (!result.error && result.data?.url) {
+      if (native) {
+        try {
+          await Browser.open({ url: result.data.url });
+        } catch (error) {
+          markNativeOAuthPending(false);
+          return { data: result.data, error };
+        }
+      } else window.location.assign(result.data.url);
+    }
+    return result;
+  }
+
   async function unlinkIdentity(identity) {
     if (!supabaseReady || !session) return { error: new Error("Not logged in") };
     return supabase.auth.unlinkIdentity(identity);
@@ -455,6 +492,7 @@ export function AuthProvider({ children }) {
     deletePasskey,
     listIdentities,
     linkGoogleIdentity,
+    linkAppleIdentity,
     unlinkIdentity,
     adminAccountAction,
     signOut,

@@ -15,6 +15,7 @@ import { isNativePlatform } from "./lib/platform.js";
 import { enableNativeNotifications, loadNotificationPreferences, nativePermissionStatus, saveNotificationPreferences } from "./lib/nativeNotifications.js";
 import SandboxPushTest from "./components/SandboxPushTest.jsx";
 import { sandboxPushTestEnabled } from "./lib/sandboxPushTestConfig.js";
+import { isOAuthCancellation } from "./lib/nativeOAuth.js";
 
 const passkeySupported = typeof window !== "undefined" && !!window.PublicKeyCredential;
 
@@ -23,7 +24,7 @@ const passkeySupported = typeof window !== "undefined" && !!window.PublicKeyCred
 // profile" screen reached from the home page.
 export default function ProfileSetup({ onDone, onOpenCircles }) {
   const { t, language, setLanguage } = useI18n();
-  const { profile, user, saveProfile, registerPasskey, listPasskeys, deletePasskey, listIdentities, linkGoogleIdentity, unlinkIdentity } = useAuth();
+  const { profile, user, saveProfile, registerPasskey, listPasskeys, deletePasskey, listIdentities, linkGoogleIdentity, linkAppleIdentity, unlinkIdentity } = useAuth();
   const isFirstTime = !profile;
 
   const [name, setName] = useState(profile?.name || "");
@@ -48,13 +49,17 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
   const [notificationError, setNotificationError] = useState("");
   const notificationUpdateRef = useRef(0);
 
-  function friendlyIdentityError(message) {
+  function friendlyIdentityError(message, provider = "Google") {
     const text = decodeURIComponent(String(message || "").replace(/\+/g, " "));
     if (!text.toLowerCase().includes("identity is already linked to another user")) return text;
     if (profile?.is_admin) {
-      return "This Google sign-in still belongs to the previous player account. Open Admin tools → Players, find the historical account, choose Finish Auth deletion, then try Connect Google again.";
+      return provider === "Google"
+        ? "This Google sign-in still belongs to the previous player account. Open Admin tools → Players, find the historical account, choose Finish Auth deletion, then try Connect Google again."
+        : `This ${provider} sign-in still belongs to the previous player account. Open Admin tools → Players, find the historical account, choose Finish Auth deletion, then try Link ${provider} again.`;
     }
-    return "This Google sign-in already belongs to another player. Sign in with Google to use that player, or ask an admin to remove the old account before linking it here.";
+    return provider === "Google"
+      ? "This Google sign-in already belongs to another player. Sign in with Google to use that player, or ask an admin to remove the old account before linking it here."
+      : `This ${provider} sign-in already belongs to another player. Sign in with ${provider} to use that player, or ask an admin to remove the old account before linking it here.`;
   }
 
   useEffect(() => {
@@ -66,7 +71,7 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
       query.get("error") ||
       hash.get("error");
 
-    if (callbackError) {
+    if (callbackError && !isOAuthCancellation(callbackError)) {
       setIdentityError(friendlyIdentityError(callbackError));
     }
 
@@ -92,6 +97,13 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
     if (error) setIdentityError(friendlyIdentityError(error.message));
   }
 
+  async function handleLinkApple() {
+    setIdentityBusy(true); setIdentityError(null);
+    const { error } = await linkAppleIdentity();
+    setIdentityBusy(false);
+    if (error && !isOAuthCancellation(error)) setIdentityError(friendlyIdentityError(error.message, "Apple"));
+  }
+
   async function handleUnlinkIdentity(identity) {
     if (identities.length <= 1) { setIdentityError("Keep at least one sign-in method connected."); return; }
     setIdentityBusy(true); setIdentityError(null);
@@ -107,6 +119,9 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
 
   useEffect(() => {
     if (!isFirstTime) { refreshIdentities(); if (passkeySupported) refreshPasskeys(); }
+    const refreshLinkedIdentities = () => { if (!isFirstTime) void refreshIdentities(); };
+    window.addEventListener("imbored:auth-identities-changed", refreshLinkedIdentities);
+    return () => window.removeEventListener("imbored:auth-identities-changed", refreshLinkedIdentities);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFirstTime]);
 
@@ -330,7 +345,7 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
           <Card style={{ marginBottom: "var(--space-3)" }}>
             <SectionTitle icon={Link2}>Sign-in methods</SectionTitle>
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-              {identities.map((identity) => {
+              {identities.filter((identity) => (identity.provider || identity.identity_data?.provider) !== "apple").map((identity) => {
                 const provider = identity.provider || identity.identity_data?.provider || "email";
                 const label = provider === "google" ? "Google" : "Email";
                 const detail = identity.identity_data?.email || user?.email || "Connected";
@@ -345,6 +360,14 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
                   </div>
                 );
               })}
+              <div style={{ minHeight: 52, display: "flex", alignItems: "center", gap: "var(--space-3)", padding: "var(--space-2) var(--space-3)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)" }}>
+                <span aria-hidden="true" style={{ fontWeight: 700, color: "var(--color-text-primary)" }}>A</span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <strong style={{ display: "block", color: "var(--color-text-primary)", fontSize: "var(--text-body-secondary-size)" }}>Apple</strong>
+                  <span style={{ display: "block", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{identities.some((identity) => (identity.provider || identity.identity_data?.provider) === "apple") ? "Connected" : "Not connected"}</span>
+                </span>
+                {!identities.some((identity) => (identity.provider || identity.identity_data?.provider) === "apple") && <Button variant="secondary" disabled={identityBusy} onClick={handleLinkApple}>Link</Button>}
+              </div>
             </div>
             {!identities.some((identity) => (identity.provider || identity.identity_data?.provider) === "google") && <Button variant="secondary" fullWidth loading={identityBusy} onClick={handleLinkGoogle} style={{ marginTop: "var(--space-3)" }}>{identityBusy ? "Connecting…" : "Connect Google"}</Button>}
             <p style={{ margin: "var(--space-2) 0 0", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", lineHeight: "var(--text-body-line)" }}>Google can be linked to this player. Changing the primary email is a separate action.</p>
