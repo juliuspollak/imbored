@@ -30,14 +30,37 @@ After review:
 ```sh
 npx supabase db push
 ./scripts/setup-push-secrets.sh
-npx supabase functions deploy send-push-notifications --no-verify-jwt
+npx supabase functions deploy send-push-notifications
 ```
 
 The secrets helper prompts for the APNs Key ID, Team ID, and local `.p8` path. It generates `PUSH_WORKER_SECRET`, formats the private key for the Edge Function, and sends all five push secrets to the currently linked Supabase project through a mode-600 temporary file under `/private/tmp`. The file is deleted automatically, and neither sensitive value is printed or stored in the repository.
 
-Store the generated `PUSH_WORKER_SECRET` in the scheduler configuration too. Invoke the function on a short schedule with `Authorization: Bearer <PUSH_WORKER_SECRET>`. Supabase Cron plus Vault is preferred; do not place this secret in browser code. The standard `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` Edge Function secrets are provided by Supabase.
+### Scheduling without Supabase Vault
 
-`--no-verify-jwt` deliberately disables the Supabase gateway JWT check. `PUSH_WORKER_SECRET` is therefore the endpoint authentication boundary: it must be high entropy, stored in Supabase secrets/Vault only, and never reused in frontend configuration.
+Do not put `PUSH_WORKER_SECRET` in a Supabase Dashboard Cron HTTP header when Vault is unavailable. Dashboard Cron serializes the HTTP request, including literal header values, into `cron.job.command`; the header field is not a separate encrypted secret store.
+
+Use a scheduled GitHub Actions workflow and an encrypted repository secret instead. Keep the request contract exactly as follows:
+
+- URL: `https://<project-ref>.supabase.co/functions/v1/send-push-notifications`
+- method: `POST`
+- `Authorization: Bearer ${{ secrets.PUSH_WORKER_SECRET }}`
+- `Content-Type: application/json`
+- body: `{}`
+- schedule: `*/5 * * * *` (UTC; GitHub Actions' shortest supported interval)
+
+The workflow step should use `curl --fail-with-body --silent --show-error` and must not enable shell tracing or print request headers. Store only the project URL in workflow YAML; store `PUSH_WORKER_SECRET` under **GitHub repository → Settings → Secrets and variables → Actions → New repository secret**.
+
+Because the original generated worker secret was intentionally not displayed, rotate it once when configuring the scheduler:
+
+```sh
+./scripts/rotate-push-worker-secret.sh
+```
+
+The helper generates a new 256-bit value, updates the currently linked Edge Function secret through a mode-600 temporary file, and copies it to the macOS clipboard without printing it. Paste it directly into the encrypted GitHub Actions secret field, save it, then return to the terminal and press Return so the helper clears the clipboard and temporary file. Do not run the helper until the scheduler secret field is ready; rotation immediately invalidates the previous worker secret.
+
+The standard `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` Edge Function secrets are provided by Supabase. Do not place any server secret in browser code.
+
+The function-specific `verify_jwt = false` setting in `supabase/config.toml` deliberately disables the Supabase gateway JWT check. `PUSH_WORKER_SECRET` is therefore the endpoint authentication boundary: it must be high entropy, stored in the Supabase Edge Function secret store and the scheduler's encrypted secret store only, and never reused in frontend configuration.
 
 TestFlight/App Store registrations default to production APNs. A debug build that uses a development provisioning profile must be built with `VITE_APNS_ENVIRONMENT=sandbox`; never set that value for TestFlight.
 
@@ -58,4 +81,4 @@ Do **not** enable Cron until direct APNs delivery has succeeded against one real
 5. Invoke the worker once manually with its bearer secret.
 6. Confirm the phone receives the notification and the structured logs show `apns_delivery_result` with `sent`, without a device token or provider JWT.
 7. Inspect the event/delivery status server-side. If direct APNs transport fails, leave Cron disabled and resolve the HTTP/2/runtime issue before any production test.
-8. Only after the sandbox test succeeds, repeat with one TestFlight account/production registration, then configure Vault-backed Cron.
+8. Only after the sandbox test succeeds, repeat with one TestFlight account/production registration, then configure the encrypted-secret scheduler described above.

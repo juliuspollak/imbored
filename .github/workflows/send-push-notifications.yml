@@ -1,0 +1,26 @@
+name: Send push notifications
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  invoke-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Invoke push worker
+        env:
+          PUSH_WORKER_SECRET: ${{ secrets.PUSH_WORKER_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error \
+            --max-time 60 \
+            --request POST \
+            --header "Authorization: Bearer ${PUSH_WORKER_SECRET}" \
+            --header "Content-Type: application/json" \
+            --data '{}' \
+            'https://scsvvhbbjxdfnqaovhcf.supabase.co/functions/v1/send-push-notifications'
