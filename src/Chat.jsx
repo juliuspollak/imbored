@@ -4,6 +4,7 @@ import { supabase, supabaseReady } from "./lib/supabase.js";
 import { sendPoke } from "./lib/pokes.js";
 import { attachRealtimeRefresh } from "./lib/realtimeRefresh.js";
 import { useI18n } from "./lib/i18n.jsx";
+import { wakePushNotifications } from "./lib/pushWake.js";
 import Button from "./components/Button.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
 import ChatSafetyMenu from "./ChatSafetyMenu.jsx";
@@ -314,6 +315,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
       setError(sendError.message || "Couldn’t send that message.");
     } else {
       setMessages((items) => items.map((item) => item.id === optimisticId ? data : item));
+      void wakePushNotifications();
     }
     setSending(false);
     textareaRef.current?.focus();

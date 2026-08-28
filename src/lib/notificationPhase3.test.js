@@ -47,6 +47,13 @@ test("worker keeps APNs credentials server-side and routes only structured metad
   assert.doesNotMatch(sender,/VITE_APNS_PRIVATE|VITE_APNS_KEY/);
 });
 
+test("manual and GitHub worker-secret invocation remains available beside authenticated wake",()=>{
+  assert.match(sender,/if\(!wakeMode&&\(!expected/);
+  assert.match(sender,/constantTimeEqual\(supplied,expected\)/);
+  const workflow=readFileSync(new URL("../../.github/workflows/send-push-notifications.yml",import.meta.url),"utf8");
+  assert.match(workflow,/Authorization: Bearer \$\{PUSH_WORKER_SECRET\}/);
+});
+
 test("leases recover crashes while stale workers cannot complete a reclaimed delivery",()=>{
   assert.match(migration,/lease_expires_at=now\(\)\+interval '3 minutes'/);
   assert.match(migration,/delivery\.status='sending' and delivery\.lease_expires_at<=now\(\)/);

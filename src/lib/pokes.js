@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase, supabaseReady } from "./supabase.js";
 import { attachRealtimeRefresh } from "./realtimeRefresh.js";
+import { wakePushNotifications } from "./pushWake.js";
 
 export const POKE_MESSAGES = [
   (name) => `👻 ${name} just poked you!`,
@@ -20,6 +21,7 @@ export async function sendPoke(fromUserId, toUserId, fromName) {
   const message = POKE_MESSAGES[Math.floor(Math.random() * POKE_MESSAGES.length)](fromName || "Someone");
   const { error } = await supabase.from("pokes").insert({ from_user: fromUserId, to_user: toUserId, message });
   if (error) console.error("Unable to send poke:", error.message);
+  else void wakePushNotifications();
   return { error };
 }
 

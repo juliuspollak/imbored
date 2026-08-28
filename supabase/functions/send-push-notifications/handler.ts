@@ -13,9 +13,26 @@ function safeQueueDiagnostic(query:string,error:unknown){
     : "The database request failed before PostgREST returned a structured response.";
   return {query,code,message};
 }
-export function createPushHandler(deps:Dependencies) { return async(request:Request)=>{
+export function createPushHandler(deps:Dependencies) {
+  // Per-isolate load shedding. Delivery leases remain the cross-instance
+  // concurrency control, while this prevents one signed-in client from
+  // needlessly hammering a warm worker instance.
+  const lastWakeByUser=new Map<string,number>();
+  return async(request:Request)=>{
   if(request.method==="OPTIONS")return new Response("ok",{headers:cors});
   const payload=await request.json().catch(()=>null) as {mode?:unknown;registrationId?:unknown}|null;
+  const wakeMode=payload?.mode==="wake";
+  if(wakeMode){
+    const authorization=request.headers.get("authorization")||"";
+    if(Object.keys(payload||{}).length!==1)return json({ok:false,mode:"wake",reason:"Wake requests do not accept targets"},400);
+    if(!authorization.startsWith("Bearer ")||!deps.createUserClient)return json({ok:false,mode:"wake",reason:"Not authenticated"},401);
+    const {data:identity,error:identityError}=await deps.createUserClient(authorization).auth.getUser();
+    if(identityError||!identity?.user?.id)return json({ok:false,mode:"wake",reason:"Not authenticated"},401);
+    const now=Date.now(),lastWake=lastWakeByUser.get(identity.user.id)||0;
+    if(now-lastWake<2000)return json({ok:true,mode:"wake",rateLimited:true},202);
+    if(lastWakeByUser.size>1000)for(const [userId,at] of lastWakeByUser)if(now-at>60000)lastWakeByUser.delete(userId);
+    lastWakeByUser.set(identity.user.id,now);
+  }
   if(payload?.mode==="sandbox-self-test"||payload?.mode==="apns-auth-check"){
     const authorization=request.headers.get("authorization")||"";
     if(!authorization.startsWith("Bearer ")||!deps.createUserClient)return json({ok:false,mode:"sandbox-self-test",reason:"Not authenticated"},401);
@@ -39,7 +56,7 @@ export function createPushHandler(deps:Dependencies) { return async(request:Requ
     return json({ok:status==="sent",mode:"sandbox-self-test",sent:status==="sent",status:response.status,...(status==="sent"?{}:{reason})});
   }
   const expected=deps.env("PUSH_WORKER_SECRET"),supplied=request.headers.get("authorization")?.replace(/^Bearer\s+/i,"")||"";
-  if(!expected||!supplied||!(await constantTimeEqual(supplied,expected))) return new Response("Unauthorized",{status:401});
+  if(!wakeMode&&(!expected||!supplied||!(await constantTimeEqual(supplied,expected)))) return new Response("Unauthorized",{status:401});
   const required=["SUPABASE_URL","SUPABASE_SERVICE_ROLE_KEY","APNS_KEY_ID","APNS_TEAM_ID","APNS_PRIVATE_KEY","APNS_BUNDLE_ID"],missing=required.filter((key)=>!deps.env(key));
   if(missing.length) return Response.json({error:`Missing server configuration: ${missing.join(", ")}`},{status:500});
   const supabase=deps.createClient();
