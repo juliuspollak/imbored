@@ -23,8 +23,9 @@ test("Apple identity linking preserves native and web callback contracts", () =>
 });
 
 test("Profile shows Link for unlinked Apple and Connected for linked Apple", () => {
-  assert.match(profile, /=== "apple"\) \? "Connected" : "Not connected"/);
-  assert.match(profile, /=== "apple"\) && <Button[^>]*onClick=\{handleLinkApple\}>Link<\/Button>/);
+  assert.match(profile, /identityProvider\(identity\) === "apple"\) \? "Connected" : "Not connected"/);
+  assert.match(profile, /identityProvider\(identity\) === "apple"\)[\s\S]*handleLinkApple}>Link<\/Button>/);
+  assert.match(profile, /aria-label="Unlink Apple"/);
   assert.match(profile, /const \{ error \} = await linkAppleIdentity\(\)/);
 });
 

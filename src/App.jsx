@@ -929,6 +929,10 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
         position:"fixed",
         top:"max(var(--global-player-bubble-offset), env(safe-area-inset-top))",
         right:"max(var(--global-player-bubble-offset), env(safe-area-inset-right))",
+        width:"var(--global-player-bubble-size)",
+        display:"flex",
+        flexDirection:"column",
+        alignItems:"center",
         zIndex:200,
         pointerEvents:"auto",
         isolation:"isolate",
@@ -1075,7 +1079,7 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
       )}
 
       {!menuOpen && (
-        <div style={{ position:"absolute", top:52, right:6 }}>
+        <div className="account-online-bubble" style={{ position:"absolute", top:"calc(var(--global-player-bubble-size) + var(--global-player-bubble-gap))", left:"50%", transform:"translateX(-50%)" }}>
           <OnlineWidget players={players} userId={userId} myName={profile.name} onOpenChat={onOpenChat} unreadBySender={unreadMessages.bySender} />
         </div>
       )}

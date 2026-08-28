@@ -112,12 +112,12 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
 
   useEffect(() => {
     if (!challengesLoaded || challengeScope?.type !== "circle") return;
-    const stillActive = circleChallenges.some((item) => String(item.challenge_id) === String(challengeScope.id));
-    if (!stillActive) {
+    const stillVisible = [...circleChallenges,...challengeHistory].some((item) => String(item.challenge_id) === String(challengeScope.id));
+    if (!stillVisible) {
       onChallengeScopeChange?.({ type:"personal",id:null,name:"My Challenge",gameIds:null });
       setExpandedChallengeId(null);
     }
-  }, [challengeScope?.id, challengeScope?.type, challengesLoaded, onChallengeScopeChange, circleChallenges]);
+  }, [challengeScope?.id, challengeScope?.type, challengesLoaded, onChallengeScopeChange, circleChallenges, challengeHistory]);
 
   useEffect(() => {
     let cancelled = false;
@@ -188,12 +188,14 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
       });
     }
     const active = circleChallenges.find((item) => String(item.challenge_id) === String(challengeScope.id));
-    const seriesTitle = active?.challenge_title ?? challengeScope.challengeTitle;
+    const selectedHistory = challengeHistory.find((item) => String(item.challenge_id) === String(challengeScope.id));
+    const selected = active || selectedHistory;
+    const seriesTitle = selected?.challenge_title ?? challengeScope.challengeTitle;
     const past = challengeHistory
       .filter((item) => Number(item.circle_id) === Number(active?.circle_id ?? challengeScope.circleId) && item.challenge_title === seriesTitle && String(item.challenge_id) !== String(challengeScope.id))
       .sort((a, b) => String(b.week_start).localeCompare(String(a.week_start)));
     return [
-      { key:`circle:${challengeScope.id}`, date:null, challengeId:challengeScope.id, label:active?.week_start ? challengeWeekLabel(active.week_start) : t("standings.thisWeek"), closed:false, winnerId:null, gameIds:active?.game_ids || challengeScope.gameIds || null },
+      { key:`circle:${challengeScope.id}`, date:null, challengeId:challengeScope.id, label:selected?.week_start ? challengeWeekLabel(selected.week_start) : t("standings.thisWeek"), closed:!!selectedHistory?.closed_at, winnerId:selectedHistory?.winner_id || null, gameIds:selected?.game_ids || challengeScope.gameIds || null },
       ...past.map((item) => ({ key:`circle:${item.challenge_id}`, date:null, challengeId:item.challenge_id, label:challengeWeekLabel(item.week_start), closed:!!item.closed_at, winnerId:item.winner_id || null, gameIds:item.game_ids || null })),
     ];
   }, [challengeScope?.type, challengeScope?.id, challengeScope?.circleId, challengeScope?.challengeTitle, challengeScope?.gameIds, circleChallenges, challengeHistory, t]);
@@ -345,6 +347,17 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
     });
   }
 
+  function chooseHistoricalChallenge(circleChallenge) {
+    onChallengeScopeChange({
+      type:"circle", id:circleChallenge.challenge_id, circleId:circleChallenge.circle_id,
+      circleName:circleChallenge.circle_name, challengeTitle:circleChallenge.challenge_title,
+      name:circleChallenge.challenge_title || circleChallenge.circle_name,
+      gameIds:circleChallenge.game_ids || [], historical:true,
+    });
+    setExpandedChallengeId(null);
+    setPeriodOffset(0);
+  }
+
   function compactGameTile(game, completed, canPlay, onClick, keySuffix = "") {
     const Icon = game.icon;
     return (
@@ -448,7 +461,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
               );
             })}
 
-            {challengeHistory.length > 0 && <details style={{ padding:"var(--space-3) var(--space-4)", border:"1px solid var(--color-border)", borderRadius:"var(--radius-md)", background:"var(--color-surface)" }}><summary style={{ ...buttonReset, display:"flex", alignItems:"center", gap:"var(--space-2)", listStyle:"none" }}><span style={{ flex:1 }}><strong style={{ display:"block", color:"var(--color-text-primary)", fontSize:"var(--text-body-size)" }}>Past challenges</strong><span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)" }}>Your latest circle results</span></span><ChevronRight size={17} /></summary><div style={{ marginTop:"var(--space-3)" }}>{challengeHistory.slice(0,5).map((item,index) => <div key={item.challenge_id} style={{ display:"flex", alignItems:"center", gap:"var(--space-2)", padding:"10px 0", borderTop:index ? "1px solid var(--color-border)" : "none" }}><span style={{ flex:1, minWidth:0 }}><strong style={{ display:"block", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", fontSize:"var(--text-body-secondary-size)" }}>{item.challenge_title || item.circle_name}</strong><span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)" }}>{item.circle_name} · {challengeWeekLabel(item.week_start)}</span></span><span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:600 }}>{item.winner_id === userId ? "You won" : item.winner_id ? `${item.winner_name || "Circlemate"} won` : "No winner"}</span></div>)}</div></details>}
+            {challengeHistory.length > 0 && <details style={{ padding:"var(--space-3) var(--space-4)", border:"1px solid var(--color-border)", borderRadius:"var(--radius-md)", background:"var(--color-surface)" }}><summary style={{ ...buttonReset, display:"flex", alignItems:"center", gap:"var(--space-2)", listStyle:"none" }}><span style={{ flex:1 }}><strong style={{ display:"block", color:"var(--color-text-primary)", fontSize:"var(--text-body-size)" }}>Past challenges</strong><span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)" }}>Scores, winners and standings</span></span><ChevronRight size={17} /></summary><div style={{ marginTop:"var(--space-3)" }}>{challengeHistory.slice(0,5).map((item,index) => <div key={item.challenge_id} style={{ padding:"10px 0", borderTop:index ? "1px solid var(--color-border)" : "none" }}><button type="button" onClick={() => chooseHistoricalChallenge(item)} style={{ ...buttonReset,width:"100%",display:"flex",alignItems:"center",gap:"var(--space-2)",border:0,background:"transparent",textAlign:"left" }}><span style={{ flex:1, minWidth:0 }}><strong style={{ display:"block", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", fontSize:"var(--text-body-secondary-size)" }}>{item.challenge_title || item.circle_name}</strong><span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)" }}>{item.circle_name} · {challengeWeekLabel(item.week_start)} · {item.finisher_count || 0}/{item.entry_count || 0} finished</span></span><span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:600 }}>{item.winner_id === userId ? "You won" : item.winner_id ? `${item.winner_name || "Circlemate"} won` : "No winner"}</span><ChevronRight size={15}/></button>{String(challengeScope?.id)===String(item.challenge_id) && <div style={{ marginTop:"var(--space-3)" }}><ChallengeStandings rows={challengeRows} roster={Object.values(challengeProfiles)} games={(item.game_ids || []).map((id)=>configuredGames.find((game)=>game.id===id)).filter(Boolean)} rounds={challengeRounds} benchmarks={challengeBenchmarks} serverStandings={serverStandings} previousRows={previousChallengeRows} previousRounds={previousChallengeRounds} isCircle userId={userId} loading={standingsLoading} defaultOpen embedded closed winnerId={item.winner_id} /><div style={{ marginTop:"var(--space-3)",padding:"var(--space-3)",borderRadius:"var(--radius-md)",background:"var(--color-surface-elevated)" }}><strong style={{ display:"block",fontSize:"var(--text-caption-size)" }}>Missed a round?</strong><span style={{ display:"block",margin:"4px 0 8px",color:"var(--color-text-secondary)",fontSize:"var(--text-caption-size)" }}>Ranked play is closed. Practice uses the game normally and cannot change these standings.</span><div style={{ display:"flex",flexWrap:"wrap",gap:"var(--space-2)" }}>{(item.game_ids || []).map((gameId)=><Button key={gameId} size="sm" variant="secondary" onClick={()=>{ onPlayModeChange?.("practice");onSelect(gameId); }}>Practice {GAME_NAMES[gameId] || gameId}</Button>)}</div></div></div>}</div>)}</div></details>}
           </div>
         )}
 

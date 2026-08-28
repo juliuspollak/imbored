@@ -11,7 +11,7 @@ export default function GameHomeButton({ onClick }) {
         position: "fixed",
         top: "max(var(--global-player-bubble-offset), env(safe-area-inset-top))",
         left: "max(16px, calc((100vw - var(--game-nav-width, 512px)) / 2))",
-        zIndex: 50,
+        zIndex: 250,
         width: "var(--control-height-md)",
         height: "var(--control-height-md)",
         minHeight: "var(--control-height-md)",

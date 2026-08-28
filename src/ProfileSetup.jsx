@@ -16,6 +16,7 @@ import { enableNativeNotifications, loadNotificationPreferences, nativePermissio
 import SandboxPushTest from "./components/SandboxPushTest.jsx";
 import { sandboxPushTestEnabled } from "./lib/sandboxPushTestConfig.js";
 import { isOAuthCancellation } from "./lib/nativeOAuth.js";
+import { canUnlinkIdentity, identityProvider } from "./lib/identityMethods.js";
 
 const passkeySupported = typeof window !== "undefined" && !!window.PublicKeyCredential;
 
@@ -105,7 +106,7 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
   }
 
   async function handleUnlinkIdentity(identity) {
-    if (identities.length <= 1) { setIdentityError("Keep at least one sign-in method connected."); return; }
+    if (!canUnlinkIdentity({ identities, passkeyCount:passkeys.length }, identity)) { setIdentityError("Keep at least one usable sign-in method connected."); return; }
     setIdentityBusy(true); setIdentityError(null);
     const { error } = await unlinkIdentity(identity);
     setIdentityBusy(false);
@@ -345,8 +346,8 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
           <Card style={{ marginBottom: "var(--space-3)" }}>
             <SectionTitle icon={Link2}>Sign-in methods</SectionTitle>
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-              {identities.filter((identity) => (identity.provider || identity.identity_data?.provider) !== "apple").map((identity) => {
-                const provider = identity.provider || identity.identity_data?.provider || "email";
+              {identities.filter((identity) => identityProvider(identity) !== "apple").map((identity) => {
+                const provider = identityProvider(identity);
                 const label = provider === "google" ? "Google" : "Email";
                 const detail = identity.identity_data?.email || user?.email || "Connected";
                 return (
@@ -356,7 +357,7 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
                       <strong style={{ display: "block", color: "var(--color-text-primary)", fontSize: "var(--text-body-secondary-size)" }}>{label}</strong>
                       <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{detail}</span>
                     </span>
-                    {identities.length > 1 && <Button variant="icon" disabled={identityBusy} onClick={() => handleUnlinkIdentity(identity)} aria-label={`Unlink ${label}`} style={{ color: "var(--color-danger-text)" }}><Unlink size={16} /></Button>}
+                    {canUnlinkIdentity({ identities, passkeyCount:passkeys.length }, identity) && <Button variant="icon" disabled={identityBusy} onClick={() => handleUnlinkIdentity(identity)} aria-label={`Unlink ${label}`} style={{ color: "var(--color-danger-text)" }}><Unlink size={16} /></Button>}
                   </div>
                 );
               })}
@@ -364,12 +365,12 @@ export default function ProfileSetup({ onDone, onOpenCircles }) {
                 <span aria-hidden="true" style={{ fontWeight: 700, color: "var(--color-text-primary)" }}>A</span>
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <strong style={{ display: "block", color: "var(--color-text-primary)", fontSize: "var(--text-body-secondary-size)" }}>Apple</strong>
-                  <span style={{ display: "block", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{identities.some((identity) => (identity.provider || identity.identity_data?.provider) === "apple") ? "Connected" : "Not connected"}</span>
+                  <span style={{ display: "block", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)" }}>{identities.some((identity) => identityProvider(identity) === "apple") ? "Connected" : "Not connected"}</span>
                 </span>
-                {!identities.some((identity) => (identity.provider || identity.identity_data?.provider) === "apple") && <Button variant="secondary" disabled={identityBusy} onClick={handleLinkApple}>Link</Button>}
+                {identities.find((identity) => identityProvider(identity) === "apple") ? (() => { const appleIdentity=identities.find((identity) => identityProvider(identity) === "apple"); return canUnlinkIdentity({ identities, passkeyCount:passkeys.length }, appleIdentity) ? <Button variant="icon" disabled={identityBusy} onClick={() => handleUnlinkIdentity(appleIdentity)} aria-label="Unlink Apple" style={{ color:"var(--color-danger-text)" }}><Unlink size={16} /></Button> : null; })() : <Button variant="secondary" disabled={identityBusy} onClick={handleLinkApple}>Link</Button>}
               </div>
             </div>
-            {!identities.some((identity) => (identity.provider || identity.identity_data?.provider) === "google") && <Button variant="secondary" fullWidth loading={identityBusy} onClick={handleLinkGoogle} style={{ marginTop: "var(--space-3)" }}>{identityBusy ? "Connecting…" : "Connect Google"}</Button>}
+            {!identities.some((identity) => identityProvider(identity) === "google") && <Button variant="secondary" fullWidth loading={identityBusy} onClick={handleLinkGoogle} style={{ marginTop: "var(--space-3)" }}>{identityBusy ? "Connecting…" : "Connect Google"}</Button>}
             <p style={{ margin: "var(--space-2) 0 0", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", lineHeight: "var(--text-body-line)" }}>Google can be linked to this player. Changing the primary email is a separate action.</p>
             {identityError && <StatusBanner variant="error" style={{ marginTop: "var(--space-3)" }}>{identityError}</StatusBanner>}
           </Card>
