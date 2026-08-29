@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const migration=readFileSync(new URL("../../supabase/migrations/202608271200_server_push_notification_outbox.sql",import.meta.url),"utf8");
+const repairMigration=readFileSync(new URL("../../supabase/migrations/202608291300_repair_push_worker_claim_pipeline.sql",import.meta.url),"utf8");
+const migration=[readFileSync(new URL("../../supabase/migrations/202608271200_server_push_notification_outbox.sql",import.meta.url),"utf8"),repairMigration].join("\n");
 const sender=["index.ts","handler.ts"].map((file)=>readFileSync(new URL(`../../supabase/functions/send-push-notifications/${file}`,import.meta.url),"utf8")).join("\n");
 const workerCore=readFileSync(new URL("../../supabase/functions/send-push-notifications/workerCore.ts",import.meta.url),"utf8");
 
@@ -22,6 +23,7 @@ test("delivery fan-out excludes inactive devices and caps retries",()=>{
   assert.match(migration,/status_in='retry' and \(select attempt_count>=5/);
   assert.match(migration,/then 'failed'/);
   assert.match(migration,/LeaseExpiredAfterMaxAttempts/);
+  assert.match(migration,/last_reason='InactiveDevice'/);
 });
 
 for (const [attempt,expected] of [[1,"retry"],[4,"retry"],[5,"failed"]]) {
@@ -45,6 +47,7 @@ test("worker keeps APNs credentials server-side and routes only structured metad
   for (const secret of ["APNS_KEY_ID","APNS_TEAM_ID","APNS_PRIVATE_KEY","APNS_BUNDLE_ID"]) assert.match(sender,new RegExp(secret));
   assert.match(sender,/buildApnsPayload\(delivery\)/);
   assert.doesNotMatch(sender,/VITE_APNS_PRIVATE|VITE_APNS_KEY/);
+  assert.match(sender,/APNS_BUNDLE_ID"\)!=="au\.imbored\.app"/);
 });
 
 test("manual and GitHub worker-secret invocation remains available beside authenticated wake",()=>{
@@ -79,4 +82,31 @@ test("route metadata is object-only, allowlisted and bounded in both SQL and wor
   assert.match(migration,/octet_length\(route_data_in::text\)>512/);
   assert.match(migration,/key in \('route','playerId'\)/);
   assert.match(migration,/key in \('route','circleId','challengeId'\)/);
+});
+
+test("focused production repair inspects and repairs only push pipeline objects without deleting queued rows",()=>{
+  assert.match(migration,/push_repair_diagnostic/);
+  assert.match(migration,/to_regprocedure\('public\.claim_push_deliveries\(integer\)'\)/);
+  assert.match(migration,/add column if not exists lease_expires_at/);
+  assert.match(migration,/create index if not exists notification_deliveries_expired_lease_idx/);
+  assert.doesNotMatch(repairMigration,/delete from public\.notification_(events|deliveries)/);
+  assert.doesNotMatch(repairMigration,/create extension|vault\.|pg_net\./i);
+});
+
+test("claim RPC contract exactly matches the worker and only expired sending leases are reclaimable",()=>{
+  assert.match(migration,/claim_push_deliveries\(batch_size integer default 10\)/);
+  for(const column of ["delivery_id bigint","claim_token uuid","attempt_count integer","device_id bigint","device_token text","apns_environment text","event_id bigint","kind text","title text","body text","route_data jsonb"]) assert.match(migration,new RegExp(column));
+  assert.match(migration,/delivery\.status='sending' and delivery\.lease_expires_at<=now\(\)/);
+  assert.doesNotMatch(migration,/delivery\.status='sending' and delivery\.lease_expires_at>now\(\)/);
+});
+
+test("completion requires the active claim token and invalid tokens deactivate only their registration",()=>{
+  assert.match(migration,/delivery\.claim_token=claim_token_in/);
+  assert.match(migration,/final_status='invalid_token'.*is_active=false/s);
+});
+
+test("worker health response covers eligible, claimed, sent, retry, permanent failure and no-device outcomes",()=>{
+  for(const field of ["eligible","claimed","sent","retried","permanently_failed","no_devices"]) assert.match(sender,new RegExp(field));
+  assert.match(sender,/push_claim_error/);
+  assert.match(sender,/diagnostic:\{rpc:"claim_push_deliveries",code:diagnostic\.code\}/);
 });

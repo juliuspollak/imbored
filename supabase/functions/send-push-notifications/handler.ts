@@ -13,6 +13,11 @@ function safeQueueDiagnostic(query:string,error:unknown){
     : "The database request failed before PostgREST returned a structured response.";
   return {query,code,message};
 }
+function logDatabaseError(event:string,operation:string,error:unknown){
+  const value=error&&typeof error==="object"?error as Record<string,unknown>:{};
+  const safe=(field:string,limit:number)=>typeof value[field]==="string"?(value[field] as string).slice(0,limit):null;
+  console.error(JSON.stringify({event,operation,code:safe("code",32)||"UNKNOWN",message:safe("message",500),details:safe("details",1000),hint:safe("hint",500)}));
+}
 export function createPushHandler(deps:Dependencies) {
   // Per-isolate load shedding. Delivery leases remain the cross-instance
   // concurrency control, while this prevents one signed-in client from
@@ -59,6 +64,7 @@ export function createPushHandler(deps:Dependencies) {
   if(!wakeMode&&(!expected||!supplied||!(await constantTimeEqual(supplied,expected)))) return new Response("Unauthorized",{status:401});
   const required=["SUPABASE_URL","SUPABASE_SERVICE_ROLE_KEY","APNS_KEY_ID","APNS_TEAM_ID","APNS_PRIVATE_KEY","APNS_BUNDLE_ID"],missing=required.filter((key)=>!deps.env(key));
   if(missing.length) return Response.json({error:`Missing server configuration: ${missing.join(", ")}`},{status:500});
+  if(deps.env("APNS_BUNDLE_ID")!=="au.imbored.app")return Response.json({error:"APNs bundle configuration does not match this app"},{status:500});
   const supabase=deps.createClient();
   if(payload?.mode==="empty-check"){
     const now=new Date().toISOString();
@@ -69,12 +75,15 @@ export function createPushHandler(deps:Dependencies) {
     const eligible=(events.count??0)+(deliveries.count??0);
     return Response.json({ok:true,mode:"empty-check",eligible,safeToSmokeTest:eligible===0});
   }
+  const {data:health,error:healthError}=await supabase.rpc("get_push_worker_health");
+  if(healthError)logDatabaseError("push_health_error","get_push_worker_health",healthError);
+  const healthRow=Array.isArray(health)?health[0]:health;
   const {data:claimed,error}=await supabase.rpc("claim_push_deliveries",{batch_size:10});
-  if(error) return Response.json({error:"Unable to claim push deliveries"},{status:500});
-  const summary={claimed:claimed?.length||0,sent:0,retry:0,failed:0,invalidated:0,completion_errors:0};if(!claimed?.length)return Response.json(summary);
+  if(error){logDatabaseError("push_claim_error","claim_push_deliveries(batch_size integer)",error);const diagnostic=safeQueueDiagnostic("claim_push_deliveries",error);return Response.json({ok:false,error:"Unable to claim push deliveries",diagnostic:{rpc:"claim_push_deliveries",code:diagnostic.code}},{status:500});}
+  const summary={ok:true,mode:wakeMode?"wake":"worker",eligible:Number(healthRow?.eligible||0),claimed:claimed?.length||0,sent:0,retried:0,permanently_failed:0,no_devices:Number(healthRow?.no_devices||0),invalidated:0,completion_errors:0};if(!claimed?.length)return Response.json(summary);
   let token:string;try{token=await deps.providerToken({keyId:deps.env("APNS_KEY_ID")!,teamId:deps.env("APNS_TEAM_ID")!,privateKey:deps.env("APNS_PRIVATE_KEY")!.replaceAll("\\n","\n")});}catch{console.error(JSON.stringify({event:"apns_provider_token_error"}));return Response.json({...summary,error:"Unable to initialise APNs authentication"},{status:500});}
   for(const delivery of claimed){let status="retry",httpStatus=0,reason="NetworkError",apnsId:string|null=null;try{const body=buildApnsPayload(delivery),response=await deps.fetch(`${apnsHost(delivery.apns_environment)}/3/device/${encodeURIComponent(delivery.device_token)}`,{method:"POST",signal:AbortSignal.timeout(APNS_TIMEOUT_MS),headers:{authorization:`bearer ${token}`,"apns-topic":deps.env("APNS_BUNDLE_ID")!,"apns-push-type":"alert","apns-priority":"10","apns-collapse-id":String(delivery.event_id),"content-type":"application/json"},body});httpStatus=response.status;apnsId=response.headers.get("apns-id");const result=await response.json().catch(()=>({}));reason=typeof result.reason==="string"?result.reason:(response.ok?"Success":"Unknown");status=classifyApns(response.status,reason);}catch(caught){({reason,status}=classifyWorkerError(caught));}
-    const {data:finalStatus,error:finishError}=await supabase.rpc("finish_push_delivery",{delivery_id_in:delivery.delivery_id,claim_token_in:delivery.claim_token,status_in:status,http_status_in:httpStatus,reason_in:reason,apns_id_in:apnsId});if(finishError||!finalStatus){summary.completion_errors+=1;console.error(JSON.stringify({event:"push_completion_error",deliveryId:delivery.delivery_id,reason:finishError?"rpc_error":"stale_lease"}));continue;}if(finalStatus==="sent")summary.sent+=1;else if(finalStatus==="retry")summary.retry+=1;else if(finalStatus==="invalid_token")summary.invalidated+=1;else summary.failed+=1;console.log(JSON.stringify({event:"apns_delivery_result",deliveryId:delivery.delivery_id,status:finalStatus,httpStatus,reason}));}
+    const {data:finalStatus,error:finishError}=await supabase.rpc("finish_push_delivery",{delivery_id_in:delivery.delivery_id,claim_token_in:delivery.claim_token,status_in:status,http_status_in:httpStatus,reason_in:reason,apns_id_in:apnsId});if(finishError||!finalStatus){summary.completion_errors+=1;if(finishError)logDatabaseError("push_completion_error","finish_push_delivery",finishError);else console.error(JSON.stringify({event:"push_completion_error",deliveryId:delivery.delivery_id,reason:"stale_lease"}));continue;}if(finalStatus==="sent")summary.sent+=1;else if(finalStatus==="retry")summary.retried+=1;else if(finalStatus==="invalid_token")summary.invalidated+=1;else summary.permanently_failed+=1;console.log(JSON.stringify({event:"apns_delivery_result",deliveryId:delivery.delivery_id,status:finalStatus,httpStatus,reason}));}
   console.log(JSON.stringify({event:"push_batch_complete",...summary}));
   return Response.json(summary,{status:summary.completion_errors?500:200});
 };}
