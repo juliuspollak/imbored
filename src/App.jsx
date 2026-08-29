@@ -1153,6 +1153,10 @@ function PokeLayer() {
 }
 
 export default function App() {
+  useEffect(() => {
+    console.log("[REPLAY HOME] normal App mounted");
+  }, []);
+
   return (
     <AuthProvider>
       <style>{NAV_BTN_STYLE}</style>

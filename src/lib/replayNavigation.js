@@ -22,10 +22,25 @@ export function homeLocationFrom(currentLocation) {
 }
 
 export function exitReplayToHome(browserWindow = window) {
+  console.log("[REPLAY HOME] exitReplayToHome entered", {
+    href: browserWindow.location.href,
+    pathname: browserWindow.location.pathname,
+    search: browserWindow.location.search,
+    hash: browserWindow.location.hash,
+  });
   const destination = homeLocationFrom(browserWindow.location.href);
   // main.jsx owns the replay/App choice. Clear the URL first, then tell that
   // mounted root to re-read it. This avoids relying on a capacitor:// document
   // reload, which can retain/reopen the WebView's replay bootstrap document.
   browserWindow.history.replaceState({}, "", destination);
+  console.log("[REPLAY HOME] after history.replaceState", {
+    href: browserWindow.location.href,
+    search: browserWindow.location.search,
+    hash: browserWindow.location.hash,
+  });
+  console.log("[REPLAY HOME] dispatching replay-location event", {
+    eventName: REPLAY_LOCATION_CHANGE_EVENT,
+  });
   browserWindow.dispatchEvent(new browserWindow.Event(REPLAY_LOCATION_CHANGE_EVENT));
+  console.log("[REPLAY HOME] replay-location event dispatched");
 }

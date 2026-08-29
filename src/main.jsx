@@ -55,15 +55,43 @@ function BootstrapApp() {
   const [puzzleStatId, setPuzzleStatId] = useState(readReplay);
 
   useEffect(() => {
-    const readLocation = () => setPuzzleStatId(readReplay());
+    const readLocation = () => {
+      const nextPuzzleStatId = readReplay();
+      console.log("[REPLAY HOME] BootstrapApp received replay-location event", {
+        href: window.location.href,
+        puzzle: new URLSearchParams(window.location.search).get("puzzle"),
+      });
+      setPuzzleStatId((currentPuzzleStatId) => {
+        console.log("[REPLAY HOME] BootstrapApp state update", {
+          currentPuzzleStatId,
+          nextPuzzleStatId,
+          isNewValue: !Object.is(currentPuzzleStatId, nextPuzzleStatId),
+        });
+        return nextPuzzleStatId;
+      });
+    };
+    console.log("[REPLAY HOME] BootstrapApp listeners attached", {
+      target: "window",
+      eventName: REPLAY_LOCATION_CHANGE_EVENT,
+    });
     window.addEventListener("popstate", readLocation);
     window.addEventListener(REPLAY_LOCATION_CHANGE_EVENT, readLocation);
     return () => {
+      console.log("[REPLAY HOME] BootstrapApp listeners removed", {
+        target: "window",
+        eventName: REPLAY_LOCATION_CHANGE_EVENT,
+      });
       window.removeEventListener("popstate", readLocation);
       window.removeEventListener(REPLAY_LOCATION_CHANGE_EVENT, readLocation);
     };
   }, []);
 
+  console.log("[REPLAY HOME] Bootstrap decision", {
+    href: typeof window === "undefined" ? null : window.location.href,
+    puzzleStatId,
+    app: puzzleStatId ? "SharedPuzzleApp" : "App",
+    reason: puzzleStatId ? "puzzle query parameter is present" : "puzzle query parameter is absent",
+  });
   return puzzleStatId ? <SharedPuzzleApp statId={puzzleStatId} /> : <App />;
 }
 

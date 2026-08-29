@@ -16,7 +16,16 @@ const GAMES = {
   zoom: { Component:lazy(() => import("./games/Zoom.jsx")), label:"Zoom" },
 };
 
-function goHome() { if (typeof window !== "undefined") exitReplayToHome(window); }
+function goHome() {
+  if (typeof window === "undefined") return;
+  console.log("[REPLAY HOME] button click", {
+    href: window.location.href,
+    search: window.location.search,
+    hash: window.location.hash,
+  });
+  console.log("[REPLAY HOME] SharedPuzzleApp.goHome entered");
+  exitReplayToHome(window);
+}
 
 function Message({ children }) {
   return (
@@ -125,6 +134,11 @@ function SharedPuzzleInner({ statId }) {
 }
 
 export default function SharedPuzzleApp({ statId }) {
+  useEffect(() => {
+    console.log("[REPLAY HOME] SharedPuzzleApp mounted", { statId });
+    return () => console.log("[REPLAY HOME] SharedPuzzleApp unmounted", { statId });
+  }, [statId]);
+
   return (
     <AuthProvider>
       <SharedPuzzleInner statId={statId} />
