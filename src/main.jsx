@@ -9,6 +9,7 @@ import { enableAutomaticAppUpdates } from "./lib/appUpdate.js";
 import { applyThemePreference, getCachedThemePreference } from "./lib/theme.js";
 import { enablePuzzleShareLinks } from "./lib/puzzleSharing.js";
 import "./lib/twistInvalidLineFeedback.js";
+import "./lib/chatIosFocusGuard.js";
 // Fonts are bundled rather than fetched from Google's CDN. A packaged app
 // should render its own type with no network at all, and shipping them removes
 // a third-party request on every launch that would otherwise need declaring in
@@ -39,6 +40,7 @@ import "./hive-branding.css";
 import "./gridly-branding.css";
 import "./game-tile-artwork.css";
 import "./twist-feedback.css";
+import "./chat-ios-polish.css";
 import { REPLAY_LOCATION_CHANGE_EVENT, replayStatIdFrom } from "./lib/replayNavigation.js";
 
 enableAutomaticAppUpdates();
