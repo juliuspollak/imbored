@@ -91,6 +91,18 @@ test("focused production repair inspects and repairs only push pipeline objects 
   assert.match(migration,/create index if not exists notification_deliveries_expired_lease_idx/);
   assert.doesNotMatch(repairMigration,/delete from public\.notification_(events|deliveries)/);
   assert.doesNotMatch(repairMigration,/create extension|vault\.|pg_net\./i);
+  assert.match(repairMigration,/Incompatible Phase 3 push table; missing required columns/);
+});
+
+test("repair restores the environment-aware native device registration contract",()=>{
+  assert.match(repairMigration,/register_native_push_device\([\s\S]*apns_environment_in text default 'production'/);
+  assert.match(repairMigration,/apns_environment_in not in \('production','sandbox'\)/);
+  assert.match(repairMigration,/push_device_registrations_apns_environment_check/);
+  assert.match(repairMigration,/grant execute on function public\.register_native_push_device\(text,text,text,text,text\) to authenticated/);
+});
+
+test("worker health eligible count is explicitly bigint rather than sum-bigint numeric",()=>{
+  assert.match(repairMigration,/coalesce\(sum\([\s\S]*?\),0\)::bigint/);
 });
 
 test("claim RPC contract exactly matches the worker and only expired sending leases are reclaimable",()=>{

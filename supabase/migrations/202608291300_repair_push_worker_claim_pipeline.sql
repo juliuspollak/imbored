@@ -18,6 +18,34 @@ alter table public.push_device_registrations
   add column if not exists is_active boolean not null default true,
   add column if not exists invalidated_at timestamptz,
   add column if not exists invalidation_reason text;
+update public.push_device_registrations set apns_environment='production'
+where apns_environment is null or apns_environment not in ('production','sandbox');
+alter table public.push_device_registrations drop constraint if exists push_device_registrations_apns_environment_check;
+alter table public.push_device_registrations add constraint push_device_registrations_apns_environment_check
+  check(apns_environment in ('production','sandbox')) not valid;
+alter table public.push_device_registrations validate constraint push_device_registrations_apns_environment_check;
+
+drop function if exists public.register_native_push_device(text,text,text,text);
+create or replace function public.register_native_push_device(
+  installation_id_in text,platform_in text,device_token_in text,
+  timezone_in text default null,apns_environment_in text default 'production'
+) returns void language plpgsql security definer set search_path='public' as $$
+declare clean_installation text:=nullif(btrim(installation_id_in),''); clean_token text:=nullif(btrim(device_token_in),'');
+begin
+  if auth.uid() is null then raise exception 'You must be signed in.' using errcode='42501'; end if;
+  if platform_in<>'ios' or apns_environment_in not in ('production','sandbox') then raise exception 'Unsupported push target.' using errcode='22023'; end if;
+  if clean_installation is null or char_length(clean_installation) not between 8 and 200 then raise exception 'Invalid installation identifier.' using errcode='22023'; end if;
+  if clean_token is null or char_length(clean_token) not between 16 and 512 then raise exception 'Invalid device token.' using errcode='22023'; end if;
+  delete from public.push_device_registrations where user_id=auth.uid() and platform=platform_in and device_token=clean_token and installation_id<>clean_installation;
+  insert into public.push_device_registrations(user_id,installation_id,platform,device_token,timezone,apns_environment,is_active,invalidated_at,invalidation_reason)
+  values(auth.uid(),clean_installation,platform_in,clean_token,public.resolve_timezone(timezone_in),apns_environment_in,true,null,null)
+  on conflict(platform,installation_id) do update set user_id=excluded.user_id,device_token=excluded.device_token,timezone=excluded.timezone,
+    apns_environment=excluded.apns_environment,is_active=true,invalidated_at=null,invalidation_reason=null,updated_at=now(),last_seen_at=now()
+  where push_device_registrations.user_id=auth.uid() or push_device_registrations.device_token=excluded.device_token;
+  if not found then raise exception 'This installation is already registered with another device token.' using errcode='23505'; end if;
+end $$;
+revoke all on function public.register_native_push_device(text,text,text,text,text) from public,anon;
+grant execute on function public.register_native_push_device(text,text,text,text,text) to authenticated;
 
 -- These base outbox tables are intentionally not dropped/recreated. CREATE IF
 -- NOT EXISTS handles a production database where Phase 3 never got this far.
@@ -51,6 +79,22 @@ create table if not exists public.notification_deliveries (
   updated_at timestamptz not null default now(),
   unique(event_id,device_registration_id)
 );
+
+-- CREATE TABLE is atomic, so historically partial Phase 3 application leaves
+-- either a complete base table or no table. Refuse an unrelated/incompatible
+-- legacy table explicitly instead of failing later with a misleading RPC error.
+do $$
+declare missing text;
+begin
+  select string_agg(required.column_name,', ' order by required.column_name) into missing
+  from (values
+    ('notification_events','id'),('notification_events','event_key'),('notification_events','recipient_id'),
+    ('notification_events','kind'),('notification_events','title'),('notification_events','body'),('notification_events','route_data'),
+    ('notification_deliveries','id'),('notification_deliveries','event_id'),('notification_deliveries','device_registration_id')
+  ) required(table_name,column_name)
+  where not exists(select 1 from information_schema.columns column_item where column_item.table_schema='public' and column_item.table_name=required.table_name and column_item.column_name=required.column_name);
+  if missing is not null then raise exception 'Incompatible Phase 3 push table; missing required columns: %',missing using errcode='42703'; end if;
+end $$;
 
 alter table public.notification_events
   add column if not exists processed_at timestamptz,
@@ -196,7 +240,7 @@ create or replace function public.get_push_worker_health()
 returns table(eligible bigint,claimable bigint,no_devices bigint,expired_leases bigint) language sql stable security definer set search_path='public' as $$
   select
     (select count(*) from public.notification_deliveries delivery where delivery.attempt_count<5 and (((delivery.status in ('pending','retry')) and delivery.next_attempt_at<=now()) or (delivery.status='sending' and delivery.lease_expires_at<=now())))+
-    (select coalesce(sum((select count(*) from public.push_device_registrations device where device.user_id=event.recipient_id and device.is_active)),0) from public.notification_events event where event.processed_at is null and event.available_at<=now()),
+    (select coalesce(sum((select count(*) from public.push_device_registrations device where device.user_id=event.recipient_id and device.is_active)),0)::bigint from public.notification_events event where event.processed_at is null and event.available_at<=now()),
     (select count(*) from public.notification_deliveries delivery where delivery.attempt_count<5 and (((delivery.status in ('pending','retry')) and delivery.next_attempt_at<=now()) or (delivery.status='sending' and delivery.lease_expires_at<=now()))),
     (select count(*) from public.notification_events event where event.processed_at is null and event.available_at<=now() and not exists(select 1 from public.push_device_registrations device where device.user_id=event.recipient_id and device.is_active)),
     (select count(*) from public.notification_deliveries delivery where delivery.status='sending' and delivery.lease_expires_at<=now());
@@ -208,5 +252,6 @@ notify pgrst,'reload schema';
 insert into push_repair_diagnostic values
   ('after','claim_push_deliveries(integer)',to_regprocedure('public.claim_push_deliveries(integer)') is not null,'worker parameter: batch_size'),
   ('after','finish_push_delivery(bigint,uuid,text,integer,text,text)',to_regprocedure('public.finish_push_delivery(bigint,uuid,text,integer,text,text)') is not null,'claim_token required'),
+  ('after','register_native_push_device(text,text,text,text,text)',to_regprocedure('public.register_native_push_device(text,text,text,text,text)') is not null,'production/sandbox registration'),
   ('after','get_push_worker_health()',to_regprocedure('public.get_push_worker_health()') is not null,'security-safe aggregate counts');
 select * from push_repair_diagnostic order by stage,object_name;
