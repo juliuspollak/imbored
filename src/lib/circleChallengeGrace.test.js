@@ -5,6 +5,7 @@ import { rankStandings } from "./challengeStandingsScoring.js";
 
 const migration=readFileSync(new URL("../../supabase/migrations/202608291100_circle_challenge_grace_period.sql",import.meta.url),"utf8");
 const repairMigration=readFileSync(new URL("../../supabase/migrations/202608291200_reopen_premature_circle_challenge_winners.sql",import.meta.url),"utf8");
+const finishEarlyMigration=readFileSync(new URL("../../supabase/migrations/202608291700_finalize_circle_when_everyone_finishes.sql",import.meta.url),"utf8");
 const home=readFileSync(new URL("../Home.jsx",import.meta.url),"utf8");
 const gate=readFileSync(new URL("../ChallengeGate.jsx",import.meta.url),"utf8");
 const standings=readFileSync(new URL("../ChallengeStandings.jsx",import.meta.url),"utf8");
@@ -28,9 +29,12 @@ test("server rejects starts and direct result inserts outside open or grace",()=
   assert.match(migration,/before insert on public\.game_stats/);
   assert.match(migration,/circle_challenge_round_state\(challenge\.id,round_item\.challenge_date\) in \('open','grace'\)/);
 });
-test("winner persistence waits until grace is final and then recalculates from all results",()=>{
+test("grace waits for missing players but finalizes immediately once every eligible player finishes",()=>{
   assert.match(migration,/round_state\(target_challenge_id,last_round\)<>'final'/);
-  assert.match(migration,/finalize_circle_challenge_after_grace\(target_challenge_id\)/);
+  assert.match(finishEarlyMigration,/circle_challenge_all_eligible_players_complete/);
+  assert.match(finishEarlyMigration,/and not public\.circle_challenge_all_eligible_players_complete\(target_challenge_id\)/);
+  assert.match(finishEarlyMigration,/challenge_closed_at is not null then return 'final'/);
+  assert.match(finishEarlyMigration,/perform public\.finalize_circle_challenge\(item\.id\)/);
   assert.match(standings,/Current leader/);
   assert.match(standings,/closed \? "Winner/);
 });
