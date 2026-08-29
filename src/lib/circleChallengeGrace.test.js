@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { rankStandings } from "./challengeStandingsScoring.js";
 
 const migration=readFileSync(new URL("../../supabase/migrations/202608291100_circle_challenge_grace_period.sql",import.meta.url),"utf8");
+const repairMigration=readFileSync(new URL("../../supabase/migrations/202608291200_reopen_premature_circle_challenge_winners.sql",import.meta.url),"utf8");
 const home=readFileSync(new URL("../Home.jsx",import.meta.url),"utf8");
 const gate=readFileSync(new URL("../ChallengeGate.jsx",import.meta.url),"utf8");
 const standings=readFileSync(new URL("../ChallengeStandings.jsx",import.meta.url),"utf8");
@@ -32,6 +33,12 @@ test("winner persistence waits until grace is final and then recalculates from a
   assert.match(migration,/finalize_circle_challenge_after_grace\(target_challenge_id\)/);
   assert.match(standings,/Current leader/);
   assert.match(standings,/closed \? "Winner/);
+});
+test("premature persisted winners are reopened without deleting ranked scores",()=>{
+  assert.match(repairMigration,/round_state\(challenge\.id,rounds\.last_round\) in \('open','grace'\)/);
+  assert.match(repairMigration,/set closed_at=null,loser_id=null/);
+  assert.match(repairMigration,/delete from public\.circle_challenge_reward_awards/);
+  assert.doesNotMatch(repairMigration,/delete from public\.game_stats/);
 });
 test("a late grace score can replace the provisional leader",()=>{
   const before=rankStandings([{userId:"early",score:110,played:1,hints:0,mistakes:0,adjusted:90,finishedAt:"a"}]);
