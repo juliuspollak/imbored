@@ -27,6 +27,15 @@ test("push and remote-notification capabilities remain committed", () => {
   assert.match(entitlements, /<key>aps-environment<\/key>/);
 });
 
+test("local Xcode and production archive syncs select the matching APNs environment", () => {
+  const packageJson = JSON.parse(read("../../package.json"));
+  const workflow = read("../../.github/workflows/testflight.yml");
+  assert.match(packageJson.scripts["ios:sync"], /^VITE_APNS_ENVIRONMENT=sandbox\b/);
+  assert.match(packageJson.scripts["ios:sync:production"], /^VITE_APNS_ENVIRONMENT=production\b/);
+  assert.match(workflow, /run: npm run ios:sync:production/);
+  assert.doesNotMatch(workflow, /run: npm run ios:sync\s*$/m);
+});
+
 test("Sign in with Apple is recorded in both the entitlement and Xcode target capability",()=>{
   const entitlements=readFileSync(new URL("../../ios/App/App/App.entitlements",import.meta.url),"utf8");
   const project=readFileSync(new URL("../../ios/App/App.xcodeproj/project.pbxproj",import.meta.url),"utf8");

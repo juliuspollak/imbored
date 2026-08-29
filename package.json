@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node scripts/check-schema-migration-drift.cjs && node --test \"src/**/*.test.js\"",
-    "ios:sync": "vite build && cap sync ios",
+    "ios:sync": "VITE_APNS_ENVIRONMENT=sandbox vite build && cap sync ios",
+    "ios:sync:production": "VITE_APNS_ENVIRONMENT=production vite build && cap sync ios",
     "ios:open": "cap open ios"
   },
   "dependencies": {

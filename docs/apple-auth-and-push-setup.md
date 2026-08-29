@@ -62,7 +62,9 @@ The standard `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` Edge Function secret
 
 The function-specific `verify_jwt = false` setting in `supabase/config.toml` deliberately disables the Supabase gateway JWT check. `PUSH_WORKER_SECRET` is therefore the endpoint authentication boundary: it must be high entropy, stored in the Supabase Edge Function secret store and the scheduler's encrypted secret store only, and never reused in frontend configuration.
 
-TestFlight/App Store registrations default to production APNs. A debug build that uses a development provisioning profile must be built with `VITE_APNS_ENVIRONMENT=sandbox`; never set that value for TestFlight.
+`npm run ios:sync` builds for a development-profile Xcode Run and explicitly
+registers its tokens with sandbox APNs. TestFlight/App Store archives must use
+`npm run ios:sync:production`, which explicitly registers with production APNs.
 
 The `.p8` is server-only and can serve both APNs environments. The sender routes each registration to `api.push.apple.com` or `api.sandbox.push.apple.com`, retires `BadDeviceToken`, `DeviceTokenNotForTopic`, and `Unregistered` devices, and retries only rate limits/server/network failures. Delivery/event uniqueness prevents repeated worker calls from duplicating a device delivery.
 
@@ -74,7 +76,7 @@ Remote events currently cover private chat messages and pokes. Daily Circle remi
 
 Do **not** enable Cron until direct APNs delivery has succeeded against one real sandbox device.
 
-1. Build a development-profile iPhone build with `VITE_APNS_ENVIRONMENT=sandbox` and sign in as a dedicated test account.
+1. Run `npm run ios:sync`, build to the iPhone with a development profile, and sign in as a dedicated test account.
 2. Confirm exactly one active sandbox registration exists for that account. Do not copy its raw token into logs or tickets.
 3. Apply the reviewed migration, set secrets, and deploy the worker only after code review.
 4. From a second authorised test account, create one normal Chat message to the sandbox account. This creates one auditable event without a broad send.

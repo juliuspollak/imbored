@@ -143,7 +143,7 @@ jobs:
           npm run build
 
       - name: Sync Capacitor iOS project
-        run: npm run ios:sync
+        run: npm run ios:sync:production
 
       - name: Resolve unique build number
         id: build_number

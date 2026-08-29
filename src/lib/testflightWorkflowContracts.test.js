@@ -54,7 +54,7 @@ test("Capacitor sync uses a Ruby compatible with the locked bundle", () => {
   const lockfile = read("../../Gemfile.lock");
   const rubySetupIndex = workflow.indexOf("uses: ruby/setup-ruby@v1");
   const binstubIndex = workflow.indexOf("bundle binstubs cocoapods");
-  const syncIndex = workflow.indexOf("run: npm run ios:sync");
+  const syncIndex = workflow.indexOf("run: npm run ios:sync:production");
   const rubyVersion = workflow.match(/ruby-version: "(\d+)\.(\d+)(?:\.\d+)?"/)?.slice(1, 3).map(Number);
   const propertyListVersion = lockfile.match(/^    CFPropertyList \((\d+\.\d+\.\d+)\)$/m)?.[1];
   assert.deepEqual(rubyVersion, [3, 1]);

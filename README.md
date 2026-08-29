@@ -59,11 +59,13 @@ First time, on the Mac:
 ```bash
 npm install
 npx cap add ios      # generates ios/ — commit it, it holds signing + Info.plist
-npm run ios:sync     # vite build && cap sync ios
+npm run ios:sync     # sandbox APNs build for Xcode Run on a real iPhone
 npm run ios:open     # opens Xcode
 ```
 
-After any web change: `npm run ios:sync`.
+After any web change for local Xcode testing: `npm run ios:sync`. Production
+archives must use `npm run ios:sync:production` so their device tokens are sent
+to the production APNs endpoint.
 
 Already configured here: bundle id `au.imbored.app`, bundled web assets,
 full-bleed web view with `env(safe-area-inset-*)` padding, page-level
