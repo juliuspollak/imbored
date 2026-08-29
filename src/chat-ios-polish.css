@@ -1,0 +1,32 @@
+.chat-text.emoji-only {
+  min-width: 48px !important;
+  padding: 0 !important;
+}
+
+.chat-text.emoji-only .fluent-emoji,
+.chat-text.emoji-only .fluent-emoji-fallback {
+  width: 42px !important;
+  height: 42px !important;
+  max-width: 42px !important;
+}
+
+.chat-text.emoji-only .fluent-emoji-fallback {
+  font-size: 29px !important;
+}
+
+/* When the iOS keyboard is visible the keyboard owns the bottom safe area.
+   Keeping the home-indicator padding here creates the large empty strip shown
+   between the composer and WKWebView's native input accessory bar. */
+.chat-composer-wrap:focus-within {
+  padding-bottom: 8px !important;
+}
+
+/* Keep the composer geometry stable while optimistic messages are inserted. */
+.chat-composer,
+.chat-composer-wrap {
+  box-sizing: border-box;
+}
+
+.chat-input {
+  box-sizing: border-box;
+}
