@@ -2904,6 +2904,29 @@ begin
 end;
 $$;
 
+CREATE FUNCTION public.circle_challenge_round_state(target_challenge_id bigint, target_challenge_date date, at_time timestamp with time zone DEFAULT now()) RETURNS text
+    LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$
+declare local_now timestamp; zone text;
+begin
+  select public.resolve_timezone(circle.timezone) into zone from public.circle_weekly_challenges challenge join public.circles circle on circle.id=challenge.circle_id where challenge.id=target_challenge_id;
+  if zone is null then return 'final'; end if;
+  local_now:=timezone(zone,at_time);
+  return case when local_now<target_challenge_date::timestamp then 'scheduled' when local_now<(target_challenge_date+1)::timestamp then 'open' when local_now<(target_challenge_date+2)::timestamp then 'grace' else 'final' end;
+end $$;
+
+CREATE FUNCTION public.circle_challenge_round_cutoff(target_challenge_id bigint, target_challenge_date date) RETURNS timestamp with time zone
+    LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$
+  select ((target_challenge_date+2)::timestamp at time zone public.resolve_timezone(circle.timezone)) from public.circle_weekly_challenges challenge join public.circles circle on circle.id=challenge.circle_id where challenge.id=target_challenge_id
+$$;
+
+CREATE FUNCTION public.get_my_circle_challenge_round_states(target_challenge_id bigint) RETURNS TABLE(challenge_date date, game text, round_number integer, round_state text, closes_at timestamp with time zone)
+    LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public' AS $$
+begin
+  if not public.is_approved_user(auth.uid()) or not exists(select 1 from public.circle_weekly_challenges challenge where challenge.id=target_challenge_id and (exists(select 1 from public.circle_members member where member.circle_id=challenge.circle_id and member.user_id=auth.uid()) or exists(select 1 from public.game_stats result where result.circle_challenge_id=challenge.id and result.user_id=auth.uid()))) then raise exception 'Circle challenge not found.' using errcode='42501'; end if;
+  perform public.ensure_circle_challenge_rounds(target_challenge_id);
+  return query select r.challenge_date,r.game,r.round_number,public.circle_challenge_round_state(target_challenge_id,r.challenge_date),public.circle_challenge_round_cutoff(target_challenge_id,r.challenge_date) from public.circle_challenge_rounds r where r.challenge_id=target_challenge_id order by r.round_number;
+end $$;
+
 
 --
 -- Name: player_progress; Type: TABLE; Schema: public; Owner: -
@@ -3011,6 +3034,8 @@ begin
   from public.circle_challenge_rounds round_item
   where round_item.challenge_id=challenge.id;
 
+  if required_rounds=0 or public.circle_challenge_round_state(challenge.id,deadline)<>'final' then return null; end if;
+
   select count(*)
   into member_count
   from public.circle_members member
@@ -3020,14 +3045,6 @@ begin
   into finisher_count
   from public.circle_challenge_member_totals(challenge.id) totals
   where totals.rounds_played=required_rounds;
-
-  if required_rounds=0
-     or (
-       public.circle_today(challenge.circle_id)<=deadline
-       and (member_count=0 or finisher_count<member_count)
-     ) then
-    return null;
-  end if;
 
   select totals.member_id,totals.last_stat_id,totals.challenge_score
   into winner_id,winner_stat_id,winning_score
@@ -3332,6 +3349,16 @@ begin
   order by circle.name,challenge.created_at,challenge.id;
 end;
 $$;
+
+CREATE FUNCTION public.get_my_grace_circle_challenges() RETURNS SETOF jsonb
+    LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public' AS $$
+begin
+  if not public.is_approved_user(auth.uid()) then return; end if;
+  return query select jsonb_build_object('challenge_id',challenge.id,'circle_id',circle.id,'circle_name',circle.name,'circle_emoji',coalesce(circle.emoji,'⭐'),'challenge_title',coalesce(nullif(btrim(challenge.title),''),'Weekly challenge'),'week_start',challenge.week_start,'game_ids',challenge.game_ids,'active_days',challenge.active_days,'reward_points',challenge.reward_points,'reward_type',challenge.reward_type,'reward_label',challenge.reward_label,'repeats_weekly',challenge.repeats_weekly,'series_weeks',challenge.series_weeks,'occurrence_number',challenge.occurrence_number,'reward_goes_to',challenge.reward_goes_to,'stake_reward_id',challenge.stake_reward_id,'stake_split_method',challenge.stake_split_method,'stake_accepted',exists(select 1 from public.circle_challenge_stake_acceptances acceptance where acceptance.challenge_id=challenge.id and acceptance.user_id=auth.uid()))
+  from public.circle_members membership join public.circle_weekly_challenges challenge on challenge.circle_id=membership.circle_id join public.circles circle on circle.id=challenge.circle_id
+  where membership.user_id=auth.uid() and challenge.closed_at is null and challenge.week_start<>public.circle_week_start(circle.id)
+    and exists(select 1 from public.circle_challenge_rounds round_item where round_item.challenge_id=challenge.id and public.circle_challenge_round_state(challenge.id,round_item.challenge_date)='grace');
+end $$;
 
 
 --
@@ -6366,11 +6393,6 @@ begin
     ) then
     raise exception 'Accept what this challenge puts at stake before playing today''s round.' using errcode='42501';
   end if;
-  if target_challenge_date is distinct from public.circle_today(challenge.circle_id) then
-    raise exception 'Circle challenge rounds can only be played on their scheduled day.'
-      using errcode='22023';
-  end if;
-
   perform public.ensure_circle_challenge_rounds(challenge.id);
 
   select *
@@ -6386,6 +6408,9 @@ begin
   if assigned_round.game is distinct from target_game then
     raise exception 'Today''s assigned game is %.',assigned_round.game
       using errcode='22023';
+  end if;
+  if public.circle_challenge_round_state(challenge.id,target_challenge_date) not in ('open','grace') then
+    raise exception 'Ranked play for this Circle challenge round is closed.' using errcode='55000';
   end if;
 
   perform pg_advisory_xact_lock(
@@ -6424,6 +6449,14 @@ begin
   where id=challenge.id;
 end;
 $$;
+
+CREATE FUNCTION public.enforce_circle_challenge_result_window() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public' AS $$
+begin
+  if new.mode<>'challenge' or new.circle_challenge_id is null then return new; end if;
+  if new.user_id<>auth.uid() or not exists(select 1 from public.circle_weekly_challenges challenge join public.circle_challenge_rounds round_item on round_item.challenge_id=challenge.id where challenge.id=new.circle_challenge_id and challenge.circle_id=new.circle_id and challenge.closed_at is null and round_item.challenge_date=new.challenge_date and round_item.game=new.game and public.circle_challenge_round_state(challenge.id,round_item.challenge_date) in ('open','grace') and exists(select 1 from public.circle_members member where member.circle_id=challenge.circle_id and member.user_id=new.user_id)) then raise exception 'Ranked play for this Circle challenge round is closed.' using errcode='55000'; end if;
+  return new;
+end $$;
 
 
 --
@@ -8528,6 +8561,8 @@ CREATE TRIGGER circle_challenge_reward_cap_trigger BEFORE INSERT OR UPDATE OF re
 --
 
 CREATE TRIGGER game_stats_attach_reset_challenge_credit AFTER INSERT ON public.game_stats FOR EACH ROW EXECUTE FUNCTION public.attach_reset_challenge_credit();
+
+CREATE TRIGGER game_stats_enforce_circle_challenge_window BEFORE INSERT ON public.game_stats FOR EACH ROW EXECUTE FUNCTION public.enforce_circle_challenge_result_window();
 
 
 --

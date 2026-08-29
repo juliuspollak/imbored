@@ -56,6 +56,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   const [pointsRetryStatId, setPointsRetryStatId] = useState(null);
   const [communityRatings, setCommunityRatings] = useState({}); // date -> { avg, count }
   const [leaderboards, setLeaderboards] = useState({}); // date -> [{ user_id, seconds, profiles }]
+  const [circleRoundStates, setCircleRoundStates] = useState({});
   const [startError, setStartError] = useState("");
   const [startingIdx, setStartingIdx] = useState(null);
   // Seconds already on the clock when this attempt was reopened.
@@ -89,7 +90,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
     const scopeQuery = (query) => challengeScope?.type === "circle"
       ? query.eq("circle_challenge_id", challengeScope.id)
       : query.is("circle_challenge_id", null);
-    const [{ data }, { data: allRatings }, { data: allTimes }] = await Promise.all([
+    const [{ data }, { data: allRatings }, { data: allTimes }, { data:stateRows }] = await Promise.all([
       scopeQuery(supabase.from("game_stats").select("*")
         .eq("user_id", userId).eq("game", gameId).eq("mode", "challenge").in("challenge_date", scheduledDates)),
       scopeQuery(supabase.from("game_stats").select("challenge_date, difficulty_rating")
@@ -97,6 +98,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
         .not("difficulty_rating", "is", null)),
       scopeQuery(supabase.from("game_stats").select("challenge_date, user_id, seconds, profiles(name, icon)")
         .eq("game", gameId).eq("mode", "challenge").in("challenge_date", scheduledDates)),
+      challengeScope?.type === "circle" ? supabase.rpc("get_my_circle_challenge_round_states", { target_challenge_id:challengeScope.id }) : Promise.resolve({ data:[] }),
     ]);
     const byDate = {};
     (data || []).forEach((row) => {
@@ -124,6 +126,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
     });
     Object.values(byDateTimes).forEach((rows) => rows.sort((a, b) => a.seconds - b.seconds));
     setLeaderboards(byDateTimes);
+    setCircleRoundStates(Object.fromEntries((stateRows || []).map((round)=>[round.challenge_date,round])));
 
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -308,12 +311,14 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
         ) : (
           <div className="flex flex-col gap-2">
             {scheduledDateEntries.map(({ date, index: i }) => {
-              const isFuture = date > localDateString();
+              const serverState = challengeScope?.type === "circle" ? circleRoundStates[date]?.round_state : null;
+              const isFuture = challengeScope?.type === "circle" ? serverState === "scheduled" : date > localDateString();
               const isToday = date === localDateString();
               const result = results[date];
               const isExpanded = viewingIdx === i;
-              const isPlayable = !result && (challengeScope?.type === "circle" ? isToday : !isFuture);
-              const isMissedCircleRound = challengeScope?.type === "circle" && date < localDateString() && !result;
+              const isGrace = serverState === "grace";
+              const isPlayable = !result && (challengeScope?.type === "circle" ? serverState === "open" || isGrace : !isFuture);
+              const isMissedCircleRound = challengeScope?.type === "circle" && serverState === "final" && !result;
 
               return (
                 <div key={date}>
@@ -360,6 +365,8 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                           ? "Locked"
                           : result
                           ? `Solved in ${fmtTime(result.seconds)}`
+                          : isGrace
+                          ? "Play missed challenge · ranked grace period"
                           : isToday
                           ? communityRatings[date]
                             ? `Tap to play — ${describeAvg(communityRatings[date].avg).toLowerCase()} so far`

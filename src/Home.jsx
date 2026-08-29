@@ -87,6 +87,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
   const [todayPlayCounts, setTodayPlayCounts] = useState({});
   const [circleChallenges, setCircleChallenges] = useState([]);
   const [challengeHistory, setChallengeHistory] = useState([]);
+  const [circleRoundStates, setCircleRoundStates] = useState({});
   const [circleRosters, setCircleRosters] = useState({});
   const [challengeLifecycle, setChallengeLifecycle] = useState({});
   const [challengeCompletions, setChallengeCompletions] = useState({ personal: new Set() });
@@ -149,18 +150,24 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
       const week = currentWeekRange();
       await supabase.rpc("finalize_due_circle_challenges");
       if (cancelled) return;
-      const [{ data }, { data: personalRows }, { data: circleRows }, { data: rosterData }, { data: lifecycleData }, { data: historyData }] = await Promise.all([
+      const [{ data }, { data: graceData }, { data: personalRows }, { data: circleRows }, { data: rosterData }, { data: lifecycleData }, { data: historyData }] = await Promise.all([
         supabase.rpc("get_my_active_circle_challenges"),
+        supabase.rpc("get_my_grace_circle_challenges"),
         supabase.from("game_stats").select("game,circle_challenge_id,challenge_date").eq("user_id", userId).eq("mode", "challenge").is("circle_challenge_id", null).eq("challenge_date", todayString()),
-        supabase.from("game_stats").select("game,circle_challenge_id,challenge_date").eq("user_id", userId).eq("mode", "challenge").not("circle_challenge_id", "is", null).gte("challenge_date", week.start).lte("challenge_date", week.end),
+        supabase.from("game_stats").select("game,circle_challenge_id,challenge_date").eq("user_id", userId).eq("mode", "challenge").not("circle_challenge_id", "is", null).gte("challenge_date", daysAgoDate(14)).lte("challenge_date", week.end),
         supabase.rpc("get_my_circle_rosters"),
         supabase.rpc("get_my_circle_challenge_lifecycle"),
         supabase.rpc("get_my_circle_challenge_history", { history_limit_in:30 }),
       ]);
-      const challenges = data || [];
+      const challenges = [...(data || []),...(graceData || [])].filter((item,index,all)=>all.findIndex((candidate)=>String(candidate.challenge_id)===String(item.challenge_id))===index);
+      const states = await Promise.all(challenges.map(async (challenge) => {
+        const { data:rounds } = await supabase.rpc("get_my_circle_challenge_round_states", { target_challenge_id:challenge.challenge_id });
+        return [String(challenge.challenge_id),rounds || []];
+      }));
       const completionRows = [...(personalRows || []), ...(circleRows || [])];
       if (cancelled) return;
       setCircleChallenges(challenges);
+      setCircleRoundStates(Object.fromEntries(states));
       setChallengeHistory(historyData || []);
       setChallengesLoaded(true);
       setChallengeCompletions(groupChallengeCompletions(completionRows));
@@ -299,7 +306,8 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
   const personalGames = personalGameIds.map((id) => configuredGames.find((game) => game.id === id)).filter(Boolean);
   const personalCompleted = challengeCompletions.personal || new Set();
   const challengeStatus = (circleChallenge) => {
-    const requiredItems = circleChallenge ? buildCircleChallengeRounds({ activeDays:circleChallenge.active_days, gameIds:circleChallenge.game_ids }).map((round) => round.date) : personalGameIds;
+    const serverRounds = circleChallenge ? circleRoundStates[String(circleChallenge.challenge_id)] || [] : [];
+    const requiredItems = circleChallenge ? (serverRounds.length ? serverRounds.map((round)=>round.challenge_date) : buildCircleChallengeRounds({ activeDays:circleChallenge.active_days, gameIds:circleChallenge.game_ids, weekStart:circleChallenge.week_start }).map((round) => round.date)) : personalGameIds;
     const completed = circleChallenge ? challengeCompletions[String(circleChallenge.challenge_id)] || new Set() : personalCompleted;
     return challengeProgress(requiredItems, completed);
   };
@@ -307,6 +315,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
   const circleStatusLabel = (circleChallenge, status) => {
     const lifecycle = challengeLifecycle[String(circleChallenge.challenge_id)];
     if (lifecycle?.winner_id) return lifecycle.winner_id === userId ? "Finished · You won" : `Finished · ${lifecycle.winner_name || "A circlemate"} won`;
+    if ((circleRoundStates[String(circleChallenge.challenge_id)] || []).some((round)=>round.round_state==="grace")) return status.done ? "Complete · provisional" : "Grace period · ranked";
     if (!status.done) {
       if (status.completed === 0) return "Not started";
       return `${status.remaining} ${status.remaining === 1 ? "round" : "rounds"} left`;
@@ -332,12 +341,13 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
   }
 
   function chooseCircleChallenge(circleChallenge) {
+    const serverRounds=circleRoundStates[String(circleChallenge.challenge_id)] || [];
     onChallengeScopeChange({
       type:"circle", id:circleChallenge.challenge_id, circleId:circleChallenge.circle_id,
       name:circleChallenge.challenge_title || circleChallenge.circle_name, circleName:circleChallenge.circle_name,
       challengeTitle:circleChallenge.challenge_title || "Weekly challenge", emoji:circleChallenge.circle_emoji,
       gameIds:circleChallenge.game_ids, rewardPoints:circleChallenge.reward_points, activeDays:circleChallenge.active_days,
-      dailyRounds:buildCircleChallengeRounds({ activeDays:circleChallenge.active_days, gameIds:circleChallenge.game_ids }),
+      dailyRounds:serverRounds.length ? serverRounds.map((round)=>({ date:round.challenge_date,game:round.game,roundNumber:round.round_number,roundState:round.round_state,closesAt:round.closes_at })) : buildCircleChallengeRounds({ activeDays:circleChallenge.active_days, gameIds:circleChallenge.game_ids, weekStart:circleChallenge.week_start }),
       stakeRewardId:circleChallenge.stake_reward_id, stakeRewardName:circleChallenge.stake_reward_name,
       stakeSplitMethod:circleChallenge.stake_split_method, stakeAccepted:circleChallenge.stake_accepted,
       // A prize challenge commits the winner or the loser to something real, so
@@ -425,9 +435,11 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
               const lifecycle = challengeLifecycle[String(item.challenge_id)];
               const selected = challengeScope?.type === "circle" && String(challengeScope.id) === String(item.challenge_id);
               const expanded = String(expandedChallengeId) === String(item.challenge_id);
-              const rounds = buildCircleChallengeRounds({ activeDays:item.active_days, gameIds:item.game_ids });
+              const serverRounds = circleRoundStates[String(item.challenge_id)] || [];
+              const rounds = serverRounds.length ? serverRounds.map((round)=>({ date:round.challenge_date,game:round.game,roundNumber:round.round_number,roundState:round.round_state,closesAt:round.closes_at })) : buildCircleChallengeRounds({ activeDays:item.active_days, gameIds:item.game_ids, weekStart:item.week_start });
               const todayRound = rounds.find((round) => round.date === localDateString());
               const completionSet = challengeCompletions[String(item.challenge_id)] || new Set();
+              const graceRound = rounds.find((round)=>round.roundState==="grace"&&!completionSet.has(round.date));
               const todayDone = !!todayRound && completionSet.has(todayRound.date);
               const todayGame = todayRound ? configuredGames.find((game) => game.id === todayRound.game) || GAME_META.find((game) => game.id === todayRound.game) : null;
               const roster = circleRosters[item.circle_id] || [];
@@ -444,8 +456,8 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
                   </button>
 
                   <div style={{ padding:"0 var(--space-4) var(--space-3)" }}>
-                    <div style={{ display:"flex", alignItems:"center", marginBottom:8 }}><strong style={{ flex:1, fontSize:"var(--text-caption-size)", color:"var(--color-text-primary)" }}>TODAY&apos;S GAME</strong>{todayRound && <span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:600 }}>{todayDone ? "Completed" : "Ready to play"}</span>}</div>
-                    {todayGame ? <div className="challenge-mini-strip challenge-mini-strip--single">{compactGameTile(todayGame, todayDone, item.active_today && !todayDone && todayGame.available, () => { chooseCircleChallenge(item); onSelect(todayGame.id); }, `-${item.challenge_id}`)}</div> : <div style={{ padding:"12px 14px", border:"1px dashed var(--color-border)", borderRadius:"var(--radius-md)", color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)" }}>No game scheduled for this challenge today.</div>}
+                    <div style={{ display:"flex", alignItems:"center", marginBottom:8 }}><strong style={{ flex:1, fontSize:"var(--text-caption-size)", color:"var(--color-text-primary)" }}>{graceRound ? "MISSED CHALLENGE" : "TODAY'S GAME"}</strong>{(todayRound||graceRound) && <span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:600 }}>{graceRound ? "24-hour ranked grace" : todayDone ? "Completed" : "Ready to play"}</span>}</div>
+                    {graceRound ? <Button fullWidth before={<Play size={14}/>} onClick={()=>{ chooseCircleChallenge(item);onSelect(graceRound.game); }}>Play missed challenge · ranked</Button> : todayGame ? <div className="challenge-mini-strip challenge-mini-strip--single">{compactGameTile(todayGame, todayDone, item.active_today && !todayDone && todayGame.available, () => { chooseCircleChallenge(item); onSelect(todayGame.id); }, `-${item.challenge_id}`)}</div> : <div style={{ padding:"12px 14px", border:"1px dashed var(--color-border)", borderRadius:"var(--radius-md)", color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)" }}>No game scheduled for this challenge today.</div>}
                   </div>
 
                   <button type="button" onClick={() => { chooseCircleChallenge(item); setExpandedChallengeId(expanded ? null : item.challenge_id); }} aria-expanded={expanded} style={{ ...buttonReset, width:"100%", display:"flex", alignItems:"center", gap:"var(--space-2)", padding:"11px var(--space-4)", border:0, borderTop:"1px solid var(--color-border)", background:"transparent", color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:600 }}><BarChart3 size={15} /><span style={{ flex:1, textAlign:"left" }}>Standings &amp; stats</span><ChevronDown size={16} style={{ transform:expanded ? "rotate(180deg)" : "none" }} /></button>
@@ -461,7 +473,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
               );
             })}
 
-            {challengeHistory.length > 0 && <details style={{ padding:"var(--space-3) var(--space-4)", border:"1px solid var(--color-border)", borderRadius:"var(--radius-md)", background:"var(--color-surface)" }}><summary style={{ ...buttonReset, display:"flex", alignItems:"center", gap:"var(--space-2)", listStyle:"none" }}><span style={{ flex:1 }}><strong style={{ display:"block", color:"var(--color-text-primary)", fontSize:"var(--text-body-size)" }}>Past challenges</strong><span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)" }}>Scores, winners and standings</span></span><ChevronRight size={17} /></summary><div style={{ marginTop:"var(--space-3)" }}>{challengeHistory.slice(0,5).map((item,index) => <div key={item.challenge_id} style={{ padding:"10px 0", borderTop:index ? "1px solid var(--color-border)" : "none" }}><button type="button" onClick={() => chooseHistoricalChallenge(item)} style={{ ...buttonReset,width:"100%",display:"flex",alignItems:"center",gap:"var(--space-2)",border:0,background:"transparent",textAlign:"left" }}><span style={{ flex:1, minWidth:0 }}><strong style={{ display:"block", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", fontSize:"var(--text-body-secondary-size)" }}>{item.challenge_title || item.circle_name}</strong><span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)" }}>{item.circle_name} · {challengeWeekLabel(item.week_start)} · {item.finisher_count || 0}/{item.entry_count || 0} finished</span></span><span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:600 }}>{item.winner_id === userId ? "You won" : item.winner_id ? `${item.winner_name || "Circlemate"} won` : "No winner"}</span><ChevronRight size={15}/></button>{String(challengeScope?.id)===String(item.challenge_id) && <div style={{ marginTop:"var(--space-3)" }}><ChallengeStandings rows={challengeRows} roster={Object.values(challengeProfiles)} games={(item.game_ids || []).map((id)=>configuredGames.find((game)=>game.id===id)).filter(Boolean)} rounds={challengeRounds} benchmarks={challengeBenchmarks} serverStandings={serverStandings} previousRows={previousChallengeRows} previousRounds={previousChallengeRounds} isCircle userId={userId} loading={standingsLoading} defaultOpen embedded closed winnerId={item.winner_id} /><div style={{ marginTop:"var(--space-3)",padding:"var(--space-3)",borderRadius:"var(--radius-md)",background:"var(--color-surface-elevated)" }}><strong style={{ display:"block",fontSize:"var(--text-caption-size)" }}>Missed a round?</strong><span style={{ display:"block",margin:"4px 0 8px",color:"var(--color-text-secondary)",fontSize:"var(--text-caption-size)" }}>Ranked play is closed. Practice uses the game normally and cannot change these standings.</span><div style={{ display:"flex",flexWrap:"wrap",gap:"var(--space-2)" }}>{(item.game_ids || []).map((gameId)=><Button key={gameId} size="sm" variant="secondary" onClick={()=>{ onPlayModeChange?.("practice");onSelect(gameId); }}>Practice {GAME_NAMES[gameId] || gameId}</Button>)}</div></div></div>}</div>)}</div></details>}
+            {challengeHistory.length > 0 && <details style={{ padding:"var(--space-3) var(--space-4)", border:"1px solid var(--color-border)", borderRadius:"var(--radius-md)", background:"var(--color-surface)" }}><summary style={{ ...buttonReset, display:"flex", alignItems:"center", gap:"var(--space-2)", listStyle:"none" }}><span style={{ flex:1 }}><strong style={{ display:"block", color:"var(--color-text-primary)", fontSize:"var(--text-body-size)" }}>Past challenges</strong><span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)" }}>Scores, winners and standings</span></span><ChevronRight size={17} /></summary><div style={{ marginTop:"var(--space-3)" }}>{challengeHistory.slice(0,5).map((item,index) => <div key={item.challenge_id} style={{ padding:"10px 0", borderTop:index ? "1px solid var(--color-border)" : "none" }}><button type="button" onClick={() => chooseHistoricalChallenge(item)} style={{ ...buttonReset,width:"100%",display:"flex",alignItems:"center",gap:"var(--space-2)",border:0,background:"transparent",textAlign:"left" }}><span style={{ flex:1, minWidth:0 }}><strong style={{ display:"block", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", fontSize:"var(--text-body-secondary-size)" }}>{item.challenge_title || item.circle_name}</strong><span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)" }}>{item.circle_name} · {challengeWeekLabel(item.week_start)} · {item.finisher_count || 0}/{item.entry_count || 0} finished</span></span><span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:600 }}>{item.winner_id === userId ? "Final · You won" : item.winner_id ? `Final · ${item.winner_name || "Circlemate"} won` : "Final · No winner"}</span><ChevronRight size={15}/></button>{String(challengeScope?.id)===String(item.challenge_id) && <div style={{ marginTop:"var(--space-3)" }}><ChallengeStandings rows={challengeRows} roster={Object.values(challengeProfiles)} games={(item.game_ids || []).map((id)=>configuredGames.find((game)=>game.id===id)).filter(Boolean)} rounds={challengeRounds} benchmarks={challengeBenchmarks} serverStandings={serverStandings} previousRows={previousChallengeRows} previousRounds={previousChallengeRounds} isCircle userId={userId} loading={standingsLoading} defaultOpen embedded closed winnerId={item.winner_id} /><div style={{ marginTop:"var(--space-3)",padding:"var(--space-3)",borderRadius:"var(--radius-md)",background:"var(--color-surface-elevated)" }}><strong style={{ display:"block",fontSize:"var(--text-caption-size)" }}>Missed a round?</strong><span style={{ display:"block",margin:"4px 0 8px",color:"var(--color-text-secondary)",fontSize:"var(--text-caption-size)" }}>Ranked play is closed. Practice uses the game normally and cannot change these standings.</span><div style={{ display:"flex",flexWrap:"wrap",gap:"var(--space-2)" }}>{(item.game_ids || []).map((gameId)=><Button key={gameId} size="sm" variant="secondary" onClick={()=>{ onPlayModeChange?.("practice");onSelect(gameId); }}>Practice {GAME_NAMES[gameId] || gameId}</Button>)}</div></div></div>}</div>)}</div></details>}
           </div>
         )}
 

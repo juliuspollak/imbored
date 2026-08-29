@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import SharedPuzzleApp from "./SharedPuzzleApp.jsx";
@@ -39,6 +39,7 @@ import "./hive-branding.css";
 import "./gridly-branding.css";
 import "./game-tile-artwork.css";
 import "./twist-feedback.css";
+import { REPLAY_LOCATION_CHANGE_EVENT, replayStatIdFrom } from "./lib/replayNavigation.js";
 
 enableAutomaticAppUpdates();
 
@@ -49,15 +50,28 @@ enableAutomaticAppUpdates();
 applyThemePreference(getCachedThemePreference());
 enablePuzzleShareLinks();
 
-const puzzleStatId = typeof window === "undefined"
-  ? null
-  : new URLSearchParams(window.location.search).get("puzzle");
+function BootstrapApp() {
+  const readReplay = () => typeof window === "undefined" ? null : replayStatIdFrom(window.location.href);
+  const [puzzleStatId, setPuzzleStatId] = useState(readReplay);
+
+  useEffect(() => {
+    const readLocation = () => setPuzzleStatId(readReplay());
+    window.addEventListener("popstate", readLocation);
+    window.addEventListener(REPLAY_LOCATION_CHANGE_EVENT, readLocation);
+    return () => {
+      window.removeEventListener("popstate", readLocation);
+      window.removeEventListener(REPLAY_LOCATION_CHANGE_EVENT, readLocation);
+    };
+  }, []);
+
+  return puzzleStatId ? <SharedPuzzleApp statId={puzzleStatId} /> : <App />;
+}
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <I18nProvider>
       <ErrorBoundary onReset={() => window.location.reload()}>
-        {puzzleStatId ? <SharedPuzzleApp statId={puzzleStatId} /> : <App />}
+        <BootstrapApp />
         <InvitedApprovalNotice />
       </ErrorBoundary>
     </I18nProvider>
