@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { REPLAYABLE_GAME_IDS, REPLAY_LOCATION_CHANGE_EVENT, exitReplayToHome, homeLocationFrom, replayStatIdFrom } from "./replayNavigation.js";
+import { REPLAYABLE_GAME_IDS, REPLAY_LOCATION_CHANGE_EVENT, exitReplayToHome, homeLocationFrom, replayHomeUrlFrom, replayStatIdFrom } from "./replayNavigation.js";
 import { readFileSync } from "node:fs";
 
 test("challenge replay Home replaces replay with the normal Home route", () => {
@@ -16,7 +16,7 @@ test("challenge replay Home replaces replay with the normal Home route", () => {
   };
   assert.equal(replayStatIdFrom(browserWindow.location.href), "481");
   exitReplayToHome(browserWindow);
-  assert.deepEqual(calls, ["/"]);
+  assert.deepEqual(calls, ["capacitor://localhost/"]);
   assert.equal(replayStatIdFrom(browserWindow.location.href), null);
   assert.deepEqual(events, [REPLAY_LOCATION_CHANGE_EVENT]);
 });
@@ -26,7 +26,7 @@ for (const game of REPLAYABLE_GAME_IDS) {
     const calls=[], events=[];
     const browserWindow={ location:{ href:`capacitor://localhost/?puzzle=7&game=${game}` },history:{ replaceState:(_s,_t,url)=>calls.push(url) },Event,dispatchEvent:event=>events.push(event.type) };
     exitReplayToHome(browserWindow);
-    assert.deepEqual(calls,["/"]);
+    assert.deepEqual(calls,["capacitor://localhost/"]);
     assert.deepEqual(events,[REPLAY_LOCATION_CHANGE_EVENT]);
   });
 }
@@ -38,6 +38,36 @@ test("shared replay navigation covers every supported puzzle game", () => {
 
 test("canonical replay Home preserves an app subpath but no routing state",()=>{
   assert.equal(homeLocationFrom("https://app.example/imbored/?puzzle=4&rush=room#replay"),"/imbored/");
+  assert.equal(replayHomeUrlFrom("https://app.example/imbored/?puzzle=4&rush=room#replay"),"https://app.example/imbored/");
+});
+
+test("Capacitor WKWebView receives a full current-scheme URL instead of an ignored path-only URL",()=>{
+  let href="capacitor://localhost?puzzle=4270";
+  const calls=[];
+  const browserWindow={
+    location:{
+      get href(){ return href; },
+      get pathname(){ return new URL(href).pathname || "/"; },
+      get search(){ return new URL(href).search; },
+      get hash(){ return new URL(href).hash; },
+    },
+    history:{ replaceState:(_state,_title,url)=>{
+      calls.push(url);
+      // Models the physical WKWebView trace: path-only input is ignored for
+      // capacitor://, while a serialized current-scheme URL is accepted.
+      if (url.startsWith("capacitor://")) href=url;
+    } },
+    Event,
+    dispatchEvent:()=>{},
+  };
+
+  exitReplayToHome(browserWindow);
+
+  assert.deepEqual(calls,["capacitor://localhost"]);
+  assert.equal(browserWindow.location.href,"capacitor://localhost");
+  assert.equal(browserWindow.location.search,"");
+  assert.equal(browserWindow.location.hash,"");
+  assert.equal(replayStatIdFrom(browserWindow.location.href),null);
 });
 
 test("completed challenge re-practice mounts the real pre-App route and wires Home above overlays",()=>{

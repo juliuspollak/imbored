@@ -21,6 +21,13 @@ export function homeLocationFrom(currentLocation) {
   return url.pathname;
 }
 
+export function replayHomeUrlFrom(currentLocation) {
+  const url = new URL(currentLocation);
+  url.search = "";
+  url.hash = "";
+  return url.href;
+}
+
 export function exitReplayToHome(browserWindow = window) {
   console.log("[REPLAY HOME] exitReplayToHome entered", {
     href: browserWindow.location.href,
@@ -28,10 +35,11 @@ export function exitReplayToHome(browserWindow = window) {
     search: browserWindow.location.search,
     hash: browserWindow.location.hash,
   });
-  const destination = homeLocationFrom(browserWindow.location.href);
+  const destination = replayHomeUrlFrom(browserWindow.location.href);
   // main.jsx owns the replay/App choice. Clear the URL first, then tell that
-  // mounted root to re-read it. This avoids relying on a capacitor:// document
-  // reload, which can retain/reopen the WebView's replay bootstrap document.
+  // mounted root to re-read it. Pass WebKit a serialized URL retaining the
+  // current scheme/host/path; a path-only "/" is not applied by the iOS
+  // WKWebView when the document uses Capacitor's non-special custom scheme.
   browserWindow.history.replaceState({}, "", destination);
   console.log("[REPLAY HOME] after history.replaceState", {
     href: browserWindow.location.href,
