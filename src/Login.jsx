@@ -3,6 +3,7 @@ import { Mail, ArrowRight, Fingerprint } from "lucide-react";
 import { useAuth } from "./lib/AuthContext.jsx";
 import { supabaseReady } from "./lib/supabase.js";
 import { useI18n } from "./lib/i18n.jsx";
+import AppReviewAccess from "./components/AppReviewAccess.jsx";
 import Page from "./components/Page.jsx";
 import Button from "./components/Button.jsx";
 import Card from "./components/Card.jsx";
@@ -42,6 +43,7 @@ function AppleIcon() {
 export default function Login() {
   const { t } = useI18n();
   const { signInWithEmail, verifyCode, signInWithGoogle, signInWithApple, signInWithPasskey } = useAuth();
+  const [reviewAccess, setReviewAccess] = useState(false);
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
@@ -110,7 +112,9 @@ export default function Login() {
           </div>
         )}
 
-        {!sent ? (
+        {reviewAccess ? (
+          <AppReviewAccess onBack={() => setReviewAccess(false)} />
+        ) : !sent ? (
           <>
             {passkeySupported && (
               <>
@@ -140,6 +144,9 @@ export default function Login() {
               </Button>
               <p style={{ fontSize: 11, color: "var(--color-text-secondary)", textAlign: "center", marginTop: "var(--space-3)" }}>{t("auth.noPassword")}</p>
             </form>
+            <Button variant="ghost" size="sm" type="button" onClick={() => { setError(null); setReviewAccess(true); }} disabled={!supabaseReady || sending || passkeyBusy} style={{ marginTop: "var(--space-3)" }}>
+              App Review access
+            </Button>
           </>
         ) : (
           <form onSubmit={handleVerify}>

@@ -6,6 +6,8 @@ import { isNativePlatform } from "./platform.js";
 import { prepareNativeNotificationLogout } from "./nativeNotifications.js";
 import { NATIVE_AUTH_CALLBACK, completeNativeOAuthCallback, isOAuthCancellation, parseNativeOAuthCallback } from "./nativeOAuth.js";
 
+import { signInReviewAccount } from "./appReviewAuth.js";
+
 const AuthContext = createContext(null);
 const NATIVE_OAUTH_PENDING_KEY = "imbored-native-oauth-pending";
 const NATIVE_OAUTH_PENDING_TTL_MS = 10 * 60 * 1000;
@@ -261,6 +263,10 @@ export function AuthProvider({ children }) {
     }
   }
 
+  async function signInWithAppReview(email, password) {
+    return signInReviewAccount(supabase, email, password);
+  }
+
   async function verifyCode(email, token) {
     if (!supabaseReady) return { error: new Error("Supabase isn't configured yet") };
     return supabase.auth.verifyOtp({ email, token, type: "email" });
@@ -482,6 +488,7 @@ export function AuthProvider({ children }) {
     profileLoading,
     loading: session === undefined,
     signInWithEmail,
+    signInWithAppReview,
     verifyCode,
     signInWithGoogle,
     signInWithApple,
