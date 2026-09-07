@@ -388,6 +388,17 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
     setExpandedChallengeId(`new:${circleId}`);
   }
 
+  function openCircleDetails(circle) {
+    setCardMenuCircleId(null);
+    setRosterCircle(circle);
+    setRosterQuery("");
+  }
+
+  function openNewChallenge(circle) {
+    openCircleDetails(circle);
+    startNewChallenge(circle.id);
+  }
+
   async function saveCircleChallenge(circle, challengeKey) {
     const edit = challengeFor(challengeKey); const isStake = edit.rewardType === "stake";
     let { data, error } = await supabase.rpc("save_circle_weekly_challenge_schedule", {
@@ -425,6 +436,13 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
         .design-circle-card:active { transform: scale(0.985); transition: transform var(--transition-fast); }
         .design-circle-card .design-btn:active { transform: scale(0.96); }
         .design-circle-card .design-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-ring); outline: none; }
+        .circle-card-main { border-radius: var(--radius-md); }
+        .circle-card-main[role="button"] { cursor: pointer; }
+        .circle-card-main:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+        .circle-detail-actions { display: grid; grid-template-columns: 1fr; gap: var(--space-2); margin-bottom: var(--space-3); }
+        @media (min-width: 420px) {
+          .circle-detail-actions:has(> :nth-child(2)) { grid-template-columns: 1fr 1fr; }
+        }
         @media (max-width: 520px) {
           .circles-page-header { margin-top: calc(max(16px, env(safe-area-inset-top, 0px)) + 16px); padding-right: calc(60px + env(safe-area-inset-right, 0px)); }
         }
@@ -589,9 +607,23 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
 
               return (
                 <article key={circle.id} className="design-circle-card" style={{ background: "var(--color-surface)", border: "none", borderBottom: circleIndex === circles.length - 1 ? "none" : "1px solid var(--color-border)", padding: "var(--space-3)", minHeight: 72, boxShadow: "none" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-                    <div className="design-circle-icon" data-circle={circle.name} style={{ width: 44, height: 44, borderRadius: "var(--radius-md)", background: identity.color, color: identity.isEmoji ? "inherit" : "#fff", fontSize: identity.isEmoji ? 22 : 17, fontWeight: 750, display: "grid", placeItems: "center", flexShrink: 0 }}>{identity.label}</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+                    <div
+                      className="circle-card-main"
+                      role={isMine || manager ? "button" : undefined}
+                      tabIndex={isMine || manager ? 0 : undefined}
+                      aria-label={isMine || manager ? `Open ${circle.name}` : undefined}
+                      onClick={isMine || manager ? () => openCircleDetails(circle) : undefined}
+                      onKeyDown={isMine || manager ? (event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          openCircleDetails(circle);
+                        }
+                      } : undefined}
+                      style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flex: 1, minWidth: 0, padding: "var(--space-1)" }}
+                    >
+                      <div className="design-circle-icon" data-circle={circle.name} style={{ width: 44, height: 44, borderRadius: "var(--radius-md)", background: identity.color, color: identity.isEmoji ? "inherit" : "#fff", fontSize: identity.isEmoji ? 22 : 17, fontWeight: 750, display: "grid", placeItems: "center", flexShrink: 0 }}>{identity.label}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                         <span style={{ fontSize: 17, fontWeight: 700, color: "var(--color-text-primary)", lineHeight: "22px" }} className="truncate">{circle.name}</span>
                         {owner && <Crown size={14} style={{ color: "var(--color-warning-gold)", flexShrink: 0 }} aria-label="Circle owner" />}
@@ -604,11 +636,10 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                             : `${roster.length} member${roster.length === 1 ? "" : "s"}`}
                         </span>
                       </div>
+                      </div>
                     </div>
                     {manager ? (
-                      <Button variant="icon" onClick={() => setCardMenuCircleId(menuOpen ? null : circle.id)} aria-label={`Manage ${circle.name}`} aria-expanded={menuOpen}><Ellipsis size={18} /></Button>
-                    ) : isMine ? (
-                      <Button variant="icon" onClick={() => { setRosterCircle(circle); setRosterQuery(""); }} aria-label={`View ${circle.name}`}><Ellipsis size={18} /></Button>
+                      <Button variant="icon" onClick={(event) => { event.stopPropagation(); setCardMenuCircleId(menuOpen ? null : circle.id); }} aria-label={`More actions for ${circle.name}`} aria-expanded={menuOpen}><Ellipsis size={18} /></Button>
                     ) : myRequest?.status === "pending" ? (
                       <span style={{ fontSize: "var(--text-body-secondary-size)", color: "var(--color-text-secondary)", fontWeight: 500, flexShrink: 0 }}>Requested</span>
                     ) : (
@@ -618,7 +649,8 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
 
                   {manager && menuOpen && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-2)", marginTop: "var(--space-3)", paddingTop: "var(--space-3)", borderTop: "1px solid var(--color-border)" }}>
-                      <Button size="sm" variant="ghost" before={<Users size={13} />} onClick={() => { setCardMenuCircleId(null); setRosterCircle(circle); setRosterQuery(""); }}>Manage members</Button>
+                      {owner && <Button size="sm" variant="ghost" before={<Plus size={13} />} onClick={() => openNewChallenge(circle)}>New challenge</Button>}
+                      <Button size="sm" variant="ghost" before={<Users size={13} />} onClick={() => openCircleDetails(circle)}>Manage circle</Button>
                       <Button size="sm" variant="ghost" before={<Trash2 size={13} />} onClick={() => { setCardMenuCircleId(null); leave(circle); }} style={{ color:"var(--color-danger-text)" }}>Leave / Delete</Button>
                     </div>
                   )}
@@ -681,12 +713,15 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                 <BackButton onClick={() => { setRosterCircle(null); setDeleteCircleTarget(null); setDeleteConfirmation(""); }} ariaLabel="Back to circles" />
                 <div style={{ width: 44, height: 44, borderRadius: "var(--radius-md)", background: rosterIdentity.color, color: rosterIdentity.isEmoji ? "inherit" : "#fff", fontSize: rosterIdentity.isEmoji ? 22 : 17, fontWeight: 750, display: "grid", placeItems: "center", flexShrink: 0 }}>{rosterIdentity.label}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, color: "var(--color-text-primary)" }} className="truncate">{owner ? `Manage ${rosterCircle.name}` : rosterCircle.name}</div>
+                  <div style={{ fontWeight: 700, color: "var(--color-text-primary)" }} className="truncate">{rosterCircle.name}</div>
                   <div style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>Challenges, members and invites</div>
                 </div>
               </div>
 
-              {member && <Button variant="primary" fullWidth before={<UserPlus size={16} />} onClick={() => { setInviteCircle(rosterCircle); setInviteQuery(""); }} style={{ marginBottom: "var(--space-3)" }}>Invite a player</Button>}
+              {(owner || member) && <div className="circle-detail-actions">
+                {owner && <Button variant="primary" fullWidth before={<Plus size={16} />} onClick={() => startNewChallenge(rosterCircle.id)}>New challenge</Button>}
+                {member && <Button variant="secondary" fullWidth before={<UserPlus size={16} />} onClick={() => { setInviteCircle(rosterCircle); setInviteQuery(""); }}>Invite a player</Button>}
+              </div>}
 
               {member && (
                 <Card style={{ marginBottom: "var(--space-3)", padding: "var(--space-4)" }}>
@@ -696,13 +731,13 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                       <div style={{ fontSize: "var(--text-body-size)", fontWeight: 700, color: "var(--color-text-primary)" }}>Challenges</div>
                       <div style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>{rosterChallenges.length} scheduled</div>
                     </div>
-                    {owner && <Button variant="secondary" size="sm" before={<Plus size={12} />} onClick={() => startNewChallenge(rosterCircle.id)}>New</Button>}
                   </div>
 
                   {visibleChallenges.length === 0 && (
                     <div style={{ borderRadius: "var(--radius-md)", padding: "var(--space-4)", textAlign: "center", background: "var(--color-surface-elevated)" }}>
                       <div style={{ fontSize: "var(--text-body-secondary-size)", fontWeight: 600, color: "var(--color-text-primary)" }}>No challenge yet</div>
                       <div style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)", marginTop: "var(--space-1)" }}>{owner ? "Create one for your circle to play." : "The owner hasn't scheduled one yet."}</div>
+                      {owner && <Button variant="secondary" before={<Plus size={14} />} onClick={() => startNewChallenge(rosterCircle.id)} style={{ marginTop: "var(--space-3)" }}>Create challenge</Button>}
                     </div>
                   )}
 
