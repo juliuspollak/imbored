@@ -20,6 +20,13 @@ npm run build
 
 Outputs static files to `dist/`.
 
+The plain browser homepage is a public App Store landing page. Set
+`VITE_APP_STORE_URL` to the final `https://apps.apple.com/...` product URL in
+the web host's production environment once App Store Connect provides it. If
+the variable is absent or is not an Apple App Store URL, the page deliberately
+shows a non-clickable “App Store link coming soon” control. Capacitor native
+builds and browser deep links continue to mount the application.
+
 ## Deploy (Vercel — free, easiest)
 
 1. Push this folder to a new GitHub repo

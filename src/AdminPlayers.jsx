@@ -32,7 +32,7 @@ function fmtLastSeen(iso) {
   return `${days}d ago`;
 }
 
-export default function AdminPlayers({ onBack }) {
+export default function AdminPlayers({ onBack, onOpenPlayer }) {
   const { profile, setUserHidden, adminAccountAction } = useAuth();
   const isAdmin = !!profile?.is_admin;
   const [players, setPlayers] = useState([]);
@@ -132,27 +132,29 @@ export default function AdminPlayers({ onBack }) {
         borderRadius: compact ? 0 : undefined,
         boxShadow: compact ? "none" : undefined,
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-          <div style={{ width: 42, height: 42, borderRadius: "var(--radius-md)", background: approval ? "var(--color-warning-bg)" : "var(--color-info-bg)", fontSize: 20, display: "grid", placeItems: "center", flexShrink: 0 }}>{player.icon || "🙂"}</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+          <button type="button" onClick={() => onOpenPlayer?.(player)} aria-label={`Open ${player.name}`} className="admin-player-primary" style={{ minHeight:48, flex:1, minWidth:0, display:"flex", alignItems:"center", gap:"var(--space-3)", padding:"3px", border:0, borderRadius:"var(--radius-md)", background:"transparent", color:"inherit", font:"inherit", textAlign:"left", cursor:onOpenPlayer ? "pointer" : "default" }}>
+            <span aria-hidden="true" style={{ width: 42, height: 42, borderRadius: "var(--radius-md)", background: approval ? "var(--color-warning-bg)" : "var(--color-info-bg)", fontSize: 20, display: "grid", placeItems: "center", flexShrink: 0 }}>{player.icon || "🙂"}</span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ fontWeight: 600, fontSize: "var(--text-body-size)", color: "var(--color-text-primary)" }} className="truncate">{player.name}</span>
               {player.is_admin && <Crown size={11} style={{ color: "var(--color-warning-gold)" }} />}
               {player.is_reward_steward && <Gift size={11} style={{ color: "var(--color-primary)" }} />}
               {player.is_private && <Lock size={10} style={{ opacity: .35 }} />}
-            </div>
-            <div className="truncate" style={{ display: showStatus ? "block" : "none", fontSize: 11, fontWeight: approval ? 600 : undefined, color: approval ? "var(--color-warning-text)" : online ? "var(--color-success-text)" : "var(--color-text-secondary)" }}>
+            </span>
+            <span className="truncate" style={{ display: showStatus ? "block" : "none", fontSize: 11, fontWeight: approval ? 600 : undefined, color: approval ? "var(--color-warning-text)" : online ? "var(--color-success-text)" : "var(--color-text-secondary)" }}>
               {approval ? fmtWaiting(player.created_at) : fmtLastSeen(seenIso)}
               {player.is_blocked ? " · Blocked" : ""}{player.hidden_from_others ? " · Hidden" : ""}
-            </div>
-          </div>
+            </span>
+            </span>
+          </button>
           {approval && (
-            <Button size="sm" variant="ghost" loading={approvingId === player.id} before={<CheckCircle2 size={13} />} onClick={() => handleApproval(player.id, true)} style={{ color: "var(--color-success-text)", flexShrink: 0 }}>
+            <Button size="sm" variant="ghost" loading={approvingId === player.id} before={<CheckCircle2 size={13} />} onClick={(event) => { event.stopPropagation(); handleApproval(player.id, true); }} style={{ color: "var(--color-success-text)", flexShrink: 0 }}>
               {approvingId === player.id ? "Approving…" : "Approve"}
             </Button>
           )}
           {!player.is_admin && (
-            <button onClick={() => setExpandedId(expanded ? null : player.id)} aria-label={`More actions for ${player.name}`} aria-expanded={expanded} style={{ width: 32, height: 32, borderRadius: "var(--radius-sm)", background: compact && !expanded ? "transparent" : "var(--color-surface-elevated)", color: "var(--color-icon-subtle)", border: "none", cursor: "pointer", display: "grid", placeItems: "center" }}>
+            <button type="button" onClick={(event) => { event.stopPropagation(); setExpandedId(expanded ? null : player.id); }} aria-label={`More actions for ${player.name}`} aria-expanded={expanded} style={{ width: 40, height: 40, flexShrink:0, borderRadius: "var(--radius-sm)", background: compact && !expanded ? "transparent" : "var(--color-surface-elevated)", color: "var(--color-icon-subtle)", border: "none", cursor: "pointer", display: "grid", placeItems: "center" }}>
               <Ellipsis size={16} />
             </button>
           )}
@@ -176,6 +178,7 @@ export default function AdminPlayers({ onBack }) {
 
   return (
     <Page>
+      <style>{`.admin-player-primary:focus-visible { outline:2px solid var(--color-primary); outline-offset:2px; } .admin-player-primary:active { transform:scale(.99); } @media (hover:hover) and (pointer:fine) { .admin-player-primary:hover { background:var(--color-surface-elevated) !important; } }`}</style>
       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", marginBottom: "var(--space-6)" }}>
         <BackButton onClick={onBack} />
         <div><h1 style={{ fontSize: "var(--text-page-title-size)", fontWeight: 700, color: "var(--color-text-primary)" }}>Players</h1><p style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>Approvals first, account controls when needed</p></div>

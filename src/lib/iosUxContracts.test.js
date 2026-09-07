@@ -81,8 +81,9 @@ test("Hive completion collapses its board until Review is intentionally selected
 
 test("standings keep own details and permit eligible read-only participant details", () => {
   const standings = source("../ChallengeStandings.jsx");
+  const resultDialog = source("../ChallengeResultDialog.jsx");
   assert.match(standings, /canOpenChallengeResult\(res/);
   assert.match(standings, /!player\.isCurrentUser/);
-  assert.match(standings, /result\.isCurrentUser && <></);
-  assert.match(standings, /Practise this game/);
+  assert.match(resultDialog, /result\.isCurrentUser && <></);
+  assert.match(resultDialog, /Practise this game/);
 });

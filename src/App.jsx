@@ -60,6 +60,7 @@ import { isNativePlatform } from "./lib/platform.js";
 import { shouldLockAccountMenuScroll, shouldLockNativeDocumentScroll } from "./lib/nativeScrollLock.js";
 import { refreshNativeNotificationState, reminderTimezoneChanged, startNativeNotificationListeners } from "./lib/nativeNotifications.js";
 import { currentReleaseIdentity, hasUnseenRelease } from "./lib/releaseState.js";
+import { organiserActionBadgeCount, rewardsUnreadBadgeCount } from "./lib/rewardBadge.js";
 
 const GAME_COMPONENTS = {
   hive: { Component: HiveGame, label: HIVE_BRAND.name },
@@ -433,7 +434,7 @@ function AppShell() {
           currentUser={user}
           currentProfile={profile}
           peer={chatPlayer}
-          onBack={() => { setChatPlayer(null); if (chatReturn === "chats") setActive("chats"); setChatReturn(null); }}
+          onBack={() => { setChatPlayer(null); if (chatReturn === "chats" || chatReturn === "adminplayers") setActive(chatReturn); setChatReturn(null); }}
           onOpenScoreChallenge={openScoreChallenge}
         />
       </Suspense>
@@ -516,7 +517,7 @@ function AppShell() {
   if (active === "adminplayers") {
     return withAccountMenu(
       <Suspense fallback={<FullScreenMessage text="Loading…" />}>
-        <AdminPlayers onBack={() => setActive(null)} />
+        <AdminPlayers onBack={() => setActive(null)} onOpenPlayer={(player) => { setChatReturn("adminplayers"); setChatPlayer(player); }} />
       </Suspense>
     );
   }
@@ -849,7 +850,9 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
   const resolvedOrganiserAttentionCount = organiserAttentionCount ?? 0;
   const unseenOrganiserAttentionCount = Math.max(0, resolvedOrganiserAttentionCount - seenOrganiserAttentionCount);
   const pendingPlayersBadgeCount = isAdmin ? pendingPlayersCount : 0;
-  const totalNotifications = feedbackBadgeCount + newTransfersCount + myRedemptionUpdates + openRewardRequestsCount + unseenOrganiserAttentionCount + unreadMessages.total + pendingPlayersBadgeCount
+  const rewardUnreadCount = rewardsUnreadBadgeCount(myRedemptionUpdates);
+  const organiserActionCount = organiserActionBadgeCount(resolvedOrganiserAttentionCount, openRewardRequestsCount);
+  const totalNotifications = feedbackBadgeCount + newTransfersCount + rewardUnreadCount + openRewardRequestsCount + unseenOrganiserAttentionCount + unreadMessages.total + pendingPlayersBadgeCount
     + (sectionSignals.whatsnew ? 1 : 0) + (sectionSignals.circles ? 1 : 0);
 
   useEffect(() => {
@@ -897,9 +900,9 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
     { id:"feedback", icon:MessageSquare, label:t("account.feedback"), onClick:onOpenFeedback, badge:feedbackBadgeCount },
     { id:"stats", icon:BarChart3, label:t("account.stats"), onClick:onOpenStats },
     { id:"circles", icon:Users, label:t("account.circles"), onClick:onOpenCircles, badge:sectionSignals.circles ? 1 : 0 },
-    { id:"rewardrequests", icon:Gift, label:t("account.rewardRequests"), onClick:onOpenRewardRequests, badge:myRedemptionUpdates + openRewardRequestsCount },
+    { id:"rewardrequests", icon:Gift, label:t("account.rewardRequests"), onClick:onOpenRewardRequests, badge:rewardUnreadCount },
   ];
-  if (onOpenOrganiserRewards) items.push({ id:"organiserrewards", icon:Gift, label:t("account.organiserRewards"), onClick:onOpenOrganiserRewards, badge:resolvedOrganiserAttentionCount });
+  if (onOpenOrganiserRewards) items.push({ id:"organiserrewards", icon:Gift, label:t("account.organiserRewards"), onClick:onOpenOrganiserRewards, badge:organiserActionCount });
   const adminItems = [];
   if (isAdmin) {
     adminItems.push({ id:"adminplayers", icon:Shield, label:t("common.players"), onClick:onOpenAdminPlayers, badge:pendingPlayersBadgeCount });

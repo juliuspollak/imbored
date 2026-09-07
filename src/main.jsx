@@ -4,6 +4,7 @@ import App from "./App.jsx";
 import SharedPuzzleApp from "./SharedPuzzleApp.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import InvitedApprovalNotice from "./InvitedApprovalNotice.jsx";
+import PublicLanding from "./PublicLanding.jsx";
 import { I18nProvider } from "./lib/i18n.jsx";
 import { enableAutomaticAppUpdates } from "./lib/appUpdate.js";
 import { applyThemePreference, getCachedThemePreference } from "./lib/theme.js";
@@ -42,6 +43,8 @@ import "./game-tile-artwork.css";
 import "./twist-feedback.css";
 import "./chat-ios-polish.css";
 import { REPLAY_LOCATION_CHANGE_EVENT, replayStatIdFrom } from "./lib/replayNavigation.js";
+import { isNativePlatform } from "./lib/platform.js";
+import { shouldShowPublicLanding } from "./lib/publicLanding.js";
 
 enableAutomaticAppUpdates();
 
@@ -94,6 +97,17 @@ function BootstrapApp() {
     app: puzzleStatId ? "SharedPuzzleApp" : "App",
     reason: puzzleStatId ? "puzzle query parameter is present" : "puzzle query parameter is absent",
   });
+  const publicLanding = typeof window !== "undefined" && shouldShowPublicLanding({
+    native:isNativePlatform(),
+    pathname:window.location.pathname,
+    search:window.location.search,
+    hash:window.location.hash,
+  });
+  if (publicLanding) return <PublicLanding />;
+  return <><FullApplication puzzleStatId={puzzleStatId} /><InvitedApprovalNotice /></>;
+}
+
+function FullApplication({ puzzleStatId }) {
   return puzzleStatId ? <SharedPuzzleApp statId={puzzleStatId} /> : <App />;
 }
 
@@ -102,7 +116,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <I18nProvider>
       <ErrorBoundary onReset={() => window.location.reload()}>
         <BootstrapApp />
-        <InvitedApprovalNotice />
       </ErrorBoundary>
     </I18nProvider>
   </React.StrictMode>

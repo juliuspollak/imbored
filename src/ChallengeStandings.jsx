@@ -1,13 +1,11 @@
 import { useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { ChevronDown, ChevronLeft, ChevronRight, LockKeyhole, RefreshCw, Trophy, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, LockKeyhole, Trophy } from "lucide-react";
 import { MISSED_ROUND_PENALTY, buildChallengeStandings, explainTiebreak, fromServerStandings } from "./lib/challengeStandingsScoring.js";
 import { TYPICAL_SCORE } from "./lib/performanceScoring.js";
 import { useI18n } from "./lib/i18n.jsx";
 import { GAME_NAMES } from "./lib/gameBranding.jsx";
-import { openPuzzlePractice } from "./lib/puzzleSharing.js";
-import { supabase, supabaseReady } from "./lib/supabase.js";
 import { canOpenChallengeResult } from "./lib/challengeResultDetails.js";
+import ChallengeResultDialog, { fetchCurrentUserChallengeResult } from "./ChallengeResultDialog.jsx";
 
 function toBenchmarkMap(benchmarks) {
   return Object.fromEntries(benchmarks.map((item) => [`${item.game}:${item.day_index}`, {
@@ -105,20 +103,7 @@ function StandingsList({ standings, expandedPlayerIds, setExpandedPlayerIds, pre
       return;
     }
     setSelectedResult({ ...base, loading:true, loadError:"" });
-    if (!supabaseReady) {
-      if (requestId === resultRequestRef.current) setSelectedResult({ ...base, loading:false, loadError:"This result cannot be reopened right now." });
-      return;
-    }
-    const { data, error } = await supabase
-      .from("game_stats")
-      .select("id,game,challenge_date,seconds,mistakes,hints,correct_count,total_count,wasted_moves,expected_moves,zip_backtracked_cells,zip_required_moves,completed_at,seed")
-      .eq("user_id", userId)
-      .eq("mode", "challenge")
-      .eq("game", result.game)
-      .eq("challenge_date", result.challenge_date)
-      .order("completed_at", { ascending:false })
-      .limit(1)
-      .maybeSingle();
+    const { data, error } = await fetchCurrentUserChallengeResult({ userId, game:result.game, challengeDate:result.challenge_date });
     if (requestId !== resultRequestRef.current) return;
     if (error || !data) {
       setSelectedResult({ ...base, loading:false, loadError:"This saved game could not be opened." });
@@ -175,44 +160,9 @@ function StandingsList({ standings, expandedPlayerIds, setExpandedPlayerIds, pre
           );
         })}
       </div>
-      {selectedResult && typeof document !== "undefined" && createPortal(<CompletedResultDialog result={selectedResult} onClose={closeCompletedResult} />, document.body)}
+      <ChallengeResultDialog result={selectedResult} onClose={closeCompletedResult} />
     </>
   );
-}
-
-function CompletedResultDialog({ result, onClose }) {
-  const gameName = GAME_NAMES[result.game] || result.game;
-  const seconds = Number(result.seconds);
-  const mistakes = Math.max(0, Number(result.mistakes) || 0);
-  const hints = Math.max(0, Number(result.hints) || 0);
-  const accuracy = Number(result.total_count) > 0 ? Math.round((Math.max(0, Number(result.correct_count) || 0) / Number(result.total_count)) * 100) : null;
-
-  return (
-    <div role="presentation" onClick={(event) => { if (event.target === event.currentTarget) onClose(); }} style={{ position:"fixed", zIndex:1000, inset:0, display:"flex", alignItems:"flex-end", justifyContent:"center", padding:"var(--space-3)", paddingBottom:"max(var(--space-3), env(safe-area-inset-bottom))", background:"rgba(0,0,0,.42)", overscrollBehavior:"contain" }}>
-      <section role="dialog" aria-modal="true" aria-label={`${gameName} completed result`} style={{ width:"min(100%,430px)", maxHeight:"85dvh", overflow:"auto", border:"1px solid var(--color-border)", borderRadius:"var(--radius-xl)", background:"var(--color-surface)", boxShadow:"var(--shadow-card)", padding:"var(--space-4)", WebkitOverflowScrolling:"touch", touchAction:"pan-y" }}>
-        <div style={{ display:"flex", alignItems:"flex-start", gap:"var(--space-3)" }}>
-          <div style={{ flex:1, minWidth:0 }}><p style={{ margin:0, color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:700, textTransform:"uppercase", letterSpacing:".04em" }}>{result.isCurrentUser ? "Your completed game" : `${result.playerName}'s completed game`}</p><h3 style={{ margin:"3px 0 0", color:"var(--color-text-primary)", fontSize:20 }}>{gameName} · {result.score}</h3></div>
-          <button type="button" onClick={onClose} aria-label="Close result" className="challenge-result-close" style={{ width:40, height:40, margin:"-3px -3px 0 0", display:"grid", placeItems:"center", flexShrink:0, border:0, borderRadius:"50%", background:"var(--color-surface-elevated)", color:"var(--color-text-secondary)", cursor:"pointer", touchAction:"manipulation" }}><X size={18} /></button>
-        </div>
-        {result.loading ? <p role="status" style={{ margin:"var(--space-4) 0", color:"var(--color-text-secondary)", fontSize:"var(--text-body-secondary-size)" }}>Opening your saved result…</p> : result.loadError ? <p role="status" style={{ margin:"var(--space-4) 0", color:"var(--color-danger-text)", fontSize:"var(--text-body-secondary-size)" }}>{result.loadError}</p> : <>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(2,minmax(0,1fr))", gap:"var(--space-2)", marginTop:"var(--space-4)" }}>
-            <ResultFact label="Time" value={Number.isFinite(seconds) ? formatTime(seconds) : "—"} /><ResultFact label="Challenge score" value={result.score ?? "—"} /><ResultFact label="Mistakes" value={mistakes} /><ResultFact label="Hints" value={hints} />{accuracy !== null && <ResultFact label="Accuracy" value={`${accuracy}%`} />}
-          </div>
-          {result.isCurrentUser && <><div style={{ marginTop:"var(--space-4)", padding:"var(--space-3)", border:"1px solid var(--color-primary-subtle-border)", borderRadius:"var(--radius-md)", background:"var(--color-primary-subtle)" }}><p style={{ margin:0, color:"var(--color-text-primary)", fontSize:"var(--text-body-secondary-size)", fontWeight:700 }}>Your original Challenge result stays locked.</p><p style={{ margin:"4px 0 0", color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", lineHeight:1.45 }}>Replaying opens the exact same puzzle as Practice, so it cannot replace or change this score.</p></div>
-          <button type="button" onClick={() => openPuzzlePractice(result.id)} disabled={!result.id} className="challenge-result-replay" style={{ width:"100%", minHeight:44, marginTop:"var(--space-4)", display:"inline-flex", alignItems:"center", justifyContent:"center", gap:7, border:0, borderRadius:"var(--radius-full)", background:"var(--color-primary)", color:"var(--color-primary-text)", fontFamily:"inherit", fontSize:"var(--text-button-size)", fontWeight:800, cursor:result.id ? "pointer" : "default", opacity:result.id ? 1 : .5, touchAction:"manipulation" }}><RefreshCw size={16} /> Practise this game</button></>}
-        </>}
-      </section>
-    </div>
-  );
-}
-
-function ResultFact({ label, value }) {
-  return <div style={{ minHeight:58, padding:"var(--space-2) var(--space-3)", border:"1px solid var(--color-border)", borderRadius:"var(--radius-md)", background:"var(--color-surface-elevated)" }}><span style={{ display:"block", color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)" }}>{label}</span><strong style={{ display:"block", marginTop:3, color:"var(--color-text-primary)", fontSize:"var(--text-body-size)", fontVariantNumeric:"tabular-nums" }}>{value}</strong></div>;
-}
-
-function formatTime(value) {
-  const seconds = Math.max(0, Math.round(Number(value) || 0));
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
 function StandingsStyles() {
@@ -220,14 +170,11 @@ function StandingsStyles() {
     .challenge-standings-toggle:focus-visible,
     .challenge-player-toggle:focus-visible,
     .challenge-period-button:focus-visible,
-    .challenge-result-button:focus-visible,
-    .challenge-result-close:focus-visible,
-    .challenge-result-replay:focus-visible { outline:2px solid var(--color-primary); outline-offset:-2px; }
+    .challenge-result-button:focus-visible { outline:2px solid var(--color-primary); outline-offset:-2px; }
     @media (hover:hover) and (pointer:fine) {
       .challenge-standings-toggle:hover,
       .challenge-player-toggle:hover { background:var(--color-surface-elevated) !important; }
-      .challenge-period-button:not(:disabled):hover,
-      .challenge-result-close:hover { background:var(--color-surface) !important; }
+      .challenge-period-button:not(:disabled):hover { background:var(--color-surface) !important; }
       .challenge-result-button:hover { filter:brightness(.98); }
     }
     @media (min-width:480px) { [id^="player-results-"] > div { grid-template-columns:repeat(3,minmax(0,1fr)) !important; } }

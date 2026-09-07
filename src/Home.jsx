@@ -13,6 +13,8 @@ import Card from "./components/Card.jsx";
 import AvatarGroup from "./components/AvatarGroup.jsx";
 import { GAME_NAMES, GRIDLY_BRAND, HIVE_BRAND } from "./lib/gameBranding.jsx";
 import { CIRCLE_OCCURRENCE_STATE, circleHistoryResultLabel, circleOccurrenceCutoff, circleOccurrenceState } from "./lib/circleOccurrenceState.js";
+import { challengeScore } from "./lib/performanceScoring.js";
+import ChallengeResultDialog, { fetchCurrentUserChallengeResult } from "./ChallengeResultDialog.jsx";
 
 const buttonReset = {
   appearance: "none",
@@ -106,6 +108,8 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
   const [standingsLoading, setStandingsLoading] = useState(false);
   const [standingsRefreshing, setStandingsRefreshing] = useState(false);
   const [standingsRefreshKey, setStandingsRefreshKey] = useState(0);
+  const [selectedChallengeResult, setSelectedChallengeResult] = useState(null);
+  const resultRequestRef = useRef(0);
   const standingsCacheRef = useRef({});
 
   useEffect(() => {
@@ -371,13 +375,39 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
     setPeriodOffset(0);
   }
 
+  async function openMyChallengeResult(game, challengeDate, circleChallengeId = null) {
+    const requestId = ++resultRequestRef.current;
+    const base = { game, challenge_date:challengeDate, playerName:"You", isCurrentUser:true };
+    setSelectedChallengeResult({ ...base, loading:true, loadError:"" });
+    const { data, error } = await fetchCurrentUserChallengeResult({ userId, game, challengeDate, circleChallengeId });
+    if (requestId !== resultRequestRef.current) return;
+    if (error || !data) {
+      setSelectedChallengeResult({ ...base, loading:false, loadError:"This saved game could not be opened." });
+      return;
+    }
+    const dayIndex = (new Date(`${challengeDate}T12:00:00`).getDay() || 7) - 1;
+    let benchmark = challengeBenchmarks.find((item) => item.game === game && Number(item.day_index) === dayIndex);
+    if (!benchmark) {
+      const response = await supabase.from("game_time_benchmarks").select("effective_seconds,log_mean,log_sd").eq("mode", "challenge").eq("game", game).eq("day_index", dayIndex).maybeSingle();
+      benchmark = response.data;
+    }
+    if (requestId !== resultRequestRef.current) return;
+    const score = challengeScore(data, benchmark ? { seconds:Number(benchmark.effective_seconds) || 100, logMean:benchmark.log_mean, logSd:benchmark.log_sd } : undefined).score;
+    setSelectedChallengeResult({ ...base, ...data, score, loading:false, loadError:"" });
+  }
+
+  function closeMyChallengeResult() {
+    resultRequestRef.current += 1;
+    setSelectedChallengeResult(null);
+  }
+
   function compactGameTile(game, completed, canPlay, onClick, keySuffix = "") {
     const Icon = game.icon;
     return (
       <button
         type="button"
         key={`${game.id}${keySuffix}`}
-        disabled={!canPlay}
+        disabled={!canPlay && !completed}
         onClick={onClick}
         className={`challenge-mini-game challenge-mini-game--${game.id}`}
         style={{
@@ -385,14 +415,15 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
           display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:7,
           padding:"10px 8px 9px", border:`1px solid ${canPlay && !completed ? "var(--color-primary-subtle-border)" : "var(--color-border)"}`,
           borderRadius:"var(--radius-md)", background:"var(--color-surface)", boxShadow:"var(--shadow-control)",
-          opacity:canPlay || completed ? 1 : .68, cursor:canPlay ? "pointer" : "default",
+          opacity:canPlay || completed ? 1 : .68, cursor:canPlay || completed ? "pointer" : "default",
+          transition:"transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast)",
         }}
       >
         {completed && <span aria-label="Completed" style={{ position:"absolute", top:7, right:7, width:20, height:20, display:"grid", placeItems:"center", borderRadius:"50%", background:"var(--color-success-bg)", color:"var(--color-success-text)" }}><Check size={12} strokeWidth={3} /></span>}
         {canPlay && !completed && <span aria-hidden="true" style={{ position:"absolute", top:6, right:6, width:22, height:22, display:"grid", placeItems:"center", borderRadius:"50%", background:"var(--color-primary)", color:"var(--color-primary-text)" }}><Play size={11} fill="currentColor" /></span>}
         <span aria-hidden="true" style={{ width:42, height:42, display:"grid", placeItems:"center", borderRadius:"var(--radius-md)", background:game.tileBackground || accentSurface(game.accent), color:game.accent }}><Icon size={game.tileIconSize || 22} /></span>
         <strong style={{ color:"var(--color-text-primary)", fontSize:"var(--text-caption-size)", lineHeight:1.1 }}>{game.label}</strong>
-        {canPlay && !completed ? <span style={{ padding:"3px 10px", borderRadius:"var(--radius-full)", background:"var(--color-primary)", color:"var(--color-primary-text)", fontSize:10, fontWeight:700 }}>PLAY</span> : <span style={{ width:"75%", height:3, borderRadius:"var(--radius-full)", background:completed ? "var(--color-success-text)" : "var(--color-border)" }} />}
+        {canPlay && !completed ? <span style={{ padding:"3px 10px", borderRadius:"var(--radius-full)", background:"var(--color-primary)", color:"var(--color-primary-text)", fontSize:10, fontWeight:700 }}>PLAY</span> : completed ? <span style={{ display:"inline-flex", alignItems:"center", gap:2, color:"var(--color-success-text)", fontSize:10, fontWeight:700 }}>DETAILS <ChevronRight size={12} /></span> : <span style={{ width:"75%", height:3, borderRadius:"var(--radius-full)", background:"var(--color-border)" }} />}
       </button>
     );
   }
@@ -427,7 +458,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
               </div>
               <div style={{ padding:"0 var(--space-4) var(--space-3)" }}>
                 <div style={{ display:"flex", alignItems:"center", marginBottom:8 }}><strong style={{ flex:1, fontSize:"var(--text-caption-size)", color:"var(--color-text-primary)" }}>TODAY&apos;S GAMES</strong><span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:600 }}>{personalStatus.completed} / {personalStatus.total}</span></div>
-                <div className="challenge-mini-strip">{personalGames.map((game) => compactGameTile(game, personalCompleted.has(game.id), game.available && !personalCompleted.has(game.id), () => { choosePersonalChallenge(); onSelect(game.id); }, "-personal"))}</div>
+                <div className="challenge-mini-strip">{personalGames.map((game) => { const completed=personalCompleted.has(game.id); return compactGameTile(game, completed, game.available && !completed, () => { choosePersonalChallenge(); completed ? openMyChallengeResult(game.id, todayString()) : onSelect(game.id); }, "-personal"); })}</div>
               </div>
               <button type="button" onClick={() => { choosePersonalChallenge(); setPersonalExpanded((value) => !value); }} aria-expanded={personalExpanded} style={{ ...buttonReset, width:"100%", display:"flex", alignItems:"center", gap:"var(--space-2)", padding:"11px var(--space-4)", border:0, borderTop:"1px solid var(--color-border)", background:"transparent", color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:600 }}><BarChart3 size={15} /><span style={{ flex:1, textAlign:"left" }}>View your results and more</span><ChevronDown size={16} style={{ transform:personalExpanded ? "rotate(180deg)" : "none" }} /></button>
               {personalExpanded && challengeScope?.type !== "circle" && <div style={{ padding:"0 var(--space-3) var(--space-3)" }}><ChallengeStandings rows={challengeRows} roster={standingsRoster} games={selectedChallengeGames} benchmarks={challengeBenchmarks} previousRows={previousChallengeRows} userId={userId} loading={standingsLoading} defaultOpen embedded refreshing={standingsRefreshing} periodLabel={selectedPeriod?.label} periodIndex={periodIndex} periodCount={standingsPeriods.length} onPeriodChange={setPeriodOffset} /></div>}
@@ -460,7 +491,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
 
                   <div style={{ padding:"0 var(--space-4) var(--space-3)" }}>
                     <div style={{ display:"flex", alignItems:"center", marginBottom:8 }}><strong style={{ flex:1, fontSize:"var(--text-caption-size)", color:"var(--color-text-primary)" }}>{graceRound ? "MISSED CHALLENGE" : "TODAY'S GAME"}</strong>{(todayRound||graceRound) && <span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:600 }}>{graceRound ? "24-hour ranked grace" : todayDone ? "Completed" : "Ready to play"}</span>}</div>
-                    {graceRound ? <Button fullWidth before={<Play size={14}/>} onClick={()=>{ chooseCircleChallenge(item);onSelect(graceRound.game); }}>Play missed challenge · ranked</Button> : todayGame ? <div className="challenge-mini-strip challenge-mini-strip--single">{compactGameTile(todayGame, todayDone, item.active_today && !todayDone && todayGame.available, () => { chooseCircleChallenge(item); onSelect(todayGame.id); }, `-${item.challenge_id}`)}</div> : <div style={{ padding:"12px 14px", border:"1px dashed var(--color-border)", borderRadius:"var(--radius-md)", color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)" }}>No game scheduled for this challenge today.</div>}
+                    {graceRound ? <Button fullWidth before={<Play size={14}/>} onClick={()=>{ chooseCircleChallenge(item);onSelect(graceRound.game); }}>Play missed challenge · ranked</Button> : todayGame ? <div className="challenge-mini-strip challenge-mini-strip--single">{compactGameTile(todayGame, todayDone, item.active_today && !todayDone && todayGame.available, () => { chooseCircleChallenge(item); todayDone ? openMyChallengeResult(todayGame.id, todayRound.date, item.challenge_id) : onSelect(todayGame.id); }, `-${item.challenge_id}`)}</div> : <div style={{ padding:"12px 14px", border:"1px dashed var(--color-border)", borderRadius:"var(--radius-md)", color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)" }}>No game scheduled for this challenge today.</div>}
                   </div>
 
                   <button type="button" onClick={() => { chooseCircleChallenge(item); setExpandedChallengeId(expanded ? null : item.challenge_id); }} aria-expanded={expanded} style={{ ...buttonReset, width:"100%", display:"flex", alignItems:"center", gap:"var(--space-2)", padding:"11px var(--space-4)", border:0, borderTop:"1px solid var(--color-border)", background:"transparent", color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:600 }}><BarChart3 size={15} /><span style={{ flex:1, textAlign:"left" }}>Standings &amp; stats</span><ChevronDown size={16} style={{ transform:expanded ? "rotate(180deg)" : "none" }} /></button>
@@ -479,6 +510,8 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
             {challengeHistory.length > 0 && <details style={{ padding:"var(--space-3) var(--space-4)", border:"1px solid var(--color-border)", borderRadius:"var(--radius-md)", background:"var(--color-surface)" }}><summary style={{ ...buttonReset, display:"flex", alignItems:"center", gap:"var(--space-2)", listStyle:"none" }}><span style={{ flex:1 }}><strong style={{ display:"block", color:"var(--color-text-primary)", fontSize:"var(--text-body-size)" }}>Past challenges</strong><span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)" }}>Scores, winners and standings</span></span><ChevronRight size={17} /></summary><div style={{ marginTop:"var(--space-3)" }}>{challengeHistory.slice(0,5).map((item,index) => { const itemRounds=circleRoundStates[String(item.challenge_id)] || []; const itemState=circleOccurrenceState(itemRounds); const itemCutoff=circleOccurrenceCutoff(itemRounds); const itemClosed=itemState===CIRCLE_OCCURRENCE_STATE.FINAL; return <div key={item.challenge_id} style={{ padding:"10px 0", borderTop:index ? "1px solid var(--color-border)" : "none" }}><button type="button" onClick={() => chooseHistoricalChallenge(item)} style={{ ...buttonReset,width:"100%",display:"flex",alignItems:"center",gap:"var(--space-2)",border:0,background:"transparent",textAlign:"left" }}><span style={{ flex:1, minWidth:0 }}><strong style={{ display:"block", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", fontSize:"var(--text-body-secondary-size)" }}>{item.challenge_title || item.circle_name}</strong><span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)" }}>{item.circle_name} · {challengeWeekLabel(item.week_start)} · {item.finisher_count || 0}/{item.entry_count || 0} finished{!itemClosed && itemCutoff ? ` · closes ${new Date(itemCutoff).toLocaleString()}` : ""}</span></span><span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:600 }}>{circleHistoryResultLabel({ item,userId,state:itemState,standings:String(challengeScope?.id)===String(item.challenge_id) ? serverStandings || [] : [] })}</span><ChevronRight size={15}/></button>{String(challengeScope?.id)===String(item.challenge_id) && <div style={{ marginTop:"var(--space-3)" }}><ChallengeStandings rows={challengeRows} roster={Object.values(challengeProfiles)} games={(item.game_ids || []).map((id)=>configuredGames.find((game)=>game.id===id)).filter(Boolean)} rounds={challengeRounds} benchmarks={challengeBenchmarks} serverStandings={serverStandings} previousRows={previousChallengeRows} previousRounds={previousChallengeRounds} isCircle userId={userId} loading={standingsLoading} defaultOpen embedded closed={itemClosed} winnerId={itemClosed ? item.winner_id : null} />{itemClosed && <div style={{ marginTop:"var(--space-3)",padding:"var(--space-3)",borderRadius:"var(--radius-md)",background:"var(--color-surface-elevated)" }}><strong style={{ display:"block",fontSize:"var(--text-caption-size)" }}>Missed a round?</strong><span style={{ display:"block",margin:"4px 0 8px",color:"var(--color-text-secondary)",fontSize:"var(--text-caption-size)" }}>Ranked play is closed. Practice uses the game normally and cannot change these standings.</span><div style={{ display:"flex",flexWrap:"wrap",gap:"var(--space-2)" }}>{(item.game_ids || []).map((gameId)=><Button key={gameId} size="sm" variant="secondary" onClick={()=>{ onPlayModeChange?.("practice");onSelect(gameId); }}>Practice {GAME_NAMES[gameId] || gameId}</Button>)}</div></div>}</div>}</div>; })}</div></details>}
           </div>
         )}
+
+        <ChallengeResultDialog result={selectedChallengeResult} onClose={closeMyChallengeResult} />
 
         {playMode === "practice" && (gameConfigLoading ? (
           <div aria-live="polite" className="home-game-skeleton-grid" style={{ width:"100%", maxWidth:400, margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(2, minmax(0, 1fr))", gap:"var(--space-3)" }}>{[0,1,2,3].map((item) => <div key={item} className="home-skeleton" style={{ width:"100%", aspectRatio:"5 / 4", borderRadius:"var(--radius-lg)", background:"var(--color-surface-elevated)", border:"1px solid var(--color-border)" }} />)}</div>
