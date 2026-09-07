@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { configuredAppStoreUrl, shouldShowPublicLanding, shouldShowPublicSupport } from "./publicLanding.js";
+import { configuredAppStoreUrl, shouldShowPublicLanding, shouldShowPublicPrivacy, shouldShowPublicSupport } from "./publicLanding.js";
 
 test("only a plain browser root shows the public landing page", () => {
   assert.equal(shouldShowPublicLanding({ pathname:"/" }), true);
@@ -19,6 +19,17 @@ test("only a plain browser support path shows the public support page", () => {
   assert.equal(shouldShowPublicSupport({ pathname:"/support", hash:"#access_token=callback" }), false);
   assert.equal(shouldShowPublicSupport({ pathname:"/challenge/example" }), false);
   assert.equal(shouldShowPublicSupport({ pathname:"/play", search:"?puzzle=42" }), false);
+});
+
+test("only a plain browser privacy path shows the public privacy page", () => {
+  assert.equal(shouldShowPublicPrivacy({ pathname:"/privacy" }), true);
+  assert.equal(shouldShowPublicPrivacy({ pathname:"/privacy/" }), true);
+  assert.equal(shouldShowPublicPrivacy({ native:true, pathname:"/privacy" }), false);
+  assert.equal(shouldShowPublicPrivacy({ pathname:"/privacy", search:"?code=oauth-code" }), false);
+  assert.equal(shouldShowPublicPrivacy({ pathname:"/privacy", hash:"#access_token=callback" }), false);
+  assert.equal(shouldShowPublicPrivacy({ pathname:"/support" }), false);
+  assert.equal(shouldShowPublicPrivacy({ pathname:"/challenge/example" }), false);
+  assert.equal(shouldShowPublicPrivacy({ pathname:"/", search:"?puzzle=42" }), false);
 });
 
 test("the App Store link must be explicitly configured and Apple-hosted", () => {

@@ -6,6 +6,7 @@ import ErrorBoundary from "./ErrorBoundary.jsx";
 import InvitedApprovalNotice from "./InvitedApprovalNotice.jsx";
 import PublicLanding from "./PublicLanding.jsx";
 import PublicSupport from "./PublicSupport.jsx";
+import PublicPrivacy from "./PublicPrivacy.jsx";
 import { I18nProvider } from "./lib/i18n.jsx";
 import { enableAutomaticAppUpdates } from "./lib/appUpdate.js";
 import { applyThemePreference, getCachedThemePreference } from "./lib/theme.js";
@@ -45,7 +46,7 @@ import "./twist-feedback.css";
 import "./chat-ios-polish.css";
 import { REPLAY_LOCATION_CHANGE_EVENT, replayStatIdFrom } from "./lib/replayNavigation.js";
 import { isNativePlatform } from "./lib/platform.js";
-import { shouldShowPublicLanding, shouldShowPublicSupport } from "./lib/publicLanding.js";
+import { shouldShowPublicLanding, shouldShowPublicPrivacy, shouldShowPublicSupport } from "./lib/publicLanding.js";
 
 enableAutomaticAppUpdates();
 
@@ -106,6 +107,7 @@ function BootstrapApp() {
   };
   if (publicLocation && shouldShowPublicLanding(publicLocation)) return <PublicLanding />;
   if (publicLocation && shouldShowPublicSupport(publicLocation)) return <PublicSupport />;
+  if (publicLocation && shouldShowPublicPrivacy(publicLocation)) return <PublicPrivacy />;
   return <><FullApplication puzzleStatId={puzzleStatId} /><InvitedApprovalNotice /></>;
 }
 
