@@ -6,10 +6,11 @@ import { useI18n } from "./lib/i18n.jsx";
 import Button from "./components/Button.jsx";
 import Card from "./components/Card.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
+import { SUPPORT_EMAIL } from "./lib/supportContact.js";
 
 // Contact address published in-app, which App Store guideline 1.2 requires for
 // any app carrying user-generated content.
-export const SUPPORT_EMAIL = "support@imboredtoday.app";
+export { SUPPORT_EMAIL };
 
 export default function AccountSafety() {
   const { signOut } = useAuth();

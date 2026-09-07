@@ -2,6 +2,10 @@ export function shouldShowPublicLanding({ native = false, pathname = "/", search
   return !native && pathname === "/" && !search && !hash;
 }
 
+export function shouldShowPublicSupport({ native = false, pathname = "/", search = "", hash = "" } = {}) {
+  return !native && (pathname === "/support" || pathname === "/support/") && !search && !hash;
+}
+
 export function configuredAppStoreUrl(env = import.meta.env) {
   const value = String(env?.VITE_APP_STORE_URL || "").trim();
   if (!value) return null;

@@ -5,6 +5,7 @@ import SharedPuzzleApp from "./SharedPuzzleApp.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import InvitedApprovalNotice from "./InvitedApprovalNotice.jsx";
 import PublicLanding from "./PublicLanding.jsx";
+import PublicSupport from "./PublicSupport.jsx";
 import { I18nProvider } from "./lib/i18n.jsx";
 import { enableAutomaticAppUpdates } from "./lib/appUpdate.js";
 import { applyThemePreference, getCachedThemePreference } from "./lib/theme.js";
@@ -44,7 +45,7 @@ import "./twist-feedback.css";
 import "./chat-ios-polish.css";
 import { REPLAY_LOCATION_CHANGE_EVENT, replayStatIdFrom } from "./lib/replayNavigation.js";
 import { isNativePlatform } from "./lib/platform.js";
-import { shouldShowPublicLanding } from "./lib/publicLanding.js";
+import { shouldShowPublicLanding, shouldShowPublicSupport } from "./lib/publicLanding.js";
 
 enableAutomaticAppUpdates();
 
@@ -97,13 +98,14 @@ function BootstrapApp() {
     app: puzzleStatId ? "SharedPuzzleApp" : "App",
     reason: puzzleStatId ? "puzzle query parameter is present" : "puzzle query parameter is absent",
   });
-  const publicLanding = typeof window !== "undefined" && shouldShowPublicLanding({
+  const publicLocation = typeof window === "undefined" ? null : {
     native:isNativePlatform(),
     pathname:window.location.pathname,
     search:window.location.search,
     hash:window.location.hash,
-  });
-  if (publicLanding) return <PublicLanding />;
+  };
+  if (publicLocation && shouldShowPublicLanding(publicLocation)) return <PublicLanding />;
+  if (publicLocation && shouldShowPublicSupport(publicLocation)) return <PublicSupport />;
   return <><FullApplication puzzleStatId={puzzleStatId} /><InvitedApprovalNotice /></>;
 }
 
