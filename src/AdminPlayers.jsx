@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { CheckCircle2, Crown, Lock, EyeOff, ShieldBan, UserX, Ellipsis, RotateCcw, Gift, X } from "lucide-react";
+import { Crown, Lock, EyeOff, ShieldBan, UserX, Ellipsis, RotateCcw, Gift, X } from "lucide-react";
 import BackButton from "./BackButton.jsx";
 import { supabase, supabaseReady } from "./lib/supabase.js";
 import { useAuth } from "./lib/AuthContext.jsx";
@@ -7,17 +7,6 @@ import Page from "./components/Page.jsx";
 import Button from "./components/Button.jsx";
 import Card from "./components/Card.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
-
-// How long someone has been waiting on a decision. Kept short because it sits
-// on one line in a narrow row, under a heading that already says what the
-// waiting is for.
-function fmtWaiting(iso) {
-  if (!iso) return "Waiting";
-  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-  if (days < 1) return "Waiting · today";
-  if (days === 1) return "Waiting · 1 day";
-  return `Waiting · ${days} days`;
-}
 
 function fmtLastSeen(iso) {
   if (!iso) return "Never seen";
@@ -40,7 +29,6 @@ export default function AdminPlayers({ onBack, onOpenPlayer }) {
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
   const [expandedId, setExpandedId] = useState(null);
-  const [approvingId, setApprovingId] = useState(null);
   const [actionTarget, setActionTarget] = useState(null);
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState(null);
@@ -62,37 +50,6 @@ export default function AdminPlayers({ onBack, onOpenPlayer }) {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  // Approving goes through the admin-user-action Edge Function, the same path
-  // block/unblock/delete already use: it calls set_user_approval and then
-  // sends the approval email, which SQL alone cannot do. Withdrawing approval
-  // has no email to send, so it calls set_user_approval directly.
-  //
-  // This used to call an RPC named decide_player_approval, which has never
-  // existed in the schema — approving always failed with "Could not find the
-  // function" until an admin noticed.
-  async function handleApproval(playerId, approve) {
-    setApprovingId(playerId);
-    setNotice("");
-
-    if (!approve) {
-      const { error } = await supabase.rpc("set_user_approval", { target_user_id: playerId, approved: false });
-      setApprovingId(null);
-      if (error) { setNotice(error.message || "Could not require approval."); return; }
-      setNotice("This player now needs approval again before they can play.");
-      refresh();
-      return;
-    }
-
-    const { data, error } = await adminAccountAction("approve", playerId);
-    setApprovingId(null);
-    if (error) { setNotice(error.message || "Approval failed."); return; }
-    setNotice(
-      data?.alreadyApproved ? "That player was already approved."
-        : data?.emailSent ? "Player approved. The approval notification was emailed."
-        : `Player approved, but the email was not sent${data?.emailError ? `: ${data.emailError}` : "."}`
-    );
-    refresh();
-  }
   async function handleToggleHidden(player) { await setUserHidden(player.id, !player.hidden_from_others); setExpandedId(null); refresh(); }
   async function handleToggleRewardSteward(player) { setNotice(""); const { error } = await supabase.rpc("set_user_reward_steward", { target_user_id: player.id, steward: !player.is_reward_steward }); setExpandedId(null); if (error) setNotice(error.message || "Could not update."); refresh(); }
 
@@ -104,29 +61,18 @@ export default function AdminPlayers({ onBack, onOpenPlayer }) {
     else { setPlayers((c) => action === "delete" ? c.filter((i) => i.id !== player.id) : c); setActionTarget(null); setExpandedId(null); refresh(); }
   }
 
-  // A player stays highlighted here until the decision is actually made:
-  // approved, or declined by blocking them. Blocked players used to stay in
-  // this list forever — is_approved is still false after a block — so
-  // declining someone left them flagged with no way to settle it.
-  const pending = players.filter((p) => (
-    !p.account_deleted_at && !p.is_admin && !p.is_blocked && p.is_approved === false
-  ));
-  // Everyone not deleted and not awaiting a decision, so a declined player
-  // stays reachable in the list below (shown as Blocked) and can be restored.
-  const pendingIds = new Set(pending.map((p) => p.id));
-  const active = players.filter((p) => !p.account_deleted_at && !pendingIds.has(p.id));
+  const active = players.filter((p) => !p.account_deleted_at);
   const history = players.filter((p) => p.account_deleted_at);
 
-  function PlayerCard({ player, approval = false, compact = false, last = false }) {
+  function PlayerCard({ player, compact = false, last = false }) {
     const seenIso = lastSeen[player.id];
     const online = seenIso && Date.now() - new Date(seenIso).getTime() < 45000;
     const expanded = expandedId === player.id;
     const activityLabel = fmtLastSeen(seenIso);
-    const showStatus = !compact || approval || activityLabel !== "Never seen" || player.is_blocked || player.hidden_from_others;
+    const showStatus = !compact || activityLabel !== "Never seen" || player.is_blocked || player.hidden_from_others;
     return (
       <Card style={{
         padding: "var(--space-3)",
-        borderColor: approval ? "var(--color-warning-border)" : undefined,
         border: compact ? "none" : undefined,
         borderBottom: compact && !last ? "1px solid var(--color-border)" : undefined,
         borderRadius: compact ? 0 : undefined,
@@ -134,7 +80,7 @@ export default function AdminPlayers({ onBack, onOpenPlayer }) {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
           <button type="button" onClick={() => onOpenPlayer?.(player)} aria-label={`Open ${player.name}`} className="admin-player-primary" style={{ minHeight:48, flex:1, minWidth:0, display:"flex", alignItems:"center", gap:"var(--space-3)", padding:"3px", border:0, borderRadius:"var(--radius-md)", background:"transparent", color:"inherit", font:"inherit", textAlign:"left", cursor:onOpenPlayer ? "pointer" : "default" }}>
-            <span aria-hidden="true" style={{ width: 42, height: 42, borderRadius: "var(--radius-md)", background: approval ? "var(--color-warning-bg)" : "var(--color-info-bg)", fontSize: 20, display: "grid", placeItems: "center", flexShrink: 0 }}>{player.icon || "🙂"}</span>
+            <span aria-hidden="true" style={{ width: 42, height: 42, borderRadius: "var(--radius-md)", background: "var(--color-info-bg)", fontSize: 20, display: "grid", placeItems: "center", flexShrink: 0 }}>{player.icon || "🙂"}</span>
             <span style={{ flex: 1, minWidth: 0 }}>
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ fontWeight: 600, fontSize: "var(--text-body-size)", color: "var(--color-text-primary)" }} className="truncate">{player.name}</span>
@@ -142,17 +88,12 @@ export default function AdminPlayers({ onBack, onOpenPlayer }) {
               {player.is_reward_steward && <Gift size={11} style={{ color: "var(--color-primary)" }} />}
               {player.is_private && <Lock size={10} style={{ opacity: .35 }} />}
             </span>
-            <span className="truncate" style={{ display: showStatus ? "block" : "none", fontSize: 11, fontWeight: approval ? 600 : undefined, color: approval ? "var(--color-warning-text)" : online ? "var(--color-success-text)" : "var(--color-text-secondary)" }}>
-              {approval ? fmtWaiting(player.created_at) : fmtLastSeen(seenIso)}
+            <span className="truncate" style={{ display: showStatus ? "block" : "none", fontSize: 11, color: online ? "var(--color-success-text)" : "var(--color-text-secondary)" }}>
+              {fmtLastSeen(seenIso)}
               {player.is_blocked ? " · Blocked" : ""}{player.hidden_from_others ? " · Hidden" : ""}
             </span>
             </span>
           </button>
-          {approval && (
-            <Button size="sm" variant="ghost" loading={approvingId === player.id} before={<CheckCircle2 size={13} />} onClick={(event) => { event.stopPropagation(); handleApproval(player.id, true); }} style={{ color: "var(--color-success-text)", flexShrink: 0 }}>
-              {approvingId === player.id ? "Approving…" : "Approve"}
-            </Button>
-          )}
           {!player.is_admin && (
             <button type="button" onClick={(event) => { event.stopPropagation(); setExpandedId(expanded ? null : player.id); }} aria-label={`More actions for ${player.name}`} aria-expanded={expanded} style={{ width: 40, height: 40, flexShrink:0, borderRadius: "var(--radius-sm)", background: compact && !expanded ? "transparent" : "var(--color-surface-elevated)", color: "var(--color-icon-subtle)", border: "none", cursor: "pointer", display: "grid", placeItems: "center" }}>
               <Ellipsis size={16} />
@@ -161,14 +102,9 @@ export default function AdminPlayers({ onBack, onOpenPlayer }) {
         </div>
         {expanded && !player.is_admin && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-2)", marginTop: "var(--space-3)", paddingTop: "var(--space-3)", borderTop: "1px solid var(--color-border)" }}>
-            {!approval && <Button size="sm" variant="ghost" onClick={() => handleApproval(player.id, false)}>Require approval</Button>}
-            {/* Declining is a block, so it settles the approval and moves them
-                out of Needs approval. Labelled for the decision being made. */}
-            <Button size="sm" variant="ghost" before={player.is_blocked ? <RotateCcw size={11} /> : <ShieldBan size={11} />} onClick={() => player.is_blocked ? handleAccountAction("unblock", player) : setActionTarget({ type: "block", intent: approval ? "decline" : undefined, player, reason: "" })} style={{ color: player.is_blocked ? "var(--color-success-text)" : "var(--color-danger-text)" }}>{player.is_blocked ? "Unblock" : approval ? "Decline" : "Block"}</Button>
-            {/* Hiding someone nobody can see yet, or handing reward powers to
-                an unapproved account, are both meaningless before a decision. */}
-            {!approval && <Button size="sm" variant="ghost" before={<EyeOff size={11} />} onClick={() => handleToggleHidden(player)}>{player.hidden_from_others ? "Show" : "Hide"}</Button>}
-            {!approval && <Button size="sm" variant="ghost" before={<Gift size={11} />} onClick={() => handleToggleRewardSteward(player)} style={{ color: player.is_reward_steward ? "var(--color-primary)" : undefined }}>{player.is_reward_steward ? "Remove steward" : "Make steward"}</Button>}
+            <Button size="sm" variant="ghost" before={player.is_blocked ? <RotateCcw size={11} /> : <ShieldBan size={11} />} onClick={() => player.is_blocked ? handleAccountAction("unblock", player) : setActionTarget({ type: "block", player, reason: "" })} style={{ color: player.is_blocked ? "var(--color-success-text)" : "var(--color-danger-text)" }}>{player.is_blocked ? "Unblock" : "Block"}</Button>
+            <Button size="sm" variant="ghost" before={<EyeOff size={11} />} onClick={() => handleToggleHidden(player)}>{player.hidden_from_others ? "Show" : "Hide"}</Button>
+            <Button size="sm" variant="ghost" before={<Gift size={11} />} onClick={() => handleToggleRewardSteward(player)} style={{ color: player.is_reward_steward ? "var(--color-primary)" : undefined }}>{player.is_reward_steward ? "Remove steward" : "Make steward"}</Button>
             <Button size="sm" variant="ghost" before={<UserX size={11} />} onClick={() => setActionTarget({ type: "delete", player, reason: "" })} style={{ color: "var(--color-danger-text)" }}>Delete</Button>
           </div>
         )}
@@ -181,7 +117,7 @@ export default function AdminPlayers({ onBack, onOpenPlayer }) {
       <style>{`.admin-player-primary:focus-visible { outline:2px solid var(--color-primary); outline-offset:2px; } .admin-player-primary:active { transform:scale(.99); } @media (hover:hover) and (pointer:fine) { .admin-player-primary:hover { background:var(--color-surface-elevated) !important; } }`}</style>
       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", marginBottom: "var(--space-6)" }}>
         <BackButton onClick={onBack} />
-        <div><h1 style={{ fontSize: "var(--text-page-title-size)", fontWeight: 700, color: "var(--color-text-primary)" }}>Players</h1><p style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>Approvals first, account controls when needed</p></div>
+        <div><h1 style={{ fontSize: "var(--text-page-title-size)", fontWeight: 700, color: "var(--color-text-primary)" }}>Players</h1><p style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>Account and moderation controls</p></div>
       </div>
       {notice && <div style={{ marginBottom: "var(--space-4)" }}><StatusBanner variant="info" dismissible onDismiss={() => setNotice("")}>{notice}</StatusBanner></div>}
 
@@ -189,13 +125,6 @@ export default function AdminPlayers({ onBack, onOpenPlayer }) {
         : !isAdmin ? <p style={{ textAlign: "center", padding: "var(--space-8)", color: "var(--color-text-secondary)" }}>Admin only.</p>
         : loading ? <p style={{ textAlign: "center", padding: "var(--space-8)", color: "var(--color-text-secondary)" }}>Loading…</p>
         : <>
-          {pending.length > 0 && <section style={{ marginBottom: "var(--space-6)" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-2)", padding: "0 var(--space-1)" }}>
-              <h2 style={{ fontSize: "var(--text-caption-size)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--color-warning-text)", margin: 0 }}>Needs approval</h2>
-              <span style={{ borderRadius: "var(--radius-full)", padding: "2px 8px", fontSize: 10, fontWeight: 700, background: "var(--color-warning-bg)", color: "var(--color-warning-text)" }}>{pending.length}</span>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>{pending.map((p) => <PlayerCard key={p.id} player={p} approval />)}</div>
-          </section>}
           <section>
             <h2 style={{ fontSize: "var(--text-caption-size)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--color-text-secondary)", marginBottom: "var(--space-2)", padding: "0 var(--space-1)" }}>Players · {active.length}</h2>
             <Card style={{ padding: 0, overflow: "hidden" }}>{active.map((p, index) => <PlayerCard key={p.id} player={p} compact last={index === active.length - 1} />)}</Card>
@@ -218,10 +147,10 @@ export default function AdminPlayers({ onBack, onOpenPlayer }) {
             <div style={{ fontSize: 24 }}>{actionTarget.player.icon || "🙂"}</div>
             <div style={{ flex: 1 }}>
               <h2 style={{ fontWeight: 700, color: "var(--color-text-primary)", margin: 0 }}>
-                {actionTarget.intent === "decline" ? `Decline ${actionTarget.player.name}?` : actionTarget.type === "block" ? `Block ${actionTarget.player.name}?` : actionTarget.player.account_deleted_at ? `Permanently delete ${actionTarget.player.name}?` : `Delete ${actionTarget.player.name}'s account?`}
+                {actionTarget.type === "block" ? `Block ${actionTarget.player.name}?` : actionTarget.player.account_deleted_at ? `Permanently delete ${actionTarget.player.name}?` : `Delete ${actionTarget.player.name}'s account?`}
               </h2>
               <p style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)", marginTop: "var(--space-1)" }}>
-                {actionTarget.intent === "decline" ? "They move out of Needs approval and into the player list as blocked. You can restore them there at any time." : actionTarget.type === "block" ? "They won't be able to use the app until restored." : "The login, linked identities, profile and associated player data will be permanently deleted."}
+                {actionTarget.type === "block" ? "They won't be able to use the app until restored." : "The login, linked identities, profile and associated player data will be permanently deleted."}
               </p>
             </div>
             <button onClick={() => setActionTarget(null)} style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--color-text-secondary)" }}><X size={16} /></button>
@@ -230,7 +159,7 @@ export default function AdminPlayers({ onBack, onOpenPlayer }) {
           {actionError && <p style={{ fontSize: "var(--text-caption-size)", marginTop: "var(--space-3)", color: "var(--color-danger-text)" }}>{actionError}</p>}
           <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-4)" }}>
             <Button variant="ghost" fullWidth onClick={() => setActionTarget(null)}>Cancel</Button>
-            <Button variant="danger" fullWidth loading={actionBusy} onClick={() => handleAccountAction(actionTarget.type, actionTarget.player)}>{actionBusy ? "Working…" : actionTarget.intent === "decline" ? "Decline" : actionTarget.type === "block" ? "Block" : "Delete permanently"}</Button>
+            <Button variant="danger" fullWidth loading={actionBusy} onClick={() => handleAccountAction(actionTarget.type, actionTarget.player)}>{actionBusy ? "Working…" : actionTarget.type === "block" ? "Block" : "Delete permanently"}</Button>
           </div>
         </Card>
       </div>}

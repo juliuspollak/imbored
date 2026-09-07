@@ -409,7 +409,10 @@ begin
     is_blocked=blocked,
     blocked_at=case when blocked then now() else null end,
     blocked_by=case when blocked then auth.uid() else null end,
-    blocked_reason=case when blocked then nullif(btrim(reason),'') else null end
+    blocked_reason=case when blocked then nullif(btrim(reason),'') else null end,
+    is_approved=case when blocked then is_approved else true end,
+    approved_at=case when not blocked then coalesce(approved_at,now()) else approved_at end,
+    approved_by=case when not blocked and approved_at is null then auth.uid() else approved_by end
   where id=target_user_id and account_deleted_at is null;
 end;
 $$;
@@ -5079,7 +5082,10 @@ CREATE FUNCTION public.protect_profile_security_fields() RETURNS trigger
 begin
   if auth.uid() is null or public.is_admin(auth.uid()) then return new; end if;
   if tg_op='INSERT' then
-    new.is_admin:=false; new.is_approved:=false; new.approved_at:=null; new.approved_by:=null;
+    new.is_admin:=false;
+    new.is_approved:=true;
+    new.approved_at:=now();
+    new.approved_by:=null;
     new.hidden_from_others:=false; new.is_blocked:=false; new.blocked_at:=null; new.blocked_by:=null;
     new.blocked_reason:=null; new.account_deleted_at:=null; new.account_deleted_by:=null;
   elsif new.is_admin is distinct from old.is_admin
@@ -5734,7 +5740,7 @@ CREATE TABLE public.profiles (
     show_stats_to_others boolean DEFAULT true NOT NULL,
     week_starts_on integer DEFAULT 1 NOT NULL,
     timezone text,
-    is_approved boolean DEFAULT false NOT NULL,
+    is_approved boolean DEFAULT true NOT NULL,
     approved_at timestamp with time zone,
     approved_by uuid,
     is_blocked boolean DEFAULT false NOT NULL,

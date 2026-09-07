@@ -3,7 +3,6 @@ import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import SharedPuzzleApp from "./SharedPuzzleApp.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
-import InvitedApprovalNotice from "./InvitedApprovalNotice.jsx";
 import PublicLanding from "./PublicLanding.jsx";
 import PublicSupport from "./PublicSupport.jsx";
 import PublicPrivacy from "./PublicPrivacy.jsx";
@@ -108,7 +107,7 @@ function BootstrapApp() {
   if (publicLocation && shouldShowPublicLanding(publicLocation)) return <PublicLanding />;
   if (publicLocation && shouldShowPublicSupport(publicLocation)) return <PublicSupport />;
   if (publicLocation && shouldShowPublicPrivacy(publicLocation)) return <PublicPrivacy />;
-  return <><FullApplication puzzleStatId={puzzleStatId} /><InvitedApprovalNotice /></>;
+  return <FullApplication puzzleStatId={puzzleStatId} />;
 }
 
 function FullApplication({ puzzleStatId }) {
