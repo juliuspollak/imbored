@@ -44,6 +44,7 @@ async function completeNativeOAuth(url) {
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(undefined); // undefined = still loading, null = logged out
   const [profile, setProfile] = useState(null);
+  const [termsAgreed, setTermsAgreed] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
 
   const loadProfile = useCallback(async (userId, { showLoading = true } = {}) => {
@@ -164,6 +165,7 @@ export function AuthProvider({ children }) {
       // the app state immediately so the client does not keep retrying the
       // same invalid token while an idle game remains open.
       if (event === "SIGNED_OUT" || !newSession) {
+        setTermsAgreed(false);
         setSession(null);
         setProfile(null);
         setProfileLoading(false);
@@ -247,6 +249,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function signInWithEmail(email) {
+    if (!termsAgreed) return { error: new Error("Please agree to the Terms of Use and Privacy Policy first.") };
     if (!supabaseReady) return { error: new Error("Supabase isn't configured yet") };
 
     try {
@@ -264,15 +267,18 @@ export function AuthProvider({ children }) {
   }
 
   async function signInWithAppReview(email, password) {
+    if (!termsAgreed) return { error: new Error("Please agree to the Terms of Use and Privacy Policy first.") };
     return signInReviewAccount(supabase, email, password);
   }
 
   async function verifyCode(email, token) {
+    if (!termsAgreed) return { error: new Error("Please agree to the Terms of Use and Privacy Policy first.") };
     if (!supabaseReady) return { error: new Error("Supabase isn't configured yet") };
     return supabase.auth.verifyOtp({ email, token, type: "email" });
   }
 
   async function signInWithOAuthProvider(provider) {
+    if (!termsAgreed) return { error: new Error("Please agree to the Terms of Use and Privacy Policy first.") };
     if (!supabaseReady) return { error: new Error("Supabase isn't configured yet") };
     const native = isNativePlatform();
     if (native) markNativeOAuthPending(true);
@@ -316,6 +322,7 @@ export function AuthProvider({ children }) {
   // authenticator's own picker resolves which account. Only works for
   // someone who already registered a passkey on a previous visit.
   async function signInWithPasskey() {
+    if (!termsAgreed) return { error: new Error("Please agree to the Terms of Use and Privacy Policy first.") };
     if (!supabaseReady) return { error: new Error("Supabase isn't configured yet") };
     return supabase.auth.signInWithPasskey();
   }
@@ -420,6 +427,7 @@ export function AuthProvider({ children }) {
   }
 
   async function signOut() {
+    setTermsAgreed(false);
     if (!supabaseReady) return;
     try {
       await prepareNativeNotificationLogout();
@@ -510,6 +518,7 @@ export function AuthProvider({ children }) {
     leaveCircle,
     setUserHidden,
     refreshProfile,
+    termsAgreed, setTermsAgreed,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

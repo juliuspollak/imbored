@@ -13,6 +13,7 @@ export default function PublicLanding() {
         {appStoreUrl
           ? <a className="public-landing__store-button" href={appStoreUrl} rel="noopener noreferrer">Download on the App Store</a>
           : <span className="public-landing__store-button public-landing__store-button--pending" aria-label="App Store link coming soon">App Store link coming soon</span>}
+        <nav aria-label="Public pages" style={{ marginTop: 24, display: "flex", gap: 20 }}><a href="/support">Support</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav>
       </div>
       <style>{`
         .public-landing { min-height:100dvh; display:grid; place-items:center; padding:max(32px,env(safe-area-inset-top)) 24px max(32px,env(safe-area-inset-bottom)); background:radial-gradient(circle at 50% 18%,color-mix(in srgb,var(--color-primary) 10%,transparent),transparent 42%),var(--color-page-bg); color:var(--color-text-primary); text-align:center; }

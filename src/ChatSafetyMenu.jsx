@@ -16,7 +16,7 @@ const REPORT_REASONS = [
   ["other", "safety.reasonOther"],
 ];
 
-export default function ChatSafetyMenu({ peerId, peerName, onBlocked }) {
+export default function ChatSafetyMenu({ peerId, peerName, messageId = null, onBlocked }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState(null); // null | "report" | "block"
@@ -38,12 +38,13 @@ export default function ChatSafetyMenu({ peerId, peerName, onBlocked }) {
     setError("");
     const { error: reportError } = await supabase.rpc("report_content", {
       target_user_id: peerId,
-      target_message_id: null,
+      target_message_id: messageId,
       report_reason: reason,
       report_details: details.trim() || null,
     });
     setBusy(false);
     if (reportError) { setError(reportError.message || t("safety.reportFailed")); return; }
+    window.dispatchEvent(new CustomEvent("player-blocked", { detail: { playerId: peerId } }));
     close();
     onBlocked?.({ reported: true });
   }
@@ -54,6 +55,7 @@ export default function ChatSafetyMenu({ peerId, peerName, onBlocked }) {
     const { error: blockError } = await supabase.rpc("block_player", { target_user_id: peerId });
     setBusy(false);
     if (blockError) { setError(blockError.message || t("safety.blockFailed")); return; }
+    window.dispatchEvent(new CustomEvent("player-blocked", { detail: { playerId: peerId } }));
     close();
     onBlocked?.({ reported: false });
   }
@@ -95,7 +97,7 @@ export default function ChatSafetyMenu({ peerId, peerName, onBlocked }) {
 
             {mode === null && (
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-                <Button variant="ghost" fullWidth before={<Flag size={15} />} onClick={() => setMode("report")}>{t("safety.report")}</Button>
+                <Button variant="ghost" fullWidth before={<Flag size={15} />} onClick={() => setMode("report")}>{messageId ? "Report message & block" : "Report & Block"}</Button>
                 <Button variant="ghost" fullWidth before={<Ban size={15} />} onClick={() => setMode("block")}>{t("safety.block")}</Button>
                 <p style={{ margin: "var(--space-2) 0 0", fontSize: 11, lineHeight: 1.5, color: "var(--color-text-secondary)" }}>
                   {t("safety.note")}
@@ -118,7 +120,7 @@ export default function ChatSafetyMenu({ peerId, peerName, onBlocked }) {
                   rows={3}
                   style={{ marginTop: "var(--space-1)", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border-strong)", padding: "var(--space-2) var(--space-3)", fontFamily: "inherit", fontSize: "var(--text-body-secondary-size)", background: "var(--color-surface-input)", color: "var(--color-text-primary)", resize: "vertical" }}
                 />
-                <Button variant="primary" fullWidth loading={busy} onClick={submitReport}>{t("safety.sendReport")}</Button>
+                <Button variant="primary" fullWidth loading={busy} onClick={submitReport}>{"Report & Block"}</Button>
                 <Button variant="ghost" fullWidth onClick={() => setMode(null)}>{t("safety.back")}</Button>
               </div>
             )}

@@ -47,6 +47,8 @@ export function usePokes(userId) {
       }
     }
 
+    const onBlocked = event => setPoke(current => current?.from_user === event.detail.playerId ? null : current);
+    window.addEventListener("player-blocked", onBlocked);
     refresh();
     const detach = attachRealtimeRefresh({
       channelName: `pokes-${userId}`,
@@ -54,6 +56,7 @@ export function usePokes(userId) {
       refresh,
     });
     return () => {
+      window.removeEventListener("player-blocked", onBlocked);
       cancelled = true;
       detach();
     };

@@ -9,6 +9,8 @@ import Button from "./components/Button.jsx";
 import Card from "./components/Card.jsx";
 import TextInput from "./components/TextInput.jsx";
 
+import TermsConsent from "./components/TermsConsent.jsx";
+
 const EMAIL_OTP_LENGTH = 8;
 const passkeySupported = typeof window !== "undefined" && !!window.PublicKeyCredential;
 
@@ -42,7 +44,7 @@ function AppleIcon() {
 
 export default function Login() {
   const { t } = useI18n();
-  const { signInWithEmail, verifyCode, signInWithGoogle, signInWithApple, signInWithPasskey } = useAuth();
+  const { termsAgreed, setTermsAgreed, signInWithEmail, verifyCode, signInWithGoogle, signInWithApple, signInWithPasskey } = useAuth();
   const [reviewAccess, setReviewAccess] = useState(false);
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -65,7 +67,7 @@ export default function Login() {
 
   async function handleSendCode(e) {
     e?.preventDefault?.();
-    if (!email || sending || cooldown > 0) return;
+    if (!termsAgreed || !email || sending || cooldown > 0) return;
     const cleanEmail = email.trim().toLowerCase(); if (!cleanEmail) return;
     setSending(true); setError(null); setEmail(cleanEmail);
     try {
@@ -80,7 +82,7 @@ export default function Login() {
 
   async function verifyEnteredCode(value) {
     const cleanCode = value.replace(/\D/g, "");
-    if (verifying) return;
+    if (!termsAgreed || verifying) return;
     if (cleanCode.length !== EMAIL_OTP_LENGTH) { setError(t("auth.invalidCodeLength")); return; }
     setVerifying(true); setError(null);
     const { error } = await verifyCode(email, cleanCode);
@@ -92,7 +94,7 @@ export default function Login() {
     const timer = window.setTimeout(() => verifyEnteredCode(code), 120);
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [code, sent]);
+  }, [code, sent, termsAgreed]);
 
   return (
     <Page style={{ alignItems: "center", justifyContent: "center" }}>
@@ -112,22 +114,24 @@ export default function Login() {
           </div>
         )}
 
+        <TermsConsent checked={termsAgreed} onChange={setTermsAgreed} />
+        <fieldset disabled={!termsAgreed} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         {reviewAccess ? (
           <AppReviewAccess onBack={() => setReviewAccess(false)} />
         ) : !sent ? (
           <>
             {passkeySupported && (
               <>
-                <Button variant="primary" fullWidth loading={passkeyBusy} before={<Fingerprint size={16} />} onClick={handlePasskey} disabled={!supabaseReady} style={{ marginBottom: "var(--space-3)" }}>
+                <Button variant="primary" fullWidth loading={passkeyBusy} before={<Fingerprint size={16} />} onClick={handlePasskey} disabled={!termsAgreed || !supabaseReady} style={{ marginBottom: "var(--space-3)" }}>
                   {passkeyBusy ? t("auth.waiting") : t("auth.passkey")}
                 </Button>
                 <p style={{ fontSize: 11, color: "var(--color-text-secondary)", marginBottom: "var(--space-4)" }}>{t("auth.passkeyHint")}</p>
               </>
             )}
-            <Button fullWidth before={<AppleIcon />} onClick={handleApple} disabled={!supabaseReady} style={{ marginBottom: "var(--space-3)", background:"#000", color:"#fff", border:"1px solid #000" }}>
+            <Button fullWidth before={<AppleIcon />} onClick={handleApple} disabled={!termsAgreed || !supabaseReady} style={{ marginBottom: "var(--space-3)", background:"#000", color:"#fff", border:"1px solid #000" }}>
               Continue with Apple
             </Button>
-            <Button variant="ghost" fullWidth before={<GoogleIcon />} onClick={handleGoogle} disabled={!supabaseReady} style={{ marginBottom: "var(--space-4)", border: "1px solid var(--color-border)" }}>
+            <Button variant="ghost" fullWidth before={<GoogleIcon />} onClick={handleGoogle} disabled={!termsAgreed || !supabaseReady} style={{ marginBottom: "var(--space-4)", border: "1px solid var(--color-border)" }}>
               {t("auth.google")}
             </Button>
             <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", marginBottom: "var(--space-4)" }}>
@@ -137,14 +141,14 @@ export default function Login() {
             </div>
             <form onSubmit={handleSendCode}>
               <label style={{ fontSize: "var(--text-caption-size)", fontWeight: 500, color: "var(--color-text-secondary)", display: "block", marginBottom: 6, textAlign: "left" }}>{t("auth.email")}</label>
-              <TextInput type="email" required disabled={!supabaseReady} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" style={{ marginBottom: "var(--space-3)" }} />
+              <TextInput type="email" required disabled={!termsAgreed || !supabaseReady} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" style={{ marginBottom: "var(--space-3)" }} />
               {error && <p style={{ fontSize: "var(--text-caption-size)", marginBottom: "var(--space-3)", color: "var(--color-danger-text)" }}>{error}</p>}
-              <Button variant="primary" fullWidth type="submit" loading={sending} disabled={!supabaseReady} after={<ArrowRight size={15} />}>
+              <Button variant="primary" fullWidth type="submit" loading={sending} disabled={!termsAgreed || !supabaseReady} after={<ArrowRight size={15} />}>
                 {sending ? t("auth.sending") : t("auth.sendCode")}
               </Button>
               <p style={{ fontSize: 11, color: "var(--color-text-secondary)", textAlign: "center", marginTop: "var(--space-3)" }}>{t("auth.noPassword")}</p>
             </form>
-            <Button variant="ghost" size="sm" type="button" onClick={() => { setError(null); setReviewAccess(true); }} disabled={!supabaseReady || sending || passkeyBusy} style={{ marginTop: "var(--space-3)" }}>
+            <Button variant="ghost" size="sm" type="button" onClick={() => { setError(null); setReviewAccess(true); }} disabled={!termsAgreed || !supabaseReady || sending || passkeyBusy} style={{ marginTop: "var(--space-3)" }}>
               App Review access
             </Button>
           </>
@@ -169,6 +173,7 @@ export default function Login() {
             </div>
           </form>
         )}
+        </fieldset>
       </Card>
     </Page>
   );

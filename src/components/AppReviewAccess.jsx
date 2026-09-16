@@ -5,7 +5,7 @@ import Button from "./Button.jsx";
 import TextInput from "./TextInput.jsx";
 
 export default function AppReviewAccess({ onBack }) {
-  const { signInWithAppReview } = useAuth();
+  const { signInWithAppReview, termsAgreed } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -14,7 +14,7 @@ export default function AppReviewAccess({ onBack }) {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (pending.current) return;
+    if (!termsAgreed || pending.current) return;
     pending.current = true;
     setBusy(true);
     setError(null);
@@ -37,11 +37,11 @@ export default function AppReviewAccess({ onBack }) {
       <h2 id="app-review-title" style={{ fontSize: "var(--text-body-size)" }}>App Review access</h2>
       <p style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>For the dedicated App Store review account.</p>
       <label htmlFor="app-review-email" style={labelStyle}>Email</label>
-      <TextInput id="app-review-email" name="email" type="email" autoComplete="username" autoCapitalize="none" spellCheck={false} required autoFocus disabled={busy || !supabaseReady} value={email} onChange={(event) => setEmail(event.target.value)} style={{ marginBottom: "var(--space-3)" }} />
+      <TextInput id="app-review-email" name="email" type="email" autoComplete="username" autoCapitalize="none" spellCheck={false} required autoFocus disabled={!termsAgreed || busy || !supabaseReady} value={email} onChange={(event) => setEmail(event.target.value)} style={{ marginBottom: "var(--space-3)" }} />
       <label htmlFor="app-review-password" style={labelStyle}>Password</label>
-      <TextInput id="app-review-password" name="password" type="password" autoComplete="current-password" required disabled={busy || !supabaseReady} value={password} onChange={(event) => setPassword(event.target.value)} style={{ marginBottom: "var(--space-3)" }} />
+      <TextInput id="app-review-password" name="password" type="password" autoComplete="current-password" required disabled={!termsAgreed || busy || !supabaseReady} value={password} onChange={(event) => setPassword(event.target.value)} style={{ marginBottom: "var(--space-3)" }} />
       {error && <p role="alert" style={{ fontSize: "var(--text-caption-size)", color: "var(--color-danger-text)" }}>{error}</p>}
-      <Button type="submit" variant="primary" fullWidth loading={busy} disabled={busy || !supabaseReady}>{busy ? "Signing in…" : "Sign in"}</Button>
+      <Button type="submit" variant="primary" fullWidth loading={busy} disabled={!termsAgreed || busy || !supabaseReady}>{busy ? "Signing in…" : "Sign in"}</Button>
       <Button type="button" variant="ghost" fullWidth disabled={busy} onClick={onBack} style={{ marginTop: "var(--space-3)" }}>Back to normal sign-in</Button>
     </form>
   );

@@ -24,6 +24,8 @@ export function useOnlinePlayers() {
       if (!cancelled) setPlayers(visible);
     }
 
+    const onBlocked = event => setPlayers(rows => rows.filter(row => (row.user_id || row.id) !== event.detail.playerId));
+    window.addEventListener("player-blocked", onBlocked);
     poll();
     const detach = attachRealtimeRefresh({
       channelName: "online-players-public",
@@ -32,6 +34,7 @@ export function useOnlinePlayers() {
       fallbackMs: 60000,
     });
     return () => {
+      window.removeEventListener("player-blocked", onBlocked);
       cancelled = true;
       detach();
     };

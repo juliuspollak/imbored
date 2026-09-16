@@ -10,6 +10,10 @@ export function shouldShowPublicPrivacy({ native = false, pathname = "/", search
   return !native && (pathname === "/privacy" || pathname === "/privacy/") && !search && !hash;
 }
 
+export function shouldShowPublicTerms({ native = false, pathname = "/", search = "", hash = "" } = {}) {
+  return !native && (pathname === "/terms" || pathname === "/terms/") && !search && !hash;
+}
+
 export function configuredAppStoreUrl(env = import.meta.env) {
   const value = String(env?.VITE_APP_STORE_URL || "").trim();
   if (!value) return null;

@@ -10,6 +10,8 @@ export default function PublicSupport() {
         <p className="public-support__body">For support, questions or feedback, contact us at:</p>
         <a className="public-support__email" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
         <p className="public-support__secondary">Please include a short description of the issue and, if relevant, your device and iOS version.</p>
+        <p>Report abusive content using the chat’s three-dot menu → Report &amp; Block. We review valid safety reports as quickly as possible, targeting within 24 hours, and remove violating content and suspend or remove offending users.</p>
+        <a href="/terms">Terms of Use</a>
         <a className="public-support__home" href="/">Home</a>
       </div>
       <style>{`

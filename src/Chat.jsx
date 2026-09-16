@@ -7,6 +7,7 @@ import { useI18n } from "./lib/i18n.jsx";
 import { wakePushNotifications } from "./lib/pushWake.js";
 import Button from "./components/Button.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
+import { moderationError } from "./lib/textModeration.js";
 import ChatSafetyMenu from "./ChatSafetyMenu.jsx";
 import BackButton from "./BackButton.jsx";
 
@@ -286,6 +287,8 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
   async function sendMessageBody(rawBody, restoreDraftOnError = false) {
     const body = rawBody.trim();
     if (!body || sending || !peerId || !peerAvailable) return;
+    const rejected = moderationError(body);
+    if (rejected) { if (restoreDraftOnError) setDraft(rawBody); setError(rejected); return; }
 
     setSending(true);
     setError("");
@@ -496,7 +499,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
             <ChatSafetyMenu
               peerId={peerId}
               peerName={peerProfile?.name}
-              onBlocked={() => { setPeerAvailable(false); onBack?.(); }}
+              onBlocked={() => { setMessages([]); setPeerAvailable(false); onBack?.(); }}
             />
           )}
         </header>
@@ -524,6 +527,7 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
             const canReact = !item.system_generated && !String(item.id).startsWith("temp-");
             return (
               <div className={`chat-row ${mine ? "mine" : "theirs"}${reactions.length ? " has-reaction" : ""}`} key={item.id}>
+                {!mine && !item.system_generated && <ChatSafetyMenu peerId={peerId} peerName={peerProfile?.name} messageId={item.id} onBlocked={() => { setMessages([]); setPeerAvailable(false); onBack?.(); }} />}
                 <div
                   className={`chat-bubble${item.system_generated ? " system" : ""}`}
                   onClick={() => canReact && setReactingMessageId(pickerOpen ? null : item.id)}

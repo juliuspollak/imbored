@@ -1,3 +1,4 @@
+import { createModeratedFetch } from "./textModeration.js";
 import { createClient } from "@supabase/supabase-js";
 
 const url = import.meta.env.VITE_SUPABASE_URL;
@@ -16,6 +17,7 @@ export const supabaseReady = Boolean(url && key);
 
 export const supabase = supabaseReady
   ? createClient(url, key, {
+      global: { fetch: createModeratedFetch((...args) => fetch(...args)) },
       // Passkeys are still experimental in supabase-js — explicit opt-in
       // required. Safe to leave on even if you never enable passkeys in
       // the Supabase dashboard; it just won't do anything until you do.

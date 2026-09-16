@@ -57,7 +57,7 @@ export default function PublicPrivacy() {
           <p>For privacy questions, requests, or concerns, email <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.</p>
         </PolicySection>
 
-        <nav className="public-privacy__nav" aria-label="Public pages"><a href="/">Home</a><a href="/support">Support</a></nav>
+        <nav className="public-privacy__nav" aria-label="Public pages"><a href="/">Home</a><a href="/support">Support</a><a href="/terms">Terms</a></nav>
       </article>
       <style>{`
         .public-privacy { min-height:100dvh; padding:max(32px,env(safe-area-inset-top)) 22px max(40px,env(safe-area-inset-bottom)); background:radial-gradient(circle at 50% 5%,color-mix(in srgb,var(--color-primary) 10%,transparent),transparent 28%),var(--color-page-bg); color:var(--color-text-primary); }

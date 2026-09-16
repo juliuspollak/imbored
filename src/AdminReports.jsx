@@ -57,6 +57,14 @@ export default function AdminReports({ onBack }) {
     refresh();
   }
 
+  async function removeContent(report) {
+    setBusyId(report.id); setMessage(null);
+    const { error } = await supabase.rpc("admin_remove_reported_message", { target_report_id: report.id });
+    setBusyId(null);
+    setMessage({ type: error ? "error" : "success", text: error?.message || "Message removed. Review the player before resolving this report." });
+    refresh();
+  }
+
   async function blockReported(report) {
     setBusyId(report.id);
     setMessage(null);
@@ -105,7 +113,7 @@ export default function AdminReports({ onBack }) {
             Needs review · {open.length}
           </div>
           {open.map((report) => (
-            <ReportCard key={report.id} report={report} busy={busyId === report.id} onResolve={resolve} onBlock={blockReported} />
+            <ReportCard key={report.id} report={report} busy={busyId === report.id} onResolve={resolve} onBlock={blockReported} onRemove={removeContent} />
           ))}
         </>
       )}
@@ -116,7 +124,7 @@ export default function AdminReports({ onBack }) {
             Handled
           </div>
           {closed.map((report) => (
-            <ReportCard key={report.id} report={report} busy={busyId === report.id} onResolve={resolve} onBlock={blockReported} />
+            <ReportCard key={report.id} report={report} busy={busyId === report.id} onResolve={resolve} onBlock={blockReported} onRemove={removeContent} />
           ))}
         </>
       )}
@@ -124,7 +132,7 @@ export default function AdminReports({ onBack }) {
   );
 }
 
-function ReportCard({ report, busy, onResolve, onBlock }) {
+function ReportCard({ report, busy, onResolve, onBlock, onRemove }) {
   const isOpen = report.status === "open";
   return (
     <Card style={{ marginBottom: "var(--space-3)", borderLeft: isOpen ? "3px solid var(--color-danger-text)" : undefined }}>
@@ -132,7 +140,7 @@ function ReportCard({ report, busy, onResolve, onBlock }) {
         <strong style={{ fontSize: "var(--text-body-size)", color: "var(--color-text-primary)" }}>
           {REASON_LABELS[report.reason] || report.reason}
         </strong>
-        <span style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>{timeAgo(report.created_at)}</span>
+        <span style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>{timeAgo(report.created_at)} · {new Date(report.created_at).toLocaleString()} · {report.status}{isOpen && Date.now() - new Date(report.created_at).getTime() >= 86400000 ? " · Over 24 hours" : ""}</span>
         {!isOpen && (
           <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: report.status === "actioned" ? "var(--color-success-text)" : "var(--color-text-muted)" }}>
             {report.status}
@@ -158,6 +166,7 @@ function ReportCard({ report, busy, onResolve, onBlock }) {
 
       {isOpen && (
         <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-3)", flexWrap: "wrap" }}>
+          {report.message_body && report.message_body !== "[Removed by moderation]" && <Button size="sm" disabled={busy} onClick={() => onRemove(report)}>Remove message</Button>}
           {report.reported_user_id && (
             <Button variant="danger" size="sm" loading={busy} before={<ShieldBan size={14} />} onClick={() => onBlock(report)}>
               Block player

@@ -1,3 +1,4 @@
+import TermsGate from "./TermsGate.jsx";
 import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { LogOut, Users, User, BarChart3, MessageSquare, Sparkles, Shield, Grid3x3, Gift, MessagesSquare, Flag } from "lucide-react";
@@ -1149,6 +1150,13 @@ function PokeLayer() {
   return <PokeOverlay poke={poke} onDismiss={dismiss} />;
 }
 
+function AccountTermsBoundary() {
+  const { user, profile, loading, profileLoading } = useAuth();
+  // Account restrictions take precedence over acceptance, including cached sessions.
+  if (!supabaseReady || loading || profileLoading || !user || profile?.is_blocked || profile?.account_deleted_at) return <AppShell />;
+  return <TermsGate key={user.id}><AppShell /><PokeLayer /></TermsGate>;
+}
+
 export default function App() {
   useEffect(() => {
     console.log("[REPLAY HOME] normal App mounted");
@@ -1157,8 +1165,7 @@ export default function App() {
   return (
     <AuthProvider>
       <style>{NAV_BTN_STYLE}</style>
-      <AppShell />
-      <PokeLayer />
+      <AccountTermsBoundary />
     </AuthProvider>
   );
 }
