@@ -52,19 +52,24 @@ export default function PublicTerms() {
         </nav>
       </article>
       <style>{`
-        .public-terms { min-height:100dvh; padding:max(32px,env(safe-area-inset-top)) max(22px,env(safe-area-inset-right)) max(40px,env(safe-area-inset-bottom)) max(22px,env(safe-area-inset-left)); background:radial-gradient(circle at 50% 5%,color-mix(in srgb,var(--color-primary) 10%,transparent),transparent 28%),var(--color-page-bg); color:var(--color-text-primary); }
+        .public-terms {
+          min-height:100dvh;
+          padding:max(32px,env(safe-area-inset-top)) max(22px,env(safe-area-inset-right)) max(40px,env(safe-area-inset-bottom)) max(22px,env(safe-area-inset-left));
+          background:radial-gradient(circle at 50% 5%,color-mix(in srgb,var(--color-primary) 10%,transparent),transparent 28%),var(--color-page-bg);
+          color:var(--color-text-primary);
+        }
         .public-terms__content { width:min(100%,680px); margin:0 auto; }
         .public-terms__header { text-align:center; margin-bottom:36px; }
         .public-terms__icon { display:block; margin:0 auto; width:72px; height:72px; border-radius:18px; box-shadow:var(--shadow-card); }
         .public-terms h1 { margin:20px 0 0; font-family:"Fredoka",sans-serif; font-size:clamp(34px,10vw,46px); font-weight:600; line-height:1.12; letter-spacing:-.025em; }
-        .public-terms p { margin:10px 0 0; font-size:16px; line-height:1.75; overflow-wrap:anywhere; }
+        .public-terms p { margin:10px 0 0; color:var(--color-text-secondary); font-size:16px; line-height:1.75; overflow-wrap:anywhere; }
         .public-terms .public-terms__updated { margin-top:12px; font-size:14px; color:var(--color-text-secondary); }
         .public-terms .public-terms__subtitle { margin-top:6px; font-size:14px; color:var(--color-text-secondary); }
         .public-terms section { margin-top:30px; }
         .public-terms h2 { margin:0 0 10px; font-family:"Fredoka",sans-serif; font-size:22px; font-weight:600; line-height:1.35; }
         .public-terms a { display:inline-flex; align-items:center; min-height:44px; max-width:100%; color:var(--color-primary); font-weight:600; text-decoration:underline; text-decoration-thickness:1.5px; text-underline-offset:4px; overflow-wrap:anywhere; }
         .public-terms a:hover { text-decoration-thickness:2.5px; }
-        .public-terms a:focus-visible { outline:3px solid var(--color-primary); outline-offset:4px; border-radius:4px; }
+        .public-terms a:focus-visible { outline:3px solid var(--color-primary-ring); outline-offset:4px; border-radius:4px; }
         .public-terms__nav { display:flex; flex-wrap:wrap; justify-content:center; column-gap:28px; row-gap:8px; margin-top:40px; padding-top:24px; border-top:1px solid var(--color-border); }
       `}</style>
     </main>
