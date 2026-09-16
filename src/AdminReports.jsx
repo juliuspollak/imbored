@@ -92,6 +92,7 @@ export default function AdminReports({ onBack }) {
   return (
     <Page>
       <PageHeader title="Reports" onBack={onBack} />
+      <p style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>Handling this report does not unblock the user. Personal blocks are managed by the person who created them.</p>
 
       {message && <StatusBanner variant={message.type === "error" ? "error" : "success"} style={{ marginBottom: "var(--space-3)" }}>{message.text}</StatusBanner>}
 

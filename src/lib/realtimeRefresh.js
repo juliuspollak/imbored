@@ -61,10 +61,12 @@ export function attachRealtimeRefresh({
   };
   document.addEventListener("visibilitychange", onVisibilityChange);
   window.addEventListener("player-blocked", requestRefresh);
+  window.addEventListener("player-unblocked", requestRefresh);
   const fallback = window.setInterval(() => refreshWhenVisible(false), fallbackMs);
 
   return () => {
     window.removeEventListener("player-blocked", requestRefresh);
+    window.removeEventListener("player-unblocked", requestRefresh);
     window.clearInterval(fallback);
     document.removeEventListener("visibilitychange", onVisibilityChange);
     if (channel) void supabase.removeChannel(channel);

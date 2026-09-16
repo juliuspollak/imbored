@@ -17,15 +17,19 @@ export function useSupabaseWatchedState(userId, { compute, tables, channelName, 
 
     let cancelled = false;
     let refreshInFlight = false;
+    let refreshRequested = false;
 
     async function refresh() {
-      if (refreshInFlight) return;
+      if (refreshInFlight) { refreshRequested = true; return; }
+      refreshRequested = false;
       refreshInFlight = true;
       try {
         const result = await compute(userId);
         if (!cancelled) setValue(result);
       } finally {
         refreshInFlight = false;
+        // A block/unblock during an existing read still needs a fresh result.
+        if (refreshRequested && !cancelled) void refresh();
       }
     }
 

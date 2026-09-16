@@ -1,3 +1,7 @@
+import Page from "./components/Page.jsx";
+import PageHeader from "./components/PageHeader.jsx";
+import AccountSafety from "./AccountSafety.jsx";
+import SafetyNotice from "./components/SafetyNotice.jsx";
 import TermsGate from "./TermsGate.jsx";
 import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
@@ -250,6 +254,12 @@ function AppShell() {
   }, [user?.id]);
   const organiserAttentionCount = useOrganiserAttentionCount(isCircleOrganiser ? user?.id : undefined);
 
+  useEffect(() => {
+    const openSafety = () => { setChatPlayer(null); setChatReturn(null); setActive("safety"); };
+    window.addEventListener("open-account-safety", openSafety);
+    return () => window.removeEventListener("open-account-safety", openSafety);
+  }, []);
+
   function openSection(section) {
     setSectionSignals((current) => ({ ...current, [section]: false }));
     setActive(section);
@@ -452,6 +462,10 @@ function AppShell() {
         />
       </Suspense>
     );
+  }
+
+  if (active === "safety") {
+    return withAccountMenu(<Page><PageHeader title={t("account.safetyTitle")} onBack={() => setActive(null)} /><AccountSafety /></Page>);
   }
 
   if (active === "profile") {
@@ -890,6 +904,7 @@ function AccountBadge({ sectionSignals = {}, profile, onSignOut, onOpenProfile, 
 
   const items = [
     { id:"profile", icon:User, label:t("account.myProfile"), onClick:onOpenProfile },
+    { id:"safety", icon:Shield, label:t("account.safetyTitle"), onClick:() => window.dispatchEvent(new Event("open-account-safety")) },
     { id:"whatsnew", icon:Sparkles, label:t("account.whatsNew"), onClick:onOpenWhatsNew, badge:sectionSignals.whatsnew ? 1 : 0 },
     { id:"chats", icon:MessagesSquare, label:t("account.chats"), onClick:onOpenChats, badge:unreadMessages.total },
     { id:"feedback", icon:MessageSquare, label:t("account.feedback"), onClick:onOpenFeedback, badge:feedbackBadgeCount },
@@ -1154,7 +1169,7 @@ function AccountTermsBoundary() {
   const { user, profile, loading, profileLoading } = useAuth();
   // Account restrictions take precedence over acceptance, including cached sessions.
   if (!supabaseReady || loading || profileLoading || !user || profile?.is_blocked || profile?.account_deleted_at) return <AppShell />;
-  return <TermsGate key={user.id}><AppShell /><PokeLayer /></TermsGate>;
+  return <TermsGate key={user.id}><AppShell /><PokeLayer /><SafetyNotice /></TermsGate>;
 }
 
 export default function App() {

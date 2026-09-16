@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Ban, Flag, MoreVertical, X } from "lucide-react";
 import { supabase } from "./lib/supabase.js";
 import { useI18n } from "./lib/i18n.jsx";
+import { completeSafetyAction } from "./lib/safetyActions.js";
 import Button from "./components/Button.jsx";
 
 // App Store guideline 1.2 requires an app with user-generated content to offer
@@ -23,41 +24,43 @@ export default function ChatSafetyMenu({ peerId, peerName, messageId = null, onB
   const [reason, setReason] = useState("harassment");
   const [details, setDetails] = useState("");
   const [busy, setBusy] = useState(false);
+  const pending = useRef(false);
   const [error, setError] = useState("");
   const displayName = peerName || t("safety.player");
 
   function close() {
+    if (pending.current) return;
     setOpen(false);
     setMode(null);
     setDetails("");
     setError("");
   }
 
-  async function submitReport() {
+  async function submit(reported) {
+    if (pending.current) return;
+    pending.current = true;
     setBusy(true);
     setError("");
-    const { error: reportError } = await supabase.rpc("report_content", {
-      target_user_id: peerId,
-      target_message_id: messageId,
-      report_reason: reason,
-      report_details: details.trim() || null,
-    });
-    setBusy(false);
-    if (reportError) { setError(reportError.message || t("safety.reportFailed")); return; }
-    window.dispatchEvent(new CustomEvent("player-blocked", { detail: { playerId: peerId } }));
-    close();
-    onBlocked?.({ reported: true });
-  }
-
-  async function submitBlock() {
-    setBusy(true);
-    setError("");
-    const { error: blockError } = await supabase.rpc("block_player", { target_user_id: peerId });
-    setBusy(false);
-    if (blockError) { setError(blockError.message || t("safety.blockFailed")); return; }
-    window.dispatchEvent(new CustomEvent("player-blocked", { detail: { playerId: peerId } }));
-    close();
-    onBlocked?.({ reported: false });
+    try {
+      await completeSafetyAction(() => reported
+        ? supabase.rpc("report_content", {
+          target_user_id: peerId,
+          target_message_id: messageId,
+          report_reason: reason,
+          report_details: details.trim() || null,
+        })
+        : supabase.rpc("block_player", { target_user_id: peerId }), () => {
+          window.dispatchEvent(new CustomEvent("player-blocked", { detail: { playerId: peerId, reported } }));
+          pending.current = false;
+          close();
+          onBlocked?.({ reported });
+        });
+    } catch (failure) {
+      setError(failure?.message || t(reported ? "safety.reportFailed" : "safety.blockFailed"));
+    } finally {
+      pending.current = false;
+      setBusy(false);
+    }
   }
 
   return (
@@ -66,7 +69,7 @@ export default function ChatSafetyMenu({ peerId, peerName, messageId = null, onB
         type="button"
         onClick={() => setOpen(true)}
         aria-label={t("safety.options", { name: displayName })}
-        style={{ display: "grid", placeItems: "center", width: 34, height: 34, flexShrink: 0, borderRadius: "50%", border: "none", background: "transparent", color: "var(--color-text-secondary)", cursor: "pointer" }}
+        style={{ display: "grid", placeItems: "center", width: 44, height: 44, flexShrink: 0, borderRadius: "50%", border: "none", background: "transparent", color: "var(--color-text-secondary)", cursor: "pointer" }}
       >
         <MoreVertical size={18} />
       </button>
@@ -88,7 +91,7 @@ export default function ChatSafetyMenu({ peerId, peerName, messageId = null, onB
                     ? t("safety.blockTitle", { name: displayName })
                     : peerName || t("common.player")}
               </strong>
-              <button type="button" onClick={close} aria-label={t("safety.close")} style={{ display: "grid", placeItems: "center", width: 32, height: 32, borderRadius: "50%", border: "none", background: "var(--color-surface-elevated)", color: "var(--color-text-secondary)", cursor: "pointer" }}>
+              <button type="button" disabled={busy} onClick={close} aria-label={t("safety.close")} style={{ display: "grid", placeItems: "center", width: 44, height: 44, borderRadius: "50%", border: "none", background: "var(--color-surface-elevated)", color: "var(--color-text-secondary)", cursor: "pointer" }}>
                 <X size={16} />
               </button>
             </div>
@@ -108,20 +111,21 @@ export default function ChatSafetyMenu({ peerId, peerName, messageId = null, onB
             {mode === "report" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
                 {REPORT_REASONS.map(([id, labelKey]) => (
-                  <label key={id} style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", borderRadius: "var(--radius-sm)", padding: "var(--space-2) var(--space-3)", fontSize: "var(--text-body-secondary-size)", cursor: "pointer", background: reason === id ? "var(--color-primary-subtle)" : "var(--color-surface-elevated)", border: `1px solid ${reason === id ? "var(--color-primary-subtle-border)" : "transparent"}` }}>
-                    <input type="radio" name="report-reason" checked={reason === id} onChange={() => setReason(id)} />
+                  <label key={id} style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", minHeight: 44, borderRadius: "var(--radius-sm)", padding: "var(--space-2) var(--space-3)", fontSize: "var(--text-body-secondary-size)", cursor: "pointer", background: reason === id ? "var(--color-primary-subtle)" : "var(--color-surface-elevated)", border: `1px solid ${reason === id ? "var(--color-primary-subtle-border)" : "transparent"}` }}>
+                    <input type="radio" name="report-reason" disabled={busy} checked={reason === id} onChange={() => setReason(id)} />
                     {t(labelKey)}
                   </label>
                 ))}
                 <textarea
+                  disabled={busy}
                   value={details}
                   onChange={(event) => setDetails(event.target.value.slice(0, 1000))}
                   placeholder={t("safety.detailsPlaceholder")}
                   rows={3}
                   style={{ marginTop: "var(--space-1)", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border-strong)", padding: "var(--space-2) var(--space-3)", fontFamily: "inherit", fontSize: "var(--text-body-secondary-size)", background: "var(--color-surface-input)", color: "var(--color-text-primary)", resize: "vertical" }}
                 />
-                <Button variant="primary" fullWidth loading={busy} onClick={submitReport}>{"Report & Block"}</Button>
-                <Button variant="ghost" fullWidth onClick={() => setMode(null)}>{t("safety.back")}</Button>
+                <Button variant="primary" fullWidth loading={busy} onClick={() => submit(true)}>{"Report & Block"}</Button>
+                <Button variant="ghost" fullWidth disabled={busy} onClick={() => setMode(null)}>{t("safety.back")}</Button>
               </div>
             )}
 
@@ -130,8 +134,8 @@ export default function ChatSafetyMenu({ peerId, peerName, messageId = null, onB
                 <p style={{ margin: 0, fontSize: "var(--text-body-secondary-size)", lineHeight: 1.5, color: "var(--color-text-secondary)" }}>
                   {t("safety.blockExplain")}
                 </p>
-                <Button variant="primary" fullWidth loading={busy} onClick={submitBlock}>{t("safety.confirmBlock", { name: displayName })}</Button>
-                <Button variant="ghost" fullWidth onClick={() => setMode(null)}>{t("safety.cancel")}</Button>
+                <Button variant="primary" fullWidth loading={busy} onClick={() => submit(false)}>{t("safety.confirmBlock", { name: displayName })}</Button>
+                <Button variant="ghost" fullWidth disabled={busy} onClick={() => setMode(null)}>{t("safety.cancel")}</Button>
               </div>
             )}
           </div>
