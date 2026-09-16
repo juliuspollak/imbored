@@ -4,10 +4,11 @@ export default function PublicPrivacy() {
   return (
     <main className="public-privacy">
       <article className="public-privacy__content">
-        <header>
+        <header className="public-privacy__header">
           <img className="public-privacy__icon" src="/assets/app-icon-source.png" alt="" />
           <h1>Privacy Policy</h1>
           <p className="public-privacy__updated">Last updated: 7 September 2026</p>
+          <p className="public-privacy__subtitle">imBored · Privacy Policy</p>
         </header>
 
         <PolicySection title="Information we collect">
@@ -57,22 +58,32 @@ export default function PublicPrivacy() {
           <p>For privacy questions, requests, or concerns, email <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.</p>
         </PolicySection>
 
-        <nav className="public-privacy__nav" aria-label="Public pages"><a href="/">Home</a><a href="/support">Support</a><a href="/terms">Terms</a></nav>
+        <nav className="public-privacy__nav" aria-label="Public pages">
+          <a href="/terms">Terms of Use</a>
+          <a href="/support">Support</a>
+          <a href="/">Home</a>
+        </nav>
       </article>
       <style>{`
-        .public-privacy { min-height:100dvh; padding:max(32px,env(safe-area-inset-top)) 22px max(40px,env(safe-area-inset-bottom)); background:radial-gradient(circle at 50% 5%,color-mix(in srgb,var(--color-primary) 10%,transparent),transparent 28%),var(--color-page-bg); color:var(--color-text-primary); }
+        .public-privacy {
+          min-height:100dvh;
+          padding:max(32px,env(safe-area-inset-top)) max(22px,env(safe-area-inset-right)) max(40px,env(safe-area-inset-bottom)) max(22px,env(safe-area-inset-left));
+          background:radial-gradient(circle at 50% 5%,color-mix(in srgb,var(--color-primary) 10%,transparent),transparent 28%),var(--color-page-bg);
+          color:var(--color-text-primary);
+        }
         .public-privacy__content { width:min(100%,680px); margin:0 auto; }
-        .public-privacy header { text-align:center; margin-bottom:36px; }
-        .public-privacy__icon { width:72px; height:72px; border-radius:18px; box-shadow:var(--shadow-card); }
-        .public-privacy h1 { margin:20px 0 0; font-family:"Fredoka",sans-serif; font-size:clamp(34px,10vw,46px); line-height:1.08; letter-spacing:-.025em; }
-        .public-privacy__updated { margin:10px 0 0; color:var(--color-text-secondary); font-size:13px; }
-        .public-privacy section { margin-top:28px; }
-        .public-privacy h2 { margin:0 0 9px; font-family:"Fredoka",sans-serif; font-size:21px; line-height:1.25; }
-        .public-privacy p { margin:9px 0 0; color:var(--color-text-secondary); font-size:15px; line-height:1.7; }
-        .public-privacy a { color:var(--color-primary); font-weight:700; text-underline-offset:3px; }
-        .public-privacy a:focus-visible { outline:3px solid var(--color-primary-ring); outline-offset:3px; border-radius:4px; }
-        .public-privacy__nav { display:flex; justify-content:center; gap:28px; margin-top:40px; padding-top:24px; border-top:1px solid var(--color-border); }
-        .public-privacy__nav a { min-height:44px; display:inline-flex; align-items:center; }
+        .public-privacy__header { text-align:center; margin-bottom:36px; }
+        .public-privacy__icon { display:block; margin:0 auto; width:72px; height:72px; border-radius:18px; box-shadow:var(--shadow-card); }
+        .public-privacy h1 { margin:20px 0 0; font-family:"Fredoka",sans-serif; font-size:clamp(34px,10vw,46px); font-weight:600; line-height:1.12; letter-spacing:-.025em; }
+        .public-privacy p { margin:10px 0 0; color:var(--color-text-secondary); font-size:16px; line-height:1.75; overflow-wrap:anywhere; }
+        .public-privacy .public-privacy__updated { margin-top:12px; font-size:14px; color:var(--color-text-secondary); }
+        .public-privacy .public-privacy__subtitle { margin-top:6px; font-size:14px; color:var(--color-text-secondary); }
+        .public-privacy section { margin-top:30px; }
+        .public-privacy h2 { margin:0 0 10px; font-family:"Fredoka",sans-serif; font-size:22px; font-weight:600; line-height:1.35; }
+        .public-privacy a { display:inline-flex; align-items:center; min-height:44px; max-width:100%; color:var(--color-primary); font-weight:600; text-decoration:underline; text-decoration-thickness:1.5px; text-underline-offset:4px; overflow-wrap:anywhere; }
+        .public-privacy a:hover { text-decoration-thickness:2.5px; }
+        .public-privacy a:focus-visible { outline:3px solid var(--color-primary-ring); outline-offset:4px; border-radius:4px; }
+        .public-privacy__nav { display:flex; flex-wrap:wrap; justify-content:center; column-gap:28px; row-gap:8px; margin-top:40px; padding-top:24px; border-top:1px solid var(--color-border); }
       `}</style>
     </main>
   );
