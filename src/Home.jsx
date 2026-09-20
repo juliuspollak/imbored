@@ -94,6 +94,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
   const [circleRosters, setCircleRosters] = useState({});
   const [challengeLifecycle, setChallengeLifecycle] = useState({});
   const [challengeCompletions, setChallengeCompletions] = useState({ personal: new Set() });
+  const [personalYesterdayCompleted, setPersonalYesterdayCompleted] = useState(new Set());
   const [challengesLoaded, setChallengesLoaded] = useState(false);
   const [expandedChallengeId, setExpandedChallengeId] = useState(null);
   const [challengeRows, setChallengeRows] = useState([]);
@@ -120,7 +121,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
     if (!challengesLoaded || challengeScope?.type !== "circle") return;
     const stillVisible = [...circleChallenges,...challengeHistory].some((item) => String(item.challenge_id) === String(challengeScope.id));
     if (!stillVisible) {
-      onChallengeScopeChange?.({ type:"personal",id:null,name:"My Challenge",gameIds:null });
+      onChallengeScopeChange?.({ type:"personal",id:null,name:"My Challenge",gameIds:null,targetDate:null });
       setExpandedChallengeId(null);
     }
   }, [challengeScope?.id, challengeScope?.type, challengesLoaded, onChallengeScopeChange, circleChallenges, challengeHistory]);
@@ -155,10 +156,11 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
       const week = currentWeekRange();
       await supabase.rpc("finalize_due_circle_challenges");
       if (cancelled) return;
-      const [{ data }, { data: graceData }, { data: personalRows }, { data: circleRows }, { data: rosterData }, { data: lifecycleData }, { data: historyData }] = await Promise.all([
+      const [{ data }, { data: graceData }, { data: personalRows }, { data: yesterdayPersonalRows }, { data: circleRows }, { data: rosterData }, { data: lifecycleData }, { data: historyData }] = await Promise.all([
         supabase.rpc("get_my_active_circle_challenges"),
         supabase.rpc("get_my_grace_circle_challenges"),
         supabase.from("game_stats").select("game,circle_challenge_id,challenge_date").eq("user_id", userId).eq("mode", "challenge").is("circle_challenge_id", null).eq("challenge_date", todayString()),
+        supabase.from("game_stats").select("game,circle_challenge_id,challenge_date").eq("user_id", userId).eq("mode", "challenge").is("circle_challenge_id", null).eq("challenge_date", daysAgoDate(1)),
         supabase.from("game_stats").select("game,circle_challenge_id,challenge_date").eq("user_id", userId).eq("mode", "challenge").not("circle_challenge_id", "is", null).gte("challenge_date", daysAgoDate(14)).lte("challenge_date", week.end),
         supabase.rpc("get_my_circle_rosters"),
         supabase.rpc("get_my_circle_challenge_lifecycle"),
@@ -175,6 +177,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
       setCircleChallenges(challenges);
       setCircleRoundStates(Object.fromEntries(states));
       setChallengeHistory(historyData || []);
+      setPersonalYesterdayCompleted(new Set((yesterdayPersonalRows || []).map((row) => row.game)));
       setChallengesLoaded(true);
       setChallengeCompletions(groupChallengeCompletions(completionRows));
       setChallengeLifecycle(Object.fromEntries((lifecycleData || []).map((item) => [String(item.challenge_id), item])));
@@ -311,6 +314,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
   const personalGameIds = configuredGames.filter((game) => game.available && game.challengeEnabled).map((game) => game.id);
   const personalGames = personalGameIds.map((id) => configuredGames.find((game) => game.id === id)).filter(Boolean);
   const personalCompleted = challengeCompletions.personal || new Set();
+  const missedYesterdayGames = personalGames.filter((game) => !personalYesterdayCompleted.has(game.id));
   const challengeStatus = (circleChallenge) => {
     const serverRounds = circleChallenge ? circleRoundStates[String(circleChallenge.challenge_id)] || [] : [];
     const requiredItems = circleChallenge ? (serverRounds.length ? serverRounds.map((round)=>round.challenge_date) : buildCircleChallengeRounds({ activeDays:circleChallenge.active_days, gameIds:circleChallenge.game_ids, weekStart:circleChallenge.week_start }).map((round) => round.date)) : personalGameIds;
@@ -331,10 +335,10 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
     return waiting > 0 ? `You finished · waiting for ${waiting}` : "You finished · finalising";
   };
   const challengeItems = [
-    { key:"personal", type:"personal", active_today:true, status:personalStatus },
+    { key:"personal", type:"personal", active_today:true, status:personalStatus, has_catch_up:missedYesterdayGames.length > 0 },
     ...circleChallenges.map((item) => ({ ...item, key:String(item.challenge_id), type:"circle", status:challengeStatus(item), today_done:(challengeCompletions[String(item.challenge_id)] || new Set()).has(todayString()) })),
   ];
-  const pendingChallenges = challengesLoaded && !gameConfigLoading ? challengeItems.filter((item) => item.active_today && item.status.remaining > 0 && !item.today_done) : [];
+  const pendingChallenges = challengesLoaded && !gameConfigLoading ? challengeItems.filter((item) => item.active_today && (item.status.remaining > 0 || item.has_catch_up) && !item.today_done) : [];
   const selectedCircle = challengeScope?.type === "circle" ? circleChallenges.find((item) => String(item.challenge_id) === String(challengeScope.id)) : null;
   const selectedRoster = selectedCircle ? circleRosters[selectedCircle.circle_id] || [] : [];
   const selectedChallengeGameIds = challengeScope?.type === "circle" ? (periodIndex > 0 ? selectedPeriod?.gameIds : null) || selectedCircle?.game_ids || challengeScope.gameIds || [] : personalGameIds;
@@ -342,8 +346,8 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
   const standingsRoster = challengeScope?.type === "circle" ? selectedRoster : Object.values(challengeProfiles);
   const selectedRounds = selectedCircle ? challengeRounds.length ? challengeRounds : buildCircleChallengeRounds({ activeDays:selectedCircle.active_days, gameIds:selectedCircle.game_ids }) : [];
 
-  function choosePersonalChallenge() {
-    onChallengeScopeChange({ type:"personal",id:null,name:"My Challenge",gameIds:null });
+  function choosePersonalChallenge(targetDate = null) {
+    onChallengeScopeChange({ type:"personal",id:null,name:"My Challenge",gameIds:null,targetDate });
     setExpandedChallengeId(null);
   }
 
@@ -357,8 +361,6 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
       dailyRounds:serverRounds.length ? serverRounds.map((round)=>({ date:round.challenge_date,game:round.game,roundNumber:round.round_number,roundState:round.round_state,closesAt:round.closes_at })) : buildCircleChallengeRounds({ activeDays:circleChallenge.active_days, gameIds:circleChallenge.game_ids, weekStart:circleChallenge.week_start }),
       stakeRewardId:circleChallenge.stake_reward_id, stakeRewardName:circleChallenge.stake_reward_name,
       stakeSplitMethod:circleChallenge.stake_split_method, stakeAccepted:circleChallenge.stake_accepted,
-      // A prize challenge commits the winner or the loser to something real, so
-      // ChallengeGate has to ask for agreement the same way a stake does.
       rewardType:circleChallenge.reward_type, rewardGoesTo:circleChallenge.reward_goes_to,
       rewardLabel:circleChallenge.reward_label,
     });
@@ -460,6 +462,10 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
                 <div style={{ display:"flex", alignItems:"center", marginBottom:8 }}><strong style={{ flex:1, fontSize:"var(--text-caption-size)", color:"var(--color-text-primary)" }}>TODAY&apos;S GAMES</strong><span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:600 }}>{personalStatus.completed} / {personalStatus.total}</span></div>
                 <div className="challenge-mini-strip">{personalGames.map((game) => { const completed=personalCompleted.has(game.id); return compactGameTile(game, completed, game.available && !completed, () => { choosePersonalChallenge(); completed ? openMyChallengeResult(game.id, todayString()) : onSelect(game.id); }, "-personal"); })}</div>
               </div>
+              {missedYesterdayGames.length > 0 && <div style={{ padding:"var(--space-3) var(--space-4)", borderTop:"1px solid var(--color-border)", background:"var(--color-warning-bg)" }}>
+                <div style={{ display:"flex", alignItems:"center", marginBottom:8 }}><strong style={{ flex:1, fontSize:"var(--text-caption-size)", color:"var(--color-warning-text)" }}>MISSED YESTERDAY</strong><span style={{ color:"var(--color-warning-text)", fontSize:"var(--text-caption-size)", fontWeight:600 }}>Still playable</span></div>
+                <div className="challenge-mini-strip">{missedYesterdayGames.map((game) => compactGameTile(game, false, game.available, () => { choosePersonalChallenge(daysAgoDate(1)); onSelect(game.id); }, "-yesterday"))}</div>
+              </div>}
               <button type="button" onClick={() => { choosePersonalChallenge(); setPersonalExpanded((value) => !value); }} aria-expanded={personalExpanded} style={{ ...buttonReset, width:"100%", display:"flex", alignItems:"center", gap:"var(--space-2)", padding:"11px var(--space-4)", border:0, borderTop:"1px solid var(--color-border)", background:"transparent", color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:600 }}><BarChart3 size={15} /><span style={{ flex:1, textAlign:"left" }}>View your results and more</span><ChevronDown size={16} style={{ transform:personalExpanded ? "rotate(180deg)" : "none" }} /></button>
               {personalExpanded && challengeScope?.type !== "circle" && <div style={{ padding:"0 var(--space-3) var(--space-3)" }}><ChallengeStandings rows={challengeRows} roster={standingsRoster} games={selectedChallengeGames} benchmarks={challengeBenchmarks} previousRows={previousChallengeRows} userId={userId} loading={standingsLoading} defaultOpen embedded refreshing={standingsRefreshing} periodLabel={selectedPeriod?.label} periodIndex={periodIndex} periodCount={standingsPeriods.length} onPeriodChange={setPeriodOffset} /></div>}
             </Card>
