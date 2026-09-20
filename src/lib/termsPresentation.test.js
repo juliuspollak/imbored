@@ -25,8 +25,8 @@ const rendered = await import(`data:text/javascript;base64,${Buffer.from(compile
 test('Terms and Privacy render as separate named links with clear interactive styling', () => {
   assert.match(rendered.unchecked, /<a href="https:\/\/imbored.au\/terms"[^>]*>Terms of Use<\/a>/);
   assert.match(rendered.unchecked, /<a href="https:\/\/imbored.au\/privacy"[^>]*>Privacy Policy<\/a>/);
-  assert.match(rendered.unchecked, /\.terms-consent a \{[^}]*min-height:44px;[^}]*color:var\(--color-primary\);[^}]*text-decoration:underline/);
-  assert.match(rendered.unchecked, /a:focus-visible[^}]*outline:3px solid/);
+  assert.match(rendered.unchecked, /\.terms-consent__sentence a \{[^}]*color:var\(--color-primary\);[^}]*font-weight:700;[^}]*border-bottom:1\.5px solid/);
+  assert.match(rendered.unchecked, /\.terms-consent__sentence a:focus-visible,[^}]*\.terms-consent__checkbox input:focus-visible \{[^}]*outline:3px solid/);
   assert.doesNotMatch(rendered.unchecked, /<label[^>]*>[^<]*<a/);
 });
 
@@ -34,7 +34,7 @@ test('checkbox has a complete accessible label and remains controlled without de
   assert.match(rendered.unchecked, /type="checkbox" aria-label="I agree to the Terms of Use and Privacy Policy"/);
   assert.doesNotMatch(rendered.unchecked, /checked=""/);
   assert.match(rendered.checked, /checked=""/);
-  assert.match(read('../components/TermsConsent.jsx'), /checked=\{checked\} onChange=\{e => onChange\(e.target.checked\)\}/);
+  assert.match(read('../components/TermsConsent.jsx'), /checked=\{checked\}[\s\S]*onChange=\{\([^)]*\) => onChange\([^)]*\.target\.checked\)\}/);
   assert.match(read('../Login.jsx'), /<fieldset disabled=\{!termsAgreed\}/);
   assert.match(read('./AuthContext.jsx'), /\[termsAgreed, setTermsAgreed\] = useState\(false\)/);
 });
