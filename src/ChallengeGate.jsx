@@ -13,7 +13,6 @@ const INK = "var(--color-text-primary)";
 const ACCENT = "var(--color-primary)";
 const GREEN = "var(--color-success-text)";
 
-
 function fmtTime(s) {
   const m = Math.floor(s / 60);
   const ss = s % 60;
@@ -29,6 +28,7 @@ function describeAvg(avg) {
 export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId, onExit, onSwitchMode, hintCooldownConfig, weekStartsOn = 1, challengeScope = { type: "personal" } }) {
   const dates = weekDates(new Date(), weekStartsOn);
   const dayLabels = weekDayLabels(weekStartsOn);
+  const personalTargetDate = challengeScope?.type === "circle" ? null : challengeScope?.targetDate || null;
   const circleRounds = challengeScope?.type === "circle"
     ? challengeScope.dailyRounds?.length
       ? challengeScope.dailyRounds
@@ -37,11 +37,15 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
         gameIds:challengeScope.gameIds,
       })
     : [];
+  const personalDateEntries = dates.map((date, index) => ({ date,index,isCatchUp:false }));
+  if (personalTargetDate && !dates.includes(personalTargetDate)) {
+    personalDateEntries.unshift({ date:personalTargetDate,index:dates.length,isCatchUp:true });
+  }
   const scheduledDateEntries = challengeScope?.type === "circle"
     ? circleRounds
       .filter((round) => round.game === gameId)
-      .map((round) => ({ date:round.date,index:(round.isoDay || (new Date(`${round.date}T12:00:00`).getDay() || 7)) - 1 }))
-    : dates.map((date, index) => ({ date,index }));
+      .map((round) => ({ date:round.date,index:(round.isoDay || (new Date(`${round.date}T12:00:00`).getDay() || 7)) - 1,isCatchUp:false }))
+    : personalDateEntries;
   const scheduledDates = scheduledDateEntries.map(({ date }) => date);
   const [results, setResults] = useState({});
   const [loading, setLoading] = useState(true);
@@ -54,18 +58,14 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
   const [saveError, setSaveError] = useState("");
   const [lastSolvedStats, setLastSolvedStats] = useState(null);
   const [pointsRetryStatId, setPointsRetryStatId] = useState(null);
-  const [communityRatings, setCommunityRatings] = useState({}); // date -> { avg, count }
-  const [leaderboards, setLeaderboards] = useState({}); // date -> [{ user_id, seconds, profiles }]
+  const [communityRatings, setCommunityRatings] = useState({});
+  const [leaderboards, setLeaderboards] = useState({});
   const [circleRoundStates, setCircleRoundStates] = useState({});
   const [startError, setStartError] = useState("");
   const [startingIdx, setStartingIdx] = useState(null);
-  // Seconds already on the clock when this attempt was reopened.
   const [elapsedAtStart, setElapsedAtStart] = useState(0);
   const [localStakeAccepted, setLocalStakeAccepted] = useState(false);
   const [acceptingStake, setAcceptingStake] = useState(false);
-  // Anything the circle has to settle between themselves needs agreeing to
-  // first. A staked challenge splits the cost of an item; a prize challenge
-  // puts one on the winner or the loser. Points challenges owe nobody anything.
   const isStake = challengeScope?.type === "circle" && !!challengeScope.stakeRewardId;
   const isPrize = challengeScope?.type === "circle" && challengeScope.rewardType === "prize";
   const hasStake = isStake || isPrize;
@@ -120,7 +120,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
 
     const byDateTimes = {};
     (allTimes || []).forEach((row) => {
-      if (!row.profiles) return; // hidden from us — leave them out entirely, not a mystery blank row
+      if (!row.profiles) return;
       byDateTimes[row.challenge_date] ||= [];
       byDateTimes[row.challenge_date].push(row);
     });
@@ -130,15 +130,12 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
 
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameId, userId, challengeScope?.id, challengeScope?.type, challengeScope?.activeDays?.join(",")]);
+  }, [gameId, userId, challengeScope?.id, challengeScope?.type, challengeScope?.activeDays?.join(","), challengeScope?.targetDate]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  // The clock belongs to the attempt, not to this screen. Re-entering a round
-  // returns the original start time, so pressing Home and coming back cannot
-  // rewind it — and nothing is forfeited for leaving.
   async function beginAttempt(date) {
     const { data, error } = await supabase.rpc("begin_challenge_attempt", {
       target_game: gameId,
@@ -146,8 +143,6 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
       target_circle_challenge_id: challengeScope?.type === "circle" ? challengeScope.id : null,
       target_score_challenge_id: null,
     });
-    // A missing start is not worth blocking play over — fall back to a fresh
-    // clock rather than locking someone out of their round.
     if (error || !data) return 0;
     return Math.max(0, Math.floor((Date.now() - new Date(data).getTime()) / 1000));
   }
@@ -217,7 +212,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
 
   if (playingIdx !== null) {
     const date = playingDate || dates[playingIdx];
-    const forcedDayIndex = challengeScope?.type === "circle"
+    const forcedDayIndex = challengeScope?.type === "circle" || !dates.includes(date)
       ? ((new Date(`${date}T12:00:00`).getDay() || 7) - 1)
       : playingIdx;
     return (
@@ -251,9 +246,6 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
       <GameHomeButton onClick={onExit} />
       {onSwitchMode && <ModePill mode="challenge" onSwitch={onSwitchMode} />}
 
-      {/* Same rounded white panel + shadow as the game screens themselves,
-          so picking a day feels like the same surface you're about to play
-          on, not a separate, plainer page. */}
       <div
         className="w-full max-w-sm sm:max-w-md lg:max-w-lg rounded-2xl p-5 lg:p-6 relative"
         style={{ background: PANEL, boxShadow: "var(--shadow-card)", border: "1px solid var(--color-border)" }}
@@ -310,7 +302,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
           <p style={{ color: "var(--color-text-secondary)" }} className="text-sm text-center py-8">Loading…</p>
         ) : (
           <div className="flex flex-col gap-2">
-            {scheduledDateEntries.map(({ date, index: i }) => {
+            {scheduledDateEntries.map(({ date, index: i, isCatchUp }) => {
               const serverState = challengeScope?.type === "circle" ? circleRoundStates[date]?.round_state : null;
               const isFuture = challengeScope?.type === "circle" ? serverState === "scheduled" : date > localDateString();
               const isToday = date === localDateString();
@@ -327,9 +319,7 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                     onClick={() => {
                       if (!result && !isPlayable) return;
                       if (result) setViewingIdx(isExpanded ? null : i);
-                      else {
-                        startChallenge(i,date);
-                      }
+                      else startChallenge(i,date);
                     }}
                     className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-left"
                     style={{
@@ -346,19 +336,13 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                         background: result ? "var(--color-success-bg)" : isFuture ? "var(--color-surface-elevated)" : "var(--color-primary-subtle)",
                       }}
                     >
-                      {isFuture ? (
-                        <Lock size={13} style={{ color: INK, opacity: 0.3 }} />
-                      ) : result ? (
-                        <Check size={15} style={{ color: GREEN }} />
-                      ) : (
-                        <Play size={13} style={{ color: ACCENT }} />
-                      )}
+                      {isFuture ? <Lock size={13} style={{ color: INK, opacity: 0.3 }} /> : result ? <Check size={15} style={{ color: GREEN }} /> : <Play size={13} style={{ color: ACCENT }} />}
                     </div>
                     <div className="flex-1">
                       <div style={{ color: INK, fontWeight: 600 }} className="text-sm">
-                        {challengeScope?.type === "circle"
+                        {challengeScope?.type === "circle" || isCatchUp
                           ? new Date(`${date}T12:00:00`).toLocaleDateString(undefined,{ weekday:"short" })
-                          : dayLabels[i]}{isToday ? " · Today" : ""}
+                          : dayLabels[i]}{isToday ? " · Today" : isCatchUp ? " · Yesterday" : ""}
                       </div>
                       <div style={{ color: INK, opacity: 0.45 }} className="text-[11px]">
                         {isFuture
@@ -373,6 +357,8 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                             : "Tap to play"
                           : isMissedCircleRound
                           ? "Missed · scored nothing"
+                          : isCatchUp
+                          ? "Missed yesterday — tap to catch up"
                           : "Missed — tap to catch up"}
                       </div>
                     </div>
@@ -397,23 +383,15 @@ export default function ChallengeGate({ gameId, gameLabel, GameComponent, userId
                       )}
                       {leaderboards[date] && leaderboards[date].length > 0 && (
                         <div style={{ borderTop: "1px solid rgba(16,24,40,0.08)" }} className="pt-2">
-                          <div style={{ color: INK, opacity: 0.4 }} className="text-[10px] font-semibold uppercase tracking-wide mb-1.5 text-center">
-                            Fastest today
-                          </div>
+                          <div style={{ color: INK, opacity: 0.4 }} className="text-[10px] font-semibold uppercase tracking-wide mb-1.5 text-center">Fastest today</div>
                           <div className="flex flex-col gap-1">
-                            {leaderboards[date].slice(0, 5).map((row, i) => {
+                            {leaderboards[date].slice(0, 5).map((row, rank) => {
                               const isMe = row.user_id === userId;
                               return (
-                                <div
-                                  key={row.user_id}
-                                  className="flex items-center gap-2 rounded-lg px-2 py-1"
-                                  style={{ background: isMe ? "rgba(47,111,237,0.08)" : "transparent" }}
-                                >
-                                  <span style={{ color: INK, opacity: 0.4, width: 14 }} className="text-[11px] font-semibold">{i + 1}</span>
+                                <div key={row.user_id} className="flex items-center gap-2 rounded-lg px-2 py-1" style={{ background: isMe ? "rgba(47,111,237,0.08)" : "transparent" }}>
+                                  <span style={{ color: INK, opacity: 0.4, width: 14 }} className="text-[11px] font-semibold">{rank + 1}</span>
                                   <span style={{ fontSize: 13 }}>{row.profiles?.icon || "🙂"}</span>
-                                  <span style={{ color: INK, fontWeight: isMe ? 700 : 500 }} className="text-xs flex-1 truncate">
-                                    {isMe ? "You" : row.profiles?.name || "Someone"}
-                                  </span>
+                                  <span style={{ color: INK, fontWeight: isMe ? 700 : 500 }} className="text-xs flex-1 truncate">{isMe ? "You" : row.profiles?.name || "Someone"}</span>
                                   <span style={{ color: INK, opacity: 0.6 }} className="text-xs tabular-nums">{fmtTime(row.seconds)}</span>
                                 </div>
                               );
