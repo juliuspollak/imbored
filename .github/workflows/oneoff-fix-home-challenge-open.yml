@@ -1,0 +1,97 @@
+name: One-off Home challenge loading fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/oneoff-fix-home-challenge-open.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-home:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Patch Home challenge loading/open state
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('src/Home.jsx')
+          s = p.read_text()
+
+          old = '  const missedYesterdayGames = personalGames.filter((game) => !personalYesterdayCompleted.has(game.id));'
+          new = '  const missedYesterdayGames = challengesLoaded ? personalGames.filter((game) => !personalYesterdayCompleted.has(game.id)) : [];'
+          if old not in s:
+              raise SystemExit('missedYesterdayGames target not found')
+          s = s.replace(old, new, 1)
+
+          old = '  const pendingChallenges = challengesLoaded && !gameConfigLoading ? challengeItems.filter((item) => item.active_today && (item.status.remaining > 0 || item.has_catch_up) && !item.today_done) : [];\n  const selectedCircle = challengeScope?.type === "circle" ? circleChallenges.find((item) => String(item.challenge_id) === String(challengeScope.id)) : null;'
+          new = '''  const pendingChallenges = challengesLoaded && !gameConfigLoading ? challengeItems.filter((item) => item.active_today && (item.status.remaining > 0 || item.has_catch_up) && !item.today_done) : [];
+  const personalHasAction = challengesLoaded && !gameConfigLoading && (personalStatus.remaining > 0 || missedYesterdayGames.length > 0);
+  const selectedCircle = challengeScope?.type === "circle" ? circleChallenges.find((item) => String(item.challenge_id) === String(challengeScope.id)) : null;'''
+          if old not in s:
+              raise SystemExit('pendingChallenges target not found')
+          s = s.replace(old, new, 1)
+
+          old = '  const selectedRounds = selectedCircle ? challengeRounds.length ? challengeRounds : buildCircleChallengeRounds({ activeDays:selectedCircle.active_days, gameIds:selectedCircle.game_ids }) : [];\n\n  function choosePersonalChallenge(targetDate = null) {'
+          new = '''  const selectedRounds = selectedCircle ? challengeRounds.length ? challengeRounds : buildCircleChallengeRounds({ activeDays:selectedCircle.active_days, gameIds:selectedCircle.game_ids }) : [];
+
+  useEffect(() => {
+    if (playMode !== "challenge" || !challengesLoaded || gameConfigLoading) return;
+    if (challengeScope?.type === "circle" && challengeScope.id != null) {
+      setExpandedChallengeId(challengeScope.id);
+      setPersonalExpanded(false);
+      return;
+    }
+    if (personalHasAction) {
+      setExpandedChallengeId(null);
+      setPersonalExpanded(true);
+    }
+  }, [playMode, challengesLoaded, gameConfigLoading, challengeScope?.type, challengeScope?.id, personalHasAction]);
+
+  function choosePersonalChallenge(targetDate = null) {'''
+          if old not in s:
+              raise SystemExit('selectedRounds target not found')
+          s = s.replace(old, new, 1)
+
+          old = '{missedYesterdayGames.length > 0 && <div style={{ padding:"var(--space-3) var(--space-4)", borderTop:"1px solid var(--color-border)", background:"var(--color-warning-bg)" }}>'
+          new = '{challengesLoaded && missedYesterdayGames.length > 0 && <div style={{ padding:"var(--space-3) var(--space-4)", borderTop:"1px solid var(--color-border)", background:"var(--color-warning-bg)" }}>'
+          if old not in s:
+              raise SystemExit('missed yesterday render target not found')
+          s = s.replace(old, new, 1)
+
+          p.write_text(s)
+
+          # Add focused regression coverage to the existing UX source-contract test.
+          tests = Path('src/lib/homeChallengeUx.test.js')
+          if tests.exists():
+              t = tests.read_text()
+              marker = 'home does not flash an unloaded missed-yesterday state'
+              if marker not in t:
+                  t += '''\n\ntest("home does not flash an unloaded missed-yesterday state", () => {\n  assert.match(homeSource, /const missedYesterdayGames = challengesLoaded \\? personalGames\\.filter/);\n  assert.match(homeSource, /challengesLoaded && missedYesterdayGames\\.length > 0/);\n});\n\ntest("actionable challenges open instead of landing collapsed", () => {\n  assert.match(homeSource, /const personalHasAction = challengesLoaded && !gameConfigLoading/);\n  assert.match(homeSource, /if \\(personalHasAction\\) \\{[\\s\\S]*setPersonalExpanded\\(true\\)/);\n  assert.match(homeSource, /challengeScope\\?\\.type === "circle"[\\s\\S]*setExpandedChallengeId\\(challengeScope\\.id\\)/);\n});\n'''
+                  tests.write_text(t)
+          PY
+      - name: Test
+        run: |
+          npm ci
+          npm test
+          npm run build
+          git diff --check
+      - name: Commit fix and remove one-off workflow
+        shell: bash
+        run: |
+          rm .github/workflows/oneoff-fix-home-challenge-open.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/Home.jsx src/lib/homeChallengeUx.test.js .github/workflows/oneoff-fix-home-challenge-open.yml
+          git commit -m "Fix Home challenge loading and open state"
+          git push origin HEAD:main
