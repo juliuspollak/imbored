@@ -314,7 +314,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
   const personalGameIds = configuredGames.filter((game) => game.available && game.challengeEnabled).map((game) => game.id);
   const personalGames = personalGameIds.map((id) => configuredGames.find((game) => game.id === id)).filter(Boolean);
   const personalCompleted = challengeCompletions.personal || new Set();
-  const missedYesterdayGames = personalGames.filter((game) => !personalYesterdayCompleted.has(game.id));
+  const missedYesterdayGames = challengesLoaded ? personalGames.filter((game) => !personalYesterdayCompleted.has(game.id)) : [];
   const challengeStatus = (circleChallenge) => {
     const serverRounds = circleChallenge ? circleRoundStates[String(circleChallenge.challenge_id)] || [] : [];
     const requiredItems = circleChallenge ? (serverRounds.length ? serverRounds.map((round)=>round.challenge_date) : buildCircleChallengeRounds({ activeDays:circleChallenge.active_days, gameIds:circleChallenge.game_ids, weekStart:circleChallenge.week_start }).map((round) => round.date)) : personalGameIds;
@@ -450,7 +450,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
 
         <p style={{ margin:"0 0 var(--space-5)", textAlign:"center", color:"var(--color-text-secondary)", fontSize:"var(--text-body-secondary-size)" }}>{playMode === "challenge" ? t("home.challengeHint") : t("home.practiceHint")}</p>
 
-        {playMode === "challenge" && onChallengeScopeChange && (
+        {playMode === "challenge" && onChallengeScopeChange && challengesLoaded && !gameConfigLoading && (
           <div style={{ display:"flex", flexDirection:"column", gap:"var(--space-3)" }}>
             <Card style={{ padding:0, overflow:"hidden" }}>
               <div style={{ display:"flex", alignItems:"center", gap:"var(--space-3)", padding:"var(--space-3) var(--space-4)" }}>
@@ -462,7 +462,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
                 <div style={{ display:"flex", alignItems:"center", marginBottom:8 }}><strong style={{ flex:1, fontSize:"var(--text-caption-size)", color:"var(--color-text-primary)" }}>TODAY&apos;S GAMES</strong><span style={{ color:"var(--color-text-secondary)", fontSize:"var(--text-caption-size)", fontWeight:600 }}>{personalStatus.completed} / {personalStatus.total}</span></div>
                 <div className="challenge-mini-strip">{personalGames.map((game) => { const completed=personalCompleted.has(game.id); return compactGameTile(game, completed, game.available && !completed, () => { choosePersonalChallenge(); completed ? openMyChallengeResult(game.id, todayString()) : onSelect(game.id); }, "-personal"); })}</div>
               </div>
-              {missedYesterdayGames.length > 0 && <div style={{ padding:"var(--space-3) var(--space-4)", borderTop:"1px solid var(--color-border)", background:"var(--color-warning-bg)" }}>
+              {challengesLoaded && missedYesterdayGames.length > 0 && <div style={{ padding:"var(--space-3) var(--space-4)", borderTop:"1px solid var(--color-border)", background:"var(--color-warning-bg)" }}>
                 <div style={{ display:"flex", alignItems:"center", marginBottom:8 }}><strong style={{ flex:1, fontSize:"var(--text-caption-size)", color:"var(--color-warning-text)" }}>MISSED YESTERDAY</strong><span style={{ color:"var(--color-warning-text)", fontSize:"var(--text-caption-size)", fontWeight:600 }}>Still playable</span></div>
                 <div className="challenge-mini-strip">{missedYesterdayGames.map((game) => compactGameTile(game, false, game.available, () => { choosePersonalChallenge(daysAgoDate(1)); onSelect(game.id); }, "-yesterday"))}</div>
               </div>}

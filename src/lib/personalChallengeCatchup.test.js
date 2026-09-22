@@ -18,3 +18,18 @@ test("personal catch-up can cross the Monday week boundary", () => {
   assert.match(gate, /Missed yesterday — tap to catch up/);
   assert.match(gate, /challengeScope\?\.targetDate/);
 });
+
+
+test("does not render missed-yesterday state before challenge data loads", () => {
+  assert.match(home, /const missedYesterdayGames = challengesLoaded \? personalGames\.filter/);
+  assert.match(home, /onChallengeScopeChange && challengesLoaded && !gameConfigLoading/);
+  assert.match(home, /challengesLoaded && missedYesterdayGames\.length > 0/);
+});
+
+test("loaded personal challenge keeps its games visible without expanding results", () => {
+  const todayGames = home.indexOf("TODAY&apos;S GAMES");
+  const resultsToggle = home.indexOf("View your results and more");
+  assert.ok(todayGames >= 0);
+  assert.ok(resultsToggle > todayGames);
+  assert.match(home, /personalGames\.map/);
+});
