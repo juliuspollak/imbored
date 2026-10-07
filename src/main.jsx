@@ -44,9 +44,11 @@ import "./gridly-branding.css";
 import "./game-tile-artwork.css";
 import "./twist-feedback.css";
 import "./chat-ios-polish.css";
+import "./seasonal-theme.css";
 import { REPLAY_LOCATION_CHANGE_EVENT, replayStatIdFrom } from "./lib/replayNavigation.js";
 import { isNativePlatform } from "./lib/platform.js";
 import { shouldShowPublicTerms, shouldShowPublicLanding, shouldShowPublicPrivacy, shouldShowPublicSupport } from "./lib/publicLanding.js";
+import { SeasonalThemeSync } from "./lib/seasonalTheme.js";
 
 enableAutomaticAppUpdates();
 
@@ -113,7 +115,12 @@ function BootstrapApp() {
 }
 
 function FullApplication({ puzzleStatId }) {
-  return puzzleStatId ? <SharedPuzzleApp statId={puzzleStatId} /> : <App />;
+  return (
+    <>
+      <SeasonalThemeSync />
+      {puzzleStatId ? <SharedPuzzleApp statId={puzzleStatId} /> : <App />}
+    </>
+  );
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(
