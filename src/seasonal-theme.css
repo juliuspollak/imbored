@@ -76,3 +76,33 @@
     scroll-behavior: auto !important;
   }
 }
+
+
+:root[data-seasonal-theme="halloween"] .qp-card::before,
+:root[data-seasonal-theme="halloween"] .tg-card::before,
+:root[data-seasonal-theme="halloween"] .zp-card::before,
+:root[data-seasonal-theme="halloween"] .ms-card::before,
+:root[data-seasonal-theme="halloween"] .geo-card::before {
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  z-index: 3;
+  font-size: 21px;
+  line-height: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.18));
+}
+:root[data-seasonal-theme="halloween"] .qp-card::before { content: "🧙"; }
+:root[data-seasonal-theme="halloween"] .tg-card::before { content: "🦇"; }
+:root[data-seasonal-theme="halloween"] .zp-card::before { content: "🕷️"; }
+:root[data-seasonal-theme="halloween"] .ms-card::before { content: "👻"; }
+:root[data-seasonal-theme="halloween"] .geo-card::before { content: "🎃"; }
+
+:root[data-seasonal-theme="halloween"] .qp-card,
+:root[data-seasonal-theme="halloween"] .tg-card,
+:root[data-seasonal-theme="halloween"] .zp-card,
+:root[data-seasonal-theme="halloween"] .ms-card,
+:root[data-seasonal-theme="halloween"] .geo-card,
+:root[data-seasonal-theme="halloween"] .zoom-card {
+  border-color: color-mix(in srgb, var(--seasonal-accent) 28%, var(--color-border)) !important;
+}
