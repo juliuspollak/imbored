@@ -9,6 +9,7 @@ import Button from "./components/Button.jsx";
 import Card from "./components/Card.jsx";
 import TextInput from "./components/TextInput.jsx";
 import StatusBanner from "./components/StatusBanner.jsx";
+import { effectiveSeasonalTheme } from "./lib/seasonalTheme.js";
 
 // Must match the phrase admin_reset_all_stats() checks server-side, so the
 // database refuses the call even if this guard is ever bypassed.
@@ -197,6 +198,7 @@ export default function AdminGames({ onBack }) {
       return;
     }
     setSeasonalAvailable(true);
+    document.documentElement.dataset.seasonalTheme = effectiveSeasonalTheme(next);
     setMessage({ type: "success", text: next.seasonal_theme === "off" ? "Seasonal theme turned off." : "Halloween theme saved." });
   }
 
