@@ -169,6 +169,7 @@ export default function ZoomContinentMap({
   answered = false,
   selectedContinent,
   correctContinent,
+  onSelect,
   compact = false,
 }) {
   const [geoJson, setGeoJson] = useState(null);
@@ -243,7 +244,7 @@ export default function ZoomContinentMap({
         <svg
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           role="img"
-          aria-label={isFocused ? "Map showing the two continent choices" : "World map showing the two continent choices"}
+          aria-label={isFocused ? "Map showing the two continent choices. Tap a highlighted continent to answer." : "World map showing the two continent choices. Tap a highlighted continent to answer."}
           style={{ width: "100%", height: compact ? 120 : 198, display: "block", overflow: "hidden" }}
         >
           {features.map((feature, index) => {
@@ -258,7 +259,11 @@ export default function ZoomContinentMap({
                 stroke="none"
                 strokeLinejoin="round"
                 fillRule="evenodd"
-                style={{ transition: "fill 180ms ease" }}
+                onClick={!answered && visibleOptions.includes(continent) && onSelect ? () => onSelect(continent) : undefined}
+                style={{
+                  transition: "fill 180ms ease",
+                  cursor: !answered && visibleOptions.includes(continent) && onSelect ? "pointer" : "default",
+                }}
               />
             );
           })}
