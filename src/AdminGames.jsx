@@ -103,14 +103,30 @@ export default function AdminGames({ onBack }) {
   const [confirmPhrase, setConfirmPhrase] = useState("");
   const [drafts, setDrafts] = useState({});
   const [savedFields, setSavedFields] = useState({}); // temporary "Saved" indicators
+  const [seasonalSettings, setSeasonalSettings] = useState({ seasonal_theme: "off", seasonal_start_date: "", seasonal_end_date: "" });
+  const [seasonalSaving, setSeasonalSaving] = useState(false);
+  const [seasonalAvailable, setSeasonalAvailable] = useState(true);
   const rowsRef = useRef(rows);
   rowsRef.current = rows;
 
   const refresh = useCallback(async () => {
     if (!supabaseReady || !isAdmin) { setLoading(false); return; }
     setLoading(true); setLoadError(null);
-    const { data, error } = await supabase.from("game_config").select("*").order("sort_order", { ascending: true });
+    const [{ data, error }, seasonalResult] = await Promise.all([
+      supabase.from("game_config").select("*").order("sort_order", { ascending: true }),
+      supabase.from("app_settings").select("seasonal_theme,seasonal_start_date,seasonal_end_date").eq("id", true).maybeSingle(),
+    ]);
     if (error) { setLoadError(error.message); setLoading(false); return; }
+    if (!seasonalResult.error && seasonalResult.data) {
+      setSeasonalSettings({
+        seasonal_theme: seasonalResult.data.seasonal_theme || "off",
+        seasonal_start_date: seasonalResult.data.seasonal_start_date || "",
+        seasonal_end_date: seasonalResult.data.seasonal_end_date || "",
+      });
+      setSeasonalAvailable(true);
+    } else {
+      setSeasonalAvailable(false);
+    }
     const known = new Set((data || []).map((r) => r.game_id));
     const missing = GAME_META.filter((g) => !known.has(g.id)).map((g, i) => ({
       game_id: g.id, visible: true, available: g.available,
@@ -158,6 +174,30 @@ export default function AdminGames({ onBack }) {
       setSavedFields((s) => ({ ...s, [key]: true }));
       setTimeout(() => setSavedFields((s) => { const n = { ...s }; delete n[key]; return n; }), 1500);
     }
+  }
+
+
+  async function updateSeasonalSettings(patch) {
+    const previous = seasonalSettings;
+    const next = { ...previous, ...patch };
+    setSeasonalSettings(next);
+    setSeasonalSaving(true);
+    setMessage(null);
+    const payload = {
+      seasonal_theme: next.seasonal_theme || "off",
+      seasonal_start_date: next.seasonal_start_date || null,
+      seasonal_end_date: next.seasonal_end_date || null,
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = await supabase.from("app_settings").update(payload).eq("id", true);
+    setSeasonalSaving(false);
+    if (error) {
+      setSeasonalSettings(previous);
+      setMessage({ type: "error", text: `Couldn't save seasonal theme: ${error.message}` });
+      return;
+    }
+    setSeasonalAvailable(true);
+    setMessage({ type: "success", text: next.seasonal_theme === "off" ? "Seasonal theme turned off." : "Halloween theme saved." });
   }
 
   function confirmResetTodayChallenge(gameId, label) { setConfirmTarget({ type: "resetToday", gameId, label }); }
@@ -266,6 +306,65 @@ export default function AdminGames({ onBack }) {
         ) : (
           <>
             {loadError && <div style={{ marginBottom: "var(--section-gap)" }}><StatusBanner variant="error" dismissible onDismiss={() => setLoadError(null)}>{loadError} <Button variant="ghost" size="sm" onClick={refresh} style={{ marginLeft: 8 }}>Retry</Button></StatusBanner></div>}
+
+
+            <Card style={{ padding: "var(--space-4)", marginBottom: "var(--section-gap)", borderColor: seasonalSettings.seasonal_theme === "halloween" ? "color-mix(in srgb, #f97316 38%, var(--color-border))" : undefined }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "var(--space-3)", marginBottom: "var(--space-3)" }}>
+                <div aria-hidden="true" style={{ width: 44, height: 44, borderRadius: "var(--radius-md)", background: "linear-gradient(135deg,#fff7ed,#f3e8ff)", display: "grid", placeItems: "center", fontSize: 23, flexShrink: 0 }}>🎃</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: "var(--text-body-size)", fontWeight: 700, color: "var(--color-text-primary)" }}>Seasonal theme</div>
+                  <div style={{ marginTop: 3, fontSize: "var(--text-body-secondary-size)", color: "var(--color-text-secondary)", lineHeight: 1.45 }}>
+                    Changes decorative app styling only. Puzzle rules and answer colours stay unchanged.
+                  </div>
+                </div>
+              </div>
+
+              {!seasonalAvailable && (
+                <StatusBanner variant="info" style={{ marginBottom: "var(--space-3)" }}>
+                  Seasonal settings need the latest database migration before this control can save.
+                </StatusBanner>
+              )}
+
+              <label style={{ display: "block", marginBottom: "var(--space-3)" }}>
+                <span style={{ display: "block", fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-text-primary)", marginBottom: 5 }}>Theme</span>
+                <select
+                  value={seasonalSettings.seasonal_theme}
+                  disabled={seasonalSaving || !seasonalAvailable}
+                  onChange={(event) => updateSeasonalSettings({ seasonal_theme: event.target.value })}
+                  style={{ width: "100%", minHeight: 44, borderRadius: "var(--radius-md)", border: "1px solid var(--color-border-strong)", padding: "8px 12px", fontSize: "var(--text-input-size)", background: "var(--color-surface-input)", color: "var(--color-text-primary)", fontFamily: "inherit" }}
+                >
+                  <option value="off">Off</option>
+                  <option value="halloween">Halloween</option>
+                </select>
+              </label>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-2)" }}>
+                <label>
+                  <span style={{ display: "block", fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-text-primary)", marginBottom: 5 }}>Start date (optional)</span>
+                  <TextInput
+                    type="date"
+                    value={seasonalSettings.seasonal_start_date}
+                    disabled={seasonalSaving || !seasonalAvailable}
+                    onChange={(event) => setSeasonalSettings((current) => ({ ...current, seasonal_start_date: event.target.value }))}
+                    onBlur={() => updateSeasonalSettings({ seasonal_start_date: seasonalSettings.seasonal_start_date })}
+                  />
+                </label>
+                <label>
+                  <span style={{ display: "block", fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-text-primary)", marginBottom: 5 }}>End date (optional)</span>
+                  <TextInput
+                    type="date"
+                    value={seasonalSettings.seasonal_end_date}
+                    disabled={seasonalSaving || !seasonalAvailable}
+                    onChange={(event) => setSeasonalSettings((current) => ({ ...current, seasonal_end_date: event.target.value }))}
+                    onBlur={() => updateSeasonalSettings({ seasonal_end_date: seasonalSettings.seasonal_end_date })}
+                  />
+                </label>
+              </div>
+
+              <div style={{ marginTop: "var(--space-3)", padding: "10px 12px", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", lineHeight: 1.45 }}>
+                Halloween currently adds subtle orange/purple app accents, a pumpkin on Home/Hive and a web detail in Zoom. The installed iOS icon stays unchanged until a bundled alternate icon is shipped in a future build.
+              </div>
+            </Card>
 
             {/* Game cards */}
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", marginBottom: "var(--section-gap)" }}>
