@@ -390,6 +390,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
                   answered={answered}
                   selectedContinent={selected}
                   correctContinent={step.answer}
+                  onSelect={pick}
                   labelFor={continentMapLabelFor}
                 />
               </div>
@@ -403,6 +404,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
                   answered={answered}
                   selectedRegion={selected}
                   correctRegion={step.answer}
+                  onSelect={pick}
                   labelFor={mapLabelFor}
                 />
               </div>
@@ -417,6 +419,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
                   answered={answered}
                   selectedCountry={selected}
                   correctCountry={step.answer}
+                  onSelect={pick}
                   labelFor={countryMapLabelFor}
                 />
               </div>
