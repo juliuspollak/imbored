@@ -144,6 +144,7 @@ export default function ZoomCountryMap({
   answered = false,
   selectedCountry,
   correctCountry,
+  onSelect,
   labelFor = (value) => value,
   compact = false,
 }) {
@@ -213,7 +214,7 @@ export default function ZoomCountryMap({
         <svg
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           role="img"
-          aria-label={`${labelFor(subregion)} countries shown within ${continent}`}
+          aria-label={`${labelFor(subregion)} countries shown within ${continent}. Tap a highlighted country to answer.`}
           style={{ width: "100%", height: compact ? 122 : 184, display: "block", overflow: "hidden" }}
         >
           <g>
@@ -232,7 +233,11 @@ export default function ZoomCountryMap({
                   strokeLinejoin="round"
                   fillRule="evenodd"
                   vectorEffect="non-scaling-stroke"
-                  style={{ transition: "fill 180ms ease, stroke 180ms ease" }}
+                  onClick={!answered && style.option && onSelect ? () => onSelect(countryName) : undefined}
+                  style={{
+                    transition: "fill 180ms ease, stroke 180ms ease",
+                    cursor: !answered && style.option && onSelect ? "pointer" : "default",
+                  }}
                 />
               );
             })}
