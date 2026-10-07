@@ -147,6 +147,7 @@ export default function ZoomRegionMap({
   answered = false,
   selectedRegion,
   correctRegion,
+  onSelect,
   labelFor = (value) => value,
   compact = false,
 }) {
@@ -220,7 +221,7 @@ export default function ZoomRegionMap({
         <svg
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           role="img"
-          aria-label={`${labelFor(continent)} regions`}
+          aria-label={`${labelFor(continent)} regions. Tap a highlighted region to answer.`}
           style={{ width: "100%", height: compact ? 126 : 194, display: "block", overflow: "hidden" }}
         >
           <g>
@@ -240,7 +241,11 @@ export default function ZoomRegionMap({
                     strokeLinejoin="round"
                     fillRule="evenodd"
                     vectorEffect="non-scaling-stroke"
-                    style={{ transition: "fill 180ms ease" }}
+                    onClick={!answered && style.option && region && onSelect ? () => onSelect(region) : undefined}
+                    style={{
+                      transition: "fill 180ms ease",
+                      cursor: !answered && style.option && region && onSelect ? "pointer" : "default",
+                    }}
                   />
                   {marker && (
                     <circle
@@ -251,6 +256,8 @@ export default function ZoomRegionMap({
                       stroke={style.option ? style.stroke : "#cbd5e1"}
                       strokeWidth={0.8}
                       vectorEffect="non-scaling-stroke"
+                      onClick={!answered && style.option && region && onSelect ? () => onSelect(region) : undefined}
+                      style={{ cursor: !answered && style.option && region && onSelect ? "pointer" : "default" }}
                     />
                   )}
                 </React.Fragment>
