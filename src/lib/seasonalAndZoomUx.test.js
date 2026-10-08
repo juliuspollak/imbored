@@ -39,10 +39,13 @@ test("Halloween styling is decorative across Home and game cards", () => {
   assert.match(seasonalCss, /seasonal-home-title::after/);
   assert.match(seasonalCss, /\.hive-bee-halloween/);
   assert.match(seasonalCss, /\.twist-halloween-face/);
-  assert.match(seasonalCss, /seasonal-game-accent--gridly/);
-  assert.match(seasonalCss, /seasonal-game-accent--minisudoku/);
-  assert.match(seasonalCss, /seasonal-game-accent--geo/);
-  assert.match(seasonalCss, /seasonal-game-accent--zoom/);
+  assert.match(seasonalCss, /\.challenge-mini-game--hive::after/);
+  assert.match(seasonalCss, /\.challenge-mini-game--binary::after/);
+  assert.match(seasonalCss, /\.challenge-mini-game--gridly::after/);
+  assert.match(seasonalCss, /\.challenge-mini-game--minisudoku::after/);
+  assert.match(seasonalCss, /\.challenge-mini-game--geo::after/);
+  assert.match(seasonalCss, /\.challenge-mini-game--zoom::after/);
+  assert.match(seasonalCss, /One restrained corner ornament on every individual game screen/);
 });
 
 test("seasonal settings are publicly readable but admin writable", () => {
