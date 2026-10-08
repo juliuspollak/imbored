@@ -14,6 +14,7 @@ import Card from "../components/Card.jsx";
 import Button from "../components/Button.jsx";
 import StatusBanner from "../components/StatusBanner.jsx";
 import { createGameAttemptSeed } from "../lib/gameAttemptSeed.js";
+import SeasonalGameAccent from "../components/SeasonalGameAccent.jsx";
 
 /* ---------------- puzzle generation ---------------- */
 
@@ -626,6 +627,7 @@ export default function MiniSudokuGame({ userId, onSolved, mode = "practice", fo
       `}</style>
 
       <Card className="ms-card" style={{ position: "relative", marginTop: "var(--game-content-offset)", marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
+        <SeasonalGameAccent game="minisudoku" />
         {shouldShowGameHelp(solved) && <button
           type="button"
           onClick={() => setShowHelp((h) => !h)}
