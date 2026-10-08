@@ -115,17 +115,13 @@ function BootstrapApp() {
 }
 
 function FullApplication({ puzzleStatId }) {
-  return (
-    <>
-      <SeasonalThemeSync />
-      {puzzleStatId ? <SharedPuzzleApp statId={puzzleStatId} /> : <App />}
-    </>
-  );
+  return puzzleStatId ? <SharedPuzzleApp statId={puzzleStatId} /> : <App />;
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <I18nProvider>
+      <SeasonalThemeSync />
       <ErrorBoundary onReset={() => window.location.reload()}>
         <BootstrapApp />
       </ErrorBoundary>
