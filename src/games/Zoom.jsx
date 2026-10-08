@@ -18,6 +18,7 @@ import Page from "../components/Page.jsx";
 import Card from "../components/Card.jsx";
 import Button from "../components/Button.jsx";
 import StatusBanner from "../components/StatusBanner.jsx";
+import SeasonalGameAccent from "../components/SeasonalGameAccent.jsx";
 
 const INK = "var(--color-text-primary)";
 const ACCENT = "var(--color-primary)";
@@ -270,6 +271,7 @@ export default function ZoomGame({ userId, onSolved, mode = "practice", forcedDa
       `}</style>
 
       <Card className="zoom-card" style={{ position: "relative", marginTop: "var(--game-content-offset)", marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
+        <SeasonalGameAccent game="zoom" />
         {shouldShowGameHelp(solved) && <button
           type="button"
           onClick={() => setShowHelp((h) => !h)}
