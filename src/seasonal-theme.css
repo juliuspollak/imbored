@@ -171,3 +171,146 @@
     scroll-behavior: auto !important;
   }
 }
+
+
+/* Halloween Home: deliberately bolder than the in-game accents, matching the approved mockup. */
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] {
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(180deg, rgba(19,9,39,.10), rgba(12,7,26,.36)),
+    url('/assets/halloween-home-bg.svg') center top / cover fixed !important;
+  color: #fff;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"]::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(20,9,43,.02) 0%, rgba(12,7,28,.10) 30%, rgba(7,5,18,.36) 100%);
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-main {
+  width: 100%;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-header {
+  text-shadow: 0 2px 12px rgba(5,2,14,.45);
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .seasonal-home-title {
+  color: #fff !important;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .seasonal-home-title::after {
+  content: none;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-header p,
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-main > p {
+  color: rgba(255,255,255,.76) !important;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-progress-control {
+  background: rgba(255,255,255,.96) !important;
+  border-color: rgba(255,255,255,.72) !important;
+  box-shadow: 0 10px 26px rgba(12,5,34,.30) !important;
+  backdrop-filter: blur(12px);
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] [role="group"][aria-label="Play mode"] {
+  background: rgba(25,15,48,.58) !important;
+  border-color: rgba(255,255,255,.14) !important;
+  box-shadow: 0 8px 24px rgba(7,4,20,.24);
+  backdrop-filter: blur(12px);
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] [role="group"][aria-label="Play mode"] > button {
+  color: rgba(255,255,255,.78) !important;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] [role="group"][aria-label="Play mode"] > button[aria-pressed="true"] {
+  background: rgba(255,255,255,.97) !important;
+  color: #2766e8 !important;
+  border-color: rgba(149,178,255,.7) !important;
+  box-shadow: 0 4px 14px rgba(11,5,32,.24) !important;
+}
+
+/* Existing game art remains underneath; each transparent SVG adds the Halloween character layer. */
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-game-tile--artwork::after {
+  content: "" !important;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-game-tile--hive::after {
+  background-image: url('/assets/halloween-hive-overlay.svg');
+}
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-game-tile--binary::after {
+  background-image: url('/assets/halloween-twist-overlay.svg');
+}
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-game-tile--gridly::after {
+  background-image: url('/assets/halloween-gridly-overlay.svg');
+}
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-game-tile--minisudoku::after {
+  background-image: url('/assets/halloween-sudoku-overlay.svg');
+}
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-game-tile--animalrush::after {
+  background-image: url('/assets/halloween-animalrush-overlay.svg');
+}
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-game-tile--geo::after {
+  background-image: url('/assets/halloween-geo-overlay.svg');
+}
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-game-tile--zoom::after {
+  background-image: url('/assets/halloween-zoom-overlay.svg');
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-game-tile--artwork {
+  border: 1px solid color-mix(in srgb, #f7a34d 62%, #7436e4 38%) !important;
+  box-shadow:
+    0 12px 30px rgba(4,2,17,.42),
+    0 0 0 1px rgba(255,255,255,.06) inset,
+    0 0 18px color-mix(in srgb, var(--seasonal-accent-2) 12%, transparent) !important;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-game-tile--artwork > * {
+  z-index: 3;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-game-tile--artwork > span:last-of-type strong {
+  color: #fff !important;
+  text-shadow: 0 2px 7px rgba(4,2,14,.72) !important;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-game-tile--hive > span:last-of-type strong {
+  color: #2b1a08 !important;
+  text-shadow: 0 1px 2px rgba(255,244,196,.72) !important;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-game-tile--artwork > span:last-of-type > span:nth-child(3) {
+  background: rgba(255,255,255,.93) !important;
+  border-color: rgba(255,255,255,.58) !important;
+  color: #26342f !important;
+  box-shadow: 0 4px 12px rgba(6,3,18,.24) !important;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-game-tile--artwork > span[title] {
+  background: rgba(255,255,255,.96) !important;
+}
+
+@media (max-width: 430px) {
+  :root[data-seasonal-theme="halloween"] .design-page[data-page="home"] {
+    background-position: 52% top !important;
+    background-attachment: scroll !important;
+  }
+  :root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-header {
+    padding-right: 54px !important;
+  }
+}
