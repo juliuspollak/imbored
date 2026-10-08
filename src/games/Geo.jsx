@@ -17,6 +17,7 @@ import Page from "../components/Page.jsx";
 import Card from "../components/Card.jsx";
 import Button from "../components/Button.jsx";
 import StatusBanner from "../components/StatusBanner.jsx";
+import SeasonalGameAccent from "../components/SeasonalGameAccent.jsx";
 
 /* ---------------- continents & map ---------------- */
 
@@ -221,6 +222,7 @@ export default function GeoGame({ userId, onSolved, mode = "practice", forcedDay
       `}</style>
 
       <Card className="geo-card" style={{ position: "relative", marginTop: "var(--game-content-offset)", marginBottom: "var(--space-8)", padding: "var(--space-5)" }}>
+        <SeasonalGameAccent game="geo" />
         {shouldShowGameHelp(solved) && <button type="button" onClick={() => setShowHelp((h) => !h)} aria-label={showHelp ? "Hide instructions" : "Show instructions"} aria-expanded={showHelp} className="geo-help-button" style={{ position: "absolute", top: "var(--space-3)", right: "var(--space-3)", width: 40, height: 40, display: "grid", placeItems: "center", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", color: "var(--color-icon-subtle)", cursor: "pointer" }}>
           <HelpCircle size={16} />
         </button>}
