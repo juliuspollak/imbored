@@ -20,7 +20,7 @@ import { createGameAttemptSeed } from "../lib/gameAttemptSeed.js";
 function FlameIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
   const id = React.useId().replace(/:/g, "");
   return (
-    <svg viewBox="0 0 28 34" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
+    <svg viewBox="0 0 28 34" width={size} height={size} className={`twist-flame-icon ${className}`.trim()} style={style} aria-hidden="true" {...props}>
       <defs>
         <linearGradient id={`${id}outer`} x1="8" y1="2" x2="20" y2="31" gradientUnits="userSpaceOnUse">
           <stop offset="0" stopColor="#FFD0A0" />
@@ -52,6 +52,10 @@ function FlameIcon({ size = 24, className = "", style, isConflict = false, ...pr
         <path d="M13.9 15.6c2.8 3.1 4 5.3 4 7.9 0 3.4-1.8 5.8-4.4 5.8-2.7 0-4.6-2.4-4.6-5.7 0-2.4 1.1-4.4 3.1-6.4-.1 1.9.4 3.2 1.5 4.1-.1-2-.1-3.8.4-5.7Z" fill={`url(#${id}inner)`} />
         <path d="M13.8 19.8c1.1 1.4 1.7 2.6 1.7 3.8 0 1.6-.8 2.8-2 2.8-1.2 0-2.1-1.2-2.1-2.7 0-1.1.5-2.2 1.5-3.3 0 .9.2 1.5.7 2-.1-.9 0-1.8.2-2.6Z" fill="#FFE3A3" fillOpacity=".62" />
       </g>
+      <g className="twist-halloween-face" aria-hidden="true">
+        <path d="m8.8 18 4.2-2.2 2.1 3.2-4.3 1.2Zm10.5 0-4.2-2.2-2.1 3.2 4.3 1.2Z" fill="#2c1737" />
+        <path d="M8.8 23.5c3.1 2.8 7.3 3.1 10.4 0l-1.8 4-3.3-1.7-3.4 1.7Z" fill="#2c1737" />
+      </g>
     </svg>
   );
 }
@@ -59,7 +63,7 @@ function FlameIcon({ size = 24, className = "", style, isConflict = false, ...pr
 function FrostIcon({ size = 24, className = "", style, isConflict = false, ...props }) {
   const id = React.useId().replace(/:/g, "");
   return (
-    <svg viewBox="0 0 30 40" width={size} height={size} className={className} style={style} aria-hidden="true" {...props}>
+    <svg viewBox="0 0 30 40" width={size} height={size} className={`twist-frost-icon ${className}`.trim()} style={style} aria-hidden="true" {...props}>
       <defs>
         <linearGradient id={`${id}main`} x1="12" y1="2" x2="17" y2="37" gradientUnits="userSpaceOnUse">
           <stop offset="0" stopColor="#F2FDFF" />
@@ -93,6 +97,12 @@ function FrostIcon({ size = 24, className = "", style, isConflict = false, ...pr
         <path d="M7 23.1 11.7 17.8 11.8 25.9 7.5 30.6Z" fill="#B8F5FF" fillOpacity=".42" />
         <path d="M20.1 17.8 24.2 13.8 22.7 23.8 19.1 27Z" fill="#A8F1FF" fillOpacity=".38" />
         <path d="M16.9 3.8 19.8 9.5 16.2 12.4 13.8 9.3Z" fill="#FFFFFF" fillOpacity=".82" />
+      </g>
+      <g className="twist-halloween-face" aria-hidden="true">
+        <ellipse cx="13" cy="20" rx="1.45" ry="2.1" fill="#153359" />
+        <ellipse cx="19" cy="20" rx="1.45" ry="2.1" fill="#153359" />
+        <path d="M13.4 26c1.8-1.6 3.5-1.6 5.2 0" fill="none" stroke="#153359" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M11.2 13.8c3.2-3 7.2-3 10.1 0" fill="none" stroke="#d7f8ff" strokeWidth="1.6" strokeLinecap="round" opacity=".9" />
       </g>
     </svg>
   );
