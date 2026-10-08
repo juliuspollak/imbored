@@ -37,12 +37,12 @@ test("seasonal theme is admin controlled and date bounded", () => {
 test("Halloween styling is decorative across Home and game cards", () => {
   assert.match(seasonalCss, /data-seasonal-theme="halloween"/);
   assert.match(seasonalCss, /seasonal-home-title::after/);
-  assert.match(seasonalCss, /\.qp-card::before/);
-  assert.match(seasonalCss, /\.tg-card::before/);
-  assert.match(seasonalCss, /\.zp-card::before/);
-  assert.match(seasonalCss, /\.ms-card::before/);
-  assert.match(seasonalCss, /\.geo-card::before/);
-  assert.match(seasonalCss, /\.zoom-card::before/);
+  assert.match(seasonalCss, /\.hive-bee-halloween/);
+  assert.match(seasonalCss, /\.twist-halloween-face/);
+  assert.match(seasonalCss, /seasonal-game-accent--gridly/);
+  assert.match(seasonalCss, /seasonal-game-accent--minisudoku/);
+  assert.match(seasonalCss, /seasonal-game-accent--geo/);
+  assert.match(seasonalCss, /seasonal-game-accent--zoom/);
 });
 
 test("seasonal settings are publicly readable but admin writable", () => {
