@@ -431,10 +431,10 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
   }
 
   return (
-    <Page style={{ alignItems:"flex-start" }}>
-      <main style={{ padding:"var(--space-5) 0 var(--space-8)" }}>
-        <header style={{ marginBottom:"var(--space-5)", paddingRight:"56px" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:"var(--space-2)" }}><span aria-hidden="true" style={{ fontSize:22 }}>🧩</span><h1 className="seasonal-home-title" style={{ margin:0, color:"var(--color-text-primary)", fontSize:"var(--text-page-title-size)", lineHeight:"var(--text-page-title-line)", fontWeight:"var(--text-page-title-weight)" }}>I&apos;mBoredToday</h1></div>
+    <Page data-page="home" style={{ alignItems:"flex-start" }}>
+      <main className="home-main" style={{ padding:"var(--space-5) 0 var(--space-8)" }}>
+        <header className="home-header" style={{ marginBottom:"var(--space-5)", paddingRight:"56px" }}>
+          <div className="home-title-row" style={{ display:"flex", alignItems:"center", gap:"var(--space-2)" }}><span aria-hidden="true" style={{ fontSize:22 }}>🧩</span><h1 className="seasonal-home-title" style={{ margin:0, color:"var(--color-text-primary)", fontSize:"var(--text-page-title-size)", lineHeight:"var(--text-page-title-line)", fontWeight:"var(--text-page-title-weight)" }}>I&apos;mBoredToday</h1></div>
           <p style={{ margin:"var(--space-1) 0 0", color:"var(--color-text-secondary)", fontSize:"var(--text-page-subtitle-size)" }}>{t("home.tagline")}</p>
         </header>
 
