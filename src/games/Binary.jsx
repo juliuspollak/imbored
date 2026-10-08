@@ -13,6 +13,7 @@ import { shouldShowGameHelp } from "../lib/gameUiState.js";
 import DaySelector from "../DaySelector.jsx";
 import Button from "../components/Button.jsx";
 import { createGameAttemptSeed } from "../lib/gameAttemptSeed.js";
+import SeasonalGameAccent from "../components/SeasonalGameAccent.jsx";
 
 // The in-game symbols deliberately echo the polished fire/ice artwork used on
 // the Twist tile. They are still strongly different by shape, so the puzzle
@@ -628,6 +629,7 @@ export default function BinaryGame({ userId, onSolved, mode = "practice", forced
     `}</style>
 
     <div className="tg-card w-full max-w-md sm:max-w-lg lg:max-w-xl rounded-2xl p-5 lg:p-6 relative" style={{ maxWidth: "var(--game-page-max-width)", background: PANEL, boxShadow: "0 10px 30px rgba(16,24,40,0.10)", border: "1px solid rgba(16,24,40,0.09)" }}>
+      <SeasonalGameAccent game="binary" />
       {shouldShowGameHelp(solved) && <button onClick={() => setShowHelp((h) => !h)} className="tg-icon-btn absolute top-4 right-4 transition-opacity" style={{ color: CREAM, opacity: 0.5 }}><HelpCircle size={16} /></button>}
       <div className="text-center mb-3"><h1 style={{ fontFamily: "'Fredoka', sans-serif", fontWeight: 700, color: CREAM, letterSpacing: "-0.01em" }} className="text-3xl lg:text-4xl">{GAME_NAMES.binary}</h1><p style={{ color: CREAM, opacity: 0.58 }} className="text-[13px] mt-0.5">Place equal flame and frost in every row and column.</p></div>
       {!solved && (isChallenge ? <div className="flex justify-center mb-4"><div className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: `${GOLD}18`, color: GOLD }}><span className="text-xs font-semibold">{t("common.todaysChallenge")}</span><span className="text-[10px] opacity-80">{GIVEN_TARGETS[dayIdx]} clues</span></div></div> : <DaySelector days={DAYS} value={dayIdx} onChange={setDayIdx} />)}
