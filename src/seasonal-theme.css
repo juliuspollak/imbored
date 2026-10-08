@@ -104,35 +104,6 @@
   overflow: visible;
 }
 
-:root[data-seasonal-theme="halloween"] .seasonal-game-accent--gridly {
-  left: 8px;
-  top: 7px;
-  width: 62px;
-  height: 62px;
-  opacity: .78;
-}
-
-:root[data-seasonal-theme="halloween"] .seasonal-game-accent--minisudoku {
-  left: 11px;
-  top: 10px;
-  width: 48px;
-  height: 48px;
-}
-
-:root[data-seasonal-theme="halloween"] .seasonal-game-accent--geo {
-  left: 9px;
-  top: 8px;
-  width: 52px;
-  height: 52px;
-}
-
-:root[data-seasonal-theme="halloween"] .seasonal-game-accent--zoom {
-  left: 8px;
-  top: 7px;
-  width: 58px;
-  height: 58px;
-}
-
 :root[data-seasonal-theme="halloween"] .qp-card,
 :root[data-seasonal-theme="halloween"] .tg-card,
 :root[data-seasonal-theme="halloween"] .zp-card,
@@ -177,10 +148,16 @@
 :root[data-seasonal-theme="halloween"] .design-page[data-page="home"] {
   position: relative;
   isolation: isolate;
-  background:
-    linear-gradient(180deg, rgba(19,9,39,.10), rgba(12,7,26,.36)),
-    url('/assets/halloween-home-bg.svg') center top / cover fixed !important;
+  background: #120a26 !important;
   color: #fff;
+  --color-text-primary: #fff;
+  --color-text-secondary: rgba(244,240,251,.78);
+  --color-text-muted: rgba(231,222,244,.62);
+  --color-icon-subtle: rgba(244,240,251,.66);
+  --color-surface: rgba(22,13,44,.86);
+  --color-surface-elevated: rgba(38,24,62,.86);
+  --color-border: rgba(255,255,255,.14);
+  --color-border-strong: rgba(255,255,255,.22);
 }
 
 :root[data-seasonal-theme="halloween"] .design-page[data-page="home"]::before {
@@ -189,7 +166,9 @@
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(20,9,43,.02) 0%, rgba(12,7,28,.10) 30%, rgba(7,5,18,.36) 100%);
+  background:
+    linear-gradient(180deg, rgba(19,9,39,.08), rgba(12,7,26,.32)),
+    url('/assets/halloween-home-bg.svg') 52% top / cover no-repeat;
 }
 
 :root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-main {
@@ -313,4 +292,105 @@
   :root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-header {
     padding-right: 54px !important;
   }
+}
+
+
+/* Challenge and Practice now sit on the same fixed viewport artwork.
+   Challenge cards use a dark glass treatment even when the user's app theme is light. */
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .design-card,
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] details {
+  background: rgba(24,14,47,.88) !important;
+  border-color: rgba(255,255,255,.14) !important;
+  color: #fff !important;
+  box-shadow: 0 12px 30px rgba(5,2,15,.28) !important;
+  backdrop-filter: blur(14px);
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .design-card strong,
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] details strong {
+  color: #fff !important;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .design-card button:not(.challenge-mini-game) {
+  color: rgba(247,243,252,.88);
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .design-card [style*="background:var(--color-info-bg)"],
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .design-card [style*="background: var(--color-info-bg)"] {
+  background: rgba(105,75,155,.28) !important;
+}
+
+/* The compact Challenge tiles use the same Halloween artwork language as Practice. */
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .challenge-mini-game {
+  border-color: rgba(246,145,75,.5) !important;
+  box-shadow: 0 8px 18px rgba(5,2,15,.28) !important;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .challenge-mini-game::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .challenge-mini-game > * {
+  position: relative;
+  z-index: 3;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .challenge-mini-game--hive::after {
+  background-image: url('/assets/halloween-hive-overlay.svg');
+}
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .challenge-mini-game--binary::after {
+  background-image: url('/assets/halloween-twist-overlay.svg');
+}
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .challenge-mini-game--gridly::after {
+  background-image: url('/assets/halloween-gridly-overlay.svg');
+}
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .challenge-mini-game--minisudoku::after {
+  background-image: url('/assets/halloween-sudoku-overlay.svg');
+}
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .challenge-mini-game--animalrush::after {
+  background-image: url('/assets/halloween-animalrush-overlay.svg');
+}
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .challenge-mini-game--geo::after {
+  background-image: url('/assets/halloween-geo-overlay.svg');
+}
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .challenge-mini-game--zoom::after {
+  background-image: url('/assets/halloween-zoom-overlay.svg');
+}
+
+/* One restrained corner ornament on every individual game screen. */
+:root[data-seasonal-theme="halloween"] .seasonal-game-accent {
+  left: 9px !important;
+  top: 8px !important;
+  width: 48px !important;
+  height: 48px !important;
+  opacity: .58 !important;
+  color: #7b5a95 !important;
+  transform: none !important;
+}
+
+:root[data-seasonal-theme="halloween"] .seasonal-game-accent__bat {
+  color: #3a254f;
+}
+
+:root[data-seasonal-theme="halloween"] .qp-card .seasonal-game-accent,
+:root[data-seasonal-theme="halloween"] .tg-card .seasonal-game-accent,
+:root[data-seasonal-theme="halloween"] .zp-card .seasonal-game-accent,
+:root[data-seasonal-theme="halloween"] .ms-card .seasonal-game-accent,
+:root[data-seasonal-theme="halloween"] .geo-card .seasonal-game-accent,
+:root[data-seasonal-theme="halloween"] .zoom-card .seasonal-game-accent {
+  display: block;
+}
+
+/* Keep Halloween from duplicating the game's own primary symbol.
+   Hive's bee and Twist's flame/frost stay recognisable without extra faces. */
+:root[data-seasonal-theme="halloween"] .hive-bee-halloween,
+:root[data-seasonal-theme="halloween"] .twist-halloween-face {
+  display: none !important;
 }
