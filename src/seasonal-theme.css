@@ -404,13 +404,12 @@
   --color-warning-text: #ffd38a;
 }
 
-:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-progress-control,
-:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-progress-control * {
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-progress-control {
   color: #182033 !important;
 }
 
-:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-progress-control svg[style*="danger"] {
-  color: #c84a35 !important;
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-progress-control > span {
+  color: #182033 !important;
 }
 
 :root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .challenge-mini-game > strong {
