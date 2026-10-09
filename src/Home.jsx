@@ -411,6 +411,7 @@ export default function Home({ onSelect, playMode, onPlayModeChange, userId, onO
         key={`${game.id}${keySuffix}`}
         disabled={!canPlay && !completed}
         onClick={onClick}
+        aria-label={`${game.label}${completed ? ", completed — open details" : canPlay ? " — play" : ""}`}
         className={`challenge-mini-game challenge-mini-game--${game.id}`}
         style={{
           ...buttonReset, position:"relative", flex:"1 0 72px", minWidth:72, maxWidth:108, minHeight:112,
