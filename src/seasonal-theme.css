@@ -394,3 +394,50 @@
 :root[data-seasonal-theme="halloween"] .twist-halloween-face {
   display: none !important;
 }
+
+
+/* Final iPhone readability polish. */
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] {
+  --color-primary-subtle: rgba(70, 43, 104, .78);
+  --color-primary-subtle-border: rgba(156, 118, 206, .58);
+  --color-warning-bg: rgba(91, 55, 34, .74);
+  --color-warning-text: #ffd38a;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-progress-control,
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-progress-control * {
+  color: #182033 !important;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .home-progress-control svg[style*="danger"] {
+  color: #c84a35 !important;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .challenge-mini-game > strong {
+  display: none !important;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .challenge-mini-game > span:last-child:not([aria-hidden]) {
+  display: none !important;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .challenge-mini-game {
+  min-height: 108px !important;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .challenge-player-toggle {
+  color: #fff !important;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] .challenge-player-toggle span {
+  color: inherit;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] article:has(> .challenge-player-toggle) {
+  background: rgba(39, 24, 61, .9) !important;
+  border-color: rgba(255,255,255,.14) !important;
+}
+
+:root[data-seasonal-theme="halloween"] .design-page[data-page="home"] article:has(> .challenge-player-toggle) .challenge-player-toggle span[style*="warning-text"] {
+  color: #ffd38a !important;
+}
