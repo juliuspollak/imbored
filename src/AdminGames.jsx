@@ -340,8 +340,8 @@ export default function AdminGames({ onBack }) {
                 </select>
               </label>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-2)" }}>
-                <label>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+                <label style={{ display: "block", minWidth: 0 }}>
                   <span style={{ display: "block", fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-text-primary)", marginBottom: 5 }}>Start date (optional)</span>
                   <TextInput
                     type="date"
@@ -351,7 +351,7 @@ export default function AdminGames({ onBack }) {
                     onBlur={() => updateSeasonalSettings({ seasonal_start_date: seasonalSettings.seasonal_start_date })}
                   />
                 </label>
-                <label>
+                <label style={{ display: "block", minWidth: 0 }}>
                   <span style={{ display: "block", fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-text-primary)", marginBottom: 5 }}>End date (optional)</span>
                   <TextInput
                     type="date"
@@ -364,7 +364,7 @@ export default function AdminGames({ onBack }) {
               </div>
 
               <div style={{ marginTop: "var(--space-3)", padding: "10px 12px", borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", color: "var(--color-text-secondary)", fontSize: "var(--text-caption-size)", lineHeight: 1.45 }}>
-                Halloween currently adds subtle orange/purple app accents, a pumpkin on Home/Hive and a web detail in Zoom. The installed iOS icon stays unchanged until a bundled alternate icon is shipped in a future build.
+                Halloween changes the Home scene, game tiles and subtle in-game accents. The installed iOS icon stays unchanged until a bundled alternate icon is shipped in a future build.
               </div>
             </Card>
 
