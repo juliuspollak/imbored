@@ -681,6 +681,8 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                     </div>
                     {manager ? (
                       <Button variant="icon" onClick={(event) => { event.stopPropagation(); setCardMenuCircleId(menuOpen ? null : circle.id); }} aria-label={`More actions for ${circle.name}`} aria-expanded={menuOpen}><Ellipsis size={18} /></Button>
+                    ) : isMine ? (
+                      <span style={{ fontSize:"var(--text-body-secondary-size)", color:"var(--color-success-text)", fontWeight:600, flexShrink:0 }}>Joined</span>
                     ) : myRequest?.status === "pending" ? (
                       <span style={{ fontSize: "var(--text-body-secondary-size)", color: "var(--color-text-secondary)", fontWeight: 500, flexShrink: 0 }}>Requested</span>
                     ) : (
