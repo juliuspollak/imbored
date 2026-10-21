@@ -172,7 +172,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
       setSentInvitations(sentInvitationsResult.data || []);
       const circlesById = new Map((circlesResult.data || []).map((circle) => [Number(circle.id), circle]));
       const currentById = new Map(challenges.map((item) => [String(item.challenge_id), { ...item, week_start:weekStartForChallenge(item) }]));
-      const scheduledChallenges = (scheduledResult.data || []).map((item) => currentById.get(String(item.id)) || {
+      const scheduledChallenges = (scheduledResult.data || []).map((item) => ({ ...(currentById.get(String(item.id)) || {
         challenge_id:item.id, circle_id:item.circle_id,
         circle_name:circlesById.get(Number(item.circle_id))?.name || "Circle",
         circle_emoji:circlesById.get(Number(item.circle_id))?.emoji || "⭐",
@@ -182,7 +182,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
         series_weeks:item.series_weeks, occurrence_number:item.occurrence_number,
         is_locked:!!item.locked_at, week_start:item.week_start,
         stake_reward_id:item.stake_reward_id, stake_split_method:item.stake_split_method,
-      });
+      }), series_id:item.series_id, occurrence_number:item.occurrence_number, series_weeks:item.series_weeks, repeats_weekly:item.repeats_weekly }));
       challenges.forEach((item) => {
         if (!scheduledChallenges.some((scheduled) => String(scheduled.challenge_id) === String(item.challenge_id))) scheduledChallenges.push(item);
       });
@@ -722,8 +722,22 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
         const circleTimezone = resolveCalendarTimezone(rosterCircle.timezone);
         const circleToday = calendarDateInTimezone(circleTimezone);
         const rosterChallenges = challengesFor(rosterCircle.id);
+        const groupedChallenges = new Map();
+        rosterChallenges.forEach((challenge) => {
+          const key = challenge.repeats_weekly && challenge.series_id != null
+            ? `series:${challenge.series_id}` : `single:${challenge.challenge_id}`;
+          if (!groupedChallenges.has(key)) groupedChallenges.set(key, []);
+          groupedChallenges.get(key).push(challenge);
+        });
+        const thisMonday = weekStartForMode("this", { calendarToday:circleToday });
+        const visibleChallenges = [...groupedChallenges.values()].map((occurrences) => {
+          const ordered = [...occurrences].sort((a,b) => a.week_start.localeCompare(b.week_start));
+          const selected = ordered.find((item) => String(item.challenge_id) === String(expandedChallengeId));
+          const current = ordered.filter((item) => item.week_start <= thisMonday).at(-1) || ordered[0];
+          return { ...(selected || current), seriesOccurrences:ordered };
+        });
         const nck = `new:${rosterCircle.id}`;
-        const visibleChallenges = expandedChallengeId === nck ? [...rosterChallenges, { challenge_id: nck, challenge_title: "New challenge", isNew: true }] : rosterChallenges;
+        if (expandedChallengeId === nck) visibleChallenges.push({ challenge_id:nck, challenge_title:"New challenge", isNew:true, seriesOccurrences:[] });
 
         return (
           <div className="circles-manage-page" style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", justifyContent: "center", overflowY: "auto", background: "var(--color-page-bg)" }}>
@@ -748,7 +762,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                     <div style={{ width: 34, height: 34, borderRadius: "var(--radius-sm)", background: "var(--color-success-bg)", color: "var(--color-success-text)", display: "grid", placeItems: "center", flexShrink: 0 }}><CalendarDays size={15} /></div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: "var(--text-body-size)", fontWeight: 700, color: "var(--color-text-primary)" }}>Challenges</div>
-                      <div style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>{rosterChallenges.length} scheduled</div>
+                      <div style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>{visibleChallenges.length} challenge{visibleChallenges.length === 1 ? "" : "s"} scheduled</div>
                     </div>
                   </div>
 
@@ -773,11 +787,15 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                         <button type="button" onClick={() => setExpandedChallengeId(open ? null : ck)} style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", width: "100%", padding: "var(--space-3)", textAlign: "left", background: "transparent", border: "none", cursor: "pointer", color: "inherit", fontFamily: "inherit" }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: "var(--text-body-secondary-size)", fontWeight: 600, color: "var(--color-text-primary)" }} className="truncate">{edit.title || challenge.challenge_title || "Weekly challenge"}</div>
-                            <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 2 }}>{formatChallengeWeek(edit.weekStart)} · {edit.days.length} rounds</div>
+                            <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 2 }}>{challenge.seriesOccurrences?.length > 1 ? `${challenge.seriesOccurrences.length} weeks · Week ${edit.occurrenceNumber || 1} of ${edit.durationWeeks}` : formatChallengeWeek(edit.weekStart)} · {edit.days.length} rounds</div>
                           </div>
                           {edit.locked && <Lock size={12} style={{ color: "var(--color-warning-text)" }} />}<ChevronDown size={15} style={{ opacity: 0.35, transform: open ? "rotate(180deg)" : "none" }} />
                         </button>
                         {open && <div style={{ padding: "0 12px 12px", borderTop: "1px solid var(--color-border)" }}>
+                          {challenge.seriesOccurrences?.length > 1 && <div style={{ padding:"var(--space-3) 0", borderBottom:"1px solid var(--color-border)" }}>
+                            <div style={{ fontSize:"var(--text-caption-size)", fontWeight:700, marginBottom:6 }}>Weekly rounds · choose a week to view or edit</div>
+                            <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>{challenge.seriesOccurrences.map((occurrence) => <button type="button" key={occurrence.challenge_id} onClick={() => setExpandedChallengeId(String(occurrence.challenge_id))} aria-pressed={String(occurrence.challenge_id) === ck} style={{ ...challengeChoiceStyle(String(occurrence.challenge_id) === ck), borderRadius:"var(--radius-sm)", padding:"7px 9px", fontSize:11, fontWeight:600 }}>Week {occurrence.occurrence_number || 1}</button>)}</div>
+                          </div>}
                           {edit.locked && <div style={{ borderRadius: "var(--radius-sm)", padding: 10, fontSize: "var(--text-caption-size)", marginTop: "var(--space-3)", background: "var(--color-warning-bg)", color: "var(--color-warning-text)" }}>Locked because a member started this challenge.</div>}
                           {owner && <label style={{ display: "block", marginTop: "var(--space-3)" }}><span style={{ fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-text-primary)" }}>Challenge name</span><input disabled={edit.locked} value={edit.title} onChange={(e) => patchChallenge(ck, { title: e.target.value })} placeholder="e.g. Weekend sprint" style={{ width: "100%", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border-strong)", padding: "8px 12px", fontSize: "var(--text-input-size)", marginTop: "var(--space-1)", background: "var(--color-surface-input)", color: "var(--color-text-primary)", boxSizing: "border-box" }} /></label>}
                           <div style={{ fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-text-primary)", marginTop: "var(--space-3)", marginBottom: 6 }}>Games</div>
