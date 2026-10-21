@@ -6178,6 +6178,9 @@ begin
     where id=target_challenge_id and circle_id=target_circle_id and closed_at is null
     for update;
     if not found then raise exception 'Challenge not found.'; end if;
+    if current_challenge.repeats_weekly then
+      raise exception 'Edit the whole recurring series, not an individual week.' using errcode='55000';
+    end if;
     if current_challenge.locked_at is not null
       or exists(select 1 from public.circle_challenge_starts where challenge_id=current_challenge.id)
       or exists(select 1 from public.game_stats where circle_challenge_id=current_challenge.id) then
