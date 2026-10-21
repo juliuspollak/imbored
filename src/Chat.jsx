@@ -113,6 +113,8 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
   const quickPressOpenedRef = useRef(false);
   const initialScrollDoneRef = useRef(false);
   const previousMessageCountRef = useRef(0);
+  const keepLatestVisibleRef = useRef(true);
+  const sendingScrollRef = useRef(false);
 
   const peerId = peer?.user_id || peer?.id || null;
   const peerProfile = peer?.profiles || peer || null;
@@ -248,27 +250,53 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
     previousMessageCountRef.current=0;
   },[peerId]);
 
+  function scrollToLatest() {
+    const container = messagesRef.current;
+    if (!container) return;
+    container.scrollTop = container.scrollHeight;
+  }
+
+  // Keep the latest bubble visible as the keyboard and composer change height.
+  // Respect the reader scrolling up through earlier messages.
+  useEffect(() => {
+    const container = messagesRef.current;
+    if (!container) return;
+    const trackScroll = () => {
+      const distance = container.scrollHeight - container.clientHeight - container.scrollTop;
+      keepLatestVisibleRef.current = distance < 96;
+    };
+    container.addEventListener("scroll", trackScroll, { passive:true });
+    const observer = typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(() => { if (keepLatestVisibleRef.current || sendingScrollRef.current) scrollToLatest(); })
+      : null;
+    observer?.observe(container);
+    const composer = container.nextElementSibling;
+    if (composer) observer?.observe(composer);
+    const onViewportResize = () => {
+      if (keepLatestVisibleRef.current || sendingScrollRef.current) requestAnimationFrame(scrollToLatest);
+    };
+    window.visualViewport?.addEventListener("resize", onViewportResize);
+    return () => {
+      container.removeEventListener("scroll", trackScroll);
+      observer?.disconnect();
+      window.visualViewport?.removeEventListener("resize", onViewportResize);
+    };
+  }, [peerId, loading]);
+
   useLayoutEffect(() => {
     const container = messagesRef.current;
     if (!container || loading) return;
-
     if (!initialScrollDoneRef.current) {
-      // Position before paint so opening a long conversation never visibly
-      // travels from its oldest message to its newest one.
-      const previousBehaviour=container.style.scrollBehavior;
-      container.style.scrollBehavior="auto";
-      container.scrollTop=container.scrollHeight;
-      container.style.scrollBehavior=previousBehaviour;
-      initialScrollDoneRef.current=true;
-      previousMessageCountRef.current=messages.length;
-      return;
+      scrollToLatest();
+      initialScrollDoneRef.current = true;
+      keepLatestVisibleRef.current = true;
+    } else if (messages.length > previousMessageCountRef.current
+      && (keepLatestVisibleRef.current || sendingScrollRef.current)) {
+      scrollToLatest();
     }
+    previousMessageCountRef.current = messages.length;
+  }, [messages.length, loading]);
 
-    if (messages.length > previousMessageCountRef.current) {
-      container.scrollTo({ top:container.scrollHeight,behavior:"smooth" });
-    }
-    previousMessageCountRef.current=messages.length;
-  },[messages.length,loading]);
 
   const grouped = useMemo(() => {
     const result = [];
@@ -290,6 +318,8 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
     const rejected = moderationError(body);
     if (rejected) { if (restoreDraftOnError) setDraft(rawBody); setError(rejected); return; }
 
+    sendingScrollRef.current = true;
+    keepLatestVisibleRef.current = true;
     setSending(true);
     setError("");
     const optimisticId = `temp-${Date.now()}`;
@@ -322,6 +352,10 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
     }
     setSending(false);
     textareaRef.current?.focus();
+    requestAnimationFrame(() => {
+      scrollToLatest();
+      sendingScrollRef.current = false;
+    });
   }
 
   function submitMessage(event) {
@@ -659,6 +693,9 @@ export default function Chat({ currentUser, currentProfile, peer, onBack, onOpen
               rows={1}
               placeholder={`Message ${peerProfile?.name || "player"}…`}
               onChange={(event) => setDraft(event.target.value)}
+              onFocus={() => {
+                if (keepLatestVisibleRef.current) requestAnimationFrame(scrollToLatest);
+              }}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && !event.shiftKey) {
                   event.preventDefault();
