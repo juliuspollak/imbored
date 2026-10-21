@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { APP_REVIEW_EMAIL, signInReviewAccount } from "./appReviewAuth.js";
+import { APP_REVIEW_EMAIL, APP_REVIEW_EMAILS, signInReviewAccount } from "./appReviewAuth.js";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const login = read("../Login.jsx");
@@ -17,12 +17,15 @@ test("review credentials call password auth unchanged and return its ordinary se
   const client = { auth: { signInWithPassword: async (credentials) => { calls.push(credentials); return result; } } };
   assert.equal(await signInReviewAccount(client, "  REVIEW@IMBORED.AU ", password), result);
   assert.deepEqual(calls, [{ email: APP_REVIEW_EMAIL, password }]);
+  assert.deepEqual(APP_REVIEW_EMAILS, ["review@imbored.au", "review1@imbored.au"]);
+  assert.equal(await signInReviewAccount(client, "  REVIEW1@IMBORED.AU ", password), result);
+  assert.deepEqual(calls[1], { email: "review1@imbored.au", password });
 });
 
 test("other emails and missing passwords never call Supabase", async () => {
   let calls = 0;
   const client = { auth: { signInWithPassword: async () => { calls++; } } };
-  for (const email of ["normal@example.com", "review@imbored.au.evil.example", "", null]) {
+  for (const email of ["normal@example.com", "review@imbored.au.evil.example", "review11@imbored.au", "", null]) {
     assert.match((await signInReviewAccount(client, email, randomBytes(16).toString("hex"))).error.message, /dedicated review account/);
   }
   for (const password of ["", null, undefined]) {
