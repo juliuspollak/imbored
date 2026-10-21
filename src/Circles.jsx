@@ -89,6 +89,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
   const [memberProfiles, setMemberProfiles] = useState({});
   const [requests, setRequests] = useState([]);
   const [invitations, setInvitations] = useState([]);
+  const [sentInvitations, setSentInvitations] = useState([]);
   const [circleBlocks, setCircleBlocks] = useState([]);
   const [circleChallenges, setCircleChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -148,9 +149,10 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
         supabase.rpc("get_my_circle_rosters"),
         supabase.rpc("get_my_managed_circle_blocks"),
         supabase.rpc("get_my_pending_circle_invitations"),
+        supabase.from("circle_invitations").select("circle_id,invited_user_id,status").eq("invited_by", user.id).eq("status","pending"),
         supabase.from("circle_weekly_challenges").select("*").gte("week_start", currentMondayString()).is("closed_at", null).order("week_start").order("created_at"),
       ]);
-      const [circlesResult,profilesResult,membersResult,requestsResult,challengesResult,rosterResult,blocksResult,invitationsResult,scheduledResult] = results;
+      const [circlesResult,profilesResult,membersResult,requestsResult,challengesResult,rosterResult,blocksResult,invitationsResult,sentInvitationsResult,scheduledResult] = results;
       const criticalError = circlesResult.error || membersResult.error || challengesResult.error || rosterResult.error || scheduledResult.error;
       if (criticalError) setLoadError(criticalError.message || "Some circle details could not be loaded.");
       const challenges = challengesResult.data || [];
@@ -167,6 +169,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
       setRequests(requestsResult.data || []);
       setCircleBlocks(blocksResult.data || []);
       setInvitations(invitationsResult.data || []);
+      setSentInvitations(sentInvitationsResult.data || []);
       const circlesById = new Map((circlesResult.data || []).map((circle) => [Number(circle.id), circle]));
       const currentById = new Map(challenges.map((item) => [String(item.challenge_id), { ...item, week_start:weekStartForChallenge(item) }]));
       const scheduledChallenges = (scheduledResult.data || []).map((item) => currentById.get(String(item.id)) || {
@@ -245,6 +248,12 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
 
   const byId = Object.fromEntries(profiles.map((p) => [p.id, p]));
   const mine = new Set(members.filter((m) => m.user_id === user?.id).map((m) => m.circle_id));
+  // The Circles page is a personal dashboard, not a public directory.
+  // Do not show unrelated circles simply because the database exposes their names.
+  const visibleCircles = circles.filter((circle) => profile?.is_admin || circle.created_by === user?.id
+    || mine.has(circle.id)
+    || invitations.some((invitation) => invitation.circle_id === circle.id)
+    || requests.some((request) => request.circle_id === circle.id && request.user_id === user?.id && request.status === "pending"));
   function rosterFor(circleId) {
     return members.filter((member) => member.circle_id === circleId)
       .map((member) => memberProfiles[`${circleId}:${member.user_id}`] || byId[member.user_id] || { id:member.user_id, name:"Circle member", icon:"🙂", mood:"" });
@@ -287,10 +296,20 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
     setInviteEmail(""); setEmailInviteOpen(false);
   }
 
-  async function decideInvitation(invitationId, accept) {
+  async function decideInvitation(invitationId, accept, circleId) {
     const { error } = await supabase.rpc("decide_circle_invitation", { target_invitation_id: invitationId, accept_invitation: accept });
-    setMsg(error?.message || (accept ? "Circle joined" : "Invitation declined"));
-    if (!error) await refresh();
+    if (error) { setMsg(`Could not ${accept ? "join circle" : "decline invitation"}: ${error.message}`); return; }
+    if (accept) {
+      const { data, error: membershipError } = await supabase.from("circle_members")
+        .select("circle_id").eq("circle_id", circleId).eq("user_id", user.id).maybeSingle();
+      if (membershipError || !data) {
+        setMsg("The invitation was accepted, but membership could not be verified. Refresh Circles and contact support if it still shows Request to join.");
+        await refresh();
+        return;
+      }
+    }
+    setMsg(accept ? "Circle joined" : "Invitation declined");
+    await refresh();
   }
 
   async function request(circleId) {
@@ -571,8 +590,8 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                 <div style={{ fontSize: "var(--text-body-secondary-size)", fontWeight: 600, color: "var(--color-text-primary)" }} className="truncate">{item.circle_name}</div>
                 <div style={{ fontSize: "var(--text-caption-size)", color: "var(--color-text-secondary)" }}>{item.inviter_icon || "🙂"} {item.inviter_name || "A player"} invited you</div>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => decideInvitation(item.invitation_id, false)}>Decline</Button>
-              <Button variant="primary" size="sm" onClick={() => decideInvitation(item.invitation_id, true)}>Join</Button>
+              <Button variant="ghost" size="sm" onClick={() => decideInvitation(item.invitation_id, false, item.circle_id)}>Decline</Button>
+              <Button variant="primary" size="sm" onClick={() => decideInvitation(item.invitation_id, true, item.circle_id)}>Join</Button>
             </div>
           ))}
         </div>
@@ -595,7 +614,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
         <>
           <div style={{ fontSize: "var(--text-section-title-size)", fontWeight: "var(--text-section-title-weight)", color: "var(--color-text-secondary)", margin: "24px var(--space-1) 10px" }}>Your circles</div>
           <div style={{ overflow: "hidden", background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-card)", marginBottom: "var(--section-gap)" }}>
-            {circles.map((circle, circleIndex) => {
+            {visibleCircles.map((circle, circleIndex) => {
               const roster = rosterFor(circle.id);
               const isMine = mine.has(circle.id);
               const owner = circle.created_by === user?.id;
@@ -939,7 +958,9 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                     <div key={c.id} style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", borderRadius: "var(--radius-md)", padding: "var(--space-3)", background: "var(--color-surface-elevated)" }}>
                       <span style={{ fontSize: 24 }}>{c.icon || "🙂"}</span>
                       <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: "var(--text-body-size)", fontWeight: 600, color: "var(--color-text-primary)" }} className="truncate">{c.name}</div><div style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>{c.mood || "Ready to play"}</div></div>
-                      <Button variant="secondary" size="sm" disabled={inviteBusy === c.id} onClick={() => invite(c.id)}>{inviteBusy === c.id ? "Adding…" : "Invite"}</Button>
+                      {sentInvitations.some((item) => item.circle_id === inviteCircle.id && item.invited_user_id === c.id)
+                        ? <Button variant="secondary" size="sm" disabled>Invited</Button>
+                        : <Button variant="secondary" size="sm" disabled={inviteBusy === c.id} onClick={() => invite(c.id)}>{inviteBusy === c.id ? "Inviting…" : "Invite"}</Button>}
                     </div>
                   ))}
                 </div>
