@@ -1,10 +1,11 @@
 export const APP_REVIEW_EMAIL = "review@imbored.au";
+export const APP_REVIEW_EMAILS = Object.freeze([APP_REVIEW_EMAIL, "review1@imbored.au"]);
 
 // This limits the app's review UI, not the public Supabase Auth API.
 // Supabase validates the password and issues the ordinary user session.
 export async function signInReviewAccount(client, email, password) {
   const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
-  if (normalizedEmail !== APP_REVIEW_EMAIL) {
+  if (!APP_REVIEW_EMAILS.includes(normalizedEmail)) {
     return { error: new Error("App Review access is only available for the dedicated review account.") };
   }
   if (typeof password !== "string" || !password.length) {
