@@ -386,7 +386,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
     if (edit.locked) return;
     const days = edit.days.includes(day) ? edit.days.filter((i) => i !== day) : [...edit.days,day].sort();
     const calendarToday = calendarDateInTimezone(rosterCircle?.timezone);
-    if (!edit.challengeId && !edit.weekExplicit && shouldAdvanceToNextWeek({ weekStart:edit.weekStart, selectedDays:days, calendarToday })) {
+    if (!edit.challengeId && edit.schedule !== "repeat" && !edit.weekExplicit && shouldAdvanceToNextWeek({ weekStart:edit.weekStart, selectedDays:days, calendarToday })) {
       patchChallenge(challengeKey, { days, weekMode:"next", weekStart:weekStartForMode("next", { calendarToday }), chosenDate:"" });
     } else patchChallenge(challengeKey, { days });
   }
@@ -780,9 +780,9 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                       const edit = challengeFor(ck);
                       const open = String(expandedChallengeId) === ck;
                       const games = [...new Set([...configuredChallengeGames, ...edit.games.filter((g) => DEFAULT_GAMES.includes(g))])];
-                      const unavailableDays = challenge.isNew && edit.weekMode === "this" ? pastIsoDays(edit.weekStart, new Date(), circleToday) : new Set();
+                      const unavailableDays = challenge.isNew && edit.weekMode === "this" && edit.schedule !== "repeat" ? pastIsoDays(edit.weekStart, new Date(), circleToday) : new Set();
                       const resolvedDates = resolveChallengeDates({ weekStart:edit.weekStart, selectedDays:edit.days });
-                      const hasPastSelectedDay = challenge.isNew && edit.days.some((day) => pastIsoDays(edit.weekStart, new Date(), circleToday).has(day));
+                      const hasPastSelectedDay = challenge.isNew && edit.schedule !== "repeat" && edit.days.some((day) => pastIsoDays(edit.weekStart, new Date(), circleToday).has(day));
                       return <div key={ck} style={{ borderRadius: "var(--radius-md)", overflow: "hidden", background: "var(--color-surface-elevated)", border: open ? "1px solid var(--color-primary-subtle-border)" : "1px solid transparent" }}>
                         <button type="button" onClick={() => setExpandedChallengeId(open ? null : ck)} style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", width: "100%", padding: "var(--space-3)", textAlign: "left", background: "transparent", border: "none", cursor: "pointer", color: "inherit", fontFamily: "inherit" }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
@@ -828,10 +828,11 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
                               {[{id:"once",label:"One week only"},{id:"repeat",label:"Repeat weekly"}].map((opt) => {
                                 const sel = edit.schedule === opt.id;
                                 return <label key={opt.id} style={{ borderRadius: "var(--radius-md)", padding: "var(--space-3)", cursor: "pointer", background: sel ? "var(--color-primary-subtle)" : "var(--color-surface)", border: sel ? "1px solid var(--color-primary-subtle-border)" : "1px solid var(--color-border)", display: "block" }}>
-                                  <span style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}><input type="radio" name={`sched-${ck}`} checked={sel} onChange={() => patchChallenge(ck, { schedule: opt.id })} /><span style={{ fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-text-primary)" }}>{opt.label}</span></span>
+                                  <span style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}><input type="radio" name={`sched-${ck}`} checked={sel} onChange={() => patchChallenge(ck, { schedule: opt.id, weekExplicit:opt.id === "repeat" ? true : edit.weekExplicit, days:opt.id === "repeat" ? [...edit.days, ...pastIsoDays(edit.weekStart, new Date(), circleToday)].filter((day,index,array) => array.indexOf(day) === index).sort((a,b) => a-b) : edit.days })} /><span style={{ fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-text-primary)" }}>{opt.label}</span></span>
                                 </label>;
                               })}
                             </div>
+                            {edit.schedule === "repeat" && edit.weekMode === "this" && <div style={{ fontSize:11, color:"var(--color-text-secondary)", marginTop:8 }}>Starts this Monday. Days already passed this week are skipped automatically; all chosen days run in later weeks.</div>}
                             {edit.schedule === "repeat" && <label style={{ display: "block", marginTop: "var(--space-2)", borderRadius: "var(--radius-md)", padding: "var(--space-3)", background: "var(--color-primary-subtle)" }}><span style={{ fontSize: "var(--text-caption-size)", fontWeight: 600, color: "var(--color-text-primary)" }}>How many weeks?</span><span style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginTop: 6 }}><input type="number" min="2" max="52" value={edit.durationWeeks} onChange={(e) => patchChallenge(ck, { durationWeeks: e.target.value === "" ? "" : e.target.value })} onBlur={() => patchChallenge(ck, { durationWeeks: Math.min(52, Math.max(2, Number(edit.durationWeeks) || 2)) })} style={{ width: 72, borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border-strong)", padding: "8px 12px", fontSize: "var(--text-input-size)", background: "var(--color-surface-input)", color: "var(--color-text-primary)", boxSizing: "border-box" }} /><span style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>2–52 weeks</span></span></label>}
                           </fieldset> : edit.durationWeeks > 1 && <div style={{ marginTop:"var(--space-4)", padding:"var(--space-3)", borderRadius:"var(--radius-sm)", background:"var(--color-info-bg)", color:"var(--color-info-text)", fontSize:11 }}>This edit changes occurrence {edit.occurrenceNumber} of {edit.durationWeeks} only. Other weeks remain unchanged.</div>}
                           {/* Prize */}
