@@ -5981,11 +5981,17 @@ begin
     end if;
   end if;
 
-  if target_challenge_id is null and exists(
+  if target_challenge_id is null and coalesce(repeat_weekly_in,false)=false and exists(
     select 1 from unnest(clean_days) day
     where week_start_in+(day-1)<public.circle_today(target_circle_id)
   ) then
     raise exception 'Choose playing days that have not passed.';
+  end if;
+  if target_challenge_id is null and coalesce(repeat_weekly_in,false)=true and not exists(
+    select 1 from unnest(clean_days) day
+    where week_start_in+(day-1)>=public.circle_today(target_circle_id)
+  ) then
+    raise exception 'No playing days remain this week. Start next week instead.';
   end if;
 
   if target_challenge_id is not null then
@@ -6032,7 +6038,10 @@ begin
       reward_goes_to,locked_at,created_by,series_id,repeats_weekly,series_weeks,occurrence_number,closed_at,
       stake_reward_id,stake_split_method
     ) values(
-      target_circle_id,week_start_in+(week_offset*7),clean_title,clean_games,clean_days,
+      target_circle_id,week_start_in+(week_offset*7),clean_title,clean_games,
+      case when week_offset=0 and coalesce(repeat_weekly_in,false)
+        then array(select day from unnest(clean_days) day where week_start_in+(day-1)>=public.circle_today(target_circle_id) order by day)
+        else clean_days end,
       case when stake_requested_in and week_offset=0 then 0 when clean_reward_type='points' then greatest(coalesce(reward_points_in,0),0) else 0 end,
       case when stake_requested_in and week_offset=0 then 'points' else clean_reward_type end,
       case when not (stake_requested_in and week_offset=0) and clean_reward_type='prize' then nullif(btrim(reward_label_in),'') else null end,
