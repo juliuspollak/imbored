@@ -253,15 +253,15 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
   }, [initialChallengeId, initialCircleId, loading, circles]);
 
   const byId = Object.fromEntries(profiles.map((p) => [p.id, p]));
-  const mine = new Set(members.filter((m) => m.user_id === user?.id).map((m) => m.circle_id));
+  const mine = new Set(members.filter((m) => m.user_id === user?.id).map((m) => String(m.circle_id)));
   // The Circles page is a personal dashboard, not a public directory.
   // Do not show unrelated circles simply because the database exposes their names.
   const visibleCircles = circles.filter((circle) => profile?.is_admin || circle.created_by === user?.id
-    || mine.has(circle.id)
-    || invitations.some((invitation) => invitation.circle_id === circle.id)
-    || requests.some((request) => request.circle_id === circle.id && request.user_id === user?.id && request.status === "pending"));
+    || mine.has(String(circle.id))
+    || invitations.some((invitation) => String(invitation.circle_id) === String(circle.id))
+    || requests.some((request) => String(request.circle_id) === String(circle.id) && request.user_id === user?.id && request.status === "pending"));
   function rosterFor(circleId) {
-    return members.filter((member) => member.circle_id === circleId)
+    return members.filter((member) => String(member.circle_id) === String(circleId))
       .map((member) => memberProfiles[`${circleId}:${member.user_id}`] || byId[member.user_id] || { id:member.user_id, name:"Circle member", icon:"🙂", mood:"" });
   }
   function blocksFor(circleId) { return circleBlocks.filter((block) => block.circle_id === circleId); }
@@ -638,11 +638,11 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
           <div style={{ overflow: "hidden", background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-card)", marginBottom: "var(--section-gap)" }}>
             {visibleCircles.map((circle, circleIndex) => {
               const roster = rosterFor(circle.id);
-              const isMine = mine.has(circle.id);
+              const isMine = mine.has(String(circle.id));
               const owner = circle.created_by === user?.id;
               const manager = canManage(circle);
-              const myRequest = requests.find((r) => r.circle_id === circle.id && r.user_id === user?.id);
-              const pending = requests.filter((r) => r.circle_id === circle.id && r.status === "pending");
+              const myRequest = requests.find((r) => String(r.circle_id) === String(circle.id) && r.user_id === user?.id);
+              const pending = requests.filter((r) => String(r.circle_id) === String(circle.id) && r.status === "pending");
               const menuOpen = cardMenuCircleId === circle.id;
               const identity = circleIdentity(circle);
 
@@ -739,7 +739,7 @@ export default function Circles({ onBack, initialCircleId = null, initialChallen
         const rosterIdentity = circleIdentity(rosterCircle);
         const blocked = blocksFor(rosterCircle.id).filter((m) => m.member_name?.toLowerCase().includes(rosterQuery.toLowerCase()));
         const manager = canManage(rosterCircle);
-        const member = mine.has(rosterCircle.id);
+        const member = mine.has(String(rosterCircle.id));
         const owner = rosterCircle.created_by === user?.id;
         const circleTimezone = resolveCalendarTimezone(rosterCircle.timezone);
         const circleToday = calendarDateInTimezone(circleTimezone);
