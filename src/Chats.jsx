@@ -146,7 +146,7 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
               <TextInput value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search conversations…" style={{ paddingLeft: 40, border: "none", boxShadow: "none", background: "transparent" }} />
             </div>
           )}
-          <div className="chats-section-title"><MessageCircle size={14} />Recent conversations</div>
+          <div className="chats-section-title">Conversations</div>
 
           {loading && <div className="chats-status">Loading chats…</div>}
 
@@ -163,27 +163,31 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
             <div className="chats-status">No conversations match that search.</div>
           )}
 
+          <div className="chats-conversation-list">
           {filteredConversations.map(({ peerId, profile, latest, unread }) => (
             <button type="button" className="chats-conversation" key={peerId} onClick={() => open(profile, latest)}>
               <div className="chats-avatar">
                 {profile.icon || "🙂"}
                 {presence.has(peerId) && <span className="chats-online-dot" />}
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: "var(--space-2)" }}>
+              <div className="chats-conversation-content">
+                <div className="chats-conversation-heading">
                   <strong className="chats-truncate">{profile.name || "Player"}</strong>
                   <span className="chats-timestamp">{formatWhen(latest.created_at)}</span>
                 </div>
+                <div className="chats-conversation-bottom">
                 <div className={`chats-preview chats-truncate${unread ? " unread" : ""}`}>
                   {latest.activity_type === "feedback_completed" ? "Feedback update · " : latest.activity_type === "circle_invitation" ? "Circle invitation · " : latest.activity_type === "score_challenge" ? "Beat my score · " : latest.activity_type === "score_challenge_result" || latest.activity_type === "circle_challenge_winner" ? "Challenge result · " : latest.system_generated ? "Circle update · " : latest.sender_id === currentUser.id ? "You: " : ""}
                   {latest.body}
                 </div>
+                {latest.activity_type === "score_challenge"
+                  ? <span className="chats-review-pill">Play</span>
+                  : unread > 0 && <span className="chats-unread-pill">{unread}</span>}
+                </div>
               </div>
-              {latest.activity_type === "score_challenge"
-                ? <span className="chats-review-pill">Play</span>
-                : unread > 0 && <span className="chats-unread-pill">{unread}</span>}
             </button>
           ))}
+          </div>
         </>
       ) : (
         <>
@@ -243,22 +247,31 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
         .chats-empty strong { color:var(--color-text-primary); }
         .chats-empty p { margin:0; color:var(--color-text-secondary); font-size:var(--text-body-secondary-size); }
 
-        .chats-conversation { width:100%; display:flex; align-items:center; gap:var(--space-3); border:1px solid var(--color-border); text-align:left; background:var(--color-surface); padding:var(--space-3); border-radius:var(--radius-xl); margin:var(--space-2) 0; box-shadow:var(--shadow-card); cursor:pointer; transition:transform var(--transition-fast), box-shadow var(--transition-fast); }
-        .chats-conversation:hover { box-shadow:var(--shadow-card-hover); }
-        .chats-conversation:active { transform:scale(.985); }
-        .chats-conversation:focus-visible { outline:2px solid var(--color-primary); outline-offset:2px; }
-
-        .chats-avatar { position:relative; width:52px; height:52px; flex:0 0 auto; border-radius:var(--radius-lg); display:grid; place-items:center; font-size:27px; background:var(--color-primary-subtle); border:1px solid var(--color-primary-subtle-border); }
-        .chats-avatar-sm { width:46px; height:46px; font-size:24px; }
-        .chats-online-dot { position:absolute; right:-1px; bottom:-1px; width:13px; height:13px; border:3px solid var(--color-surface); border-radius:50%; background:var(--color-success-text); }
-
+        /* Compact, calm inbox: one grouped list rather than isolated cards. */
+        .chats-conversation-list { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); overflow:hidden; }
+        .chats-conversation-list:empty { display:none; }
+        .chats-conversation { width:100%; display:flex; align-items:center; gap:12px; border:0; border-bottom:1px solid var(--color-border); text-align:left; background:transparent; padding:12px 14px; min-height:76px; margin:0; box-shadow:none; cursor:pointer; transition:background var(--transition-fast); }
+        .chats-conversation:last-child { border-bottom:0; }
+        .chats-conversation:hover { background:var(--color-surface-elevated); }
+        .chats-conversation:active { background:var(--color-primary-subtle); }
+        .chats-conversation:focus-visible { outline:2px solid var(--color-primary); outline-offset:-2px; position:relative; z-index:1; }
+        .chats-avatar { position:relative; width:48px; height:48px; flex:0 0 auto; border-radius:50%; display:grid; place-items:center; font-size:25px; background:var(--color-primary-subtle); border:1px solid var(--color-primary-subtle-border); }
+        .chats-avatar-sm { width:44px; height:44px; font-size:23px; }
+        .chats-online-dot { position:absolute; right:-1px; bottom:-1px; width:12px; height:12px; border:2px solid var(--color-surface); border-radius:50%; background:var(--color-success-text); }
+        .chats-conversation-content { flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
+        .chats-conversation-heading { display:flex; justify-content:space-between; align-items:baseline; gap:8px; min-width:0; }
+        .chats-conversation-heading strong { color:var(--color-text-primary); font-size:var(--text-body-size); font-weight:700; min-width:0; }
+        .chats-conversation-bottom { display:flex; align-items:center; gap:8px; min-width:0; }
         .chats-truncate { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .chats-timestamp { flex:0 0 auto; font-size:10px; color:var(--color-text-muted); }
-        .chats-preview { font-size:var(--text-body-secondary-size); color:var(--color-text-secondary); }
+        .chats-timestamp { flex:0 0 auto; font-size:var(--text-caption-size); color:var(--color-text-muted); font-weight:500; }
+        .chats-preview { flex:1; min-width:0; font-size:var(--text-body-secondary-size); color:var(--color-text-secondary); }
         .chats-preview.unread { color:var(--color-text-primary); font-weight:700; }
-
-        .chats-unread-pill { min-width:22px; height:22px; padding:0 6px; border-radius:var(--radius-full); display:grid; place-items:center; background:var(--color-primary); color:var(--color-primary-text); font-size:11px; font-weight:900; }
-        .chats-review-pill { border-radius:var(--radius-full); padding:4px 10px; font-size:10px; font-weight:800; background:var(--color-warning-bg); color:var(--color-warning-text); }
+        .chats-unread-pill { flex:0 0 auto; min-width:20px; height:20px; padding:0 6px; border-radius:var(--radius-full); display:grid; place-items:center; background:var(--color-primary); color:var(--color-primary-text); font-size:11px; font-weight:800; }
+        .chats-review-pill { flex:0 0 auto; border-radius:var(--radius-full); padding:3px 8px; font-size:10px; font-weight:750; background:var(--color-warning-bg); color:var(--color-warning-text); }
+        @media (max-width:360px) {
+          .chats-conversation { padding:10px; gap:10px; min-height:70px; }
+          .chats-avatar { width:42px; height:42px; font-size:23px; }
+        }
 
         .chats-people-list { display:flex; flex-direction:column; gap:var(--space-2); }
         .chats-person-card { width:100%; display:flex; align-items:center; gap:var(--space-3); border:1px solid var(--color-border); background:var(--color-surface); border-radius:var(--radius-lg); padding:var(--space-2) var(--space-3); text-align:left; box-shadow:var(--shadow-card); cursor:pointer; transition:transform var(--transition-fast), box-shadow var(--transition-fast); }
