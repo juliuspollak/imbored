@@ -353,3 +353,31 @@
     font-size: 10px !important;
   }
 }
+
+
+/* My Challenge always shows all games: explicit layout rather than a fragile
+   :has selector which can leave the final tiles clipped on iPhone. */
+.challenge-mini-strip.challenge-mini-strip--personal {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-auto-flow: row !important;
+  grid-auto-columns: auto !important;
+  justify-content: stretch !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  gap: 8px !important;
+}
+.challenge-mini-strip.challenge-mini-strip--personal .challenge-mini-game {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  flex: initial !important;
+}
+@media (max-width: 360px) {
+  .challenge-mini-strip.challenge-mini-strip--personal {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
