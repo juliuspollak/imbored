@@ -122,7 +122,7 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
     <Page>
       <PageHeader
         title="Chats"
-        subtitle="Messages wait here, even when friends are offline."
+        subtitle="Your conversations, all in one place."
         onBack={onBack}
         backAriaLabel="Back to home"
       />
@@ -146,7 +146,7 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
               <TextInput value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search conversations…" style={{ paddingLeft: 40, border: "none", boxShadow: "none", background: "transparent" }} />
             </div>
           )}
-          <div className="chats-section-title">Conversations</div>
+          <div className="chats-section-title">Recent conversations</div>
 
           {loading && <div className="chats-status">Loading chats…</div>}
 
@@ -239,7 +239,7 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
         .chats-search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--color-text-muted); pointer-events:none; }
         .chats-search:focus-within { border-color:var(--color-primary); box-shadow:0 0 0 3px var(--color-primary-ring); }
 
-        .chats-section-title { display:flex; align-items:center; gap:7px; margin:var(--space-5) 4px var(--space-2); font-size:var(--text-caption-size); font-weight:900; letter-spacing:.08em; text-transform:uppercase; color:var(--color-text-muted); }
+        .chats-section-title { display:flex; align-items:center; gap:7px; margin:var(--space-3) 4px var(--space-2); font-size:var(--text-caption-size); font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--color-text-muted); }
 
         .chats-status { padding:var(--space-6) 0; text-align:center; color:var(--color-text-secondary); font-size:var(--text-body-secondary-size); }
 
@@ -248,14 +248,14 @@ export default function Chats({ currentUser, currentProfile, onBack, onOpenChat,
         .chats-empty p { margin:0; color:var(--color-text-secondary); font-size:var(--text-body-secondary-size); }
 
         /* Compact, calm inbox: one grouped list rather than isolated cards. */
-        .chats-conversation-list { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); overflow:hidden; }
+        .chats-conversation-list { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); overflow:hidden; box-shadow:none; }
         .chats-conversation-list:empty { display:none; }
-        .chats-conversation { width:100%; display:flex; align-items:center; gap:12px; border:0; border-bottom:1px solid var(--color-border); text-align:left; background:transparent; padding:12px 14px; min-height:76px; margin:0; box-shadow:none; cursor:pointer; transition:background var(--transition-fast); }
+        .chats-conversation { width:100%; display:flex; align-items:center; gap:11px; border:0; border-bottom:1px solid var(--color-border); text-align:left; background:transparent; padding:10px 12px; min-height:68px; margin:0; box-shadow:none; cursor:pointer; transition:background var(--transition-fast); }
         .chats-conversation:last-child { border-bottom:0; }
         .chats-conversation:hover { background:var(--color-surface-elevated); }
         .chats-conversation:active { background:var(--color-primary-subtle); }
         .chats-conversation:focus-visible { outline:2px solid var(--color-primary); outline-offset:-2px; position:relative; z-index:1; }
-        .chats-avatar { position:relative; width:48px; height:48px; flex:0 0 auto; border-radius:50%; display:grid; place-items:center; font-size:25px; background:var(--color-primary-subtle); border:1px solid var(--color-primary-subtle-border); }
+        .chats-avatar { position:relative; width:44px; height:44px; flex:0 0 auto; border-radius:50%; display:grid; place-items:center; font-size:23px; background:var(--color-surface-elevated); border:1px solid var(--color-primary-subtle-border); }
         .chats-avatar-sm { width:44px; height:44px; font-size:23px; }
         .chats-online-dot { position:absolute; right:-1px; bottom:-1px; width:12px; height:12px; border:2px solid var(--color-surface); border-radius:50%; background:var(--color-success-text); }
         .chats-conversation-content { flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
