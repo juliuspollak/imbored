@@ -32,7 +32,7 @@ jobs:
     environment: testflight
     env:
       APP_IDENTIFIER: au.imbored.app
-      APP_VERSION: "1.0"
+      APP_VERSION: "1.0.1"
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
       APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
