@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { configuredAppStoreUrl, shouldShowPublicLanding, shouldShowPublicPrivacy, shouldShowPublicSupport } from "./publicLanding.js";
@@ -33,7 +34,16 @@ test("only a plain browser privacy path shows the public privacy page", () => {
 });
 
 test("the App Store link must be explicitly configured and Apple-hosted", () => {
-  assert.equal(configuredAppStoreUrl({}), null);
+  assert.equal(configuredAppStoreUrl({}), "https://apps.apple.com/au/app/imboredtoday/id6804962205");
   assert.equal(configuredAppStoreUrl({ VITE_APP_STORE_URL:"https://example.com/invented" }), null);
   assert.equal(configuredAppStoreUrl({ VITE_APP_STORE_URL:"https://apps.apple.com/au/app/example/id123" }), "https://apps.apple.com/au/app/example/id123");
+});
+
+test("public launch page describes discoverable games and points to a real App Store listing", () => {
+  const landing = readFileSync(new URL("../PublicLanding.jsx", import.meta.url), "utf8");
+  const html = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
+  assert.match(landing, /Hive, Twist, Gridly, Mini Sudoku, Geo and Zoom/);
+  assert.match(landing, /Get imBoredToday on the App Store/);
+  assert.match(html, /name="description"/);
+  assert.match(html, /name="apple-itunes-app" content="app-id=6804962205"/);
 });
