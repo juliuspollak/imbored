@@ -20,12 +20,15 @@ npm run build
 
 Outputs static files to `dist/`.
 
-The plain browser homepage is a public App Store landing page. Set
-`VITE_APP_STORE_URL` to the final `https://apps.apple.com/...` product URL in
-the web host's production environment once App Store Connect provides it. If
-the variable is absent or is not an Apple App Store URL, the page deliberately
-shows a non-clickable “App Store link coming soon” control. Capacitor native
-builds and browser deep links continue to mount the application.
+The plain browser homepage is a public App Store landing page linking to the
+verified live listing: https://apps.apple.com/au/app/imboredtoday/id6804962205.
+`VITE_APP_STORE_URL` is an optional override; it must be an HTTPS
+`apps.apple.com` URL. The default avoids showing a stale "coming soon"
+button if the production environment variable is missing. Browser deep links
+and Capacitor native builds still mount the application as before.
+
+See `docs/app-store-discovery.md` for App Store Connect metadata proposals
+and the launch checklist. App Store metadata is not changed by a web deploy.
 
 ## Deploy (Vercel — free, easiest)
 
